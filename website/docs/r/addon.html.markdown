@@ -52,6 +52,7 @@ The following attributes are exported:
 * `name` - The add-on name
 * `plan` - The plan name
 * `provider_id` - The ID of the plan provider
+* `config_vars` - The Configuration variables of the add-on
 
 
 ## Import
