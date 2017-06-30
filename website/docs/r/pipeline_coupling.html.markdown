@@ -63,5 +63,6 @@ The following attributes are exported:
 
 * `id` - The UUID of this pipeline coupling.
 * `app` - The name of the application.
+* `app_id` - The ID of the application.
 * `pipeline` - The UUID of the pipeline.
 * `stage` - The stage for this coupling.
