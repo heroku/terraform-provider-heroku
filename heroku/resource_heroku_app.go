@@ -333,7 +333,12 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	configVars := make(map[string]string)
 	care := make(map[string]struct{})
 	for _, v := range d.Get("config_vars").([]interface{}) {
-		for k := range v.(map[string]interface{}) {
+		// Protect against panic on type cast for a nil-length array or map
+		n, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		for k := range n {
 			care[k] = struct{}{}
 		}
 	}
@@ -355,6 +360,7 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 			configVars[k] = v
 		}
 	}
+
 	var configVarsValue []map[string]string
 	if len(configVars) > 0 {
 		configVarsValue = []map[string]string{configVars}
