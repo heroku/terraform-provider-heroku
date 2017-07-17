@@ -231,6 +231,29 @@ func TestAccHerokuApp_Space(t *testing.T) {
 	})
 }
 
+// https://github.com/terraform-providers/terraform-provider-heroku/issues/2
+func TestAccHerokuApp_EmptyConfigVars(t *testing.T) {
+	var app heroku.App
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAppDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAppConfig_EmptyConfigVars(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppAttributesNoVars(&app, appName),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "name", appName),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckHerokuAppDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*heroku.Service)
 
@@ -592,4 +615,15 @@ resource "heroku_app" "foobar" {
     FOO = "bar"
   }
 }`, spaceName, org, appName, org)
+}
+
+func testAccCheckHerokuAppConfig_EmptyConfigVars(appName string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+  name   = "%s"
+  region = "us"
+
+  config_vars = [
+  ]
+}`, appName)
 }
