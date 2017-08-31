@@ -6,7 +6,7 @@ Terraform Provider
 - Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
 - Documentation: https://www.terraform.io/docs/providers/heroku/index.html
 
-<img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/source/assets/images/logo-text.svg" width="600px">
+<img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" width="600px">
 
 Requirements
 ------------
