@@ -126,7 +126,6 @@ func resourceHerokuApp() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				ForceNew: true,
 			},
 
 			"buildpacks": {
@@ -399,22 +398,22 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
+	opts := heroku.AppUpdateOpts{}
 
-	// If name changed, update it
 	if d.HasChange("name") {
 		v := d.Get("name").(string)
-		opts := heroku.AppUpdateOpts{
-			Name: &v,
-		}
-
-		renamedApp, err := client.AppUpdate(context.TODO(), d.Id(), opts)
-		if err != nil {
-			return err
-		}
-
-		// Store the new ID
-		d.SetId(renamedApp.Name)
+		opts.Name = &v
 	}
+	if d.HasChange("stack") {
+		v := d.Get("stack").(string)
+		opts.BuildStack = &v
+	}
+
+	updatedApp, err := client.AppUpdate(context.TODO(), d.Id(), opts)
+	if err != nil {
+		return err
+	}
+	d.SetId(updatedApp.Name)
 
 	// If the config vars changed, then recalculate those
 	if d.HasChange("config_vars") {
