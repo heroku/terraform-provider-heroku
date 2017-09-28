@@ -11,6 +11,11 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
+type spaceWithRanges struct {
+	heroku.Space
+	TrustedIPRanges []string
+}
+
 func resourceHerokuSpace() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceHerokuSpaceCreate,
@@ -38,6 +43,14 @@ func resourceHerokuSpace() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+			},
+
+			"trusted_ip_ranges": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 		},
 	}
@@ -76,6 +89,28 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error waiting for Space (%s) to become available: %s", d.Id(), err)
 	}
 
+	if ranges, ok := d.GetOk("trusted_ip_ranges"); ok {
+		var rules []*struct {
+			Action string `json:"action" url:"action,key"`
+			Source string `json:"source" url:"source,key"`
+		}
+		for _, r := range ranges.([]interface{}) {
+			rules = append(rules, &struct {
+				Action string `json:"action" url:"action,key"`
+				Source string `json:"source" url:"source,key"`
+			}{
+				Action: "allow",
+				Source: r.(string),
+			})
+		}
+
+		opts := heroku.InboundRulesetCreateOpts{Rules: &rules}
+		_, err := client.InboundRulesetCreate(context.TODO(), space.ID, opts)
+		if err != nil {
+			return fmt.Errorf("Error creating Trusted IP Ranges for Space (%s): %s", space.ID, err)
+		}
+	}
+
 	return resourceHerokuSpaceRead(d, meta)
 }
 
@@ -86,8 +121,8 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	space := spaceRaw.(*heroku.Space)
 
+	space := spaceRaw.(*spaceWithRanges)
 	setSpaceAttributes(d, space)
 	return nil
 }
@@ -95,28 +130,53 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 func resourceHerokuSpaceUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 
-	if !d.HasChange("name") {
-		return nil
+	if d.HasChange("name") {
+		name := d.Get("name").(string)
+		opts := heroku.SpaceUpdateOpts{Name: &name}
+
+		space, err := client.SpaceUpdate(context.TODO(), d.Id(), opts)
+		if err != nil {
+			return err
+		}
+
+		// The type conversion here can be dropped when the vendored version of
+		// heroku-go is updated.
+		setSpaceAttributes(d, &spaceWithRanges{Space: *space})
 	}
 
-	name := d.Get("name").(string)
-	opts := heroku.SpaceUpdateOpts{Name: &name}
+	if d.HasChange("trusted_ip_ranges") {
+		var rules []*struct {
+			Action string `json:"action" url:"action,key"`
+			Source string `json:"source" url:"source,key"`
+		}
+		ranges := d.Get("trusted_ip_ranges")
+		for _, r := range ranges.([]interface{}) {
+			rules = append(rules, &struct {
+				Action string `json:"action" url:"action,key"`
+				Source string `json:"source" url:"source,key"`
+			}{
+				Action: "allow",
+				Source: r.(string),
+			})
+		}
 
-	space, err := client.SpaceUpdate(context.TODO(), d.Id(), opts)
-	if err != nil {
-		return err
+		opts := heroku.InboundRulesetCreateOpts{Rules: &rules}
+		_, err := client.InboundRulesetCreate(context.TODO(), d.Id(), opts)
+		if err != nil {
+			return fmt.Errorf("Error creating Trusted IP Ranges for Space (%s): %s", d.Id(), err)
+		}
+
+		d.Set("trusted_ip_ranges", ranges)
 	}
 
-	// The type conversion here can be dropped when the vendored version of
-	// heroku-go is updated.
-	setSpaceAttributes(d, (*heroku.Space)(space))
 	return nil
 }
 
-func setSpaceAttributes(d *schema.ResourceData, space *heroku.Space) {
+func setSpaceAttributes(d *schema.ResourceData, space *spaceWithRanges) {
 	d.Set("name", space.Name)
 	d.Set("organization", space.Organization.Name)
 	d.Set("region", space.Region.Name)
+	d.Set("trusted_ip_ranges", space.TrustedIPRanges)
 }
 
 func resourceHerokuSpaceDelete(d *schema.ResourceData, meta interface{}) error {
@@ -141,8 +201,22 @@ func SpaceStateRefreshFunc(client *heroku.Service, id string) resource.StateRefr
 			return nil, "", err
 		}
 
-		// The type conversion here can be dropped when the vendored version of
-		// heroku-go is updated.
-		return (*heroku.Space)(space), space.State, nil
+		s := spaceWithRanges{
+			Space: *space,
+		}
+		if space.State == "allocating" {
+			return &s, space.State, nil
+		}
+
+		ruleset, err := client.InboundRulesetCurrent(context.TODO(), id)
+		if err != nil {
+			return nil, "", err
+		}
+		s.TrustedIPRanges = make([]string, len(ruleset.Rules))
+		for i, r := range ruleset.Rules {
+			s.TrustedIPRanges[i] = r.Source
+		}
+
+		return &s, space.State, nil
 	}
 }

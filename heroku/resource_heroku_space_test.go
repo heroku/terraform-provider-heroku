@@ -62,6 +62,10 @@ resource "heroku_space" "foobar" {
   name = "%s"
 	organization = "%s"
 	region = "virginia"
+	trusted_ip_ranges = [
+		"8.8.8.8/32",
+		"8.8.8.0/24",
+	]
 }
 `, spaceName, orgName)
 }
