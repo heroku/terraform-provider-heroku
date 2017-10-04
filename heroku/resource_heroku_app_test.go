@@ -288,8 +288,8 @@ func testAccCheckHerokuAppAttributes(app *heroku.App, appName, stackName string)
 			return fmt.Errorf("Bad region: %s", app.Region.Name)
 		}
 
-		if app.Stack.Name != stackName {
-			return fmt.Errorf("Bad stack: %s", app.Stack.Name)
+		if app.BuildStack.Name != stackName {
+			return fmt.Errorf("Bad stack: %s", app.BuildStack.Name)
 		}
 
 		if app.Name != appName {
@@ -313,8 +313,8 @@ func testAccCheckHerokuAppAttributesUpdated(app *heroku.App, appName, stackName 
 	return func(s *terraform.State) error {
 		client := testAccProvider.Meta().(*heroku.Service)
 
-		if app.Stack.Name != stackName {
-			return fmt.Errorf("Bad stack: %s", app.Stack.Name)
+		if app.BuildStack.Name != stackName {
+			return fmt.Errorf("Bad stack: %s", app.BuildStack.Name)
 		}
 
 		if app.Name != appName {
@@ -431,8 +431,8 @@ func testAccCheckHerokuAppAttributesOrg(app *heroku.OrganizationApp, appName, sp
 			return fmt.Errorf("Bad space: %s", appSpace)
 		}
 
-		if app.Stack.Name != "heroku-16" {
-			return fmt.Errorf("Bad stack: %s", app.Stack.Name)
+		if app.BuildStack.Name != "heroku-16" {
+			return fmt.Errorf("Bad stack: %s", app.BuildStack.Name)
 		}
 
 		if app.Name != appName {

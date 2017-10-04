@@ -48,7 +48,7 @@ func (a *application) Update() error {
 			a.App = &herokuApplication{}
 			a.App.Name = app.Name
 			a.App.Region = app.Region.Name
-			a.App.Stack = app.Stack.Name
+			a.App.Stack = app.BuildStack.Name
 			a.App.GitURL = app.GitURL
 			a.App.WebURL = app.WebURL
 		}
@@ -61,7 +61,7 @@ func (a *application) Update() error {
 			a.App = &herokuApplication{}
 			a.App.Name = app.Name
 			a.App.Region = app.Region.Name
-			a.App.Stack = app.Stack.Name
+			a.App.Stack = app.BuildStack.Name
 			a.App.GitURL = app.GitURL
 			a.App.WebURL = app.WebURL
 			if app.Space != nil {
