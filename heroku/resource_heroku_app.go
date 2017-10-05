@@ -146,8 +146,9 @@ func resourceHerokuApp() *schema.Resource {
 			},
 
 			"all_config_vars": {
-				Type:     schema.TypeMap,
-				Computed: true,
+				Type:       schema.TypeMap,
+				Computed:   true,
+				Deprecated: "Please reference config_vars instead",
 			},
 
 			"git_url": {
@@ -330,40 +331,22 @@ func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error 
 func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 
-	configVars := make(map[string]string)
-	care := make(map[string]struct{})
-	for _, v := range d.Get("config_vars").([]interface{}) {
-		// Protect against panic on type cast for a nil-length array or map
-		n, ok := v.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		for k := range n {
-			care[k] = struct{}{}
-		}
-	}
-
 	// Only track buildpacks when set in the configuration.
 	_, buildpacksConfigured := d.GetOk("buildpacks")
 
 	organizationApp := isOrganizationApp(d)
 
-	// Only set the config_vars that we have set in the configuration.
-	// The "all_config_vars" field has all of them.
+	// The "all_config_vars" field has all config vars, but will go away, instead
+	// you should just reference config_vars, which will also have them all. This
+	// is done to detect drift in config vars.
 	app, err := resourceHerokuAppRetrieve(d.Id(), organizationApp, client)
 	if err != nil {
 		return err
 	}
 
-	for k, v := range app.Vars {
-		if _, ok := care[k]; ok {
-			configVars[k] = v
-		}
-	}
-
 	var configVarsValue []map[string]string
-	if len(configVars) > 0 {
-		configVarsValue = []map[string]string{configVars}
+	if len(app.Vars) > 0 {
+		configVarsValue = []map[string]string{app.Vars}
 	}
 
 	d.Set("name", app.App.Name)
@@ -374,8 +357,14 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	if buildpacksConfigured {
 		d.Set("buildpacks", app.Buildpacks)
 	}
-	d.Set("config_vars", configVarsValue)
-	d.Set("all_config_vars", app.Vars)
+
+	if err := d.Set("config_vars", configVarsValue); err != nil {
+		log.Printf("[WARN] Error setting config vars: %s", err)
+	}
+	if err := d.Set("all_config_vars", app.Vars); err != nil {
+		log.Printf("[WARN] Error setting all_config_vars: %s", err)
+	}
+
 	if organizationApp {
 		d.Set("space", app.App.Space)
 
