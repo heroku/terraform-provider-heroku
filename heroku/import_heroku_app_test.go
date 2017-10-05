@@ -21,10 +21,9 @@ func TestAccHerokuApp_importBasic(t *testing.T) {
 				Config: testAccCheckHerokuAppConfig_basic(appName),
 			},
 			{
-				ResourceName:            "heroku_app.foobar",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"config_vars"},
+				ResourceName:      "heroku_app.foobar",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -48,10 +47,9 @@ func TestAccHerokuApp_importOrganization(t *testing.T) {
 				Config: testAccCheckHerokuAppConfig_organization(appName, org),
 			},
 			{
-				ResourceName:            "heroku_app.foobar",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"config_vars"},
+				ResourceName:      "heroku_app.foobar",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
