@@ -48,7 +48,7 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 
 	opts := heroku.SpaceCreateOpts{}
 	opts.Name = d.Get("name").(string)
-	opts.Organization = d.Get("organization").(string)
+	opts.Team = d.Get("organization").(string)
 
 	if v, ok := d.GetOk("region"); ok {
 		vs := v.(string)
