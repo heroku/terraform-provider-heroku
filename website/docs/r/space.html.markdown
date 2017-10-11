@@ -46,3 +46,11 @@ The following attributes are exported:
 * `name` - The space's name.
 * `organization` - The space's organization.
 * `region` - The space's region.
+
+## Import
+
+Spaces can be imported using the space `id`, e.g.
+
+```
+$ terraform import heroku_space.foobar MySpace
+```

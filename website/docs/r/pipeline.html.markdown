@@ -60,3 +60,11 @@ The following attributes are exported:
 
 * `id` - The UUID of the pipeline.
 * `name` - The name of the pipeline.
+
+## Import
+
+Pipelines can be imported using the Pipeline `id`, e.g.
+
+```
+$ terraform import heroku_pipeline.foobar 12345678
+```
