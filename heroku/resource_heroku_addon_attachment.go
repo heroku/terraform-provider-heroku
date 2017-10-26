@@ -32,6 +32,13 @@ func resourceHerokuAddonAttachment() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+
+			"name": {
+				Type:     schema.TypeString,
+				ForceNew: true,
+				Optional: true,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -41,6 +48,10 @@ func resourceHerokuAddonAttachmentCreate(d *schema.ResourceData, meta interface{
 	client := meta.(*heroku.Service)
 
 	opts := heroku.AddOnAttachmentCreateOpts{Addon: d.Get("addon_id").(string), App: d.Get("app_id").(string)}
+
+	if v := d.Get("name").(string); v != "" {
+		opts.Name = &v
+	}
 
 	log.Printf("[DEBUG] Addon Attachment create configuration: %#v", opts)
 	a, err := client.AddOnAttachmentCreate(context.TODO(), opts)
@@ -69,6 +80,7 @@ func resourceHerokuAddonAttachmentRead(d *schema.ResourceData, meta interface{})
 
 	d.Set("app_id", addonattachment.App.Name)
 	d.Set("addon_id", addonattachment.Addon.Name)
+	d.Set("name", addonattachment.Name)
 
 	return nil
 }

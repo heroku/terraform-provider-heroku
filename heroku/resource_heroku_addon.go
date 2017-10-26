@@ -55,6 +55,11 @@ func resourceHerokuAddon() *schema.Resource {
 				Computed: true,
 			},
 
+			"name": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			"config_vars": {
 				Type:     schema.TypeList,
 				Computed: true,
