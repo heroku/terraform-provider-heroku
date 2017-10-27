@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 
 	"github.com/cyberdelia/heroku-go/v3"
 	multierror "github.com/hashicorp/go-multierror"
@@ -99,6 +100,7 @@ func resourceHerokuApp() *schema.Resource {
 		Read:   resourceHerokuAppRead,
 		Update: resourceHerokuAppUpdate,
 		Delete: resourceHerokuAppDelete,
+		Exists: resourceHerokuAppExists,
 
 		Importer: &schema.ResourceImporter{
 			State: resourceHerokuAppImport,
@@ -454,6 +456,26 @@ func resourceHerokuAppDelete(d *schema.ResourceData, meta interface{}) error {
 
 	d.SetId("")
 	return nil
+}
+
+func resourceHerokuAppExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	var err error
+	client := meta.(*heroku.Service)
+
+	if isOrganizationApp(d) {
+		_, err = client.OrganizationAppInfo(context.TODO(), d.Id())
+	} else {
+		_, err = client.AppInfo(context.TODO(), d.Id())
+	}
+	if err != nil {
+		// Make sure it's a missing app error.
+		if herr, ok := err.(*url.Error).Err.(heroku.Error); ok && herr.ID == "not_found" {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
 }
 
 func resourceHerokuAppRetrieve(id string, organization bool, client *heroku.Service) (*application, error) {
