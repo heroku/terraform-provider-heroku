@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -24,6 +25,7 @@ func resourceHerokuAddon() *schema.Resource {
 		Read:   resourceHerokuAddonRead,
 		Update: resourceHerokuAddonUpdate,
 		Delete: resourceHerokuAddonDelete,
+		Exists: resourceHerokuAddonExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -176,6 +178,20 @@ func resourceHerokuAddonDelete(d *schema.ResourceData, meta interface{}) error {
 
 	d.SetId("")
 	return nil
+}
+
+func resourceHerokuAddonExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	client := meta.(*heroku.Service)
+
+	_, err := client.AddOnInfo(context.TODO(), d.Id())
+	if err != nil {
+		if herr, ok := err.(*url.Error).Err.(heroku.Error); ok && herr.ID == "not_found" {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
 }
 
 func resourceHerokuAddonRetrieve(id string, client *heroku.Service) (*heroku.AddOn, error) {
