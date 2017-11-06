@@ -11,6 +11,7 @@ import (
 
 func TestAccHerokuApp_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	appStack := "heroku-16"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -18,7 +19,7 @@ func TestAccHerokuApp_importBasic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_basic(appName),
+				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
 			},
 			{
 				ResourceName:      "heroku_app.foobar",
