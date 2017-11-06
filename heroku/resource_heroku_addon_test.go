@@ -73,6 +73,27 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 	})
 }
 
+func TestAccHerokuAddon_Disappears(t *testing.T) {
+	var addon heroku.AddOn
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAddonConfig_basic(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
+					testAccCheckHerokuAddonDisappears(appName, "deployhooks"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func testAccCheckHerokuAddonDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*heroku.Service)
 
@@ -129,6 +150,15 @@ func testAccCheckHerokuAddonExists(n string, addon *heroku.AddOn) resource.TestC
 		*addon = *foundAddon
 
 		return nil
+	}
+}
+
+func testAccCheckHerokuAddonDisappears(appName, addonName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		client := testAccProvider.Meta().(*heroku.Service)
+
+		_, err := client.AddOnDelete(context.TODO(), appName, addonName)
+		return err
 	}
 }
 
