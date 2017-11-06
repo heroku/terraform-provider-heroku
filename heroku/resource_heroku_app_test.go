@@ -40,6 +40,7 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 func TestAccHerokuApp_Disappears(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	appStack := "cedar-14"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -47,7 +48,7 @@ func TestAccHerokuApp_Disappears(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_basic(appName),
+				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					testAccCheckHerokuAppDisappears(appName),
@@ -569,7 +570,7 @@ func testAccCheckHerokuAppConfig_basic(appName, appStack string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
-	stack = "%s"
+  stack = "%s"
   region = "us"
 
   config_vars {
