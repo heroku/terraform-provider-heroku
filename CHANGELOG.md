@@ -4,6 +4,7 @@
 * r/heroku_app: always read all config vars [GH-17]
 * r/heroku_app: Handle updating an app's stack [GH-16]
 * r/heroku_app: Adding an Exists method to check for if an App exists [GH-20]
+* r/heroku_addon: Adding an Exists method to check for if an Addon exists [GH-21]
 
 ## 0.1.0 (June 20, 2017)
 
