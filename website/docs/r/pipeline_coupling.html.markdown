@@ -66,3 +66,11 @@ The following attributes are exported:
 * `app_id` - The ID of the application.
 * `pipeline` - The UUID of the pipeline.
 * `stage` - The stage for this coupling.
+
+## Import
+
+Pipeline couplings can be imported using the Pipeline coupling `id`, e.g.
+
+```
+$ terraform import heroku_pipeline_coupling.foobar 12345678
+```
