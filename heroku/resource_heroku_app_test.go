@@ -37,6 +37,28 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 	})
 }
 
+func TestAccHerokuApp_Disappears(t *testing.T) {
+	var app heroku.App
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	appStack := "cedar-14"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAppDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppDisappears(appName),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 func TestAccHerokuApp_Change(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
@@ -535,11 +557,20 @@ func testAccInstallUnconfiguredBuildpack(t *testing.T, appName string) func() {
 	}
 }
 
+func testAccCheckHerokuAppDisappears(appName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		client := testAccProvider.Meta().(*heroku.Service)
+
+		_, err := client.AppDelete(context.TODO(), appName)
+		return err
+	}
+}
+
 func testAccCheckHerokuAppConfig_basic(appName, appStack string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
-	stack = "%s"
+  stack = "%s"
   region = "us"
 
   config_vars {
