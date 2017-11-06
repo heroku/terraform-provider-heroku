@@ -76,3 +76,11 @@ The following attributes are exported:
 * `all_config_vars` - A map of all of the configuration variables that
     exist for the app, containing both those set by Terraform and those
     set externally.
+
+## Import
+
+Apps can be imported using the App `id`, e.g.
+
+```
+$ terraform import heroku_app.foobar MyApp
+```
