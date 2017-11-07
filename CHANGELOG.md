@@ -1,17 +1,17 @@
-## 0.1.1 (Unreleased)
+## 0.1.1 (November 07, 2017)
 
 FEATURES:
 
-* **New Resource:** `r/heroku_addon_attachment` [GH-19]
+* **New Resource:** `r/heroku_addon_attachment` ([#19](https://github.com/terraform-providers/terraform-provider-heroku/issues/19))
 
 IMPROVEMENTS:
 
-* r/heroku_app: Protect against panic [GH-11]
-* r/heroku_app: always read all config vars [GH-17]
-* r/heroku_app: Handle updating an app's stack [GH-16]
-* r/heroku_app: Adding an Exists method to check for if an App exists [GH-20]
-* r/heroku_app: Making the `config_vars` field Optional + Computed [GH-22] [GH-23]
-* r/heroku_addon: Adding an Exists method to check for if an Addon exists [GH-21]
+* r/heroku_app: Protect against panic ([#11](https://github.com/terraform-providers/terraform-provider-heroku/issues/11))
+* r/heroku_app: always read all config vars ([#17](https://github.com/terraform-providers/terraform-provider-heroku/issues/17))
+* r/heroku_app: Handle updating an app's stack ([#16](https://github.com/terraform-providers/terraform-provider-heroku/issues/16))
+* r/heroku_app: Adding an Exists method to check for if an App exists ([#20](https://github.com/terraform-providers/terraform-provider-heroku/issues/20))
+* r/heroku_app: Making the `config_vars` field Optional + Computed ([#22](https://github.com/terraform-providers/terraform-provider-heroku/issues/22)] [[#23](https://github.com/terraform-providers/terraform-provider-heroku/issues/23))
+* r/heroku_addon: Adding an Exists method to check for if an Addon exists ([#21](https://github.com/terraform-providers/terraform-provider-heroku/issues/21))
 
 ## 0.1.0 (June 20, 2017)
 
