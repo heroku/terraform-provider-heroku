@@ -621,6 +621,8 @@ func testAccCheckHerokuAppConfig_no_vars(appName string) string {
 resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
+
+  config_vars = []
 }`, appName)
 }
 
