@@ -1,5 +1,11 @@
 ## 0.1.1 (Unreleased)
 
+FEATURES:
+
+* **New Resource:** `r/heroku_addon_attachment` [GH-19]
+
+IMPROVEMENTS:
+
 * r/heroku_app: Protect against panic [GH-11]
 * r/heroku_app: always read all config vars [GH-17]
 * r/heroku_app: Handle updating an app's stack [GH-16]
