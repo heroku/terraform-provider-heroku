@@ -28,6 +28,7 @@ func Provider() terraform.ResourceProvider {
 
 		ResourcesMap: map[string]*schema.Resource{
 			"heroku_addon":             resourceHerokuAddon(),
+			"heroku_addon_attachment":  resourceHerokuAddonAttachment(),
 			"heroku_app":               resourceHerokuApp(),
 			"heroku_app_feature":       resourceHerokuAppFeature(),
 			"heroku_cert":              resourceHerokuCert(),
