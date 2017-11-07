@@ -141,6 +141,7 @@ func resourceHerokuApp() *schema.Resource {
 			"config_vars": {
 				Type:     schema.TypeList,
 				Optional: true,
+				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeMap,
 				},
