@@ -53,10 +53,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_addon" "foobar" {
     app = "${heroku_app.foobar.name}"
-    plan = "deployhooks:http"
-    config {
-        url = "http://google.com"
-    }
+    plan = "heroku-postgresql:hobby-dev"
 }
 
 resource "heroku_addon_attachment" "foobar" {
@@ -74,10 +71,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_addon" "foobar" {
     app = "${heroku_app.foobar.name}"
-    plan = "deployhooks:http"
-    config {
-        url = "http://google.com"
-    }
+    plan = "heroku-postgresql:hobby-dev"
 }
 
 resource "heroku_addon_attachment" "foobar" {
