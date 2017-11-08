@@ -43,8 +43,9 @@ The following arguments are supported:
 * `config_vars` - (Optional) Configuration variables for the application.
      The config variables in this map are not the final set of configuration
      variables, but rather variables you want present. That is, other
-     configuration variables set externally won't be removed by Terraform
-     if they aren't present in this list.
+     configuration variables set externally by Heroku Addons will not be present
+     in this list. See the `all_config_vars` for a complete list of config vars
+     present for the application.
 * `space` - (Optional) The name of a private space to create the app in.
 * `organization` - (Optional) A block that can be specified once to define
      organization settings for this app. The fields for this block are
