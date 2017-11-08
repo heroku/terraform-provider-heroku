@@ -148,9 +148,8 @@ func resourceHerokuApp() *schema.Resource {
 			},
 
 			"all_config_vars": {
-				Type:       schema.TypeMap,
-				Computed:   true,
-				Deprecated: "Please reference config_vars instead",
+				Type:     schema.TypeMap,
+				Computed: true,
 			},
 
 			"git_url": {
@@ -348,7 +347,27 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 
 	var configVarsValue []map[string]string
 	if len(app.Vars) > 0 {
-		configVarsValue = []map[string]string{app.Vars}
+		// make a copy of app.Vars so we can manipulate it later in the READ,
+		// removing any config vars added by Heroku Addons
+		copyVars := make(map[string]string)
+		for k, v := range app.Vars {
+			copyVars[k] = v
+		}
+
+		configVarsValue = []map[string]string{copyVars}
+	}
+
+	// get addons, and grab any ENV vars that they add, to remove from the
+	// configVarsValue map
+	addons, err := client.AddOnListByApp(context.TODO(), d.Id(), nil)
+	if err != nil {
+		log.Printf("Error retrieving addon information for app (%s): %s", d.Id(), err)
+	}
+
+	// store any config vars added by add-ons for removal
+	var addonConfigVars []string
+	for _, a := range addons {
+		addonConfigVars = append(addonConfigVars, a.ConfigVars...)
 	}
 
 	d.Set("name", app.App.Name)
@@ -358,6 +377,20 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("web_url", app.App.WebURL)
 	if buildpacksConfigured {
 		d.Set("buildpacks", app.Buildpacks)
+	}
+
+	for _, configMap := range configVarsValue {
+		// configVarsValue is a []map[string]string, which should contain a single
+		// entry. The config_vars attribute should instead be stored as TypeSet, but
+		// that is likel a backwards incompatible change. Here we check if any
+		// config var has been added by an addon, and remove it from the map so that
+		// config vars added by addons are not seen as drift.
+		for _, k := range addonConfigVars {
+			if _, ok := configMap[k]; ok {
+				log.Printf("[DEBUG] Removing AddOn config var from config_vars: %s", k)
+				delete(configMap, k)
+			}
+		}
 	}
 
 	if err := d.Set("config_vars", configVarsValue); err != nil {
