@@ -15,6 +15,10 @@ func resourceHerokuDomain() *schema.Resource {
 		Read:   resourceHerokuDomainRead,
 		Delete: resourceHerokuDomainDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceHerokuDomainImport,
+		},
+
 		Schema: map[string]*schema.Schema{
 			"hostname": {
 				Type:     schema.TypeString,
@@ -34,6 +38,19 @@ func resourceHerokuDomain() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceHerokuDomainImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	client := meta.(*heroku.Service)
+
+	app := d.Get("app").(string)
+
+	_, err := client.DomainInfo(context.Background(), app, d.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceHerokuDomainCreate(d *schema.ResourceData, meta interface{}) error {
