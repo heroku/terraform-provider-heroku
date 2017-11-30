@@ -15,6 +15,10 @@ func resourceHerokuAppFeature() *schema.Resource {
 		Read:   resourceHerokuAppFeatureRead,
 		Delete: resourceHerokuAppFeatureDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
+
 		Schema: map[string]*schema.Schema{
 			"app": {
 				Type:     schema.TypeString,

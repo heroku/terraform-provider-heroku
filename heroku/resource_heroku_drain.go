@@ -18,6 +18,10 @@ func resourceHerokuDrain() *schema.Resource {
 		Read:   resourceHerokuDrainRead,
 		Delete: resourceHerokuDrainDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
+
 		Schema: map[string]*schema.Schema{
 			"url": {
 				Type:     schema.TypeString,
