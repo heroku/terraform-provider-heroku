@@ -104,6 +104,6 @@ func testAccCheckHerokuDomainConfig_basic(appName string) string {
 
 resource "heroku_domain" "foobar" {
     app = "${heroku_app.foobar.name}"
-    hostname = "terraform.example.com"
-}`, appName)
+    hostname = "terraform-%s.example.com"
+}`, appName, appName)
 }

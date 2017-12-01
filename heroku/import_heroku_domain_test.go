@@ -20,9 +20,9 @@ func TestAccHerokuDomain_importBasic(t *testing.T) {
 				Config: testAccCheckHerokuDomainConfig_basic(appName),
 			},
 			{
-				ResourceName:      "heroku_domain.foobar",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:        "heroku_domain.foobar",
+				ImportStateIdPrefix: appName + ":",
+				ImportState:         true,
 			},
 		},
 	})

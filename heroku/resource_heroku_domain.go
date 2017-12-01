@@ -43,12 +43,15 @@ func resourceHerokuDomain() *schema.Resource {
 func resourceHerokuDomainImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client := meta.(*heroku.Service)
 
-	app := d.Get("app").(string)
+	app, id := parseCompositeID(d.Id())
 
-	_, err := client.DomainInfo(context.Background(), app, d.Id())
+	do, err := client.DomainInfo(context.Background(), app, id)
 	if err != nil {
 		return nil, err
 	}
+
+	d.SetId(do.ID)
+	d.Set("app", app)
 
 	return []*schema.ResourceData{d}, nil
 }
