@@ -19,7 +19,7 @@ func resourceHerokuDrain() *schema.Resource {
 		Delete: resourceHerokuDrainDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourceHerokuDrainImport,
 		},
 
 		Schema: map[string]*schema.Schema{
