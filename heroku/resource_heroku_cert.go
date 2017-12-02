@@ -17,7 +17,7 @@ func resourceHerokuCert() *schema.Resource {
 		Delete: resourceHerokuCertDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourceHerokuCertImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -48,6 +48,22 @@ func resourceHerokuCert() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceHerokuCertImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	client := meta.(*heroku.Service)
+
+	app, id := parseCompositeID(d.Id())
+
+	ep, err := client.SSLEndpointInfo(context.Background(), app, id)
+	if err != nil {
+		return nil, err
+	}
+
+	d.SetId(ep.ID)
+	d.Set("app", app)
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceHerokuCertCreate(d *schema.ResourceData, meta interface{}) error {
