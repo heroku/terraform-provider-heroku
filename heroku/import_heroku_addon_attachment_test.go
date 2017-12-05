@@ -19,9 +19,8 @@ func TestAccHerokuAddonAttachment_importBasic(t *testing.T) {
 				Config: testAccCheckHerokuAddonAttachmentConfig_basic(appName),
 			},
 			{
-				ResourceName:        "heroku_addon_attachment.foobar",
-				ImportStateIdPrefix: appName + ":",
-				ImportState:         true,
+				ResourceName: "heroku_addon_attachment.foobar",
+				ImportState:  true,
 			},
 		},
 	})
