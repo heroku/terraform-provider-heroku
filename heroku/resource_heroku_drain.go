@@ -18,6 +18,10 @@ func resourceHerokuDrain() *schema.Resource {
 		Read:   resourceHerokuDrainRead,
 		Delete: resourceHerokuDrainDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceHerokuDrainImport,
+		},
+
 		Schema: map[string]*schema.Schema{
 			"url": {
 				Type:     schema.TypeString,
@@ -40,6 +44,22 @@ func resourceHerokuDrain() *schema.Resource {
 }
 
 const retryableError = `App hasn't yet been assigned a log channel. Please try again momentarily.`
+
+func resourceHerokuDrainImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	client := meta.(*heroku.Service)
+
+	app, id := parseCompositeID(d.Id())
+
+	dr, err := client.LogDrainInfo(context.Background(), app, id)
+	if err != nil {
+		return nil, err
+	}
+
+	d.SetId(dr.ID)
+	d.Set("app", app)
+
+	return []*schema.ResourceData{d}, nil
+}
 
 func resourceHerokuDrainCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)

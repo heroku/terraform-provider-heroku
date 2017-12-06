@@ -44,7 +44,6 @@ func resourceHerokuAddonAttachment() *schema.Resource {
 }
 
 func resourceHerokuAddonAttachmentCreate(d *schema.ResourceData, meta interface{}) error {
-
 	client := meta.(*heroku.Service)
 
 	opts := heroku.AddOnAttachmentCreateOpts{Addon: d.Get("addon_id").(string), App: d.Get("app_id").(string)}
