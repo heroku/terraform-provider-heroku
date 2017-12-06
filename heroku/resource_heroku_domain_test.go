@@ -3,6 +3,7 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/cyberdelia/heroku-go/v3"
@@ -13,7 +14,8 @@ import (
 
 func TestAccHerokuDomain_Basic(t *testing.T) {
 	var domain heroku.Domain
-	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -26,11 +28,11 @@ func TestAccHerokuDomain_Basic(t *testing.T) {
 					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
 					testAccCheckHerokuDomainAttributes(&domain),
 					resource.TestCheckResourceAttr(
-						"heroku_domain.foobar", "hostname", "terraform.example.com"),
+						"heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
 					resource.TestCheckResourceAttr(
 						"heroku_domain.foobar", "app", appName),
 					resource.TestCheckResourceAttr(
-						"heroku_domain.foobar", "cname", "terraform.example.com.herokudns.com"),
+						"heroku_domain.foobar", "cname", "terraform-tftest-"+randString+".example.com.herokudns.com"),
 				),
 			},
 		},
@@ -57,8 +59,7 @@ func testAccCheckHerokuDomainDestroy(s *terraform.State) error {
 
 func testAccCheckHerokuDomainAttributes(Domain *heroku.Domain) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-
-		if Domain.Hostname != "terraform.example.com" {
+		if !strings.HasPrefix(Domain.Hostname, "terraform-") && !strings.HasSuffix(Domain.Hostname, ".example.com") {
 			return fmt.Errorf("Bad hostname: %s", Domain.Hostname)
 		}
 
