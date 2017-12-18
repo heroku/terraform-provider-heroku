@@ -335,6 +335,10 @@ type AddOn struct {
 		ID   string `json:"id" url:"id,key"`     // unique identifier of app
 		Name string `json:"name" url:"name,key"` // unique name of app
 	} `json:"app" url:"app,key"` // billing application associated with this add-on
+	BilledPrice *struct {
+		Cents int    `json:"cents" url:"cents,key"` // price in cents per unit of plan
+		Unit  string `json:"unit" url:"unit,key"`   // unit of price for plan
+	} `json:"billed_price" url:"billed_price,key"` // billed price
 	ConfigVars []string  `json:"config_vars" url:"config_vars,key"` // config vars exposed to the owning app by this add-on
 	CreatedAt  time.Time `json:"created_at" url:"created_at,key"`   // when add-on was created
 	ID         string    `json:"id" url:"id,key"`                   // unique identifier of add-on
@@ -365,6 +369,7 @@ func (s *Service) AddOnInfo(ctx context.Context, addOnIdentity string) (*AddOn, 
 type AddOnCreateOpts struct {
 	Attachment *struct{}          `json:"attachment,omitempty" url:"attachment,omitempty,key"` // name for add-on's initial attachment
 	Config     *map[string]string `json:"config,omitempty" url:"config,omitempty,key"`         // custom add-on provisioning options
+	Confirm    *string            `json:"confirm,omitempty" url:"confirm,omitempty,key"`       // name of owning app for confirmation
 	Plan       string             `json:"plan" url:"plan,key"`                                 // unique identifier of this plan
 }
 
@@ -436,6 +441,10 @@ type AddOnActionProvisionResult struct {
 		ID   string `json:"id" url:"id,key"`     // unique identifier of app
 		Name string `json:"name" url:"name,key"` // unique name of app
 	} `json:"app" url:"app,key"` // billing application associated with this add-on
+	BilledPrice *struct {
+		Cents int    `json:"cents" url:"cents,key"` // price in cents per unit of plan
+		Unit  string `json:"unit" url:"unit,key"`   // unit of price for plan
+	} `json:"billed_price" url:"billed_price,key"` // billed price
 	ConfigVars []string  `json:"config_vars" url:"config_vars,key"` // config vars exposed to the owning app by this add-on
 	CreatedAt  time.Time `json:"created_at" url:"created_at,key"`   // when add-on was created
 	ID         string    `json:"id" url:"id,key"`                   // unique identifier of add-on
@@ -466,6 +475,10 @@ type AddOnActionDeprovisionResult struct {
 		ID   string `json:"id" url:"id,key"`     // unique identifier of app
 		Name string `json:"name" url:"name,key"` // unique name of app
 	} `json:"app" url:"app,key"` // billing application associated with this add-on
+	BilledPrice *struct {
+		Cents int    `json:"cents" url:"cents,key"` // price in cents per unit of plan
+		Unit  string `json:"unit" url:"unit,key"`   // unit of price for plan
+	} `json:"billed_price" url:"billed_price,key"` // billed price
 	ConfigVars []string  `json:"config_vars" url:"config_vars,key"` // config vars exposed to the owning app by this add-on
 	CreatedAt  time.Time `json:"created_at" url:"created_at,key"`   // when add-on was created
 	ID         string    `json:"id" url:"id,key"`                   // unique identifier of add-on
@@ -513,9 +526,10 @@ type AddOnAttachment struct {
 	WebURL    *string   `json:"web_url" url:"web_url,key"`       // URL for logging into web interface of add-on in attached app context
 }
 type AddOnAttachmentCreateOpts struct {
-	Addon string `json:"addon" url:"addon,key"`                     // unique identifier of add-on
-	App   string `json:"app" url:"app,key"`                         // unique identifier of app
-	Force *bool  `json:"force,omitempty" url:"force,omitempty,key"` // whether or not to allow existing attachment with same name to be
+	Addon   string  `json:"addon" url:"addon,key"`                         // unique identifier of add-on
+	App     string  `json:"app" url:"app,key"`                             // unique identifier of app
+	Confirm *string `json:"confirm,omitempty" url:"confirm,omitempty,key"` // name of owning app for confirmation
+	Force   *bool   `json:"force,omitempty" url:"force,omitempty,key"`     // whether or not to allow existing attachment with same name to be
 	// replaced
 	Name      *string `json:"name,omitempty" url:"name,omitempty,key"`           // unique name for this add-on attachment to this app
 	Namespace *string `json:"namespace,omitempty" url:"namespace,omitempty,key"` // attachment namespace
@@ -1878,66 +1892,6 @@ func (s *Service) DynoSizeList(ctx context.Context, lr *ListRange) (DynoSizeList
 	return dynoSize, s.Get(ctx, &dynoSize, fmt.Sprintf("/dyno-sizes"), nil, lr)
 }
 
-// Deprecated: An event represents an action performed on another API
-// resource.
-type Event struct {
-	Action string `json:"action" url:"action,key"` // the operation performed on the resource
-	Actor  struct {
-		Email string `json:"email" url:"email,key"` // unique email address of account
-		ID    string `json:"id" url:"id,key"`       // unique identifier of an account
-	} `json:"actor" url:"actor,key"` // user that performed the operation
-	CreatedAt time.Time `json:"created_at" url:"created_at,key"` // when the event was created
-	Data      struct {
-		AllowTracking       bool      `json:"allow_tracking" url:"allow_tracking,key"` // whether to allow third party web activity tracking
-		Beta                bool      `json:"beta" url:"beta,key"`                     // whether allowed to utilize beta Heroku features
-		CreatedAt           time.Time `json:"created_at" url:"created_at,key"`         // when account was created
-		DefaultOrganization *struct {
-			ID   string `json:"id" url:"id,key"`     // unique identifier of organization
-			Name string `json:"name" url:"name,key"` // unique name of organization
-		} `json:"default_organization" url:"default_organization,key"` // organization selected by default
-		DelinquentAt     *time.Time `json:"delinquent_at" url:"delinquent_at,key"` // when account became delinquent
-		Email            string     `json:"email" url:"email,key"`                 // unique email address of account
-		Federated        bool       `json:"federated" url:"federated,key"`         // whether the user is federated and belongs to an Identity Provider
-		ID               string     `json:"id" url:"id,key"`                       // unique identifier of an account
-		IdentityProvider *struct {
-			ID           string `json:"id" url:"id,key"` // unique identifier of this identity provider
-			Organization struct {
-				Name string `json:"name" url:"name,key"` // unique name of organization
-			} `json:"organization" url:"organization,key"`
-		} `json:"identity_provider" url:"identity_provider,key"` // Identity Provider details for federated users.
-		LastLogin               *time.Time `json:"last_login" url:"last_login,key"`                               // when account last authorized with Heroku
-		Name                    *string    `json:"name" url:"name,key"`                                           // full name of the account owner
-		SmsNumber               *string    `json:"sms_number" url:"sms_number,key"`                               // SMS number of account
-		SuspendedAt             *time.Time `json:"suspended_at" url:"suspended_at,key"`                           // when account was suspended
-		TwoFactorAuthentication bool       `json:"two_factor_authentication" url:"two_factor_authentication,key"` // whether two-factor auth is enabled on the account
-		UpdatedAt               time.Time  `json:"updated_at" url:"updated_at,key"`                               // when account was updated
-		Verified                bool       `json:"verified" url:"verified,key"`                                   // whether account has been verified with billing information
-	} `json:"data" url:"data,key"` // An account represents an individual signed up to use the Heroku
-	// platform.
-	ID           string     `json:"id" url:"id,key"`                       // unique identifier of an event
-	PreviousData struct{}   `json:"previous_data" url:"previous_data,key"` // data fields that were changed during update with previous values
-	PublishedAt  *time.Time `json:"published_at" url:"published_at,key"`   // when the event was published
-	Resource     string     `json:"resource" url:"resource,key"`           // the type of resource affected
-	Sequence     *string    `json:"sequence" url:"sequence,key"`           // a numeric string representing the event's sequence
-	UpdatedAt    time.Time  `json:"updated_at" url:"updated_at,key"`       // when the event was updated (same as created)
-	Version      string     `json:"version" url:"version,key"`             // the event's API version string
-}
-
-// Deprecated: A failed event represents a failure of an action
-// performed on another API resource.
-type FailedEvent struct {
-	Action   string  `json:"action" url:"action,key"`     // The attempted operation performed on the resource.
-	Code     *int    `json:"code" url:"code,key"`         // An HTTP status code.
-	ErrorID  *string `json:"error_id" url:"error_id,key"` // ID of error raised.
-	Message  string  `json:"message" url:"message,key"`   // A detailed error message.
-	Method   string  `json:"method" url:"method,key"`     // The HTTP method type of the failed action.
-	Path     string  `json:"path" url:"path,key"`         // The path of the attempted operation.
-	Resource *struct {
-		ID   string `json:"id" url:"id,key"`     // Unique identifier of a resource.
-		Name string `json:"name" url:"name,key"` // the type of resource affected
-	} `json:"resource" url:"resource,key"` // The related resource of the failed action.
-}
-
 // Filters are special endpoints to allow for API consumers to specify a
 // subset of resources to consume in order to reduce the number of
 // requests that are performed.  Each filter endpoint endpoint is
@@ -2317,6 +2271,16 @@ func (s *Service) LogDrainCreate(ctx context.Context, appIdentity string, o LogD
 	return &logDrain, s.Post(ctx, &logDrain, fmt.Sprintf("/apps/%v/log-drains", appIdentity), o)
 }
 
+type LogDrainUpdateOpts struct {
+	URL string `json:"url" url:"url,key"` // url associated with the log drain
+}
+
+// Update an add-on owned log drain.
+func (s *Service) LogDrainUpdate(ctx context.Context, addOnIdentity string, logDrainQueryIdentity string, o LogDrainUpdateOpts) (*LogDrain, error) {
+	var logDrain LogDrain
+	return &logDrain, s.Put(ctx, &logDrain, fmt.Sprintf("/addons/%v/log-drains/%v", addOnIdentity, logDrainQueryIdentity), o)
+}
+
 // Delete an existing log drain. Log drains added by add-ons can only be
 // removed by removing the add-on.
 func (s *Service) LogDrainDelete(ctx context.Context, appIdentity string, logDrainQueryIdentity string) (*LogDrain, error) {
@@ -2654,6 +2618,10 @@ type OrganizationAddOnListForOrganizationResult []struct {
 		ID   string `json:"id" url:"id,key"`     // unique identifier of app
 		Name string `json:"name" url:"name,key"` // unique name of app
 	} `json:"app" url:"app,key"` // billing application associated with this add-on
+	BilledPrice *struct {
+		Cents int    `json:"cents" url:"cents,key"` // price in cents per unit of plan
+		Unit  string `json:"unit" url:"unit,key"`   // unit of price for plan
+	} `json:"billed_price" url:"billed_price,key"` // billed price
 	ConfigVars []string  `json:"config_vars" url:"config_vars,key"` // config vars exposed to the owning app by this add-on
 	CreatedAt  time.Time `json:"created_at" url:"created_at,key"`   // when add-on was created
 	ID         string    `json:"id" url:"id,key"`                   // unique identifier of add-on
@@ -3993,7 +3961,7 @@ func (s *Service) TeamDelete(ctx context.Context, teamIdentity string) (*Team, e
 	return &team, s.Delete(ctx, &team, fmt.Sprintf("/teams/%v", teamIdentity))
 }
 
-// An team app encapsulates the team specific functionality of Heroku
+// A team app encapsulates the team specific functionality of Heroku
 // apps.
 type TeamApp struct {
 	ArchivedAt *time.Time `json:"archived_at" url:"archived_at,key"` // when app was archived
