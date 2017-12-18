@@ -80,7 +80,10 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 
 	app := d.Get("app").(string)
-	opts := heroku.AddOnCreateOpts{Plan: d.Get("plan").(string)}
+	opts := heroku.AddOnCreateOpts{
+		Plan:    d.Get("plan").(string),
+		Confirm: &app,
+	}
 
 	if v := d.Get("config"); v != nil {
 		config := make(map[string]string)

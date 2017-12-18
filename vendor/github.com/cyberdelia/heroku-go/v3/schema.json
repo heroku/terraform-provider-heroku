@@ -584,6 +584,13 @@
         "object"
       ],
       "definitions": {
+        "confirm": {
+          "description": "name of owning app for confirmation",
+          "example": "example",
+          "type": [
+            "string"
+          ]
+        },
         "created_at": {
           "description": "when add-on attachment was created",
           "example": "2012-01-01T12:00:00Z",
@@ -678,6 +685,9 @@
               },
               "app": {
                 "$ref": "#/definitions/app/definitions/identity"
+              },
+              "confirm": {
+                "$ref": "#/definitions/add-on-attachment/definitions/confirm"
               },
               "force": {
                 "$ref": "#/definitions/add-on-attachment/definitions/force"
@@ -1583,6 +1593,14 @@
             }
           }
         },
+        "cents": {
+          "description": "price in cents per unit of add-on",
+          "example": 0,
+          "readOnly": true,
+          "type": [
+            "integer"
+          ]
+        },
         "config_vars": {
           "description": "config vars exposed to the owning app by this add-on",
           "example": [
@@ -1597,6 +1615,13 @@
           "readOnly": true,
           "type": [
             "array"
+          ]
+        },
+        "confirm": {
+          "description": "name of owning app for confirmation",
+          "example": "example",
+          "type": [
+            "string"
           ]
         },
         "created_at": {
@@ -1652,6 +1677,14 @@
             "deprovisioned"
           ],
           "example": "provisioned",
+          "readOnly": true,
+          "type": [
+            "string"
+          ]
+        },
+        "unit": {
+          "description": "unit of price for add-on",
+          "example": "month",
           "readOnly": true,
           "type": [
             "string"
@@ -1738,6 +1771,9 @@
                 "type": [
                   "object"
                 ]
+              },
+              "confirm": {
+                "$ref": "#/definitions/add-on/definitions/confirm"
               },
               "plan": {
                 "$ref": "#/definitions/plan/definitions/identity"
@@ -1874,6 +1910,22 @@
             }
           },
           "strictProperties": true
+        },
+        "billed_price": {
+          "description": "billed price",
+          "properties": {
+            "cents": {
+              "$ref": "#/definitions/plan/definitions/cents"
+            },
+            "unit": {
+              "$ref": "#/definitions/plan/definitions/unit"
+            }
+          },
+          "strictProperties": true,
+          "type": [
+            "object",
+            "null"
+          ]
         },
         "config_vars": {
           "$ref": "#/definitions/add-on/definitions/config_vars"
@@ -2125,7 +2177,6 @@
           "description": "application process tier",
           "enum": [
             "production",
-            "traditional",
             "free",
             "hobby",
             "private"
@@ -5433,369 +5484,6 @@
         }
       }
     },
-    "event": {
-      "description": "Deprecated: An event represents an action performed on another API resource.",
-      "$schema": "http://json-schema.org/draft-04/hyper-schema",
-      "stability": "development",
-      "strictProperties": true,
-      "title": "Heroku Platform API - Event",
-      "type": [
-        "object"
-      ],
-      "definitions": {
-        "action": {
-          "description": "the operation performed on the resource",
-          "enum": [
-            "create",
-            "destroy",
-            "update"
-          ],
-          "example": "create",
-          "readOnly": true,
-          "type": [
-            "string"
-          ]
-        },
-        "created_at": {
-          "description": "when the event was created",
-          "example": "2012-01-01T12:00:00Z",
-          "format": "date-time",
-          "readOnly": true,
-          "type": [
-            "string"
-          ]
-        },
-        "data": {
-          "description": "the serialized resource affected by the event",
-          "example": {
-          },
-          "anyOf": [
-            {
-              "$ref": "#/definitions/account"
-            },
-            {
-              "$ref": "#/definitions/add-on"
-            },
-            {
-              "$ref": "#/definitions/add-on-attachment"
-            },
-            {
-              "$ref": "#/definitions/app"
-            },
-            {
-              "$ref": "#/definitions/app-formation-set"
-            },
-            {
-              "$ref": "#/definitions/app-setup"
-            },
-            {
-              "$ref": "#/definitions/app-transfer"
-            },
-            {
-              "$ref": "#/definitions/build"
-            },
-            {
-              "$ref": "#/definitions/collaborator"
-            },
-            {
-              "$ref": "#/definitions/domain"
-            },
-            {
-              "$ref": "#/definitions/dyno"
-            },
-            {
-              "$ref": "#/definitions/failed-event"
-            },
-            {
-              "$ref": "#/definitions/formation"
-            },
-            {
-              "$ref": "#/definitions/inbound-ruleset"
-            },
-            {
-              "$ref": "#/definitions/organization"
-            },
-            {
-              "$ref": "#/definitions/release"
-            },
-            {
-              "$ref": "#/definitions/space"
-            },
-            {
-              "$ref": "#/definitions/team"
-            }
-          ],
-          "readOnly": true,
-          "type": [
-            "object"
-          ]
-        },
-        "id": {
-          "description": "unique identifier of an event",
-          "example": "01234567-89ab-cdef-0123-456789abcdef",
-          "format": "uuid",
-          "readOnly": true,
-          "type": [
-            "string"
-          ]
-        },
-        "identity": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/event/definitions/id"
-            }
-          ]
-        },
-        "published_at": {
-          "description": "when the event was published",
-          "example": "2012-01-01T12:00:00Z",
-          "format": "date-time",
-          "readOnly": true,
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "resource": {
-          "description": "the type of resource affected",
-          "enum": [
-            "addon",
-            "addon-attachment",
-            "app",
-            "app-setup",
-            "app-transfer",
-            "build",
-            "collaborator",
-            "domain",
-            "dyno",
-            "failed-event",
-            "formation",
-            "formation-set",
-            "inbound-ruleset",
-            "organization",
-            "release",
-            "space",
-            "team",
-            "user"
-          ],
-          "example": "app",
-          "readOnly": true,
-          "type": [
-            "string"
-          ]
-        },
-        "sequence": {
-          "description": "a numeric string representing the event's sequence",
-          "example": "1234567890",
-          "pattern": "^[0-9]{1,128}$",
-          "readOnly": true,
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "updated_at": {
-          "description": "when the event was updated (same as created)",
-          "example": "2012-01-01T12:00:00Z",
-          "format": "date-time",
-          "readOnly": true,
-          "type": [
-            "string"
-          ]
-        },
-        "version": {
-          "description": "the event's API version string",
-          "example": "application/vnd.heroku+json; version=3",
-          "readOnly": true,
-          "type": [
-            "string"
-          ]
-        }
-      },
-      "links": [
-      ],
-      "properties": {
-        "action": {
-          "$ref": "#/definitions/event/definitions/action"
-        },
-        "actor": {
-          "description": "user that performed the operation",
-          "properties": {
-            "email": {
-              "$ref": "#/definitions/account/definitions/email"
-            },
-            "id": {
-              "$ref": "#/definitions/account/definitions/id"
-            }
-          },
-          "strictProperties": true,
-          "type": [
-            "object"
-          ]
-        },
-        "created_at": {
-          "$ref": "#/definitions/event/definitions/created_at"
-        },
-        "data": {
-          "$ref": "#/definitions/event/definitions/data"
-        },
-        "id": {
-          "$ref": "#/definitions/event/definitions/id"
-        },
-        "previous_data": {
-          "description": "data fields that were changed during update with previous values",
-          "type": [
-            "object"
-          ]
-        },
-        "published_at": {
-          "$ref": "#/definitions/event/definitions/published_at"
-        },
-        "resource": {
-          "$ref": "#/definitions/event/definitions/resource"
-        },
-        "sequence": {
-          "$ref": "#/definitions/event/definitions/sequence"
-        },
-        "updated_at": {
-          "$ref": "#/definitions/event/definitions/updated_at"
-        },
-        "version": {
-          "$ref": "#/definitions/event/definitions/version"
-        }
-      }
-    },
-    "failed-event": {
-      "description": "Deprecated: A failed event represents a failure of an action performed on another API resource.",
-      "$schema": "http://json-schema.org/draft-04/hyper-schema",
-      "stability": "development",
-      "strictProperties": true,
-      "title": "Heroku Platform API - Failed Event",
-      "type": [
-        "object"
-      ],
-      "definitions": {
-        "action": {
-          "description": "The attempted operation performed on the resource.",
-          "enum": [
-            "create",
-            "destroy",
-            "update",
-            "unknown"
-          ],
-          "example": "create",
-          "readOnly": true,
-          "type": [
-            "string"
-          ]
-        },
-        "error_id": {
-          "description": "ID of error raised.",
-          "example": "rate_limit",
-          "readOnly": true,
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "message": {
-          "description": "A detailed error message.",
-          "example": "Your account reached the API rate limit\nPlease wait a few minutes before making new requests",
-          "readOnly": true,
-          "type": [
-            "string"
-          ]
-        },
-        "method": {
-          "description": "The HTTP method type of the failed action.",
-          "enum": [
-            "DELETE",
-            "GET",
-            "HEAD",
-            "OPTIONS",
-            "PATCH",
-            "POST",
-            "PUT"
-          ],
-          "example": "POST",
-          "readOnly": true,
-          "type": [
-            "string"
-          ]
-        },
-        "code": {
-          "description": "An HTTP status code.",
-          "example": 404,
-          "readOnly": true,
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "identity": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/event/definitions/id"
-            }
-          ]
-        },
-        "path": {
-          "description": "The path of the attempted operation.",
-          "example": "/apps/my-app",
-          "readOnly": true,
-          "type": [
-            "string"
-          ]
-        },
-        "resource_id": {
-          "description": "Unique identifier of a resource.",
-          "example": "01234567-89ab-cdef-0123-456789abcdef",
-          "format": "uuid",
-          "readOnly": true,
-          "type": [
-            "string"
-          ]
-        }
-      },
-      "links": [
-      ],
-      "properties": {
-        "action": {
-          "$ref": "#/definitions/failed-event/definitions/action"
-        },
-        "code": {
-          "$ref": "#/definitions/failed-event/definitions/code"
-        },
-        "error_id": {
-          "$ref": "#/definitions/failed-event/definitions/error_id"
-        },
-        "message": {
-          "$ref": "#/definitions/failed-event/definitions/message"
-        },
-        "method": {
-          "$ref": "#/definitions/failed-event/definitions/method"
-        },
-        "path": {
-          "$ref": "#/definitions/failed-event/definitions/path"
-        },
-        "resource": {
-          "description": "The related resource of the failed action.",
-          "properties": {
-            "id": {
-              "$ref": "#/definitions/failed-event/definitions/resource_id"
-            },
-            "name": {
-              "$ref": "#/definitions/event/definitions/resource"
-            }
-          },
-          "strictProperties": true,
-          "type": [
-            "object",
-            "null"
-          ]
-        }
-      }
-    },
     "filter-apps": {
       "description": "Filters are special endpoints to allow for API consumers to specify a subset of resources to consume in order to reduce the number of requests that are performed.  Each filter endpoint endpoint is responsible for determining its supported request format.  The endpoints are over POST in order to handle large request bodies without hitting request uri query length limitations, but the requests themselves are idempotent and will not have side effects.",
       "$schema": "http://json-schema.org/draft-04/hyper-schema",
@@ -7095,6 +6783,29 @@
             "$ref": "#/definitions/log-drain"
           },
           "title": "Create"
+        },
+        {
+          "description": "Update an add-on owned log drain.",
+          "href": "/addons/{(%23%2Fdefinitions%2Fadd-on%2Fdefinitions%2Fidentity)}/log-drains/{(%23%2Fdefinitions%2Flog-drain%2Fdefinitions%2Fquery_identity)}",
+          "method": "PUT",
+          "rel": "update",
+          "schema": {
+            "properties": {
+              "url": {
+                "$ref": "#/definitions/log-drain/definitions/url"
+              }
+            },
+            "required": [
+              "url"
+            ],
+            "type": [
+              "object"
+            ]
+          },
+          "targetSchema": {
+            "$ref": "#/definitions/log-drain"
+          },
+          "title": "Update"
         },
         {
           "description": "Delete an existing log drain. Log drains added by add-ons can only be removed by removing the add-on.",
@@ -13181,7 +12892,7 @@
     },
     "team-app": {
       "$schema": "http://json-schema.org/draft-04/hyper-schema",
-      "description": "An team app encapsulates the team specific functionality of Heroku apps.",
+      "description": "A team app encapsulates the team specific functionality of Heroku apps.",
       "stability": "development",
       "title": "Heroku Platform API - Team App",
       "type": [
@@ -15261,12 +14972,6 @@
     },
     "dyno": {
       "$ref": "#/definitions/dyno"
-    },
-    "event": {
-      "$ref": "#/definitions/event"
-    },
-    "failed-event": {
-      "$ref": "#/definitions/failed-event"
     },
     "filter-apps": {
       "$ref": "#/definitions/filter-apps"
