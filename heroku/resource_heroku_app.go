@@ -215,6 +215,12 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 		})
 	}
 
+	// XXX Heroku's API treats app UUID's and names the same. This can cause
+	// confusion as other parts of this provider assume the app NAME is the app
+	// ID, as a lot of the Heroku API will accept BOTH. App ID's aren't very
+	// easy to get, so it makes more sense to just use the name as much as possible.
+	d.SetId(app.Name)
+
 	return []*schema.ResourceData{d}, nil
 }
 
