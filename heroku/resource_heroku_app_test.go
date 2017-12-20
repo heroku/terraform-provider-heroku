@@ -284,6 +284,30 @@ func TestAccHerokuApp_EmptyConfigVars(t *testing.T) {
 	})
 }
 
+func TestAccHerokuApp_AllConfigVars(t *testing.T) {
+	var app heroku.App
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	appStack := "heroku-16"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAppDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAppConfig_config_vars_with_addons(appName, appStack),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
+					resource.TestCheckResourceAttr(
+						"heroku_app.default", "name", appName),
+					resource.TestCheckResourceAttr(
+						"heroku_app.default", "config_vars.0.A", "1"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckHerokuAppDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*heroku.Service)
 
@@ -576,6 +600,29 @@ resource "heroku_app" "foobar" {
   config_vars {
     FOO = "bar"
   }
+}`, appName, appStack)
+}
+
+func testAccCheckHerokuAppConfig_config_vars_with_addons(appName, appStack string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "default" {
+  name   = "%s"
+	stack = "%s"
+  region = "us"
+
+  config_vars {
+    A = "1"
+  }
+}
+
+resource "heroku_addon" "database" {
+  app  = "${heroku_app.default.name}"
+  plan = "heroku-postgresql:hobby-basic"
+}
+
+resource "heroku_addon" "redis" {
+  app  = "${heroku_app.default.name}"
+  plan = "heroku-redis:hobby-dev"
 }`, appName, appStack)
 }
 
