@@ -413,6 +413,13 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetId(updatedApp.Name)
 
+	if d.HasChange("buildpacks") {
+		err := updateBuildpacks(d.Id(), client, d.Get("buildpacks").([]interface{}))
+		if err != nil {
+			return err
+		}
+	}
+
 	// If the config vars changed, then recalculate those
 	if d.HasChange("config_vars") {
 		o, n := d.GetChange("config_vars")
@@ -425,13 +432,6 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 
 		err := updateConfigVars(
 			d.Id(), client, o.([]interface{}), n.([]interface{}))
-		if err != nil {
-			return err
-		}
-	}
-
-	if d.HasChange("buildpacks") {
-		err := updateBuildpacks(d.Id(), client, d.Get("buildpacks").([]interface{}))
 		if err != nil {
 			return err
 		}
