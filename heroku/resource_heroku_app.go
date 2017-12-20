@@ -379,11 +379,19 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("region", app.App.Region)
 	d.Set("git_url", app.App.GitURL)
 	d.Set("web_url", app.App.WebURL)
+
 	if buildpacksConfigured {
 		d.Set("buildpacks", app.Buildpacks)
 	}
-	d.Set("config_vars", configVarsValue)
-	d.Set("all_config_vars", app.Vars)
+
+	if err := d.Set("config_vars", configVarsValue); err != nil {
+		log.Printf("[WARN] Error setting config vars: %s", err)
+	}
+
+	if err := d.Set("all_config_vars", app.Vars); err != nil {
+		log.Printf("[WARN] Error setting all_config_vars: %s", err)
+	}
+
 	if organizationApp {
 		d.Set("space", app.App.Space)
 
