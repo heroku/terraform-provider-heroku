@@ -152,6 +152,14 @@ func resourceHerokuApp() *schema.Resource {
 				Computed: true,
 			},
 
+			"external_config_vars": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+
 			"git_url": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -387,9 +395,27 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		// config vars added by addons are not seen as drift.
 		for _, k := range addonConfigVars {
 			if _, ok := configMap[k]; ok {
-				log.Printf("[DEBUG] Removing AddOn config var from config_vars: %s", k)
+				log.Printf("[INFO] Removing AddOn config var from config_vars: %s", k)
 				delete(configMap, k)
 			}
+		}
+
+		if v := d.Get("external_config_vars").(*schema.Set); v.Len() > 0 {
+			log.Printf("[INFO] external_config_vars: %#v", v)
+
+			for _, k := range v.List() {
+				ks := k.(string)
+				if _, ok := configMap[ks]; ok {
+					log.Printf(
+						"[INFO] Removing externally-set config var from config_vars: %s",
+						ks,
+					)
+					delete(configMap, ks)
+				}
+			}
+
+		} else {
+			log.Printf("[INFO] No external_config_vars")
 		}
 	}
 

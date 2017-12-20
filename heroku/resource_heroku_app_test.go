@@ -25,12 +25,12 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 			{
 				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
 					testAccCheckHerokuAppAttributes(&app, appName, "heroku-16"),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "name", appName),
+						"heroku_app.default", "name", appName),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "config_vars.0.FOO", "bar"),
+						"heroku_app.default", "config_vars.0.FOO", "bar"),
 				),
 			},
 		},
@@ -50,7 +50,7 @@ func TestAccHerokuApp_Disappears(t *testing.T) {
 			{
 				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
 					testAccCheckHerokuAppDisappears(appName),
 				),
 				ExpectNonEmptyPlan: true,
@@ -74,29 +74,29 @@ func TestAccHerokuApp_Change(t *testing.T) {
 			{
 				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
 					testAccCheckHerokuAppAttributes(&app, appName, appStack),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "name", appName),
+						"heroku_app.default", "name", appName),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "stack", appStack),
+						"heroku_app.default", "stack", appStack),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "config_vars.0.FOO", "bar"),
+						"heroku_app.default", "config_vars.0.FOO", "bar"),
 				),
 			},
 			{
 				Config: testAccCheckHerokuAppConfig_updated(appName2, appStack2),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
 					testAccCheckHerokuAppAttributesUpdated(&app, appName2, appStack2),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "name", appName2),
+						"heroku_app.default", "name", appName2),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "stack", appStack2),
+						"heroku_app.default", "stack", appStack2),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "config_vars.0.FOO", "bing"),
+						"heroku_app.default", "config_vars.0.FOO", "bing"),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "config_vars.0.BAZ", "bar"),
+						"heroku_app.default", "config_vars.0.BAZ", "bar"),
 				),
 			},
 		},
@@ -116,23 +116,23 @@ func TestAccHerokuApp_NukeVars(t *testing.T) {
 			{
 				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
 					testAccCheckHerokuAppAttributes(&app, appName, "heroku-16"),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "name", appName),
+						"heroku_app.default", "name", appName),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "config_vars.0.FOO", "bar"),
+						"heroku_app.default", "config_vars.0.FOO", "bar"),
 				),
 			},
 			{
 				Config: testAccCheckHerokuAppConfig_no_vars(appName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
 					testAccCheckHerokuAppAttributesNoVars(&app, appName),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "name", appName),
+						"heroku_app.default", "name", appName),
 					resource.TestCheckNoResourceAttr(
-						"heroku_app.foobar", "config_vars.0.FOO"),
+						"heroku_app.default", "config_vars.0.FOO"),
 				),
 			},
 		},
@@ -151,27 +151,27 @@ func TestAccHerokuApp_Buildpacks(t *testing.T) {
 			{
 				Config: testAccCheckHerokuAppConfig_go(appName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
 					testAccCheckHerokuAppBuildpacks(appName, false),
-					resource.TestCheckResourceAttr("heroku_app.foobar", "buildpacks.0", "heroku/go"),
+					resource.TestCheckResourceAttr("heroku_app.default", "buildpacks.0", "heroku/go"),
 				),
 			},
 			{
 				Config: testAccCheckHerokuAppConfig_multi(appName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
 					testAccCheckHerokuAppBuildpacks(appName, true),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "buildpacks.0", "https://github.com/heroku/heroku-buildpack-multi-procfile"),
-					resource.TestCheckResourceAttr("heroku_app.foobar", "buildpacks.1", "heroku/go"),
+						"heroku_app.default", "buildpacks.0", "https://github.com/heroku/heroku-buildpack-multi-procfile"),
+					resource.TestCheckResourceAttr("heroku_app.default", "buildpacks.1", "heroku/go"),
 				),
 			},
 			{
 				Config: testAccCheckHerokuAppConfig_no_vars(appName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
 					testAccCheckHerokuAppNoBuildpacks(appName),
-					resource.TestCheckNoResourceAttr("heroku_app.foobar", "buildpacks.0"),
+					resource.TestCheckNoResourceAttr("heroku_app.default", "buildpacks.0"),
 				),
 			},
 		},
@@ -190,18 +190,18 @@ func TestAccHerokuApp_ExternallySetBuildpacks(t *testing.T) {
 			{
 				Config: testAccCheckHerokuAppConfig_no_vars(appName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
 					testAccCheckHerokuAppNoBuildpacks(appName),
-					resource.TestCheckNoResourceAttr("heroku_app.foobar", "buildpacks.0"),
+					resource.TestCheckNoResourceAttr("heroku_app.default", "buildpacks.0"),
 				),
 			},
 			{
 				PreConfig: testAccInstallUnconfiguredBuildpack(t, appName),
 				Config:    testAccCheckHerokuAppConfig_no_vars(appName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
 					testAccCheckHerokuAppBuildpacks(appName, false),
-					resource.TestCheckNoResourceAttr("heroku_app.foobar", "buildpacks.0"),
+					resource.TestCheckNoResourceAttr("heroku_app.default", "buildpacks.0"),
 				),
 			},
 		},
@@ -226,7 +226,7 @@ func TestAccHerokuApp_Organization(t *testing.T) {
 			{
 				Config: testAccCheckHerokuAppConfig_organization(appName, org),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
+					testAccCheckHerokuAppExistsOrg("heroku_app.default", &app),
 					testAccCheckHerokuAppAttributesOrg(&app, appName, "", org),
 				),
 			},
@@ -253,7 +253,7 @@ func TestAccHerokuApp_Space(t *testing.T) {
 			{
 				Config: testAccCheckHerokuAppConfig_space(appName, spaceName, org),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
+					testAccCheckHerokuAppExistsOrg("heroku_app.default", &app),
 					testAccCheckHerokuAppAttributesOrg(&app, appName, spaceName, org),
 				),
 			},
@@ -274,17 +274,17 @@ func TestAccHerokuApp_EmptyConfigVars(t *testing.T) {
 			{
 				Config: testAccCheckHerokuAppConfig_EmptyConfigVars(appName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
 					testAccCheckHerokuAppAttributesNoVars(&app, appName),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "name", appName),
+						"heroku_app.default", "name", appName),
 				),
 			},
 		},
 	})
 }
 
-func TestAccHerokuApp_AllConfigVars(t *testing.T) {
+func TestAccHerokuApp_AddonConfigVars(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	appStack := "heroku-16"
@@ -298,10 +298,69 @@ func TestAccHerokuApp_AllConfigVars(t *testing.T) {
 				Config: testAccCheckHerokuAppConfig_config_vars_with_addons(appName, appStack),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.default", &app),
-					resource.TestCheckResourceAttr(
-						"heroku_app.default", "name", appName),
-					resource.TestCheckResourceAttr(
-						"heroku_app.default", "config_vars.0.A", "1"),
+					resource.TestCheckResourceAttr("heroku_app.default", "name", appName),
+					resource.TestCheckResourceAttr("heroku_app.default", "config_vars.#", "1"),
+					resource.TestCheckResourceAttr("heroku_app.default", "config_vars.0.A", "1"),
+					resource.TestCheckResourceAttr("heroku_app.default", "all_config_vars.%", "1"),
+					resource.TestCheckResourceAttrSet("heroku_app.default", "all_config_vars.A"),
+
+					// Config vars from addons will not appear in
+					// all_config_vars until a refresh on heroku_app occurs.
+					resource.TestCheckNoResourceAttr("heroku_app.default", "all_config_vars.DATABASE_URL"),
+					resource.TestCheckNoResourceAttr("heroku_app.default", "all_config_vars.REDIS_URL"),
+				),
+			},
+			{
+				Config: testAccCheckHerokuAppConfig_config_vars_with_addons(appName, appStack),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
+					resource.TestCheckResourceAttr("heroku_app.default", "name", appName),
+					resource.TestCheckResourceAttr("heroku_app.default", "config_vars.#", "1"),
+					resource.TestCheckResourceAttr("heroku_app.default", "config_vars.0.A", "1"),
+					resource.TestCheckResourceAttr("heroku_app.default", "all_config_vars.%", "3"),
+					resource.TestCheckResourceAttrSet("heroku_app.default", "all_config_vars.A"),
+					resource.TestCheckResourceAttrSet("heroku_app.default", "all_config_vars.DATABASE_URL"),
+					resource.TestCheckResourceAttrSet("heroku_app.default", "all_config_vars.REDIS_URL"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccHerokuApp_ExternalConfigVars(t *testing.T) {
+	var app heroku.App
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	appStack := "heroku-16"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAppDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
+					resource.TestCheckResourceAttr("heroku_app.default", "name", appName),
+					resource.TestCheckResourceAttr("heroku_app.default", "config_vars.#", "1"),
+					resource.TestCheckResourceAttr("heroku_app.default", "config_vars.0.FOO", "bar"),
+					resource.TestCheckResourceAttr("heroku_app.default", "all_config_vars.%", "1"),
+					resource.TestCheckResourceAttrSet("heroku_app.default", "all_config_vars.FOO"),
+				),
+			},
+			{
+				PreConfig: testAccSetExternalVars(t, appName, map[string]string{
+					"BAZ": "qux",
+				}),
+				Config: testAccCheckHerokuAppConfig_external_config_vars(appName, appStack),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.default", &app),
+					resource.TestCheckResourceAttr("heroku_app.default", "name", appName),
+					resource.TestCheckResourceAttr("heroku_app.default", "config_vars.#", "1"),
+					resource.TestCheckResourceAttr("heroku_app.default", "config_vars.0.FOO", "bar"),
+					resource.TestCheckResourceAttr("heroku_app.default", "all_config_vars.%", "2"),
+					resource.TestCheckResourceAttr("heroku_app.default", "all_config_vars.FOO", "bar"),
+					resource.TestCheckResourceAttr("heroku_app.default", "all_config_vars.BAZ", "qux"),
 				),
 			},
 		},
@@ -581,6 +640,20 @@ func testAccInstallUnconfiguredBuildpack(t *testing.T, appName string) func() {
 	}
 }
 
+func testAccSetExternalVars(t *testing.T, appName string, vars map[string]string) func() {
+	return func() {
+		client := testAccProvider.Meta().(*heroku.Service)
+
+		result, err := client.ConfigVarUpdate(context.TODO(), appName, stringMap(vars))
+		if err != nil {
+			t.Fatalf("Error setting config variables: %s", err)
+		}
+
+		// TODO: Remove
+		t.Logf("%#v", result)
+	}
+}
+
 func testAccCheckHerokuAppDisappears(appName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := testAccProvider.Meta().(*heroku.Service)
@@ -592,7 +665,7 @@ func testAccCheckHerokuAppDisappears(appName string) resource.TestCheckFunc {
 
 func testAccCheckHerokuAppConfig_basic(appName, appStack string) string {
 	return fmt.Sprintf(`
-resource "heroku_app" "foobar" {
+resource "heroku_app" "default" {
   name   = "%s"
   stack = "%s"
   region = "us"
@@ -626,9 +699,24 @@ resource "heroku_addon" "redis" {
 }`, appName, appStack)
 }
 
+func testAccCheckHerokuAppConfig_external_config_vars(appName, appStack string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "default" {
+  name   = "%s"
+  stack = "%s"
+  region = "us"
+
+  config_vars {
+    FOO = "bar"
+  }
+
+  external_config_vars = ["baz"]
+}`, appName, appStack)
+}
+
 func testAccCheckHerokuAppConfig_go(appName string) string {
 	return fmt.Sprintf(`
-resource "heroku_app" "foobar" {
+resource "heroku_app" "default" {
   name   = "%s"
   region = "us"
 
@@ -638,7 +726,7 @@ resource "heroku_app" "foobar" {
 
 func testAccCheckHerokuAppConfig_multi(appName string) string {
 	return fmt.Sprintf(`
-resource "heroku_app" "foobar" {
+resource "heroku_app" "default" {
   name   = "%s"
   region = "us"
 
@@ -651,7 +739,7 @@ resource "heroku_app" "foobar" {
 
 func testAccCheckHerokuAppConfig_updated(appName, appStack string) string {
 	return fmt.Sprintf(`
-resource "heroku_app" "foobar" {
+resource "heroku_app" "default" {
   name   = "%s"
 	stack  = "%s"
   region = "us"
@@ -665,7 +753,7 @@ resource "heroku_app" "foobar" {
 
 func testAccCheckHerokuAppConfig_no_vars(appName string) string {
 	return fmt.Sprintf(`
-resource "heroku_app" "foobar" {
+resource "heroku_app" "default" {
   name   = "%s"
   region = "us"
 
@@ -675,7 +763,7 @@ resource "heroku_app" "foobar" {
 
 func testAccCheckHerokuAppConfig_organization(appName, org string) string {
 	return fmt.Sprintf(`
-resource "heroku_app" "foobar" {
+resource "heroku_app" "default" {
   name   = "%s"
   region = "us"
 
@@ -691,14 +779,14 @@ resource "heroku_app" "foobar" {
 
 func testAccCheckHerokuAppConfig_space(appName, spaceName, org string) string {
 	return fmt.Sprintf(`
-resource "heroku_space" "foobar" {
+resource "heroku_space" "default" {
   name = "%s"
 	organization = "%s"
 	region = "virginia"
 }
-resource "heroku_app" "foobar" {
+resource "heroku_app" "default" {
   name   = "%s"
-  space  = "${heroku_space.foobar.name}"
+  space  = "${heroku_space.default.name}"
   region = "virginia"
 
   organization {
@@ -713,11 +801,20 @@ resource "heroku_app" "foobar" {
 
 func testAccCheckHerokuAppConfig_EmptyConfigVars(appName string) string {
 	return fmt.Sprintf(`
-resource "heroku_app" "foobar" {
+resource "heroku_app" "default" {
   name   = "%s"
   region = "us"
 
   config_vars = [
   ]
 }`, appName)
+}
+
+func stringMap(src map[string]string) map[string]*string {
+	dst := make(map[string]*string)
+	for k, val := range src {
+		v := val
+		dst[k] = &v
+	}
+	return dst
 }
