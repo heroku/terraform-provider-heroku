@@ -1,4 +1,16 @@
-## 0.1.2 (Unreleased)
+## 0.1.2 (January 04, 2018)
+
+FEATURES:
+
+* All resources now support `terraform import` ([#31](https://github.com/terraform-providers/terraform-provider-heroku/pull/31))
+
+IMPROVEMENTS:
+
+* r/heroku_app: Revert change ([#17](https://github.com/terraform-providers/terraform-provider-heroku/pull/17)) which deleted externally-created config vars ([#36](https://github.com/terraform-providers/terraform-provider-heroku/pull/36))
+* r/heroku_app: Change import to use the app name as its ID if possible ([#34](https://github.com/terraform-providers/terraform-provider-heroku/pull/34))
+* r/heroku_addon: Pass confirm option during addon creation ([#32](https://github.com/terraform-providers/terraform-provider-heroku/pull/32))
+* r/heroku_space: Support trusted_ip_ranges ([#28](https://github.com/terraform-providers/terraform-provider-heroku/pull/28))
+
 ## 0.1.1 (November 07, 2017)
 
 FEATURES:
