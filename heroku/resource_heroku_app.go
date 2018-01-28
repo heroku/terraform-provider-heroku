@@ -42,43 +42,32 @@ func (a *application) Update() error {
 	var errs []error
 	var err error
 
-	if !a.Organization {
-		app, err := a.Client.AppInfo(context.TODO(), a.Id)
-		if err != nil {
-			errs = append(errs, err)
-		} else {
-			a.App = &herokuApplication{}
-			a.App.Name = app.Name
-			a.App.Region = app.Region.Name
-			a.App.Stack = app.BuildStack.Name
-			a.App.GitURL = app.GitURL
-			a.App.WebURL = app.WebURL
-			a.App.Acm = app.Acm
-		}
+	app, err := a.Client.AppInfo(context.TODO(), a.Id)
+	if err != nil {
+		errs = append(errs, err)
 	} else {
-		app, err := a.Client.OrganizationAppInfo(context.TODO(), a.Id)
+		a.App = &herokuApplication{}
+		a.App.Name = app.Name
+		a.App.Region = app.Region.Name
+		a.App.Stack = app.BuildStack.Name
+		a.App.GitURL = app.GitURL
+		a.App.WebURL = app.WebURL
+		a.App.Acm = app.Acm
+		if app.Space != nil {
+			a.App.Space = app.Space.Name
+		}
+		if app.Organization != nil {
+			a.App.OrganizationName = app.Organization.Name
+		} else {
+			log.Println("[DEBUG] Something is wrong - didn't get information about organization name, while the app is marked as being so")
+		}
+
+	}
+
+	if app.Organization != nil {
+		a.App.Locked, err = retrieveOrgLockState(a.Id, app.Organization.Name, a.Client)
 		if err != nil {
 			errs = append(errs, err)
-		} else {
-			// No inheritance between OrganizationApp and App is killing it :/
-			a.App = &herokuApplication{}
-			a.App.Name = app.Name
-			a.App.Region = app.Region.Name
-			a.App.Stack = app.BuildStack.Name
-			a.App.GitURL = app.GitURL
-			a.App.WebURL = app.WebURL
-			if app.Space != nil {
-				a.App.Space = app.Space.Name
-			}
-			if app.Organization != nil {
-				a.App.OrganizationName = app.Organization.Name
-			} else {
-				log.Println("[DEBUG] Something is wrong - didn't get information about organization name, while the app is marked as being so")
-			}
-			a.App.Locked = app.Locked
-			if a.App.Acm, err = retrieveAcm(a.Id, a.Client); err != nil {
-				errs = append(errs, err)
-			}
 		}
 	}
 
@@ -521,6 +510,15 @@ func resourceHerokuAppRetrieve(id string, organization bool, client *heroku.Serv
 	}
 
 	return &app, nil
+}
+
+func retrieveOrgLockState(id, org string, client *heroku.Service) (bool, error) {
+	app, err := client.OrganizationAppInfo(context.TODO(), id)
+	if err != nil {
+		return false, err
+	}
+
+	return app.Locked, nil
 }
 
 func retrieveBuildpacks(id string, client *heroku.Service) ([]string, error) {
