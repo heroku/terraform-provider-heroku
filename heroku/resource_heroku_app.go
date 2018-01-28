@@ -644,6 +644,9 @@ func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) e
 	}
 
 	if v, ok := d.GetOk("acm"); ok {
+		if _, ok := d.GetOk("organization"); !ok {
+			log.Printf("You ask me to enable ACM for a non-organization app. This will most likely fail, due to the Heroku constraints (the app has to be scaled to Standard-1X - state of 28.01.2018)")
+		}
 		if err := updateAcm(d.Id(), client, v.(bool)); err != nil {
 			return err
 		}
