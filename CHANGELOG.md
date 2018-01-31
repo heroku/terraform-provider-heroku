@@ -1,4 +1,9 @@
 ## 0.2.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* r/heroku_app: Wait until for new release after updating config vars [GH-35]
+
 ## 0.1.2 (January 04, 2018)
 
 FEATURES:
