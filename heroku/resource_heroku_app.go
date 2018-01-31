@@ -2,12 +2,15 @@ package heroku
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
+	"time"
 
 	"github.com/cyberdelia/heroku-go/v3"
 	multierror "github.com/hashicorp/go-multierror"
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -432,6 +435,13 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetId(updatedApp.Name)
 
+	if d.HasChange("buildpacks") {
+		err := updateBuildpacks(d.Id(), client, d.Get("buildpacks").([]interface{}))
+		if err != nil {
+			return err
+		}
+	}
+
 	// If the config vars changed, then recalculate those
 	if d.HasChange("config_vars") {
 		o, n := d.GetChange("config_vars")
@@ -447,12 +457,28 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			return err
 		}
-	}
 
-	if d.HasChange("buildpacks") {
-		err := updateBuildpacks(d.Id(), client, d.Get("buildpacks").([]interface{}))
+		releases, err := client.ReleaseList(
+			context.TODO(),
+			d.Id(),
+			&heroku.ListRange{Descending: true, Field: "version", Max: 1},
+		)
 		if err != nil {
 			return err
+		}
+		if len(releases) == 0 {
+			return errors.New("no release found")
+		}
+
+		stateConf := &resource.StateChangeConf{
+			Pending: []string{"pending"},
+			Target:  []string{"succeeded"},
+			Refresh: releaseStateRefreshFunc(client, d.Id(), releases[0].ID),
+			Timeout: 20 * time.Minute,
+		}
+
+		if _, err := stateConf.WaitForState(); err != nil {
+			return fmt.Errorf("Error waiting for new release (%s) to succeed: %s", releases[0].ID, err)
 		}
 	}
 
@@ -604,4 +630,18 @@ func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) e
 	}
 
 	return nil
+}
+
+func releaseStateRefreshFunc(client *heroku.Service, appID, releaseID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		release, err := client.ReleaseInfo(context.TODO(), appID, releaseID)
+
+		if err != nil {
+			return nil, "", err
+		}
+
+		// The type conversion here can be dropped when the vendored version of
+		// heroku-go is updated.
+		return (*heroku.Release)(release), release.Status, nil
+	}
 }
