@@ -1,5 +1,9 @@
 ## 0.2.0 (Unreleased)
 
+FEATURES:
+
+* r/heroku_app: Add `acm` field to enable Heroku Automated Certificate Management (ACM) [GH-38]
+
 IMPROVEMENTS:
 
 * r/heroku_app: Wait until for new release after updating config vars [GH-35]
