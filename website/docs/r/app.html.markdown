@@ -49,6 +49,7 @@ The following arguments are supported:
 * `organization` - (Optional) A block that can be specified once to define
      organization settings for this app. The fields for this block are
      documented below.
+* `acm` - (Optional) The flag representing Automated Certificate Management for the app.
 
 The `organization` block supports:
 

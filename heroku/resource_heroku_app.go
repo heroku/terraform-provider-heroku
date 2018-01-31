@@ -26,6 +26,7 @@ type herokuApplication struct {
 	WebURL           string
 	OrganizationName string
 	Locked           bool
+	Acm              bool
 }
 
 // type application is used to store all the details of a heroku app
@@ -44,39 +45,32 @@ func (a *application) Update() error {
 	var errs []error
 	var err error
 
-	if !a.Organization {
-		app, err := a.Client.AppInfo(context.TODO(), a.Id)
-		if err != nil {
-			errs = append(errs, err)
-		} else {
-			a.App = &herokuApplication{}
-			a.App.Name = app.Name
-			a.App.Region = app.Region.Name
-			a.App.Stack = app.BuildStack.Name
-			a.App.GitURL = app.GitURL
-			a.App.WebURL = app.WebURL
-		}
+	app, err := a.Client.AppInfo(context.TODO(), a.Id)
+	if err != nil {
+		errs = append(errs, err)
 	} else {
-		app, err := a.Client.OrganizationAppInfo(context.TODO(), a.Id)
+		a.App = &herokuApplication{}
+		a.App.Name = app.Name
+		a.App.Region = app.Region.Name
+		a.App.Stack = app.BuildStack.Name
+		a.App.GitURL = app.GitURL
+		a.App.WebURL = app.WebURL
+		a.App.Acm = app.Acm
+		if app.Space != nil {
+			a.App.Space = app.Space.Name
+		}
+		if app.Organization != nil {
+			a.App.OrganizationName = app.Organization.Name
+		} else {
+			log.Println("[DEBUG] Something is wrong - didn't get information about organization name, while the app is marked as being so")
+		}
+
+	}
+
+	if app.Organization != nil {
+		a.App.Locked, err = retrieveOrgLockState(a.Id, app.Organization.Name, a.Client)
 		if err != nil {
 			errs = append(errs, err)
-		} else {
-			// No inheritance between OrganizationApp and App is killing it :/
-			a.App = &herokuApplication{}
-			a.App.Name = app.Name
-			a.App.Region = app.Region.Name
-			a.App.Stack = app.BuildStack.Name
-			a.App.GitURL = app.GitURL
-			a.App.WebURL = app.WebURL
-			if app.Space != nil {
-				a.App.Space = app.Space.Name
-			}
-			if app.Organization != nil {
-				a.App.OrganizationName = app.Organization.Name
-			} else {
-				log.Println("[DEBUG] Something is wrong - didn't get information about organization name, while the app is marked as being so")
-			}
-			a.App.Locked = app.Locked
 		}
 	}
 
@@ -165,6 +159,11 @@ func resourceHerokuApp() *schema.Resource {
 				Computed: true,
 			},
 
+			"acm": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+
 			"heroku_hostname": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -222,6 +221,7 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	// ID, as a lot of the Heroku API will accept BOTH. App ID's aren't very
 	// easy to get, so it makes more sense to just use the name as much as possible.
 	d.SetId(app.Name)
+	d.Set("acm", app.Acm)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -382,6 +382,7 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("region", app.App.Region)
 	d.Set("git_url", app.App.GitURL)
 	d.Set("web_url", app.App.WebURL)
+	d.Set("acm", app.App.Acm)
 
 	if buildpacksConfigured {
 		d.Set("buildpacks", app.Buildpacks)
@@ -482,6 +483,13 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	if d.HasChange("acm") {
+		err := updateAcm(d.Id(), client, d.Get("acm").(bool))
+		if err != nil {
+			return err
+		}
+	}
+
 	return resourceHerokuAppRead(d, meta)
 }
 
@@ -530,6 +538,15 @@ func resourceHerokuAppRetrieve(id string, organization bool, client *heroku.Serv
 	return &app, nil
 }
 
+func retrieveOrgLockState(id, org string, client *heroku.Service) (bool, error) {
+	app, err := client.OrganizationAppInfo(context.TODO(), id)
+	if err != nil {
+		return false, err
+	}
+
+	return app.Locked, nil
+}
+
 func retrieveBuildpacks(id string, client *heroku.Service) ([]string, error) {
 	results, err := client.BuildpackInstallationList(context.TODO(), id, nil)
 
@@ -543,6 +560,14 @@ func retrieveBuildpacks(id string, client *heroku.Service) ([]string, error) {
 	}
 
 	return buildpacks, nil
+}
+
+func retrieveAcm(id string, client *heroku.Service) (bool, error) {
+	result, err := client.AppInfo(context.TODO(), id)
+	if err != nil {
+		return false, err
+	}
+	return result.Acm, nil
 }
 
 func retrieveConfigVars(id string, client *heroku.Service) (map[string]string, error) {
@@ -615,6 +640,19 @@ func updateBuildpacks(id string, client *heroku.Service, v []interface{}) error 
 	return nil
 }
 
+func updateAcm(id string, client *heroku.Service, enabled bool) error {
+	if enabled {
+		if _, err := client.AppEnableACM(context.TODO(), id); err != nil {
+			return err
+		}
+	} else {
+		if _, err := client.AppDisableACM(context.TODO(), id); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // performAppPostCreateTasks performs post-create tasks common to both org and non-org apps.
 func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) error {
 	if v, ok := d.GetOk("config_vars"); ok {
@@ -625,6 +663,15 @@ func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) e
 
 	if v, ok := d.GetOk("buildpacks"); ok {
 		if err := updateBuildpacks(d.Id(), client, v.([]interface{})); err != nil {
+			return err
+		}
+	}
+
+	if v, ok := d.GetOk("acm"); ok {
+		if _, ok := d.GetOk("organization"); !ok {
+			log.Printf("You ask me to enable ACM for a non-organization app. This will most likely fail, due to the Heroku constraints (the app has to be scaled to Standard-1X - state of 28.01.2018)")
+		}
+		if err := updateAcm(d.Id(), client, v.(bool)); err != nil {
 			return err
 		}
 	}

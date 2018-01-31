@@ -208,6 +208,46 @@ func TestAccHerokuApp_ExternallySetBuildpacks(t *testing.T) {
 	})
 }
 
+func TestAccHerokuApp_ACM(t *testing.T) {
+	var app heroku.App
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := os.Getenv("HEROKU_ORGANIZATION")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			if org == "" {
+				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
+			}
+		},
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAppDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAppConfig_organization(appName, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					resource.TestCheckResourceAttr("heroku_app.foobar", "acm", "false"),
+				),
+			},
+			{
+				Config: testAccCheckHerokuAppConfig_acm_enabled(appName, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					resource.TestCheckResourceAttr("heroku_app.foobar", "acm", "true"),
+				),
+			},
+			{
+				Config: testAccCheckHerokuAppConfig_acm_disabled(appName, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					resource.TestCheckResourceAttr("heroku_app.foobar", "acm", "false"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccHerokuApp_Organization(t *testing.T) {
 	var app heroku.OrganizationApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
@@ -673,4 +713,36 @@ resource "heroku_app" "foobar" {
   config_vars = [
   ]
 }`, appName)
+}
+
+func testAccCheckHerokuAppConfig_acm_enabled(appName, org string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+  name   = "%s"
+  region = "us"
+  acm = true
+  organization {
+    name = "%s"
+  }
+
+  config_vars = {
+    FOO = "bar"
+  }
+}`, appName, org)
+}
+
+func testAccCheckHerokuAppConfig_acm_disabled(appName, org string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+  name   = "%s"
+  region = "us"
+  acm = false
+  organization = {
+    name = "%s"
+  }
+
+  config_vars = {
+    FOO = "bar"
+  }
+}`, appName, org)
 }
