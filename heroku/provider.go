@@ -39,6 +39,10 @@ func Provider() terraform.ResourceProvider {
 			"heroku_space":             resourceHerokuSpace(),
 		},
 
+		DataSourcesMap: map[string]*schema.Resource{
+			"heroku_app": dataSourceHerokuApp(),
+		},
+
 		ConfigureFunc: providerConfigure,
 	}
 }
