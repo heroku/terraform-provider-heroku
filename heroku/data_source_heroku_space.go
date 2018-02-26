@@ -29,7 +29,7 @@ func dataSourceHerokuSpace() *schema.Resource {
 			},
 
 			"shield": {
-				Type:     schema.TypeString,
+				Type:     schema.TypeBool,
 				Computed: true,
 			},
 
@@ -55,12 +55,7 @@ func dataSourceHerokuSpaceRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("name", name)
 	d.Set("state", space.State)
 	d.Set("organization", space.Organization.Name)
-
-	if space.Shield {
-		d.Set("shield", "on")
-	} else {
-		d.Set("shield", "off")
-	}
+	d.Set("shield", space.Shield)
 
 	return nil
 }
