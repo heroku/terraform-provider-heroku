@@ -14,7 +14,7 @@ Use this data source to get information about a [Heroku Private Space](https://w
 
 ```hcl
 # Look up a Heroku Private Space
-data "heroku_app" "default"
+data "heroku_space" "default"
   name   = "my-secret-space"
 }
 ```
@@ -34,7 +34,7 @@ The following attributes are exported:
 * `region` - The region in which the Heroku Private Space is deployed.
 * `state` - The state of the Heroku Private Space. Either `allocating` or `allocated`.
 * `shielded` - Whether or not the space has [Shield](https://devcenter.heroku.com/articles/private-spaces#shield-private-spaces) turned on. One of `on` or `off`.
-* `organization` - The organization that owns this app, if the app is owned by an organization. The fields for this block are documented below.
+* `organization` - The organization that owns this space, if the space is owned by an organization. The fields for this block are documented below.
 
 The `organization` block supports:
 
