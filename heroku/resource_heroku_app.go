@@ -338,21 +338,34 @@ func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error 
 	return resourceHerokuAppRead(d, meta)
 }
 
+func setOrganizationDetails(d *schema.ResourceData, app *application) (err error) {
+	d.Set("space", app.App.Space)
+
+	orgDetails := map[string]interface{}{
+		"name":     app.App.OrganizationName,
+		"locked":   app.App.Locked,
+		"personal": false,
+	}
+	err = d.Set("organization", []interface{}{orgDetails})
+	return err
+}
+
+func setAppDetails(d *schema.ResourceData, app *application) (err error) {
+	d.Set("name", app.App.Name)
+	d.Set("stack", app.App.Stack)
+	d.Set("region", app.App.Region)
+	d.Set("git_url", app.App.GitURL)
+	d.Set("web_url", app.App.WebURL)
+	d.Set("acm", app.App.Acm)
+	d.Set("heroku_hostname", fmt.Sprintf("%s.herokuapp.com", app.App.Name))
+	return err
+}
+
 func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 
-	configVars := make(map[string]string)
 	care := make(map[string]struct{})
-	for _, v := range d.Get("config_vars").([]interface{}) {
-		// Protect against panic on type cast for a nil-length array or map
-		n, ok := v.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		for k := range n {
-			care[k] = struct{}{}
-		}
-	}
+	configVars := make(map[string]string)
 
 	// Only track buildpacks when set in the configuration.
 	_, buildpacksConfigured := d.GetOk("buildpacks")
@@ -366,6 +379,17 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	for _, v := range d.Get("config_vars").([]interface{}) {
+		// Protect against panic on type cast for a nil-length array or map
+		n, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		for k := range n {
+			care[k] = struct{}{}
+		}
+	}
+
 	for k, v := range app.Vars {
 		if _, ok := care[k]; ok {
 			configVars[k] = v
@@ -376,13 +400,6 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	if len(configVars) > 0 {
 		configVarsValue = []map[string]string{configVars}
 	}
-
-	d.Set("name", app.App.Name)
-	d.Set("stack", app.App.Stack)
-	d.Set("region", app.App.Region)
-	d.Set("git_url", app.App.GitURL)
-	d.Set("web_url", app.App.WebURL)
-	d.Set("acm", app.App.Acm)
 
 	if buildpacksConfigured {
 		d.Set("buildpacks", app.Buildpacks)
@@ -397,22 +414,10 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if organizationApp {
-		d.Set("space", app.App.Space)
-
-		orgDetails := map[string]interface{}{
-			"name":     app.App.OrganizationName,
-			"locked":   app.App.Locked,
-			"personal": false,
-		}
-		err := d.Set("organization", []interface{}{orgDetails})
-		if err != nil {
-			return err
-		}
+		setOrganizationDetails(d, app)
 	}
 
-	// We know that the hostname on heroku will be the name+herokuapp.com
-	// You need this to do things like create DNS CNAME records
-	d.Set("heroku_hostname", fmt.Sprintf("%s.herokuapp.com", app.App.Name))
+	setAppDetails(d, app)
 
 	return nil
 }
