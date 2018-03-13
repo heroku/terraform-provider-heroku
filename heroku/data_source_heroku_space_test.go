@@ -29,11 +29,11 @@ func TestAccDatasourceHerokuSpace_Basic(t *testing.T) {
 				Config: testAccCheckHerokuSpaceWithDatasource_basic(spaceName, orgName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"data.heroku_app.foobar", "name", spaceName),
+						"data.heroku_space.foobar", "name", spaceName),
 					resource.TestCheckResourceAttr(
-						"data.heroku_app.foobar", "organization", orgName),
+						"data.heroku_space.foobar", "organization", orgName),
 					resource.TestCheckResourceAttr(
-						"data.heroku_app.foobar", "region", "us"),
+						"data.heroku_space.foobar", "region", "virginia"),
 				),
 			},
 		},
@@ -45,7 +45,7 @@ func testAccCheckHerokuSpace_basic(spaceName string, orgName string) string {
 resource "heroku_space" "foobar" {
   name         = "%s"
   organization = "%s"
-  region       = "us"
+  region       = "virginia"
 }
 `, spaceName, orgName)
 }
@@ -58,8 +58,8 @@ resource "heroku_space" "foobar" {
   region       = "us"
 }
 
-data "heroku_app" "foobar" {
-  name = "${heroku_app.foobar.name}"
+data "heroku_space" "foobar" {
+  name = "${heroku_space.foobar.name}"
 }
 `, spaceName, orgName)
 }
