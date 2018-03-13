@@ -55,7 +55,7 @@ func testAccCheckHerokuSpaceWithDatasource_basic(spaceName string, orgName strin
 resource "heroku_space" "foobar" {
   name         = "%s"
   organization = "%s"
-  region       = "us"
+  region       = "virginia"
 }
 
 data "heroku_space" "foobar" {
