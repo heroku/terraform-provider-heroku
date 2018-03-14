@@ -47,6 +47,7 @@ func resourceHerokuSpace() *schema.Resource {
 
 			"trusted_ip_ranges": {
 				Type:     schema.TypeList,
+				Computed: true,
 				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
