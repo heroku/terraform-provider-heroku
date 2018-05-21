@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/go-multierror"
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 	"time"
@@ -187,8 +188,7 @@ func resourceHerokuTeamCollaboratorDelete(d *schema.ResourceData, meta interface
 	until it 404s before proceeding further.
 	*/
 	log.Printf("[INFO] Begin checking if [%s] has been deleted", getEmail(d))
-	maxTries := 5
-	retryErr := retry(maxTries, time.Second, func() error {
+	retryError := resource.Retry(10*time.Second, func() *resource.RetryError {
 		_, err := client.TeamAppCollaboratorInfo(context.TODO(), getAppName(d), d.Id())
 
 		// Debug log to check
@@ -199,14 +199,15 @@ func resourceHerokuTeamCollaboratorDelete(d *schema.ResourceData, meta interface
 			// fmt.ErrorF does not output to log when TF_LOG=DEBUG is set to true, hence the need to execute log.PrintF for
 			// debugging purpose and fmt.ErrorF so the retry func loops
 			log.Printf("[WARNING] Team collaborator [%s] exists after deletion. Checking again", getEmail(d))
-			return fmt.Errorf("[ERROR] Team collaborator [%s] still exists on [%s] after checking %v times", getEmail(d), getAppName(d), maxTries)
+			return resource.RetryableError(err)
 		} else {
+			// if there is an error in the GET, the collaborator no longer exists.
 			return nil
 		}
 	})
 
-	if retryErr != nil {
-		return retryErr
+	if retryError != nil {
+		return fmt.Errorf("[ERROR] Team collaborator [%s] still exists on [%s] after checking several times", getEmail(d), getAppName(d))
 	}
 
 	return nil
