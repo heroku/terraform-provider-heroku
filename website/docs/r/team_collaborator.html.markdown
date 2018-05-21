@@ -13,7 +13,7 @@ resource.
 
 A team collaborator represents an account that has been given access to a team app on Heroku.
 
-_Note: Please only use this resource if you have team/organization apps_
+~> **NOTE on MySQL Passwords:** Please only use this resource if you have team/organization apps
 
 ## Example Usage
 
@@ -29,16 +29,14 @@ resource "heroku_team_collaborator" "foobar-collaborator" {
 ## Argument Reference
 * `app` - (Required) The name of the team app that the team collaborator will be added to.
 * `email` - (Required) Email address of the team collaborator
-* `permissions` - (Required) A list of permissions that will be granted to the team collaborator. The order in which
-individual permissions are set here does not matter.
+* `permissions` - (Required) List of permissions that will be granted to the team collaborator. The order in which
+individual permissions are set here does not matter. Please [visit this link](https://devcenter.heroku.com/articles/app-permissions)
+for more information on available permissions.
 
 ## Attributes Reference
 The following attributes are exported:
 
 * `id` - The ID of the team collaborator
-* `app` - The team application the collaborator is part of
-* `email` - The team collaborator's email address
-* `permissions` - The permission set for this team collaborator
 
 ## Import
 Team Collaborators can be imported using the combination of the team application name, a colon, and the collaborator's email address

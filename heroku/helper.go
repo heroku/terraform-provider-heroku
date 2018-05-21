@@ -7,9 +7,7 @@ import (
 	"time"
 )
 
-// some resources need the app_name as part of the constructed api endpoint
-// and not necessarily in the POST opts. This method is to allow getting app_name
-// from ResourceData in a DRY manner
+// getAppName extracts the app attribute generically from a Heroku resource.
 func getAppName(d *schema.ResourceData) string {
 	var appName string
 	if v, ok := d.GetOk("app"); ok {
@@ -21,7 +19,7 @@ func getAppName(d *schema.ResourceData) string {
 	return appName
 }
 
-// same reason as above
+// getEmail extracts the email attribute generically from a Heroku resource.
 func getEmail(d *schema.ResourceData) string {
 	var email string
 	if v, ok := d.GetOk("email"); ok {

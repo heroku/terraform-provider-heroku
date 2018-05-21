@@ -51,6 +51,7 @@ func resourceHerokuTeamCollaborator() *schema.Resource {
 			"app": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 
 			"email": {
@@ -79,11 +80,7 @@ func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface
 
 	appName := getAppName(d)
 
-	if v, ok := d.GetOk("email"); ok {
-		vs := v.(string)
-		log.Printf("[DEBUG] User (email): %s", vs)
-		opts.User = vs
-	}
+	opts.User = getEmail(d)
 
 	/**
 	Setting the silent parameter to true by default. It is really an optional parameter that doesn't
@@ -106,7 +103,7 @@ func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface
 		opts.Permissions = &perms
 	}
 
-	log.Printf("[DEBUG] Creating Heroku Team Collaborator: [%s]", d.Get("email").(string))
+	log.Printf("[DEBUG] Creating Heroku Team Collaborator: [%s]", opts.User)
 	collaborator, err := client.TeamAppCollaboratorCreate(context.TODO(), appName, opts)
 	if err != nil {
 		return err
@@ -229,7 +226,6 @@ func resourceHerokuTeamCollaboratorRetrieve(id string, appName string, client *h
 
 func (tc *teamCollaborator) Update() error {
 	var errs []error
-	var err error
 
 	log.Printf("[INFO] tc.Id is %s", tc.Id)
 
