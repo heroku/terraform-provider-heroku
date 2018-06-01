@@ -105,7 +105,7 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 			})
 		}
 
-		opts := heroku.InboundRulesetCreateOpts{Rules: &rules}
+		opts := heroku.InboundRulesetCreateOpts{Rules: rules}
 		_, err := client.InboundRulesetCreate(context.TODO(), space.ID, opts)
 		if err != nil {
 			return fmt.Errorf("Error creating Trusted IP Ranges for Space (%s): %s", space.ID, err)
@@ -161,7 +161,7 @@ func resourceHerokuSpaceUpdate(d *schema.ResourceData, meta interface{}) error {
 			})
 		}
 
-		opts := heroku.InboundRulesetCreateOpts{Rules: &rules}
+		opts := heroku.InboundRulesetCreateOpts{Rules: rules}
 		_, err := client.InboundRulesetCreate(context.TODO(), d.Id(), opts)
 		if err != nil {
 			return fmt.Errorf("Error creating Trusted IP Ranges for Space (%s): %s", d.Id(), err)

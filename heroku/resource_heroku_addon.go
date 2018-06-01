@@ -93,7 +93,7 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 
-		opts.Config = &config
+		opts.Config = config
 	}
 
 	log.Printf("[DEBUG] Addon create configuration: %#v, %#v", app, opts)
