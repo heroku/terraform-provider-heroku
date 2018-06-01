@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ -n "${DEBUG-}" ]; then
+  set -x
+fi
+
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd)"
+
+curl -so v3/schema.json https://api.heroku.com/schema \
+  -H "Accept: application/vnd.heroku+json; version=3"
+
+go get -u github.com/interagent/schematic/cmd/schematic
+schematic v3/schema.json > v3/heroku.go
+
+# Heroku's schema.json does not specify a "version" key
+# Replace Version="" with Version="v3"
+sed -E -i '' \
+  's/^([[:space:]]*Version[[:space:]]*=[[:space:]]*)""$/\1"v3"/' \
+  v3/heroku.go
+
+gofmt -w v3/heroku.go
