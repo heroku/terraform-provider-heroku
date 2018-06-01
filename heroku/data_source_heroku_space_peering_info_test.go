@@ -26,11 +26,11 @@ func TestAccDatasourceHerokuSpacePeeringInfo_Basic(t *testing.T) {
 				Config: testAccCheckHerokuSpacePeeringInfo_basic(spaceName, orgName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"data.heroku_space.foobar", "name", spaceName),
+						"heroku_space.foobar", "name", spaceName),
 					resource.TestCheckResourceAttrSet(
 						"data.heroku_space_peering_info.foobar", "aws_account_id"),
 					resource.TestCheckResourceAttr(
-						"data.heroku_space.foobar", "aws_region", "us-east-1"),
+						"data.heroku_space_peering_info.foobar", "aws_region", "us-east-1"),
 					resource.TestCheckResourceAttrSet(
 						"data.heroku_space_peering_info.foobar", "vpc_id"),
 				),
