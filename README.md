@@ -66,7 +66,7 @@ In order to run the full suite of Acceptance tests, run `make testacc`. You will
 Things to keep in mind when running acceptance tests:
 
 * The tests take roughly 60 minutes to run. Creating Heroku Private Spaces can take 10 minutes and the tests create/destroy a few private spaces.
-* *Acceptance tests create real resources, and often cost money to run.*
+* **Acceptance tests create real resources, and often cost money to run.**
 
 ```sh
 $ make testacc
