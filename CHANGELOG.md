@@ -3,6 +3,7 @@
 FEATURES:
 
 * r/heroku_app: Add `acm` field to enable Heroku Automated Certificate Management (ACM) [GH-38]
+* r/heroku_team_collaborator: Add a new team collaborator resource to the provider ([#56](https://github.com/terraform-providers/terraform-provider-heroku/pull/56))
 
 IMPROVEMENTS:
 
