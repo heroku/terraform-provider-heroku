@@ -101,7 +101,7 @@ func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface
 		}
 
 		log.Printf("[DEBUG] Permissions: %v", perms)
-		opts.Permissions = &perms
+		opts.Permissions = perms
 	}
 
 	log.Printf("[DEBUG] Creating Heroku Team Collaborator: [%s]", opts.User)
