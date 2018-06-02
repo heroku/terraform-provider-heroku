@@ -90,26 +90,32 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error waiting for Space (%s) to become available: %s", d.Id(), err)
 	}
 
-	if ranges, ok := d.GetOk("trusted_ip_ranges"); ok {
-		var rules []*struct {
+	// If there are no ranges specified, default to empty list of ranges
+	ranges, ok := d.GetOk("trusted_ip_ranges")
+	if !ok {
+		ranges = make([]interface{}, 0)
+	}
+
+	log.Printf("[DEBUG] Setting trusted_ip_ranges")
+	var rules []*struct {
+		Action string `json:"action" url:"action,key"`
+		Source string `json:"source" url:"source,key"`
+	}
+	for _, r := range ranges.([]interface{}) {
+		log.Printf("Setting range to : %s", r.(string))
+		rules = append(rules, &struct {
 			Action string `json:"action" url:"action,key"`
 			Source string `json:"source" url:"source,key"`
-		}
-		for _, r := range ranges.([]interface{}) {
-			rules = append(rules, &struct {
-				Action string `json:"action" url:"action,key"`
-				Source string `json:"source" url:"source,key"`
-			}{
-				Action: "allow",
-				Source: r.(string),
-			})
-		}
+		}{
+			Action: "allow",
+			Source: r.(string),
+		})
+	}
 
-		opts := heroku.InboundRulesetCreateOpts{Rules: rules}
-		_, err := client.InboundRulesetCreate(context.TODO(), space.ID, opts)
-		if err != nil {
-			return fmt.Errorf("Error creating Trusted IP Ranges for Space (%s): %s", space.ID, err)
-		}
+	ruleOpts := heroku.InboundRulesetCreateOpts{Rules: rules}
+	_, ruleErr := client.InboundRulesetCreate(context.TODO(), space.ID, ruleOpts)
+	if ruleErr != nil {
+		return fmt.Errorf("Error creating Trusted IP Ranges for Space (%s): %s", space.ID, ruleErr)
 	}
 
 	return resourceHerokuSpaceRead(d, meta)
