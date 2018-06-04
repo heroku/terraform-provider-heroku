@@ -26,7 +26,7 @@ func resourceHerokuSpacePeeringConnectionAccepter() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"space_id": {
+			"space": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
@@ -54,7 +54,7 @@ func resourceHerokuSpacePeeringConnectionAccepter() *schema.Resource {
 func resourceHerokuSpacePeeringConnectionAccepterCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 
-	spaceIdentity := d.Get("space_id").(string)
+	spaceIdentity := d.Get("space").(string)
 	pcxID := d.Get("vpc_peering_connection_id").(string)
 
 	_, err := client.PeeringAccept(context.TODO(), spaceIdentity, pcxID)
@@ -91,7 +91,7 @@ func resourceHerokuSpacePeeringConnectionAccepterCreate(d *schema.ResourceData, 
 func resourceHerokuSpacePeeringConnectionAccepterRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 
-	spaceIdentity := d.Get("space_id").(string)
+	spaceIdentity := d.Get("space").(string)
 
 	peeringConn, err := client.PeeringInfo(context.TODO(), spaceIdentity, d.Id())
 	if err != nil {
@@ -111,7 +111,7 @@ func resourceHerokuSpacePeeringConnectionAccepterDelete(d *schema.ResourceData, 
 
 	log.Printf("[INFO] Deleting space peering connection: %s", d.Id())
 
-	_, err := client.PeeringDestroy(context.TODO(), d.Get("space_id").(string), d.Id())
+	_, err := client.PeeringDestroy(context.TODO(), d.Get("space").(string), d.Id())
 	if err != nil {
 		return err
 	}
