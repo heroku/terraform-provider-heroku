@@ -14,7 +14,7 @@ Use this data source to get information about a [Heroku Private Space](https://w
 
 ```hcl
 # Look up a Heroku Private Space
-data "heroku_space" "default"
+data "heroku_space" "default" {
   name   = "my-secret-space"
 }
 ```

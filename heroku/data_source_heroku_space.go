@@ -1,8 +1,6 @@
 package heroku
 
 import (
-	"context"
-
 	"github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -14,6 +12,11 @@ func dataSourceHerokuSpace() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+			},
+
+			"organization": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 
 			"region": {
@@ -33,9 +36,12 @@ func dataSourceHerokuSpace() *schema.Resource {
 				Computed: true,
 			},
 
-			"organization": {
-				Type:     schema.TypeString,
+			"trusted_ip_ranges": {
+				Type:     schema.TypeList,
 				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 		},
 	}
@@ -45,17 +51,17 @@ func dataSourceHerokuSpaceRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*heroku.Service)
 
 	name := d.Get("name").(string)
-	space, err := client.SpaceInfo(context.TODO(), name)
+	spaceRaw, _, err := SpaceStateRefreshFunc(client, name)()
 	if err != nil {
 		return err
 	}
 
+	space := spaceRaw.(*spaceWithRanges)
+
 	d.SetId(name)
-	d.Set("region", space.Region.Name)
-	d.Set("name", name)
 	d.Set("state", space.State)
-	d.Set("organization", space.Organization.Name)
 	d.Set("shield", space.Shield)
+	setSpaceAttributes(d, space)
 
 	return nil
 }
