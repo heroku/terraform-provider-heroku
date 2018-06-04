@@ -14,8 +14,8 @@ import (
 
 func TestAccHerokuSpace_Basic(t *testing.T) {
 	var space heroku.Space
-	spaceName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	spaceName2 := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
+	spaceName2 := fmt.Sprintf("tftest2-%s", acctest.RandString(10))
 	org := os.Getenv("HEROKU_ORGANIZATION")
 
 	// HEROKU_SPACES_ORGANIZATION allows us to use a special Organization managed by Heroku for the
@@ -39,17 +39,53 @@ func TestAccHerokuSpace_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuSpaceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuSpaceConfig_basic(spaceName, org),
+				ResourceName: "heroku_space.foobar",
+				Config:       testAccCheckHerokuSpaceConfig_basic(spaceName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
+					resource.TestCheckResourceAttr("heroku_space.foobar", "trusted_ip_ranges.#", "2"),
+
 					testAccCheckHerokuSpaceAttributes(&space, spaceName),
 				),
 			},
 			{
-				Config: testAccCheckHerokuSpaceConfig_basic(spaceName2, org),
+				ResourceName: "heroku_space.foobar",
+				Config:       testAccCheckHerokuSpaceConfig_basic(spaceName2, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
 					testAccCheckHerokuSpaceAttributes(&space, spaceName2),
+				),
+			},
+		},
+	})
+}
+
+func TestAccHerokuSpace_IPRange(t *testing.T) {
+	var space heroku.Space
+	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
+	org := os.Getenv("HEROKU_ORGANIZATION")
+
+	spacesOrg := os.Getenv("HEROKU_SPACES_ORGANIZATION")
+	if spacesOrg != "" {
+		org = spacesOrg
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			if org == "" {
+				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
+			}
+		},
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuSpaceDestroy,
+		Steps: []resource.TestStep{
+			{
+				ResourceName: "heroku_space.foobar",
+				Config:       testAccCheckHerokuSpaceConfig_iprange(spaceName, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
+					resource.TestCheckResourceAttr("heroku_space.foobar", "trusted_ip_ranges.#", "1"),
 				),
 			},
 		},
@@ -66,6 +102,16 @@ resource "heroku_space" "foobar" {
 		"8.8.8.8/32",
 		"8.8.8.0/24",
 	]
+}
+`, spaceName, orgName)
+}
+
+func testAccCheckHerokuSpaceConfig_iprange(spaceName, orgName string) string {
+	return fmt.Sprintf(`
+resource "heroku_space" "foobar" {
+  name         = "%s"
+  organization = "%s"
+  region       = "virginia"
 }
 `, spaceName, orgName)
 }
