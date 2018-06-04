@@ -19,7 +19,6 @@ script:
 - make vendor-status
 - make vet
 - make website-test
-- travis_wait 120 make testacc
 
 branches:
   only:
