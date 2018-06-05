@@ -57,9 +57,22 @@ func resourceHerokuSpacePeeringConnectionAccepterCreate(d *schema.ResourceData, 
 	spaceIdentity := d.Get("space").(string)
 	pcxID := d.Get("vpc_peering_connection_id").(string)
 
-	_, err := client.PeeringAccept(context.TODO(), spaceIdentity, pcxID)
-	if err != nil {
-		return err
+	// There is a lag between when a peering request is initiated from AWS's end and when it
+	// appears as an option in a space's list of peering connections. In testing, this is
+	// usually in the 1-3 minute range. We retry for 5 minutes so plan/apply runs that
+	// create the two resources at the same time don't result in an error.
+	retryError := resource.Retry(5*time.Minute, func() *resource.RetryError {
+		_, err := client.PeeringAccept(context.TODO(), spaceIdentity, pcxID)
+		if err != nil {
+			return resource.RetryableError(err)
+		}
+
+		log.Printf("[INFO] Peer connection %s to %s has been accepted", pcxID, spaceIdentity)
+		return nil
+	})
+
+	if retryError != nil {
+		return fmt.Errorf("[ERROR] Unable to accept peer connection %s to %s", pcxID, spaceIdentity)
 	}
 
 	log.Printf("[INFO] Space ID: %s, Peering Connection ID: %s", spaceIdentity, pcxID)
@@ -69,7 +82,7 @@ func resourceHerokuSpacePeeringConnectionAccepterCreate(d *schema.ResourceData, 
 	log.Printf("[DEBUG] Waiting for connection (%s) to be accepted", d.Id())
 
 	stateConf := &resource.StateChangeConf{
-		Pending: []string{"initiating-request", "pending-acceptance", "provisioning"},
+		Pending: []string{"initiating-request", "pending", "pending-acceptance", "provisioning"},
 		Target:  []string{"active"},
 		Refresh: SpacePeeringConnAccepterStateRefreshFunc(client, spaceIdentity, d.Id()),
 		Timeout: 20 * time.Minute,
@@ -80,7 +93,7 @@ func resourceHerokuSpacePeeringConnectionAccepterCreate(d *schema.ResourceData, 
 		return fmt.Errorf("Error waiting for Space (%s) to become available: %s", d.Id(), err)
 	}
 
-	p := finalPeerConn.(*heroku.Peering)
+	p := finalPeerConn.(*spacePeerInfo)
 
 	d.Set("status", p.Status)
 	d.Set("type", p.Type)
