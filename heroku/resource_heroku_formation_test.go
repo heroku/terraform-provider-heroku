@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/cyberdelia/heroku-go/v3"
-	"github.com/fsouza/go-dockerclient/external/github.com/Sirupsen/logrus"
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
@@ -51,8 +50,6 @@ func TestAccHerokuFormationSingleUpdate_WithOrg(t *testing.T) {
 func testAccCheckHerokuFormationExists(n string, formation *heroku.Formation) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
-
-		logrus.Printf("What is ok: %s", ok)
 
 		if !ok {
 			return fmt.Errorf("Formation not found: %s", n)
