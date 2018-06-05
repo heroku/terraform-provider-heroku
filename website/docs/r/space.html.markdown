@@ -37,6 +37,7 @@ The following arguments are supported:
 * `name` - (Required) The name of the space.
 * `organization` - (Required) The name of the organization which will own the space.
 * `region` - (Optional) The region that the space should be created in.
+* `trusted_ip_ranges` - (Required) The list of IP address CIDR ranges (0.0.0.0/0, etc) that can connect to apps hosted in this private space.
 
 ## Attributes Reference
 
