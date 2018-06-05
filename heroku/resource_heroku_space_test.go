@@ -56,12 +56,71 @@ func TestAccHerokuSpace_Basic(t *testing.T) {
 	})
 }
 
+func TestAccHerokuSpace_Shield(t *testing.T) {
+	var space heroku.Space
+	spaceName := fmt.Sprintf("tfshieldtest-%s", acctest.RandString(10))
+	spaceName2 := fmt.Sprintf("tfshieldtest-%s", acctest.RandString(10))
+	org := os.Getenv("HEROKU_ORGANIZATION")
+
+	// HEROKU_SPACES_ORGANIZATION allows us to use a special Organization managed by Heroku for the
+	// strict purpose of testing Heroku Spaces. It has the following resource limits
+	// - 2 spaces
+	// - 2 apps per space
+	// - 2 dynos per space
+	spacesOrg := os.Getenv("HEROKU_SPACES_ORGANIZATION")
+	if spacesOrg != "" {
+		org = spacesOrg
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			if org == "" {
+				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
+			}
+		},
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuSpaceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuSpaceConfig_shield(spaceName, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
+					testAccCheckHerokuSpaceAttributes(&space, spaceName),
+				),
+			},
+			{
+				Config: testAccCheckHerokuSpaceConfig_shield(spaceName2, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
+					testAccCheckHerokuSpaceAttributes(&space, spaceName2),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckHerokuSpaceConfig_basic(spaceName, orgName string) string {
 	return fmt.Sprintf(`
 resource "heroku_space" "foobar" {
   name = "%s"
 	organization = "%s"
 	region = "virginia"
+	trusted_ip_ranges = [
+		"8.8.8.8/32",
+		"8.8.8.0/24",
+	]
+}
+`, spaceName, orgName)
+}
+
+func testAccCheckHerokuSpaceConfig_shield(spaceName, orgName string) string {
+	return fmt.Sprintf(`
+resource "heroku_space" "foobar" {
+  name = "%s"
+	organization = "%s"
+	region = "virginia"
+	shield = true
 	trusted_ip_ranges = [
 		"8.8.8.8/32",
 		"8.8.8.0/24",

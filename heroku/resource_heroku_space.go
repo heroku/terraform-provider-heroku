@@ -45,6 +45,13 @@ func resourceHerokuSpace() *schema.Resource {
 				ForceNew: true,
 			},
 
+			"shield": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				ForceNew: true,
+			},
+
 			"trusted_ip_ranges": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -67,6 +74,12 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 	if v, ok := d.GetOk("region"); ok {
 		vs := v.(string)
 		opts.Region = &vs
+	}
+
+	if v := d.Get("shield"); v != nil {
+		vs := v.(bool)
+		log.Printf("[DEBUG] Creating a shield space")
+		opts.Shield = &vs
 	}
 
 	space, err := client.SpaceCreate(context.TODO(), opts)
@@ -178,6 +191,7 @@ func setSpaceAttributes(d *schema.ResourceData, space *spaceWithRanges) {
 	d.Set("organization", space.Organization.Name)
 	d.Set("region", space.Region.Name)
 	d.Set("trusted_ip_ranges", space.TrustedIPRanges)
+	d.Set("shield", space.Shield)
 }
 
 func resourceHerokuSpaceDelete(d *schema.ResourceData, meta interface{}) error {
