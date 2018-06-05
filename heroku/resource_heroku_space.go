@@ -14,6 +14,7 @@ import (
 type spaceWithRanges struct {
 	heroku.Space
 	TrustedIPRanges []string
+	Nat             heroku.SpaceNat
 }
 
 func resourceHerokuSpace() *schema.Resource {
@@ -178,6 +179,7 @@ func setSpaceAttributes(d *schema.ResourceData, space *spaceWithRanges) {
 	d.Set("organization", space.Organization.Name)
 	d.Set("region", space.Region.Name)
 	d.Set("trusted_ip_ranges", space.TrustedIPRanges)
+	d.Set("outbound_ips", space.Nat)
 }
 
 func resourceHerokuSpaceDelete(d *schema.ResourceData, meta interface{}) error {
@@ -217,6 +219,12 @@ func SpaceStateRefreshFunc(client *heroku.Service, id string) resource.StateRefr
 		for i, r := range ruleset.Rules {
 			s.TrustedIPRanges[i] = r.Source
 		}
+
+		nat, err := client.SpaceNatInfo(context.TODO(), id)
+		if err != nil {
+			return nil, "", err
+		}
+		s.Nat = *nat
 
 		return &s, space.State, nil
 	}
