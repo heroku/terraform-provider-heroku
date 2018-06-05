@@ -37,8 +37,8 @@ func Provider() terraform.ResourceProvider {
 			"heroku_pipeline":                          resourceHerokuPipeline(),
 			"heroku_pipeline_coupling":                 resourceHerokuPipelineCoupling(),
 			"heroku_space":                             resourceHerokuSpace(),
-			"heroku_team_collaborator":                 resourceHerokuTeamCollaborator(),
 			"heroku_space_peering_connection_accepter": resourceHerokuSpacePeeringConnectionAccepter(),
+			"heroku_team_collaborator":                 resourceHerokuTeamCollaborator(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
