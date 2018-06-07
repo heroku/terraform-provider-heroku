@@ -1,6 +1,9 @@
 package heroku
 
 import (
+	"context"
+	"fmt"
+	"github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/schema"
 	"log"
 )
@@ -27,4 +30,15 @@ func getEmail(d *schema.ResourceData) string {
 	}
 
 	return email
+}
+
+func doesHerokuAppExist(appName string, client *heroku.Service) (*heroku.App, error) {
+	log.Printf("app is %s", appName)
+	app, err := client.AppInfo(context.TODO(), appName)
+
+	if err != nil {
+		log.Println(err)
+		return nil, fmt.Errorf("[ERROR] Your app does not exist")
+	}
+	return app, nil
 }

@@ -10,8 +10,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-// herokuFormation is a value type used to hold the details
-// of a formation
+// herokuFormation is a value type used to hold the details of a formation
 type herokuFormation struct {
 	AppName  string
 	Command  string
@@ -82,7 +81,8 @@ func resourceHerokuFormationRead(d *schema.ResourceData, meta interface{}) error
 	return nil
 }
 
-// this is more or less the same as update but i believe terraform needs a 'Create' method
+// resourceHerokuFormationCreate method will execute an UPDATE to the formation.
+// There is no CREATE method on the formation endpoint.
 func resourceHerokuFormationCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 
@@ -161,9 +161,9 @@ func resourceHerokuFormationUpdate(d *schema.ResourceData, meta interface{}) err
 	return resourceHerokuFormationRead(d, meta)
 }
 
+// There's no DELETE endpoint for the formation resource so this function will be a no-op.
 func resourceHerokuFormationDelete(d *schema.ResourceData, meta interface{}) error {
-	// there is no DELETE endpoint for the formation resource
-	log.Printf("[INFO] There is no DELETE for formation resource so this is a noop")
+	log.Printf("[INFO] There is no DELETE for formation resource so this is a no-op. Resource will be removed from state.")
 	return nil
 }
 
@@ -184,7 +184,7 @@ func resourceHerokuFormationRetrieve(id string, appName string, client *heroku.S
 	err := formation.Update(appName)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error retrieving formation: %s", err)
+		return nil, fmt.Errorf("error retrieving formation: %s", err)
 	}
 
 	return &formation, nil
@@ -231,17 +231,6 @@ func resourceHerokuFormationImport(d *schema.ResourceData, meta interface{}) ([]
 	return []*schema.ResourceData{d}, nil
 }
 
-func doesHerokuAppExist(appName string, client *heroku.Service) (*heroku.App, error) {
-	log.Printf("app is %s", appName)
-	app, err := client.AppInfo(context.TODO(), appName)
-
-	if err != nil {
-		log.Println(err)
-		return nil, fmt.Errorf("[ERROR] Your app does not exist")
-	}
-	return app, nil
-}
-
 func formatSize(quant interface{}) string {
 	if quant == nil || quant == (*string)(nil) {
 		return ""
@@ -257,16 +246,18 @@ func formatSize(quant interface{}) string {
 		return ""
 	}
 
-	// the size will generally be something like "standard-1x" or "Private-M"
-	// the goal will to be split the size, capitalize zero index and then toUpper the first index
-	// to get the end result of "Standard-1X". I'm doing this because the API PATCH accepts lowercase
-	// but returns the formatted which causes state file issues.
+	/**
+	A formation's size can be "standard-1x" or "Private-M". The goal of this method will be to
+	split the size, capitalize zero index and then toUpper the first index to get the end result of "Standard-1X".
+	This is needed because Heroku's PATCH formation endpoint accepts lowercase but returns the formatted
+	version which causes state file issues.
+	*/
 	splittedString := strings.Split(rawQuant, "-")
 	var formattedSlice []string
 
-	for i := 0; i < 2; i++ { // there will only ever be two elements
+	for i := 0; i < 2; i++ { // There will only ever be two elements
 		if i == 0 {
-			// capitalize the first element
+			// Capitalize the first element
 			formattedSlice = append(formattedSlice, strings.Title(splittedString[i]))
 		} else {
 			formattedSlice = append(formattedSlice, strings.ToUpper(splittedString[i]))

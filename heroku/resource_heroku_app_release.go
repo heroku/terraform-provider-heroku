@@ -27,6 +27,7 @@ func resourceHerokuAppRelease() *schema.Resource {
 				ForceNew: true,
 			},
 
+			// A Heroku release cannot be updated so ForceNew is set on both slug_id & Description
 			"slug_id": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -83,7 +84,7 @@ func resourceHerokuAppReleaseCreate(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("[ERROR] Error waiting for new release (%s) to succeed: %s", newRelease.ID, err)
 	}
 
-	// set the ID after the release is successful
+	// Set the ID after the release is successful
 	d.SetId(newRelease.ID)
 
 	return resourceHerokuAppReleaseRead(d, meta)
@@ -107,15 +108,15 @@ func resourceHerokuAppReleaseRead(d *schema.ResourceData, meta interface{}) erro
 	return nil
 }
 
+// There's no DELETE endpoint for the release resource so this function will be a no-op.
 func resourceHerokuAppReleaseDelete(d *schema.ResourceData, meta interface{}) error {
-	// There's no DELETE endpoint for the release resource so this function will be a no-op.
-	log.Printf("[INFO] Deletion will be a no-op method. We will just remove it from the state.")
+	log.Printf("[INFO] There is no DELETE for releease resource so this is a no-op. Resource will be removed from state.")
 	return nil
 }
 
 func resourceHerokuAppReleaseImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	// The import function will import the current release for an app. There doesn't seem to be a compelling reason
-	// for someone to import a legacy release on an app.
+	// The import function will import the current release for an app.
+	// There doesn't seem to be a compelling reason for someone to import a legacy release on an application.
 	client := meta.(*heroku.Service)
 
 	appName := d.Id()
@@ -129,9 +130,9 @@ func resourceHerokuAppReleaseImport(d *schema.ResourceData, meta interface{}) ([
 		return nil, err
 	}
 
-	// it isn't likely for the last release to not be current, but adding this check just to be sure
+	// It isn't likely for the last release to not be 'current', but adding the check below just to be sure
 	if !appRelease.Current {
-		return nil, fmt.Errorf("[ERROR] The latest release for app [%s] is not current for some odd reason", appName)
+		return nil, fmt.Errorf("[ERROR] The latest release for app [%s] is not current for some reason", appName)
 	}
 
 	d.SetId(appRelease.ID)

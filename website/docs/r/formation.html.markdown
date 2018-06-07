@@ -17,8 +17,8 @@ A formation represents the formation of processes that should be set for an appl
 - The application must have a dyno in order to update its formation.
 - If the heroku formation resource is removed and deleted, this will be a no-op action in Heroku.
 The Heroku Platform does not have a `DELETE` endpoint for `formation`.
-- This resource works well with the `heroku_app_release` resource, which allows you to deploy a release to an application,
-before the formation is updated.
+- This resource works well with the `heroku_app_release` resource, which allows you to deploy a release to an application
+before the formation can be updated.
 
 ## Example Usage
 
@@ -42,8 +42,7 @@ resource "heroku_formation" "foobar-web" {
     quantity = 2
     size = "standard-2x"
 
-    # Tells Terraform that this formation must be created/updated
-    # only after the app release has been created
+    # Tells Terraform that this formation must be created/updated only after the app release has been created
     depends_on = ["heroku_app_release.foobar-release"]
 }
 ```
