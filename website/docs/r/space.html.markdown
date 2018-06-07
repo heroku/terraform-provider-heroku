@@ -37,6 +37,7 @@ The following arguments are supported:
 * `name` - (Required) The name of the space.
 * `organization` - (Required) The name of the organization which will own the space.
 * `region` - (Optional) The region that the space should be created in.
+* `shield` - (Optional) Whether or not the private space should be [shielded](https://devcenter.heroku.com/articles/private-spaces#shield-private-spaces).
 
 ## Attributes Reference
 
@@ -46,6 +47,7 @@ The following attributes are exported:
 * `name` - The space's name.
 * `organization` - The space's organization.
 * `region` - The space's region.
+* `outbound_ips` - The space's stable outbound [NAT IPs](https://devcenter.heroku.com/articles/platform-api-reference#space-network-address-translation).
 
 ## Import
 

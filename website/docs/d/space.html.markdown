@@ -33,8 +33,9 @@ The following attributes are exported:
 * `id` - The unique ID of the Heroku Private Space.
 * `region` - The region in which the Heroku Private Space is deployed.
 * `state` - The state of the Heroku Private Space. Either `allocating` or `allocated`.
-* `shielded` - Whether or not the space has [Shield](https://devcenter.heroku.com/articles/private-spaces#shield-private-spaces) turned on. One of `on` or `off`.
+* `shield` - Whether or not the space has [Shield](https://devcenter.heroku.com/articles/private-spaces#shield-private-spaces) turned on. One of `on` or `off`.
 * `organization` - The organization that owns this space, if the space is owned by an organization. The fields for this block are documented below.
+* `outbound_ips` - The space's stable outbound [NAT IPs](https://devcenter.heroku.com/articles/platform-api-reference#space-network-address-translation).
 
 The `organization` block supports:
 

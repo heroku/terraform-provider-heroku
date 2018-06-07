@@ -14,6 +14,7 @@ import (
 type spaceWithRanges struct {
 	heroku.Space
 	TrustedIPRanges []string
+	Nat             heroku.SpaceNat
 }
 
 func resourceHerokuSpace() *schema.Resource {
@@ -39,16 +40,32 @@ func resourceHerokuSpace() *schema.Resource {
 				ForceNew: true,
 			},
 
+			"outbound_ips": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+
 			"region": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
 
+			"shield": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				ForceNew: true,
+			},
+
 			"trusted_ip_ranges": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Computed: true,
 				Optional: true,
+				MinItems: 0,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -67,6 +84,14 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 	if v, ok := d.GetOk("region"); ok {
 		vs := v.(string)
 		opts.Region = &vs
+	}
+
+	if v := d.Get("shield"); v != nil {
+		vs := v.(bool)
+		if vs {
+			log.Printf("[DEBUG] Creating a shield space")
+		}
+		opts.Shield = &vs
 	}
 
 	space, err := client.SpaceCreate(context.TODO(), opts)
@@ -91,11 +116,14 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if ranges, ok := d.GetOk("trusted_ip_ranges"); ok {
+		ips := ranges.(*schema.Set)
+
 		var rules []*struct {
 			Action string `json:"action" url:"action,key"`
 			Source string `json:"source" url:"source,key"`
 		}
-		for _, r := range ranges.([]interface{}) {
+
+		for _, r := range ips.List() {
 			rules = append(rules, &struct {
 				Action string `json:"action" url:"action,key"`
 				Source string `json:"source" url:"source,key"`
@@ -110,6 +138,7 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			return fmt.Errorf("Error creating Trusted IP Ranges for Space (%s): %s", space.ID, err)
 		}
+		log.Printf("[DEBUG] Set Trusted IP Ranges to %s for Space %s", ips.List(), d.Id())
 	}
 
 	return resourceHerokuSpaceRead(d, meta)
@@ -124,7 +153,15 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	space := spaceRaw.(*spaceWithRanges)
-	setSpaceAttributes(d, space)
+
+	d.Set("name", space.Name)
+	d.Set("organization", space.Organization.Name)
+	d.Set("region", space.Region.Name)
+	d.Set("trusted_ip_ranges", space.TrustedIPRanges)
+	d.Set("outbound_ips", space.Nat.Sources)
+
+	log.Printf("[DEBUG] Set NAT source IPs to %s for %s", space.Nat.Sources, d.Id())
+
 	return nil
 }
 
@@ -135,14 +172,10 @@ func resourceHerokuSpaceUpdate(d *schema.ResourceData, meta interface{}) error {
 		name := d.Get("name").(string)
 		opts := heroku.SpaceUpdateOpts{Name: &name}
 
-		space, err := client.SpaceUpdate(context.TODO(), d.Id(), opts)
+		_, err := client.SpaceUpdate(context.TODO(), d.Id(), opts)
 		if err != nil {
 			return err
 		}
-
-		// The type conversion here can be dropped when the vendored version of
-		// heroku-go is updated.
-		setSpaceAttributes(d, &spaceWithRanges{Space: *space})
 	}
 
 	if d.HasChange("trusted_ip_ranges") {
@@ -173,13 +206,6 @@ func resourceHerokuSpaceUpdate(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func setSpaceAttributes(d *schema.ResourceData, space *spaceWithRanges) {
-	d.Set("name", space.Name)
-	d.Set("organization", space.Organization.Name)
-	d.Set("region", space.Region.Name)
-	d.Set("trusted_ip_ranges", space.TrustedIPRanges)
-}
-
 func resourceHerokuSpaceDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 
@@ -199,24 +225,38 @@ func SpaceStateRefreshFunc(client *heroku.Service, id string) resource.StateRefr
 	return func() (interface{}, string, error) {
 		space, err := client.SpaceInfo(context.TODO(), id)
 		if err != nil {
+			log.Printf("[DEBUG] %s (%s)", err, id)
 			return nil, "", err
 		}
 
 		s := spaceWithRanges{
 			Space: *space,
 		}
+
 		if space.State == "allocating" {
+			log.Printf("[DEBUG] Still allocating: %s (%s)", space.State, id)
 			return &s, space.State, nil
 		}
 
 		ruleset, err := client.InboundRulesetCurrent(context.TODO(), id)
 		if err != nil {
+			log.Printf("[DEBUG] %s (%s)", err, id)
 			return nil, "", err
 		}
+
 		s.TrustedIPRanges = make([]string, len(ruleset.Rules))
 		for i, r := range ruleset.Rules {
 			s.TrustedIPRanges[i] = r.Source
 		}
+
+		nat, err := client.SpaceNatInfo(context.TODO(), id)
+		if err != nil {
+			return nil, "", err
+		}
+		s.Nat = *nat
+
+		log.Printf("[DEBUG] Outbound NAT IPs: %s (%s)", s.Nat.Sources, id)
+		log.Printf("[DEBUG] Trusted IP ranges: %s (%s)", s.TrustedIPRanges, id)
 
 		return &s, space.State, nil
 	}
