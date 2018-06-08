@@ -58,7 +58,7 @@ resource "heroku_addon" "foobar" {
 
 resource "heroku_addon_attachment" "foobar" {
     app_id   = "${heroku_app.foobar.id}"
-    addon_id = "${heroku_addon.foobar.name}"
+    addon_id = "${heroku_addon.foobar.id}"
 }`, appName)
 }
 
@@ -76,7 +76,7 @@ resource "heroku_addon" "foobar" {
 
 resource "heroku_addon_attachment" "foobar" {
     app_id   = "${heroku_app.foobar.id}"
-    addon_id = "${heroku_addon.foobar.name}"
+    addon_id = "${heroku_addon.foobar.id}"
     name     = "%s"
 }`, appName, name)
 }

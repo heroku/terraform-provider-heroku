@@ -78,7 +78,7 @@ func resourceHerokuAddonAttachmentRead(d *schema.ResourceData, meta interface{})
 	}
 
 	d.Set("app_id", addonattachment.App.Name)
-	d.Set("addon_id", addonattachment.Addon.Name)
+	d.Set("addon_id", addonattachment.Addon.ID)
 	d.Set("name", addonattachment.Name)
 
 	return nil
