@@ -22,7 +22,6 @@ func dataSourceHerokuSpace() *schema.Resource {
 			"outbound_ips": {
 				Type:     schema.TypeList,
 				Computed: true,
-				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
