@@ -4,12 +4,13 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/cyberdelia/heroku-go/v3"
+	heroku "github.com/cyberdelia/heroku-go/v3"
 )
 
 type Config struct {
-	Email  string
-	APIKey string
+	Email   string
+	APIKey  string
+	Headers http.Header
 }
 
 // Client() returns a new Service for accessing Heroku.
@@ -17,9 +18,10 @@ type Config struct {
 func (c *Config) Client() (*heroku.Service, error) {
 	service := heroku.NewService(&http.Client{
 		Transport: &heroku.Transport{
-			Username:  c.Email,
-			Password:  c.APIKey,
-			UserAgent: heroku.DefaultUserAgent,
+			Username:          c.Email,
+			Password:          c.APIKey,
+			UserAgent:         heroku.DefaultUserAgent,
+			AdditionalHeaders: c.Headers,
 		},
 	})
 
