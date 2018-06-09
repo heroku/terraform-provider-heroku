@@ -46,9 +46,10 @@ func resourceHerokuSpace() *schema.Resource {
 			},
 
 			"trusted_ip_ranges": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Computed: true,
 				Optional: true,
+				MinItems: 0,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -91,11 +92,14 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if ranges, ok := d.GetOk("trusted_ip_ranges"); ok {
+		ips := ranges.(*schema.Set)
+
 		var rules []*struct {
 			Action string `json:"action" url:"action,key"`
 			Source string `json:"source" url:"source,key"`
 		}
-		for _, r := range ranges.([]interface{}) {
+
+		for _, r := range ips.List() {
 			rules = append(rules, &struct {
 				Action string `json:"action" url:"action,key"`
 				Source string `json:"source" url:"source,key"`
@@ -110,6 +114,7 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			return fmt.Errorf("Error creating Trusted IP Ranges for Space (%s): %s", space.ID, err)
 		}
+		log.Printf("[DEBUG] Set Trusted IP Ranges to %s for Space %s", ips.List(), d.Id())
 	}
 
 	return resourceHerokuSpaceRead(d, meta)
@@ -124,7 +129,12 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	space := spaceRaw.(*spaceWithRanges)
-	setSpaceAttributes(d, space)
+
+	d.Set("name", space.Name)
+	d.Set("organization", space.Organization.Name)
+	d.Set("region", space.Region.Name)
+	d.Set("trusted_ip_ranges", space.TrustedIPRanges)
+
 	return nil
 }
 
@@ -135,14 +145,10 @@ func resourceHerokuSpaceUpdate(d *schema.ResourceData, meta interface{}) error {
 		name := d.Get("name").(string)
 		opts := heroku.SpaceUpdateOpts{Name: &name}
 
-		space, err := client.SpaceUpdate(context.TODO(), d.Id(), opts)
+		_, err := client.SpaceUpdate(context.TODO(), d.Id(), opts)
 		if err != nil {
 			return err
 		}
-
-		// The type conversion here can be dropped when the vendored version of
-		// heroku-go is updated.
-		setSpaceAttributes(d, &spaceWithRanges{Space: *space})
 	}
 
 	if d.HasChange("trusted_ip_ranges") {
@@ -173,13 +179,6 @@ func resourceHerokuSpaceUpdate(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func setSpaceAttributes(d *schema.ResourceData, space *spaceWithRanges) {
-	d.Set("name", space.Name)
-	d.Set("organization", space.Organization.Name)
-	d.Set("region", space.Region.Name)
-	d.Set("trusted_ip_ranges", space.TrustedIPRanges)
-}
-
 func resourceHerokuSpaceDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 
@@ -199,24 +198,31 @@ func SpaceStateRefreshFunc(client *heroku.Service, id string) resource.StateRefr
 	return func() (interface{}, string, error) {
 		space, err := client.SpaceInfo(context.TODO(), id)
 		if err != nil {
+			log.Printf("[DEBUG] %s (%s)", err, id)
 			return nil, "", err
 		}
 
 		s := spaceWithRanges{
 			Space: *space,
 		}
+
 		if space.State == "allocating" {
+			log.Printf("[DEBUG] Still allocating: %s (%s)", space.State, id)
 			return &s, space.State, nil
 		}
 
 		ruleset, err := client.InboundRulesetCurrent(context.TODO(), id)
 		if err != nil {
+			log.Printf("[DEBUG] %s (%s)", err, id)
 			return nil, "", err
 		}
+
 		s.TrustedIPRanges = make([]string, len(ruleset.Rules))
 		for i, r := range ruleset.Rules {
 			s.TrustedIPRanges[i] = r.Source
 		}
+
+		log.Printf("[DEBUG] Trusted IP ranges: %s (%s)", s.TrustedIPRanges, id)
 
 		return &s, space.State, nil
 	}

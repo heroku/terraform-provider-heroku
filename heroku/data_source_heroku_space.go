@@ -61,7 +61,6 @@ func dataSourceHerokuSpaceRead(d *schema.ResourceData, m interface{}) error {
 	d.SetId(name)
 	d.Set("state", space.State)
 	d.Set("shield", space.Shield)
-	setSpaceAttributes(d, space)
 
-	return nil
+	return resourceHerokuSpaceRead(d, m)
 }
