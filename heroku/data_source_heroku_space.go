@@ -19,6 +19,14 @@ func dataSourceHerokuSpace() *schema.Resource {
 				Computed: true,
 			},
 
+			"outbound_ips": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+
 			"region": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -61,7 +69,6 @@ func dataSourceHerokuSpaceRead(d *schema.ResourceData, m interface{}) error {
 	d.SetId(name)
 	d.Set("state", space.State)
 	d.Set("shield", space.Shield)
-	setSpaceAttributes(d, space)
 
-	return nil
+	return resourceHerokuSpaceRead(d, m)
 }
