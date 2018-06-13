@@ -21,6 +21,9 @@ func TestAccHerokuFormation_importBasic(t *testing.T) {
 			if slugId == "" {
 				t.Skip("HEROKU_SLUG_ID is not set; skipping test.")
 			}
+			if org == "" {
+				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
+			}
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{

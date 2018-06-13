@@ -32,7 +32,6 @@ func TestAccHerokuAppRelease_Basic(t *testing.T) {
 				Config: testAccCheckHerokuAppRelease_Basic(appName, slugId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppReleaseExists("heroku_app_release.foobar-release", &appRelease),
-					testAccCheckHerokuAppReleaseSlugIdAttribute(&appRelease, slugId),
 					resource.TestCheckResourceAttr(
 						"heroku_app_release.foobar-release", "slug_id", slugId),
 				),
@@ -66,7 +65,6 @@ func TestAccHerokuAppRelease_OrgBasic(t *testing.T) {
 				Config: testAccCheckHerokuAppRelease_OrgBasic(appName, org, slugId, desc),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppReleaseExists("heroku_app_release.foobar-release", &appRelease),
-					testAccCheckHerokuAppReleaseSlugIdAttribute(&appRelease, slugId),
 					resource.TestCheckResourceAttr(
 						"heroku_app_release.foobar-release", "slug_id", slugId),
 					resource.TestCheckResourceAttr(
@@ -75,17 +73,6 @@ func TestAccHerokuAppRelease_OrgBasic(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccCheckHerokuAppReleaseSlugIdAttribute(appRelease *heroku.Release, n string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		if appRelease.Slug.ID != n {
-			return fmt.Errorf("[ERROR] App Release slug id incorrect. Found: %s | Expected: %s", appRelease.Slug.ID, n)
-		}
-
-		return nil
-	}
 }
 
 func testAccCheckHerokuAppReleaseExists(n string, appRelease *heroku.Release) resource.TestCheckFunc {
@@ -109,7 +96,7 @@ func testAccCheckHerokuAppReleaseExists(n string, appRelease *heroku.Release) re
 		}
 
 		if foundAppRelease.ID != rs.Primary.ID {
-			return fmt.Errorf("[ERROR] Team Collaborator not found")
+			return fmt.Errorf("[ERROR] App release not found")
 		}
 
 		*appRelease = *foundAppRelease

@@ -17,7 +17,7 @@ A formation represents the formation of processes that should be set for an appl
 - The application must have a dyno in order to update its formation.
 - If the heroku formation resource is removed and deleted, this will be a no-op action in Heroku.
 The Heroku Platform does not have a `DELETE` endpoint for `formation`.
-- This resource works well with the `heroku_app_release` resource, which allows you to deploy a release to an application
+- This resource works well with the `heroku_app_release` resource, which allows you to deploy a slug/release to an application
 before the formation can be updated.
 
 ## Example Usage
@@ -29,7 +29,7 @@ resource "heroku_app" "foobar" {
     region = "us"
 }
 
-# Creates a new release for application foobar using slug id some_slug_id
+# Creates a new release for application foobar using a slug id
 resource "heroku_app_release" "foobar-release" {
     app = "${heroku_app.foobar.name}"
     slug_id = "01234567-89ab-cdef-0123-456789abcdef"

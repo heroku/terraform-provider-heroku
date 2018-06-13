@@ -2,6 +2,7 @@ package heroku
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/resource"
@@ -14,6 +15,7 @@ func resourceHerokuAppRelease() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceHerokuAppReleaseCreate,
 		Read:   resourceHerokuAppReleaseRead,
+		Update: resourceHerokuAppReleaseUpdate,
 		Delete: resourceHerokuAppReleaseDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -27,8 +29,7 @@ func resourceHerokuAppRelease() *schema.Resource {
 				ForceNew: true,
 			},
 
-			// A Heroku release cannot be updated so ForceNew is set on both slug_id & Description
-			"slug_id": {
+			"slug_id": { // An existing Heroku release cannot be updated so ForceNew is required
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
@@ -36,7 +37,6 @@ func resourceHerokuAppRelease() *schema.Resource {
 
 			"description": {
 				Type:     schema.TypeString,
-				ForceNew: true,
 				Optional: true,
 				Computed: true,
 			},
@@ -108,7 +108,21 @@ func resourceHerokuAppReleaseRead(d *schema.ResourceData, meta interface{}) erro
 	return nil
 }
 
-// There's no DELETE endpoint for the release resource so this function will be a no-op.
+// resourceHerokuAppReleaseUpdate will be a no-op method as there is no UPDATE endpoint for the release resource
+// in the Heroku Platform APIs.
+func resourceHerokuAppReleaseUpdate(d *schema.ResourceData, meta interface{}) error {
+	// Detect if [description] attribute changed but not [slug_id]. If such is the case, output error.
+	// If both attributes changed, a new release will be created since [slug_id] is set to ForceNew.
+
+	if !d.HasChange("slug_id") && d.HasChange("description") {
+		return errors.New("you cannot update an existing release's description. Please create a new release instead")
+	}
+
+	return nil
+}
+
+// resourceHerokuAppReleaseDelete will be a no-op method as there is no DELETE endpoint for the release resource
+// in the Heroku Platform APIs.
 func resourceHerokuAppReleaseDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] There is no DELETE for releease resource so this is a no-op. Resource will be removed from state.")
 	return nil

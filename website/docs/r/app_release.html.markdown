@@ -21,6 +21,9 @@ resource "heroku_app" "foobar" {
     name = "foobar"
     region = "us"
 }
+
+# Upload your slug
+
 resource "heroku_app_release" "foobar-release" {
     app = "${heroku_app.foobar.name}"
     slug_id = "01234567-89ab-cdef-0123-456789abcdef"

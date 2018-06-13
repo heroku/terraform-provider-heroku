@@ -41,6 +41,7 @@ func resourceHerokuFormation() *schema.Resource {
 			"app": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 
 			"type": {
@@ -108,7 +109,7 @@ func resourceHerokuFormationCreate(d *schema.ResourceData, meta interface{}) err
 		opts.Quantity = &vs
 	}
 
-	log.Printf("[DEBUG] Creating Heroku formation...")
+	log.Printf(fmt.Sprintf("[DEBUG] Updating %s formation...", appName))
 	f, err := client.FormationUpdate(context.TODO(), appName, getFormationType(d), opts)
 	if err != nil {
 		return err
@@ -154,7 +155,7 @@ func resourceHerokuFormationUpdate(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return err
 	}
-	d.SetId(updatedFormation.Type)
+	d.SetId(updatedFormation.ID)
 
 	d.Partial(false)
 
@@ -181,7 +182,7 @@ func getFormationType(d *schema.ResourceData) string {
 func resourceHerokuFormationRetrieve(id string, appName string, client *heroku.Service) (*formation, error) {
 	formation := formation{Id: id, Client: client}
 
-	err := formation.Update(appName)
+	err := formation.GetInfo(appName)
 
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving formation: %s", err)
@@ -190,7 +191,7 @@ func resourceHerokuFormationRetrieve(id string, appName string, client *heroku.S
 	return &formation, nil
 }
 
-func (f *formation) Update(appName string) error {
+func (f *formation) GetInfo(appName string) error {
 	var errs []error
 	var err error
 

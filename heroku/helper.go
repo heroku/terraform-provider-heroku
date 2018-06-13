@@ -33,7 +33,6 @@ func getEmail(d *schema.ResourceData) string {
 }
 
 func doesHerokuAppExist(appName string, client *heroku.Service) (*heroku.App, error) {
-	log.Printf("app is %s", appName)
 	app, err := client.AppInfo(context.TODO(), appName)
 
 	if err != nil {
