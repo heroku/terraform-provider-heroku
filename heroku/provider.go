@@ -1,8 +1,10 @@
 package heroku
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -23,6 +25,11 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HEROKU_API_KEY", nil),
+			},
+			"headers": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("HEROKU_HEADERS", nil),
 			},
 		},
 
@@ -52,9 +59,22 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
+	headers := make(map[string]string)
+	if h := d.Get("headers").(string); h != "" {
+		if err := json.Unmarshal([]byte(h), &headers); err != nil {
+			return nil, err
+		}
+	}
+
+	h := make(http.Header)
+	for k, v := range headers {
+		h.Set(k, v)
+	}
+
 	config := Config{
-		Email:  d.Get("email").(string),
-		APIKey: d.Get("api_key").(string),
+		Email:   d.Get("email").(string),
+		APIKey:  d.Get("api_key").(string),
+		Headers: h,
 	}
 
 	log.Println("[INFO] Initializing Heroku client")

@@ -37,4 +37,5 @@ The following arguments are supported:
   be sourced from the `HEROKU_API_KEY` environment variable.
 * `email` - (Required) Email to be notified by Heroku. It must be provided, but
   it can also be sourced from the `HEROKU_EMAIL` environment variable.
-
+* `headers` - (Optional) Additional Headers to be sent to Heroku. If not provided,
+  it can also be sourced from the `HEROKU_HEADERS` environment variable.
