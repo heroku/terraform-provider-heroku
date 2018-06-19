@@ -1,14 +1,19 @@
-## 0.2.0 (Unreleased)
+## 1.0.0 (Unreleased)
 
 FEATURES:
 
 * r/heroku_app: Add `acm` field to enable Heroku Automated Certificate Management (ACM) [GH-38]
-* r/heroku_team_collaborator: Add a new team collaborator resource to the provider ([#56](https://github.com/terraform-providers/terraform-provider-heroku/pull/56))
+* r/heroku_team_collaborator: Add a new team collaborator resource ([#56](https://github.com/terraform-providers/terraform-provider-heroku/pull/56))
 * d/heroku_space_peering_info: Add a new data resource for getting VPC peering information for a Heroku private space ([#57](https://github.com/terraform-providers/terraform-provider-heroku/pull/57))
+* r/heroku_app_release: Add a new app release resource ([#62](https://github.com/terraform-providers/terraform-provider-heroku/pull/62))
+* r/heroku_formation: Add a new formation resource ([#62](https://github.com/terraform-providers/terraform-provider-heroku/pull/62))
+* r/heroku_space_peering_request_accepter: Add a new space peering request accepter resource ([#58](https://github.com/terraform-providers/terraform-provider-heroku/pull/58))
 
 IMPROVEMENTS:
 
 * r/heroku_app: Wait until for new release after updating config vars [GH-35]
+* r/heroku_addon_attachment: Fix Attachment Ids
+* r/heroku_space: Add space attributes for outbound IPs and shield
 
 ## 0.1.2 (January 04, 2018)
 

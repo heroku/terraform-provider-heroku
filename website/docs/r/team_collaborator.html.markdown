@@ -13,7 +13,7 @@ resource.
 
 A team collaborator represents an account that has been given access to a team app on Heroku.
 
-~> **NOTE on MySQL Passwords:** Please only use this resource if you have team/organization apps
+~> **NOTE:** Please only use this resource if you have team/organization apps
 
 ## Example Usage
 
