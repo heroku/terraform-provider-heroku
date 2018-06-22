@@ -159,6 +159,7 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("region", space.Region.Name)
 	d.Set("trusted_ip_ranges", space.TrustedIPRanges)
 	d.Set("outbound_ips", space.Nat.Sources)
+	d.Set("shield", space.Shield)
 
 	log.Printf("[DEBUG] Set NAT source IPs to %s for %s", space.Nat.Sources, d.Id())
 
