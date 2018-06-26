@@ -232,6 +232,17 @@ func resourceHerokuFormationImport(d *schema.ResourceData, meta interface{}) ([]
 	return []*schema.ResourceData{d}, nil
 }
 
+// Guarantees a consistent format for the string that describes the
+// size of a dyno. A formation's size can be "free" or "standard-1x"
+// or "Private-M".
+//
+// Heroku's PATCH formation endpoint accepts lowercase but
+// returns the capitalised version. This ensures consistent
+// capitalisation for state.
+//
+// For all supported dyno types see:
+// https://devcenter.heroku.com/articles/dyno-types
+// https://devcenter.heroku.com/articles/heroku-enterprise#available-dyno-types
 func formatSize(quant interface{}) string {
 	if quant == nil || quant == (*string)(nil) {
 		return ""
@@ -247,21 +258,14 @@ func formatSize(quant interface{}) string {
 		return ""
 	}
 
-	/**
-	A formation's size can be "standard-1x" or "Private-M". The goal of this method will be to
-	split the size, capitalize zero index and then toUpper the first index to get the end result of "Standard-1X".
-	This is needed because Heroku's PATCH formation endpoint accepts lowercase but returns the formatted
-	version which causes state file issues.
-	*/
-	splittedString := strings.Split(rawQuant, "-")
+	// Capitalise the first descriptor, uppercase the remaining descriptors
 	var formattedSlice []string
-
-	for i := 0; i < 2; i++ { // There will only ever be two elements
+	s := strings.Split(rawQuant, "-")
+	for i := range s {
 		if i == 0 {
-			// Capitalize the first element
-			formattedSlice = append(formattedSlice, strings.Title(splittedString[i]))
+			formattedSlice = append(formattedSlice, strings.Title(s[i]))
 		} else {
-			formattedSlice = append(formattedSlice, strings.ToUpper(splittedString[i]))
+			formattedSlice = append(formattedSlice, strings.ToUpper(s[i]))
 		}
 	}
 
