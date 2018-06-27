@@ -1,4 +1,9 @@
 ## 1.0.1 (Unreleased)
+
+Fixes:
+
+* Ensure Shield attribute is imported for spaces [#76](https://github.com/terraform-providers/terraform-provider-heroku/pull/76)
+
 ## 1.0.0 (June 19, 2018)
 
 FEATURES:
