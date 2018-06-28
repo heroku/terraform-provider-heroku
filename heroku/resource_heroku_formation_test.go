@@ -33,7 +33,7 @@ func TestAccHerokuFormationSingleUpdate_WithOrg(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuFormationConfig_WithOrg(org, appName, slugId),
+				Config: testAccCheckHerokuFormationConfig_WithOrg(org, appName, slugId, "standard-2x", 2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuFormationExists("heroku_formation.foobar-web", &formation),
 					testAccCheckHerokuFormationSizeAttribute(&formation, "Standard-2X"),
@@ -45,6 +45,37 @@ func TestAccHerokuFormationSingleUpdate_WithOrg(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccHerokuFormationUpdateFreeDyno(t *testing.T) {
+	var formation heroku.Formation
+
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	slugId := os.Getenv("HEROKU_SLUG_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			if slugId == "" {
+				t.Skip("HEROKU_SLUG_ID is not set; skipping test.")
+			}
+		},
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuFormationConfig_WithOrg("", appName, slugId, "free", 1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuFormationExists("heroku_formation.foobar-web", &formation),
+					testAccCheckHerokuFormationSizeAttribute(&formation, "Free"),
+					resource.TestCheckResourceAttr(
+						"heroku_formation.foobar-web", "size", "Free"),
+					resource.TestCheckResourceAttr(
+						"heroku_formation.foobar-web", "quantity", "1"),
+				),
+			},
+		},
+	})
+
 }
 
 func testAccCheckHerokuFormationExists(n string, formation *heroku.Formation) resource.TestCheckFunc {
@@ -88,7 +119,7 @@ func testAccCheckHerokuFormationSizeAttribute(formation *heroku.Formation, n str
 	}
 }
 
-func testAccCheckHerokuFormationConfig_WithOrg(org, appName, slugId string) string {
+func testAccCheckHerokuFormationConfig_WithOrg(org, appName, slugId, dynoSize string, dynoQuant int) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
@@ -104,8 +135,8 @@ resource "heroku_app_release" "foobar-release" {
 resource "heroku_formation" "foobar-web" {
 	app = "${heroku_app.foobar.name}"
 	type = "web"
-	quantity = 2
-	size = "standard-2x"
+	size = "%s"
+	quantity = %d
 }
-`, appName, org, slugId)
+`, appName, org, slugId, dynoSize, dynoQuant)
 }
