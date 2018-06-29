@@ -16,28 +16,28 @@ import (
 
 // herokuApplication is a value type used to hold the details of an
 // application. We use this for common storage of values needed for the
-// heroku.App and heroku.OrganizationApp types
+// heroku.App and heroku.TeamApp types
 type herokuApplication struct {
-	Name             string
-	Region           string
-	Space            string
-	Stack            string
-	GitURL           string
-	WebURL           string
-	OrganizationName string
-	Locked           bool
-	Acm              bool
+	Name     string
+	Region   string
+	Space    string
+	Stack    string
+	GitURL   string
+	WebURL   string
+	TeamName string
+	Locked   bool
+	Acm      bool
 }
 
 // type application is used to store all the details of a heroku app
 type application struct {
 	Id string // Id of the resource
 
-	App          *herokuApplication // The heroku application
-	Client       *heroku.Service    // Client to interact with the heroku API
-	Vars         map[string]string  // The vars on the application
-	Buildpacks   []string           // The application's buildpack names or URLs
-	Organization bool               // is the application organization app
+	App        *herokuApplication // The heroku application
+	Client     *heroku.Service    // Client to interact with the heroku API
+	Vars       map[string]string  // The vars on the application
+	Buildpacks []string           // The application's buildpack names or URLs
+	Team       bool               // is the application team/organization
 }
 
 // Updates the application to have the latest from remote
@@ -59,16 +59,18 @@ func (a *application) Update() error {
 		if app.Space != nil {
 			a.App.Space = app.Space.Name
 		}
-		if app.Organization != nil {
-			a.App.OrganizationName = app.Organization.Name
+
+		if app.Team != nil {
+			a.App.TeamName = app.Team.Name
+		} else if app.Organization != nil {
+			a.App.TeamName = app.Organization.Name
 		} else {
 			log.Println("[DEBUG] Something is wrong - didn't get information about organization name, while the app is marked as being so")
 		}
-
 	}
 
-	if app.Organization != nil {
-		a.App.Locked, err = retrieveOrgLockState(a.Id, app.Organization.Name, a.Client)
+	if app.Team != nil {
+		a.App.Locked, err = retrieveTeamLockState(a.Id, app.TeamName, a.Client)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -170,9 +172,38 @@ func resourceHerokuApp() *schema.Resource {
 			},
 
 			"organization": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
+				Type:          schema.TypeList,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: "team",
+				Deprecated:    "Heroku has deprecated organizations. Use team instead.",
+				MaxItems:      1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+
+						"locked": {
+							Type:     schema.TypeBool,
+							Optional: true,
+						},
+
+						"personal": {
+							Type:     schema.TypeBool,
+							Optional: true,
+						},
+					},
+				},
+			},
+
+			"team": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: "organization",
+				MaxItems:      1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -196,9 +227,13 @@ func resourceHerokuApp() *schema.Resource {
 	}
 }
 
-func isOrganizationApp(d *schema.ResourceData) bool {
-	v := d.Get("organization").([]interface{})
-	return len(v) > 0 && v[0] != nil
+func isTeamApp(d *schema.ResourceData) bool {
+	// The "team" and "organization" attributes are synonyms. Organizations have been deprecated
+	// by heroku and should no longer be used.
+	// See https://devcenter.heroku.com/changelog-items/1132
+	org := d.Get("organization").([]interface{})
+	team := d.Get("team").([]interface{})
+	return ((len(org) > 0 && org[0] != nil) || (len(team) > 0 && team[0] != nil))
 }
 
 func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -209,10 +244,19 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 		return nil, err
 	}
 
-	// Flag organization apps by setting the organization name
-	if app.Organization != nil {
-		d.Set("organization", []map[string]interface{}{
-			{"name": app.Organization.Name},
+	// @joestump 06/29/2018 Heroku has deprecated organizations. This will set the "name" attribute
+	// on the "team" map to the team name if it exists with organization name as fallback.
+	// See https://github.com/cyberdelia/heroku-go/pull/27#issuecomment-401399969
+	teamName := ""
+	if app.Team != nil {
+		teamName = app.Team.Name
+	} else if app.Organization {
+		teamName = app.Organization.Name
+	}
+
+	if teamName != "" {
+		d.Set("team", []map[string]interface{}{
+			{"name": teamName},
 		})
 	}
 
@@ -227,8 +271,8 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 }
 
 func switchHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
-	if isOrganizationApp(d) {
-		return resourceHerokuOrgAppCreate(d, meta)
+	if isTeamApp(d) {
+		return resourceHerokuTeamAppCreate(d, meta)
 	}
 
 	return resourceHerokuAppCreate(d, meta)
@@ -272,32 +316,34 @@ func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourceHerokuAppRead(d, meta)
 }
 
-func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceHerokuTeamAppCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
-	// Build up our creation options
-	opts := heroku.OrganizationAppCreateOpts{}
 
-	v := d.Get("organization").([]interface{})
-	if len(v) > 1 {
-		return fmt.Errorf("Error Creating Heroku App: Only 1 Heroku Organization is permitted")
+	opts := heroku.TeamAppCreateOpts{}
+
+	if v, ok := d.GetOk("team"); ok {
+		v := d.Get("team").([]interface{})
+	} else if v, ok := d.GetOk("organization"); ok {
+		v := d.Get("organization").([]interface{})
 	}
-	orgDetails := v[0].(map[string]interface{})
 
-	if v := orgDetails["name"]; v != nil {
+	teamDetails := v[0].(map[string]interface{})
+
+	if v := teamDetails["name"]; v != nil {
 		vs := v.(string)
-		log.Printf("[DEBUG] Organization name: %s", vs)
-		opts.Organization = &vs
+		log.Printf("[DEBUG] Team Name: %s", vs)
+		opts.Team = &vs
 	}
 
-	if v := orgDetails["personal"]; v != nil {
+	if v := teamDetails["personal"]; v != nil {
 		vs := v.(bool)
-		log.Printf("[DEBUG] Organization Personal: %t", vs)
+		log.Printf("[DEBUG] Team Personal: %t", vs)
 		opts.Personal = &vs
 	}
 
-	if v := orgDetails["locked"]; v != nil {
+	if v := teamDetails["locked"]; v != nil {
 		vs := v.(bool)
-		log.Printf("[DEBUG] Organization locked: %t", vs)
+		log.Printf("[DEBUG] Team locked: %t", vs)
 		opts.Locked = &vs
 	}
 
@@ -306,24 +352,27 @@ func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error 
 		log.Printf("[DEBUG] App name: %s", vs)
 		opts.Name = &vs
 	}
+
 	if v, ok := d.GetOk("region"); ok {
 		vs := v.(string)
 		log.Printf("[DEBUG] App region: %s", vs)
 		opts.Region = &vs
 	}
+
 	if v, ok := d.GetOk("space"); ok {
 		vs := v.(string)
 		log.Printf("[DEBUG] App space: %s", vs)
 		opts.Space = &vs
 	}
+
 	if v, ok := d.GetOk("stack"); ok {
 		vs := v.(string)
 		log.Printf("[DEBUG] App stack: %s", vs)
 		opts.Stack = &vs
 	}
 
-	log.Printf("[DEBUG] Creating Heroku app...")
-	a, err := client.OrganizationAppCreate(context.TODO(), opts)
+	log.Printf("[DEBUG] Creating Heroku Team App...")
+	a, err := client.TeamAppCreate(context.TODO(), opts)
 	if err != nil {
 		return err
 	}
@@ -338,15 +387,15 @@ func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error 
 	return resourceHerokuAppRead(d, meta)
 }
 
-func setOrganizationDetails(d *schema.ResourceData, app *application) (err error) {
+func setTeamDetails(d *schema.ResourceData, app *application) (err error) {
 	d.Set("space", app.App.Space)
 
-	orgDetails := map[string]interface{}{
-		"name":     app.App.OrganizationName,
+	teamDetails := map[string]interface{}{
+		"name":     app.App.TeamName,
 		"locked":   app.App.Locked,
 		"personal": false,
 	}
-	err = d.Set("organization", []interface{}{orgDetails})
+	err = d.Set("team", []interface{}{orgDetails})
 	return err
 }
 
@@ -370,11 +419,11 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	// Only track buildpacks when set in the configuration.
 	_, buildpacksConfigured := d.GetOk("buildpacks")
 
-	organizationApp := isOrganizationApp(d)
+	teamApp := isTeamApp(d)
 
 	// Only set the config_vars that we have set in the configuration.
 	// The "all_config_vars" field has all of them.
-	app, err := resourceHerokuAppRetrieve(d.Id(), organizationApp, client)
+	app, err := resourceHerokuAppRetrieve(d.Id(), teamApp, client)
 	if err != nil {
 		return err
 	}
@@ -413,8 +462,8 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[WARN] Error setting all_config_vars: %s", err)
 	}
 
-	if organizationApp {
-		setOrganizationDetails(d, app)
+	if teamApp {
+		setTeamDetails(d, app)
 	}
 
 	setAppDetails(d, app)
@@ -515,8 +564,8 @@ func resourceHerokuAppExists(d *schema.ResourceData, meta interface{}) (bool, er
 	var err error
 	client := meta.(*heroku.Service)
 
-	if isOrganizationApp(d) {
-		_, err = client.OrganizationAppInfo(context.TODO(), d.Id())
+	if isTeamApp(d) {
+		_, err = client.TeamAppInfo(context.TODO(), d.Id())
 	} else {
 		_, err = client.AppInfo(context.TODO(), d.Id())
 	}
@@ -531,8 +580,8 @@ func resourceHerokuAppExists(d *schema.ResourceData, meta interface{}) (bool, er
 	return true, nil
 }
 
-func resourceHerokuAppRetrieve(id string, organization bool, client *heroku.Service) (*application, error) {
-	app := application{Id: id, Client: client, Organization: organization}
+func resourceHerokuAppRetrieve(id string, team bool, client *heroku.Service) (*application, error) {
+	app := application{Id: id, Client: client, Team: organization}
 
 	err := app.Update()
 
@@ -543,8 +592,8 @@ func resourceHerokuAppRetrieve(id string, organization bool, client *heroku.Serv
 	return &app, nil
 }
 
-func retrieveOrgLockState(id, org string, client *heroku.Service) (bool, error) {
-	app, err := client.OrganizationAppInfo(context.TODO(), id)
+func retrieveTeamLockState(id, team string, client *heroku.Service) (bool, error) {
+	app, err := client.TeamAppInfo(context.TODO(), id)
 	if err != nil {
 		return false, err
 	}
@@ -658,7 +707,7 @@ func updateAcm(id string, client *heroku.Service, enabled bool) error {
 	return nil
 }
 
-// performAppPostCreateTasks performs post-create tasks common to both org and non-org apps.
+// performAppPostCreateTasks performs post-create tasks common to both team/org and non-org apps.
 func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) error {
 	if v, ok := d.GetOk("config_vars"); ok {
 		if err := updateConfigVars(d.Id(), client, nil, v.([]interface{})); err != nil {
@@ -673,7 +722,7 @@ func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) e
 	}
 
 	if v, ok := d.GetOk("acm"); ok {
-		if _, ok := d.GetOk("organization"); !ok {
+		if _, ok := d.GetOk("team"); !ok {
 			log.Printf("You ask me to enable ACM for a non-organization app. This will most likely fail, due to the Heroku constraints (the app has to be scaled to Standard-1X - state of 28.01.2018)")
 		}
 		if err := updateAcm(d.Id(), client, v.(bool)); err != nil {
