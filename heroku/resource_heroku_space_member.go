@@ -119,16 +119,17 @@ func spaceAppAccessPermissionsToSchemaSet(spaceAppAccess *heroku.SpaceAppAccess)
 	return perms
 }
 
-type permissionUpdateItem = struct {
-	Name *string `json:"name,omitempty" url:"name,omitempty,key"`
-}
-
+//The choice of using anonymous structs in heroku-go should be re-visited...
 func permissionsSchemaSetToSpaceAppAccessUpdateOpts(permSet *schema.Set) heroku.SpaceAppAccessUpdateOpts {
-	permissions := make([]*permissionUpdateItem, 0)
+	permissions := make([]*struct {
+		Name *string `json:"name,omitempty" url:"name,omitempty,key"`
+	}, 0)
 	opts := heroku.SpaceAppAccessUpdateOpts{Permissions: permissions}
 	for _, perm := range permSet.List() {
 		permName := perm.(string)
-		permOpt := permissionUpdateItem{Name: &permName}
+		permOpt := struct {
+			Name *string `json:"name,omitempty" url:"name,omitempty,key"`
+		}{&permName}
 		opts.Permissions = append(opts.Permissions, &permOpt)
 	}
 	return opts
