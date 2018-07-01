@@ -21,17 +21,17 @@ resource "heroku_space" "default" {
   region = "virginia"
 }
 
-// Create a new Heroku app in test-space
+// Give an existing team member create_apps permissions to the space
 resource "heroku_space_member" "member1" {
   space = "${heroku_space.default.name}"
   email = "member1@foobar.com"
   permissions = ["create_apps"]
 }
 
+// Remove an existing team members permissions to the space
 resource "heroku_space_member" "member2" {
   space = "${heroku_space.default.name}"
   email = "member2@foobar.com"
-  permissions = ["create_apps"]
 }
 ```
 
@@ -41,4 +41,4 @@ The following arguments are supported:
 
 * `space` - (Required) The name of the space.
 * `email` - (Required) The email of the team member to set permissions for.
-* `permissions` - (Required) The permissions to grant the team member. Currently `create_apps` is the only supported permission.
+* `permissions` - (Optional) The permissions to grant the team member. Currently `create_apps` is the only supported permission. If not provided the member will have no permissions to the space (Note that members with the admin role are unaffected)
