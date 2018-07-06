@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	heroku "github.com/cyberdelia/heroku-go/v3"
@@ -112,10 +113,18 @@ func TestAccHerokuSpace_IPRange(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				ResourceName: "heroku_space.foobar",
-				Config:       testAccCheckHerokuSpaceConfig_iprange(spaceName, org),
+				Config:       testAccCheckHerokuSpaceConfig_iprange(spaceName, org, []string{"8.8.8.8/32"}),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
 					resource.TestCheckResourceAttr("heroku_space.foobar", "trusted_ip_ranges.#", "1"),
+				),
+			},
+			{
+				ResourceName: "heroku_space.foobar",
+				Config:       testAccCheckHerokuSpaceConfig_iprange(spaceName, org, []string{"8.8.8.8/32", "8.8.8.0/24"}),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
+					resource.TestCheckResourceAttr("heroku_space.foobar", "trusted_ip_ranges.#", "2"),
 				),
 			},
 		},
@@ -147,14 +156,16 @@ resource "heroku_space" "foobar" {
 `, spaceName, orgName)
 }
 
-func testAccCheckHerokuSpaceConfig_iprange(spaceName, orgName string) string {
+func testAccCheckHerokuSpaceConfig_iprange(spaceName, orgName string, ips []string) string {
+	ipsStr := fmt.Sprintf("\"%s\"", strings.Join(ips, "\", \""))
 	return fmt.Sprintf(`
 resource "heroku_space" "foobar" {
   name         = "%s"
   organization = "%s"
   region       = "virginia"
+  trusted_ip_ranges = [%s]
 }
-`, spaceName, orgName)
+`, spaceName, orgName, ipsStr)
 }
 
 func testAccCheckHerokuSpaceExists(n string, space *heroku.Space) resource.TestCheckFunc {

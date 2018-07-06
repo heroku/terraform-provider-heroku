@@ -184,8 +184,8 @@ func resourceHerokuSpaceUpdate(d *schema.ResourceData, meta interface{}) error {
 			Action string `json:"action" url:"action,key"`
 			Source string `json:"source" url:"source,key"`
 		}
-		ranges := d.Get("trusted_ip_ranges")
-		for _, r := range ranges.([]interface{}) {
+		ranges := d.Get("trusted_ip_ranges").(*schema.Set)
+		for _, r := range ranges.List() {
 			rules = append(rules, &struct {
 				Action string `json:"action" url:"action,key"`
 				Source string `json:"source" url:"source,key"`
