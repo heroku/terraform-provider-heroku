@@ -70,7 +70,7 @@ func (a *application) Update() error {
 	}
 
 	if app.Team != nil {
-		a.App.Locked, err = retrieveTeamLockState(a.Id, app.TeamName, a.Client)
+		a.App.Locked, err = retrieveTeamLockState(a.Id, app.Team.Name, a.Client)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -175,7 +175,7 @@ func resourceHerokuApp() *schema.Resource {
 				Type:          schema.TypeList,
 				Optional:      true,
 				ForceNew:      true,
-				ConflictsWith: "team",
+				ConflictsWith: []string{"team"},
 				Deprecated:    "Heroku has deprecated organizations. Use team instead.",
 				MaxItems:      1,
 				Elem: &schema.Resource{
@@ -202,7 +202,7 @@ func resourceHerokuApp() *schema.Resource {
 				Type:          schema.TypeList,
 				Optional:      true,
 				ForceNew:      true,
-				ConflictsWith: "organization",
+				ConflictsWith: []string{"organization"},
 				MaxItems:      1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -250,7 +250,7 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	teamName := ""
 	if app.Team != nil {
 		teamName = app.Team.Name
-	} else if app.Organization {
+	} else if app.Organization != nil {
 		teamName = app.Organization.Name
 	}
 
@@ -321,13 +321,16 @@ func resourceHerokuTeamAppCreate(d *schema.ResourceData, meta interface{}) error
 
 	opts := heroku.TeamAppCreateOpts{}
 
-	if v, ok := d.GetOk("team"); ok {
-		v := d.Get("team").([]interface{})
-	} else if v, ok := d.GetOk("organization"); ok {
-		v := d.Get("organization").([]interface{})
+	var t []interface{}
+	if _, ok := d.GetOk("team"); ok {
+		t = d.Get("team").([]interface{})
+	} else if _, ok := d.GetOk("organization"); ok {
+		t = d.Get("organization").([]interface{})
+	} else {
+		return fmt.Errorf("Cannot create team app without team/org information")
 	}
 
-	teamDetails := v[0].(map[string]interface{})
+	teamDetails := t[0].(map[string]interface{})
 
 	if v := teamDetails["name"]; v != nil {
 		vs := v.(string)
@@ -395,7 +398,8 @@ func setTeamDetails(d *schema.ResourceData, app *application) (err error) {
 		"locked":   app.App.Locked,
 		"personal": false,
 	}
-	err = d.Set("team", []interface{}{orgDetails})
+
+	err = d.Set("team", []interface{}{teamDetails})
 	return err
 }
 
@@ -581,7 +585,7 @@ func resourceHerokuAppExists(d *schema.ResourceData, meta interface{}) (bool, er
 }
 
 func resourceHerokuAppRetrieve(id string, team bool, client *heroku.Service) (*application, error) {
-	app := application{Id: id, Client: client, Team: organization}
+	app := application{Id: id, Client: client, Team: team}
 
 	err := app.Update()
 
