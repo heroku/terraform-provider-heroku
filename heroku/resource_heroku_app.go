@@ -172,7 +172,7 @@ func resourceHerokuApp() *schema.Resource {
 			},
 
 			"organization": {
-				Type:          schema.TypeList,
+				Type:          schema.TypeMap,
 				Optional:      true,
 				ForceNew:      true,
 				ConflictsWith: []string{"team"},
@@ -199,7 +199,7 @@ func resourceHerokuApp() *schema.Resource {
 			},
 
 			"team": {
-				Type:          schema.TypeList,
+				Type:          schema.TypeMap,
 				Optional:      true,
 				ForceNew:      true,
 				ConflictsWith: []string{"organization"},
@@ -400,7 +400,16 @@ func setTeamDetails(d *schema.ResourceData, app *application) (err error) {
 	}
 
 	err = d.Set("team", []interface{}{teamDetails})
-	return err
+	if err != nil {
+		return err
+	}
+
+	// @joestump 07/06/2018 Set both team and organization attributes for
+	// backwards compatibility.
+	err = d.Set("organization", []interface{}{teamDetails})
+	if err != nil {
+		return err
+	}
 }
 
 func setAppDetails(d *schema.ResourceData, app *application) (err error) {

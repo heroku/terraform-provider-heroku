@@ -68,8 +68,10 @@ func dataSourceHerokuApp() *schema.Resource {
 			},
 
 			"organization": {
-				Type:     schema.TypeList,
-				Computed: true,
+				Type:          schema.TypeMap,
+				Computed:      true,
+				ConflictsWith: []string{"team"},
+				Deprecated:    "Heroku has deprecated organizations. Use team instead.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -85,6 +87,32 @@ func dataSourceHerokuApp() *schema.Resource {
 						"personal": {
 							Type:     schema.TypeBool,
 							Computed: true,
+						},
+					},
+				},
+			},
+
+			"team": {
+				Type:          schema.TypeMap,
+				Computed:      true,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"organization"},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+
+						"locked": {
+							Type:     schema.TypeBool,
+							Optional: true,
+						},
+
+						"personal": {
+							Type:     schema.TypeBool,
+							Optional: true,
 						},
 					},
 				},
