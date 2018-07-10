@@ -1,4 +1,10 @@
-## 1.1.0 (Unreleased)
+## 1.0.2 (Unreleased)
+
+BUG FIXES:
+
+* r/heroku_formation: Add support for Free/Hobby Dyno Types [#80](https://github.com/terraform-providers/terraform-provider-heroku/pull/80)
+* r/heroku_space: Fixed interface conversion panic applying changed trusted ips [#88](https://github.com/terraform-providers/terraform-provider-heroku/pull/88)
+
 ## 1.0.1 (June 27, 2018)
 
 BUG FIXES:
