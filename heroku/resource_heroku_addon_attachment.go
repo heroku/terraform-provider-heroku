@@ -20,7 +20,7 @@ func resourceHerokuAddonAttachment() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 
-		SchemaVersion: 1, // TODO: experimental
+		SchemaVersion: 1,
 		MigrateState:  resourceHerokuAddonAttachmentMigrateState,
 
 		Schema: map[string]*schema.Schema{

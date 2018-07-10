@@ -29,7 +29,7 @@ func migrateAddonAttachmentStateV0toV1(is *terraform.InstanceState, client *hero
 		return is, nil
 	}
 
-	log.Printf("[DEBUG] Attributes before migration: %#v", is.Attributes)
+	log.Printf("[DEBUG] Addon Attachment Attributes before migration: %#v", is.Attributes)
 
 	attachmentAppId := is.Attributes["app_id"]
 	attachmentAddOnId := is.Attributes["id"]
@@ -45,7 +45,7 @@ func migrateAddonAttachmentStateV0toV1(is *terraform.InstanceState, client *hero
 		is.Attributes["addon_id"] = addonId
 	}
 
-	log.Printf("[DEBUG] Attributes after migration: %#v", is.Attributes)
+	log.Printf("[DEBUG] Addon Attachment Attributes after migration: %#v", is.Attributes)
 
 	return is, nil
 }
