@@ -109,6 +109,10 @@ func resourceHerokuSpaceInboundRulesetDelete(d *schema.ResourceData, meta interf
 
 	spaceIdentity := d.Get("space").(string)
 
+	// Heroku Private Spaces ship with a default 0.0.0.0/0 inbound ruleset. An HPS *MUST* have
+	// an inbound ruleset. There's no delete API method for this. So when we "delete" the ruleset
+	// we reset things back to what Heroku sets when the HPS is created. Given that the default
+	// allows all traffic from all places, this is akin to deleting all filtering.
 	var rules []*struct {
 		Action string `json:"action" url:"action,key"`
 		Source string `json:"source" url:"source,key"`
