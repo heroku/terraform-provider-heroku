@@ -3,7 +3,6 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	heroku "github.com/cyberdelia/heroku-go/v3"
