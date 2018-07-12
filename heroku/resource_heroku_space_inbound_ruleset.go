@@ -23,7 +23,7 @@ func resourceHerokuSpaceInboundRuleset() *schema.Resource {
 			},
 
 			"rule": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Required: true,
 				MinItems: 1,
 				Elem: &schema.Resource{
@@ -98,6 +98,7 @@ func resourceHerokuSpaceInboundRulesetRead(d *schema.ResourceData, meta interfac
 		rulesList = append(rulesList, values)
 	}
 
+	d.SetId(ruleset.ID)
 	d.Set("rule", rulesList)
 
 	return nil
