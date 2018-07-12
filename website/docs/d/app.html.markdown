@@ -14,7 +14,7 @@ Use this data source to get information about a Heroku App.
 
 ```hcl
 # Create a new Heroku app
-data "heroku_app" "default"
+data "heroku_app" "default" {
   name   = "my-cool-app"
 }
 ```

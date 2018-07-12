@@ -159,6 +159,7 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("region", space.Region.Name)
 	d.Set("trusted_ip_ranges", space.TrustedIPRanges)
 	d.Set("outbound_ips", space.Nat.Sources)
+	d.Set("shield", space.Shield)
 
 	log.Printf("[DEBUG] Set NAT source IPs to %s for %s", space.Nat.Sources, d.Id())
 
@@ -183,8 +184,8 @@ func resourceHerokuSpaceUpdate(d *schema.ResourceData, meta interface{}) error {
 			Action string `json:"action" url:"action,key"`
 			Source string `json:"source" url:"source,key"`
 		}
-		ranges := d.Get("trusted_ip_ranges")
-		for _, r := range ranges.([]interface{}) {
+		ranges := d.Get("trusted_ip_ranges").(*schema.Set)
+		for _, r := range ranges.List() {
 			rules = append(rules, &struct {
 				Action string `json:"action" url:"action,key"`
 				Source string `json:"source" url:"source,key"`

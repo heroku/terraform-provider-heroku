@@ -1,4 +1,18 @@
-## 1.0.1 (Unreleased)
+## 1.0.3 (Unreleased)
+## 1.0.2 (July 10, 2018)
+
+BUG FIXES:
+
+* r/heroku_formation: Add support for Free/Hobby Dyno Types [#80](https://github.com/terraform-providers/terraform-provider-heroku/pull/80)
+* r/heroku_space: Fixed interface conversion panic applying changed trusted ips [#88](https://github.com/terraform-providers/terraform-provider-heroku/pull/88)
+
+## 1.0.1 (June 27, 2018)
+
+BUG FIXES:
+
+* r/heroku_space: Fix bug [#75](https://github.com/terraform-providers/terraform-provider-heroku/issues/75) in [#76](https://github.com/terraform-providers/terraform-provider-heroku/pull/76) that caused Terraform plans to destroy existing Heroku Private Spaces
+
+
 ## 1.0.0 (June 19, 2018)
 
 FEATURES:
