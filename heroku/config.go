@@ -3,6 +3,7 @@ package heroku
 import (
 	"log"
 	"net/http"
+	"os"
 
 	heroku "github.com/cyberdelia/heroku-go/v3"
 )
@@ -13,15 +14,19 @@ type Config struct {
 	Headers http.Header
 }
 
-// Client() returns a new Service for accessing Heroku.
-//
+// Client returns a new Service for accessing Heroku.
 func (c *Config) Client() (*heroku.Service, error) {
+	var debugHTTP = false
+	if os.Getenv("TF_LOG") == "TRACE" || os.Getenv("TF_LOG") == "DEBUG" {
+		debugHTTP = true
+	}
 	service := heroku.NewService(&http.Client{
 		Transport: &heroku.Transport{
 			Username:          c.Email,
 			Password:          c.APIKey,
 			UserAgent:         heroku.DefaultUserAgent,
 			AdditionalHeaders: c.Headers,
+			Debug:             debugHTTP,
 		},
 	})
 

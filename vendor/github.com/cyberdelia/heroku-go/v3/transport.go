@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
-	"os"
 	"strings"
 
 	"github.com/pborman/uuid"
@@ -80,8 +79,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		if err != nil {
 			log.Println(err)
 		} else {
-			os.Stderr.Write(dump)
-			os.Stderr.Write([]byte{'\n', '\n'})
+			log.Printf("%s", dump)
 		}
 	}
 
@@ -98,8 +96,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		if err != nil {
 			log.Println(err)
 		} else {
-			os.Stderr.Write(dump)
-			os.Stderr.Write([]byte{'\n'})
+			log.Printf("%s", dump)
 		}
 	}
 
