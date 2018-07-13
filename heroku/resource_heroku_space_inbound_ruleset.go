@@ -100,6 +100,7 @@ func resourceHerokuSpaceInboundRulesetRead(d *schema.ResourceData, meta interfac
 
 	d.SetId(ruleset.ID)
 	d.Set("rule", rulesList)
+	d.Set("space", ruleset.Space.Name)
 
 	return nil
 }
@@ -128,7 +129,7 @@ func resourceHerokuSpaceInboundRulesetDelete(d *schema.ResourceData, meta interf
 
 	_, err := client.InboundRulesetCreate(context.TODO(), spaceIdentity, heroku.InboundRulesetCreateOpts{Rules: rules})
 	if err != nil {
-		return fmt.Errorf("Error resettting inbound ruleset for space (%s): %s", spaceIdentity, err)
+		return fmt.Errorf("Error resetting inbound ruleset for space (%s): %s", spaceIdentity, err)
 	}
 
 	d.SetId("")
