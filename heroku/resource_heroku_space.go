@@ -62,10 +62,11 @@ func resourceHerokuSpace() *schema.Resource {
 			},
 
 			"trusted_ip_ranges": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Optional: true,
-				MinItems: 0,
+				Type:       schema.TypeSet,
+				Computed:   true,
+				Optional:   true,
+				MinItems:   0,
+				Deprecated: "This attribute is deprecated in favor of heroku_space_inbound_ruleset. Using both at the same time will likely cause unexpected behavior.",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},

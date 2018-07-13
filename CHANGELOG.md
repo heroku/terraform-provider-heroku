@@ -1,4 +1,13 @@
-## 1.0.3 (Unreleased)
+## 1.1.0 (Unreleased)
+
+FEATURES:
+
+* r/heroku_space_inbound_ruleset: Add a new resource for managing [inbound IP rulesets](https://devcenter.heroku.com/articles/platform-api-reference#inbound-ruleset) for Heroku Private Spaces ([#91](https://github.com/terraform-providers/terraform-provider-heroku/pull/91))
+
+IMPROVEMENTS:
+
+* HTTP headers are now shown when `TF_LOG` is set to `DEBUG` or `TRACE` [#89](https://github.com/terraform-providers/terraform-provider-heroku/pull/89)
+
 ## 1.0.2 (July 10, 2018)
 
 BUG FIXES:
