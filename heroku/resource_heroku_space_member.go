@@ -45,79 +45,75 @@ func resourceHerokuSpaceMember() *schema.Resource {
 	}
 }
 
-//There's no actual method to create a space member, so we actually just need to import
+//callback for schema Resource.Create
+//There's no actual method to create a space member, so we just need to import
 //the existing member into the state and update if needed.
 func resourceHerokuSpaceMemberCreate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] lifecycle `Create`")
-	client := meta.(*heroku.Service)
-	space := d.Get("space").(string)
-	email := d.Get("email").(string)
-	spaceAppAccess, err := client.SpaceAppAccessInfo(context.TODO(), space, email)
-	log.Printf("[DEBUG] lifecycle `Create` retrieved data %s", spew.Sdump(spaceAppAccess))
+	_, err := syncSpaceAppAccessInfo(d.Get("email").(string), d, meta)
 	if err != nil {
 		return err
 	}
-	d.SetId(spaceAppAccess.User.ID)
-	d.Set("space", spaceAppAccess.Space.Name)
-	d.Set("email", spaceAppAccess.User.Email)
-	log.Printf("[DEBUG] lifecycle `Create` current permissions %s", spew.Sdump(d.Get("permissions").(*schema.Set)))
-	d.Set("permissions", spaceAppAccessPermissionsToSchemaSet(spaceAppAccess))
-
 	return resourceHerokuSpaceMemberUpdate(d, meta)
 }
 
+//callback for schema Resource.Read
 func resourceHerokuSpaceMemberRead(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] lifecycle `Read`")
-	client := meta.(*heroku.Service)
-	space := d.Get("space").(string)
-	//Can take the email or an ID. Use the ID to help make sure we keep consistent with the state file
-	spaceAppAccess, err := client.SpaceAppAccessInfo(context.TODO(), space, d.Id())
-	log.Printf("[DEBUG] lifecycle `Read` retrieved data %s", spew.Sdump(spaceAppAccess))
-	if err != nil {
-		return err
-	}
-	d.Set("space", spaceAppAccess.Space.Name)
-	d.Set("email", spaceAppAccess.User.Email)
-	log.Printf("[DEBUG] lifecycle `Read` current permissions %s", spew.Sdump(d.Get("permissions").(*schema.Set)))
-	d.Set("permissions", spaceAppAccessPermissionsToSchemaSet(spaceAppAccess))
-	log.Printf("[DEBUG] lifecycle `Read` altered permissions %s", spew.Sdump(d.Get("permissions").(*schema.Set)))
-
-	return nil
+	_, err := syncSpaceAppAccessInfo(d.Id(), d, meta)
+	return err
 }
 
+//callback for schema Resource.Update
 func resourceHerokuSpaceMemberUpdate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] lifecycle `Update`")
-	log.Printf("[DEBUG] lifecycle `Update` current permissions %s", spew.Sdump(d.Get("permissions").(*schema.Set)))
+	currentPermissionsSet := d.Get("permissions").(*schema.Set)
+	memberEmail := d.Get("email").(string)
 	if d.HasChange("permissions") {
-		log.Printf("[DEBUG] lifecycle `Update` permissions CHANGED")
+		log.Printf("[DEBUG] update current permissions (%s) for %s", spew.Sdump(currentPermissionsSet), memberEmail)
 		client := meta.(*heroku.Service)
 		opts := permissionsSchemaSetToSpaceAppAccessUpdateOpts(d.Get("permissions").(*schema.Set))
 		space := d.Get("space").(string)
-		log.Printf("[DEBUG] lifecycle `Update` API opts: %s", spew.Sdump(opts))
 		_, err := client.SpaceAppAccessUpdate(context.TODO(), space, d.Id(), opts)
 		if err != nil {
-			log.Printf("[DEBUG] lifecycle `Update` API call failed: %s", spew.Sdump(err))
 			return err
 		}
-		log.Printf("[DEBUG] lifecycle `Update` API call done")
 	} else {
-		log.Printf("[DEBUG] lifecycle `Update` permissions NOT CHANGED")
+		log.Printf("[DEBUG] current permissions (%s) for %s not changed", spew.Sdump(currentPermissionsSet), memberEmail)
 	}
 	return nil
 }
 
-//Members cannot be deleted from a space with this resource, they are removed from the state file
-//and their permissions are cleared out via an update.
+//callback for schema Resource.Delete
+//Members cannot be deleted from a space with this resource, they are removed
+//from the state file and their permissions are cleared out via an update.
 func resourceHerokuSpaceMemberDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] lifecycle `Delete`")
-	currentSet := d.Get("permissions").(*schema.Set)
-	log.Printf("[DEBUG] lifecycle `Delete` current permissions %s", spew.Sdump(currentSet))
+	currentPermissionsSet := d.Get("permissions").(*schema.Set)
+	log.Printf("[DEBUG] removing current permissions (%s) for %s", spew.Sdump(currentPermissionsSet), d.Get("email").(string))
 	emptyItems := make([]interface{}, 0)
-	emptySet := schema.NewSet(currentSet.F, emptyItems)
+	emptySet := schema.NewSet(currentPermissionsSet.F, emptyItems)
 	d.Set("permissions", emptySet)
 	return resourceHerokuSpaceMemberUpdate(d, meta)
 }
 
+//utility method to retrieve and sync the schema with the SpaceAppAccessInfo
+//from the Heroku API using email or ID
+func syncSpaceAppAccessInfo(emailOrID string, d *schema.ResourceData, meta interface{}) (*heroku.SpaceAppAccess, error) {
+	client := meta.(*heroku.Service)
+	space := d.Get("space").(string)
+	spaceAppAccess, err := client.SpaceAppAccessInfo(context.TODO(), space, emailOrID)
+	if err != nil {
+		return nil, err
+	}
+	if g.Id() == "" {
+		d.SetId(spaceAppAccess.User.ID)
+	}
+	d.Set("space", spaceAppAccess.Space.Name)
+	d.Set("email", spaceAppAccess.User.Email)
+	d.Set("permissions", spaceAppAccessPermissionsToSchemaSet(spaceAppAccess))
+	log.Printf("[DEBUG] set permissions from Heroku API to (%s) for %s", spew.Sdump(d.Get("permissions").(*schema.Set)), emailOrID)
+	return spaceAppAccess, nil
+}
+
+//utility method to convert SpaceAppAccess to a simple string array of
+//permission names.
 func spaceAppAccessPermissionsToSchemaSet(spaceAppAccess *heroku.SpaceAppAccess) []string {
 	perms := make([]string, 0)
 	if spaceAppAccess != nil {
@@ -125,13 +121,14 @@ func spaceAppAccessPermissionsToSchemaSet(spaceAppAccess *heroku.SpaceAppAccess)
 			perms = append(perms, perm.Name)
 		}
 	}
-	log.Printf("[DEBUG] permissions set to %s", spew.Sdump(perms))
 	return perms
 }
 
-//The choice of using anonymous structs in heroku-go should be revisited per
-//https://github.com/interagent/schematic/issues/17
+//utility method to convert a schema.Set of simple permission names to
+//SpaceAppAccessUpdateOpts suitable as input into the the heroku API.
 func permissionsSchemaSetToSpaceAppAccessUpdateOpts(permSet *schema.Set) heroku.SpaceAppAccessUpdateOpts {
+	//The choice of using anonymous structs in heroku-go should be revisited per
+	//https://github.com/interagent/schematic/issues/17
 	permissions := make([]struct {
 		Name *string `json:"name,omitempty" url:"name,omitempty,key"`
 	}, 0)
