@@ -5,6 +5,14 @@ Thank you for opening an issue. Please note that we try to keep the Terraform is
 ### Terraform Version
 Run `terraform -v` to show the version. If you are not running the latest version of Terraform, please upgrade because your issue may have already been fixed.
 
+### Heroku Provider Version
+Run `terraform -v` to show core and any provider versions. A sample output could be:
+
+```
+Terraform v0.11.7
++ provider.heroku v1.1.0
+```
+
 ### Affected Resource(s)
 Please list the resources as a list, for example:
 - opc_instance
