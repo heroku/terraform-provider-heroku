@@ -284,7 +284,7 @@ func TestAccHerokuApp_Space(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 			if org == "" {
-				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
+				t.Skip("HEROKU_SPACES_ORGANIZATION is not set; skipping test.")
 			}
 		},
 		Providers:    testAccProviders,

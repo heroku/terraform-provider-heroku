@@ -1,4 +1,10 @@
-## 1.2.0 (Unreleased)
+## 1.1.1 (Unreleased)
+
+MIGRATION:
+
+* r/heroku_addon: Add migration to store the `uuid` for the resource ID instead of `name` [#84](https://github.com/terraform-providers/terraform-provider-heroku/pull/84)
+* r/heroku_addon_attachment: Add migration to store the `uuid` of the addon for `addon_id` [#84](https://github.com/terraform-providers/terraform-provider-heroku/pull/84)
+
 ## 1.1.0 (July 13, 2018)
 
 FEATURES:
@@ -21,7 +27,6 @@ BUG FIXES:
 BUG FIXES:
 
 * r/heroku_space: Fix bug [#75](https://github.com/terraform-providers/terraform-provider-heroku/issues/75) in [#76](https://github.com/terraform-providers/terraform-provider-heroku/pull/76) that caused Terraform plans to destroy existing Heroku Private Spaces
-
 
 ## 1.0.0 (June 19, 2018)
 
