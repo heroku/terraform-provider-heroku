@@ -8,12 +8,12 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-func resourceHerokuSpaceMember() *schema.Resource {
+func resourceHerokuSpaceAppAccess() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceHerokuSpaceMemberCreate,
-		Read:   resourceHerokuSpaceMemberRead,
-		Update: resourceHerokuSpaceMemberUpdate,
-		Delete: resourceHerokuSpaceMemberDelete,
+		Create: resourceHerokuSpaceAppAccessCreate,
+		Read:   resourceHerokuSpaceAppAccessRead,
+		Update: resourceHerokuSpaceAppAccessUpdate,
+		Delete: resourceHerokuSpaceAppAccessDelete,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -47,17 +47,17 @@ func resourceHerokuSpaceMember() *schema.Resource {
 //callback for schema Resource.Create
 //There's no actual method to create a space member, so we just need to import
 //the existing member into the state and update if needed.
-func resourceHerokuSpaceMemberCreate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] resourceHerokuSpaceMemberCreate")
-	err := resourceHerokuSpaceMemberUpdate(d, meta)
+func resourceHerokuSpaceAppAccessCreate(d *schema.ResourceData, meta interface{}) error {
+	log.Printf("[DEBUG] resourceHerokuSpaceAppAccessCreate")
+	err := resourceHerokuSpaceAppAccessUpdate(d, meta)
 	if err != nil {
 		return err
 	}
-	return resourceHerokuSpaceMemberRead(d, meta)
+	return resourceHerokuSpaceAppAccessRead(d, meta)
 }
 
 //callback for schema Resource.Read
-func resourceHerokuSpaceMemberRead(d *schema.ResourceData, meta interface{}) error {
+func resourceHerokuSpaceAppAccessRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 	space := d.Get("space").(string)
 	email := d.Get("email").(string)
@@ -73,7 +73,7 @@ func resourceHerokuSpaceMemberRead(d *schema.ResourceData, meta interface{}) err
 }
 
 //callback for schema Resource.Update
-func resourceHerokuSpaceMemberUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceHerokuSpaceAppAccessUpdate(d *schema.ResourceData, meta interface{}) error {
 	currentPermissionsSet := d.Get("permissions").(*schema.Set)
 	email := d.Get("email").(string)
 	space := d.Get("space").(string)
@@ -90,11 +90,11 @@ func resourceHerokuSpaceMemberUpdate(d *schema.ResourceData, meta interface{}) e
 //callback for schema Resource.Delete
 //Members cannot be deleted from a space with this resource, they are removed
 //from the state file and their permissions are cleared out.
-func resourceHerokuSpaceMemberDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceHerokuSpaceAppAccessDelete(d *schema.ResourceData, meta interface{}) error {
 	currentPermissionsSet := d.Get("permissions").(*schema.Set)
 	log.Printf("[DEBUG] removing current permissions (%v) for %s", currentPermissionsSet.List(), d.Get("email").(string))
 	d.Set("permissions", make([]string, 0))
-	return resourceHerokuSpaceMemberUpdate(d, meta)
+	return resourceHerokuSpaceAppAccessUpdate(d, meta)
 }
 
 //utility method to convert SpaceAppAccess to a simple string array of
