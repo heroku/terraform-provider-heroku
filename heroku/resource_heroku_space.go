@@ -14,7 +14,7 @@ import (
 type spaceWithRanges struct {
 	heroku.Space
 	TrustedIPRanges []string
-	Nat             heroku.SpaceNat
+	NAT             heroku.SpaceNAT
 }
 
 func resourceHerokuSpace() *schema.Resource {
@@ -159,10 +159,10 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("organization", space.Organization.Name)
 	d.Set("region", space.Region.Name)
 	d.Set("trusted_ip_ranges", space.TrustedIPRanges)
-	d.Set("outbound_ips", space.Nat.Sources)
+	d.Set("outbound_ips", space.NAT.Sources)
 	d.Set("shield", space.Shield)
 
-	log.Printf("[DEBUG] Set NAT source IPs to %s for %s", space.Nat.Sources, d.Id())
+	log.Printf("[DEBUG] Set NAT source IPs to %s for %s", space.NAT.Sources, d.Id())
 
 	return nil
 }
@@ -251,13 +251,13 @@ func SpaceStateRefreshFunc(client *heroku.Service, id string) resource.StateRefr
 			s.TrustedIPRanges[i] = r.Source
 		}
 
-		nat, err := client.SpaceNatInfo(context.TODO(), id)
+		nat, err := client.SpaceNATInfo(context.TODO(), id)
 		if err != nil {
 			return nil, "", err
 		}
-		s.Nat = *nat
+		s.NAT = *nat
 
-		log.Printf("[DEBUG] Outbound NAT IPs: %s (%s)", s.Nat.Sources, id)
+		log.Printf("[DEBUG] Outbound NAT IPs: %s (%s)", s.NAT.Sources, id)
 		log.Printf("[DEBUG] Trusted IP ranges: %s (%s)", s.TrustedIPRanges, id)
 
 		return &s, space.State, nil
