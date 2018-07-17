@@ -69,9 +69,9 @@ func dataSourceHerokuSpacePeeringInfoRead(d *schema.ResourceData, m interface{})
 	d.Set("aws_account_id", peeringInfo.AwsAccountID)
 	d.Set("aws_region", peeringInfo.AwsRegion)
 	d.Set("vpc_id", peeringInfo.VpcID)
-	d.Set("vpc_cidr", peeringInfo.VpcCidr)
-	d.Set("dyno_cidr_blocks", peeringInfo.DynoCidrBlocks)
-	d.Set("unavailable_cidr_blocks", peeringInfo.UnavailableCidrBlocks)
+	d.Set("vpc_cidr", peeringInfo.VpcCIDR)
+	d.Set("dyno_cidr_blocks", peeringInfo.DynoCIDRBlocks)
+	d.Set("unavailable_cidr_blocks", peeringInfo.UnavailableCIDRBlocks)
 
 	return nil
 }

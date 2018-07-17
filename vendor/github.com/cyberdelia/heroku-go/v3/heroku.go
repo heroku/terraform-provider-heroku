@@ -4547,6 +4547,7 @@ type VPNConnection struct {
 		StatusMessage    string `json:"status_message" url:"status_message,key"`         // Details of the status
 	} `json:"tunnels" url:"tunnels,key"`
 }
+
 type VPNConnectionCreateOpts struct {
 	Name          string   `json:"name" url:"name,key"`                     // VPN Name
 	PublicIP      string   `json:"public_ip" url:"public_ip,key"`           // Public IP of VPN customer gateway
