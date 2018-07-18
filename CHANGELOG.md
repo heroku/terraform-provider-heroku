@@ -1,7 +1,7 @@
 ## 1.2.0 (Unreleased)
 
 IMPROVEMENTS:
-
+* Better support for addon config referencing for downstream heroku apps. (#101)[https://github.com/terraform-providers/terraform-provider-heroku/pull/102/files]
 * Update the `heroku-go` client to the latest version. (#97)[https://github.com/terraform-providers/terraform-provider-heroku/pull/97]
 
 ## 1.1.1 (July 17, 2018)
