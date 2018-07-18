@@ -45,7 +45,7 @@ If you wish to work on the provider, you'll first need [Go](http://www.golang.or
 To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
 
 ```sh
-$ make bin
+$ make build
 ...
 $ $GOPATH/bin/terraform-provider-heroku
 ...
@@ -62,6 +62,7 @@ In order to run the full suite of Acceptance tests, run `make testacc`. You will
 * `HEROKU_ORGANIZATION` – The organization to run the tests against.
 * `HEROKU_SPACES_ORGANIZATION` – The organization to run the Heroku Private Space tests against. 
 * `HEROKU_API_KEY` – A valid API key that has access to the two organizations listed above.
+* `HEROKU_EMAIL` - The email associated with above API key
 
 Things to keep in mind when running acceptance tests:
 
