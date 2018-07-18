@@ -3709,6 +3709,9 @@
         "id": {
           "$ref": "#/definitions/app/definitions/id"
         },
+        "internal_routing": {
+          "$ref": "#/definitions/team-app/definitions/internal_routing"
+        },
         "maintenance": {
           "$ref": "#/definitions/app/definitions/maintenance"
         },
@@ -12138,6 +12141,9 @@
             "type": [
               "object"
             ],
+            "required": [
+              "permissions"
+            ],
             "properties": {
               "permissions": {
                 "type": [
@@ -13149,6 +13155,16 @@
             }
           ]
         },
+        "internal_routing": {
+          "default": false,
+          "description": "describes whether a Private Spaces app is externally routable or not",
+          "example": false,
+          "readOnly": false,
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "joined": {
           "default": false,
           "description": "is the current member a collaborator on this app.",
@@ -13194,6 +13210,9 @@
               },
               "stack": {
                 "$ref": "#/definitions/stack/definitions/name"
+              },
+              "internal_routing": {
+                "$ref": "#/definitions/team-app/definitions/internal_routing"
               }
             },
             "type": [
@@ -13320,6 +13339,9 @@
         },
         "id": {
           "$ref": "#/definitions/app/definitions/id"
+        },
+        "internal_routing": {
+          "$ref": "#/definitions/team-app/definitions/internal_routing"
         },
         "joined": {
           "$ref": "#/definitions/team-app/definitions/joined"
@@ -14914,6 +14936,256 @@
         }
       }
     },
+    "vpn-connection": {
+      "description": "[VPN](https://devcenter.heroku.com/articles/private-spaces-vpn?preview=1) provides a way to connect your Private Spaces to your network via VPN.",
+      "$schema": "http://json-schema.org/draft-04/hyper-schema",
+      "stability": "prototype",
+      "strictProperties": true,
+      "title": "Heroku Platform API - Private Spaces VPN",
+      "type": [
+        "object"
+      ],
+      "definitions": {
+        "name": {
+          "description": "VPN Name",
+          "example": "office",
+          "type": [
+            "string"
+          ]
+        },
+        "public_ip": {
+          "description": "Public IP of VPN customer gateway",
+          "example": "35.161.69.30",
+          "type": [
+            "string"
+          ]
+        },
+        "routable_cidrs": {
+          "description": "Routable CIDRs of VPN",
+          "type": [
+            "array"
+          ],
+          "items": {
+            "example": "172.16.0.0/16",
+            "type": [
+              "string"
+            ]
+          }
+        },
+        "id": {
+          "description": "VPN ID",
+          "example": "123456789012",
+          "readOnly": true,
+          "type": [
+            "string"
+          ]
+        },
+        "identity": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/vpn-connection/definitions/id"
+            },
+            {
+              "$ref": "#/definitions/vpn-connection/definitions/name"
+            }
+          ]
+        },
+        "space_cidr_block": {
+          "description": "CIDR Block of the Private Space",
+          "example": "10.0.0.0/16",
+          "readOnly": true,
+          "type": [
+            "string"
+          ]
+        },
+        "ike_version": {
+          "description": "IKE Version",
+          "example": 1,
+          "readOnly": true,
+          "type": [
+            "integer"
+          ]
+        },
+        "tunnel": {
+          "description": "Tunnel info",
+          "readOnly": true,
+          "type": [
+            "object"
+          ],
+          "properties": {
+            "last_status_change": {
+              "description": "Timestamp of last status changed",
+              "example": "2016-10-25T22:09:05Z",
+              "type": [
+                "string"
+              ]
+            },
+            "ip": {
+              "description": "Public IP address for the tunnel",
+              "example": "52.44.146.197",
+              "type": [
+                "string"
+              ]
+            },
+            "customer_ip": {
+              "description": "Public IP address for the customer side of the tunnel",
+              "example": "52.44.146.197",
+              "type": [
+                "string"
+              ]
+            },
+            "pre_shared_key": {
+              "description": "Pre-shared key",
+              "example": "secret",
+              "type": [
+                "string"
+              ]
+            },
+            "status": {
+              "description": "Status of the tunnel",
+              "enum": [
+                "UP",
+                "DOWN"
+              ],
+              "example": "UP",
+              "type": [
+                "string"
+              ]
+            },
+            "status_message": {
+              "description": "Details of the status",
+              "example": "status message",
+              "type": [
+                "string"
+              ]
+            }
+          }
+        },
+        "status": {
+          "description": "Status of the VPN",
+          "enum": [
+            "pending",
+            "provisioning",
+            "active",
+            "deprovisioning",
+            "complete",
+            "failed"
+          ],
+          "example": "active",
+          "readOnly": true,
+          "type": [
+            "string"
+          ]
+        },
+        "status_message": {
+          "description": "Details of the status",
+          "example": "supplied CIDR block already in use",
+          "readOnly": true,
+          "type": [
+            "string"
+          ]
+        }
+      },
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/vpn-connection/definitions/id"
+        },
+        "name": {
+          "$ref": "#/definitions/vpn-connection/definitions/name"
+        },
+        "public_ip": {
+          "$ref": "#/definitions/vpn-connection/definitions/public_ip"
+        },
+        "routable_cidrs": {
+          "$ref": "#/definitions/vpn-connection/definitions/routable_cidrs"
+        },
+        "space_cidr_block": {
+          "$ref": "#/definitions/vpn-connection/definitions/space_cidr_block"
+        },
+        "tunnels": {
+          "items": {
+            "$ref": "#/definitions/vpn-connection/definitions/tunnel"
+          },
+          "type": [
+            "array"
+          ]
+        },
+        "ike_version": {
+          "$ref": "#/definitions/vpn-connection/definitions/ike_version"
+        },
+        "status": {
+          "$ref": "#/definitions/vpn-connection/definitions/status"
+        },
+        "status_message": {
+          "$ref": "#/definitions/vpn-connection/definitions/status_message"
+        }
+      },
+      "links": [
+        {
+          "description": "Create a new VPN connection in a private space.",
+          "href": "/spaces/{(%23%2Fdefinitions%2Fspace%2Fdefinitions%2Fidentity)}/vpn-connections",
+          "rel": "create",
+          "schema": {
+            "properties": {
+              "name": {
+                "$ref": "#/definitions/vpn-connection/definitions/name"
+              },
+              "public_ip": {
+                "$ref": "#/definitions/vpn-connection/definitions/public_ip"
+              },
+              "routable_cidrs": {
+                "$ref": "#/definitions/vpn-connection/definitions/routable_cidrs"
+              }
+            },
+            "required": [
+              "name",
+              "public_ip",
+              "routable_cidrs"
+            ],
+            "type": [
+              "object"
+            ]
+          },
+          "targetSchema": {
+            "$ref": "#/definitions/vpn-connection"
+          },
+          "method": "POST",
+          "title": "Create"
+        },
+        {
+          "description": "Destroy existing VPN Connection",
+          "href": "/spaces/{(%23%2Fdefinitions%2Fspace%2Fdefinitions%2Fidentity)}/vpn-connections/{(%23%2Fdefinitions%2Fvpn-connection%2Fdefinitions%2Fidentity)}",
+          "rel": "empty",
+          "method": "DELETE",
+          "title": "Destroy"
+        },
+        {
+          "description": "List VPN connections for a space.",
+          "href": "/spaces/{(%23%2Fdefinitions%2Fspace%2Fdefinitions%2Fidentity)}/vpn-connections",
+          "method": "GET",
+          "rel": "instances",
+          "targetSchema": {
+            "items": {
+              "$ref": "#/definitions/vpn-connection"
+            },
+            "type": [
+              "array"
+            ]
+          },
+          "title": "List"
+        },
+        {
+          "description": "Info for an existing vpn-connection.",
+          "href": "/spaces/{(%23%2Fdefinitions%2Fspace%2Fdefinitions%2Fidentity)}/vpn-connections/{(%23%2Fdefinitions%2Fvpn-connection%2Fdefinitions%2Fidentity)}",
+          "method": "GET",
+          "rel": "self",
+          "targetSchema": {
+            "$ref": "#/definitions/vpn-connection"
+          },
+          "title": "Info"
+        }
+      ]
+    },
     "whitelisted-add-on-service": {
       "description": "Entities that have been whitelisted to be used by an Organization",
       "$schema": "http://json-schema.org/draft-04/hyper-schema",
@@ -15369,6 +15641,9 @@
     },
     "user-preferences": {
       "$ref": "#/definitions/user-preferences"
+    },
+    "vpn-connection": {
+      "$ref": "#/definitions/vpn-connection"
     },
     "whitelisted-add-on-service": {
       "$ref": "#/definitions/whitelisted-add-on-service"

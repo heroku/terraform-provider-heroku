@@ -1,9 +1,15 @@
-## 1.1.1 (Unreleased)
+## 1.2.0 (Unreleased)
 
-MIGRATION:
+IMPROVEMENTS:
 
-* r/heroku_addon: Add migration to store the `uuid` for the resource ID instead of `name` [#84](https://github.com/terraform-providers/terraform-provider-heroku/pull/84)
-* r/heroku_addon_attachment: Add migration to store the `uuid` of the addon for `addon_id` [#84](https://github.com/terraform-providers/terraform-provider-heroku/pull/84)
+* Update the `heroku-go` client to the latest version. (#97)[https://github.com/terraform-providers/terraform-provider-heroku/pull/97]
+
+## 1.1.1 (July 17, 2018)
+
+BUG FIXES:
+
+* r/heroku_addon: Add migration to store the `uuid` for the resource ID instead of `name` ([#84](https://github.com/terraform-providers/terraform-provider-heroku/pull/84))
+* r/heroku_addon_attachment: Add migration to store the `uuid` of the addon for `addon_id` ([#84](https://github.com/terraform-providers/terraform-provider-heroku/pull/84))
 
 ## 1.1.0 (July 13, 2018)
 
@@ -13,14 +19,14 @@ FEATURES:
 
 IMPROVEMENTS:
 
-* HTTP headers are now shown when `TF_LOG` is set to `DEBUG` or `TRACE` [#89](https://github.com/terraform-providers/terraform-provider-heroku/pull/89)
+* HTTP headers are now shown when `TF_LOG` is set to `DEBUG` or `TRACE` ([#89](https://github.com/terraform-providers/terraform-provider-heroku/pull/89))
 
 ## 1.0.2 (July 10, 2018)
 
 BUG FIXES:
 
-* r/heroku_formation: Add support for Free/Hobby Dyno Types [#80](https://github.com/terraform-providers/terraform-provider-heroku/pull/80)
-* r/heroku_space: Fixed interface conversion panic applying changed trusted ips [#88](https://github.com/terraform-providers/terraform-provider-heroku/pull/88)
+* r/heroku_formation: Add support for Free/Hobby Dyno Types ([#80](https://github.com/terraform-providers/terraform-provider-heroku/pull/80))
+* r/heroku_space: Fixed interface conversion panic applying changed trusted ips ([#88](https://github.com/terraform-providers/terraform-provider-heroku/pull/88))
 
 ## 1.0.1 (June 27, 2018)
 

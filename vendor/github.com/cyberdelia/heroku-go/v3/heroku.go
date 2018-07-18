@@ -992,6 +992,7 @@ type App struct {
 	CreatedAt                    time.Time `json:"created_at" url:"created_at,key"`                                         // when app was created
 	GitURL                       string    `json:"git_url" url:"git_url,key"`                                               // git repo URL of app
 	ID                           string    `json:"id" url:"id,key"`                                                         // unique identifier of app
+	InternalRouting              *bool     `json:"internal_routing" url:"internal_routing,key"`                             // describes whether a Private Spaces app is externally routable or not
 	Maintenance                  bool      `json:"maintenance" url:"maintenance,key"`                                       // maintenance status of app
 	Name                         string    `json:"name" url:"name,key"`                                                     // unique name of app
 	Organization                 *struct {
@@ -1912,6 +1913,7 @@ type FilterAppsAppsResult []struct {
 	CreatedAt                    time.Time `json:"created_at" url:"created_at,key"`                                         // when app was created
 	GitURL                       string    `json:"git_url" url:"git_url,key"`                                               // git repo URL of app
 	ID                           string    `json:"id" url:"id,key"`                                                         // unique identifier of app
+	InternalRouting              *bool     `json:"internal_routing" url:"internal_routing,key"`                             // describes whether a Private Spaces app is externally routable or not
 	Joined                       bool      `json:"joined" url:"joined,key"`                                                 // is the current member a collaborator on this app.
 	Locked                       bool      `json:"locked" url:"locked,key"`                                                 // are other team members forbidden from joining this app.
 	Maintenance                  bool      `json:"maintenance" url:"maintenance,key"`                                       // maintenance status of app
@@ -3203,7 +3205,7 @@ func (s *Service) PasswordResetCompleteResetPassword(ctx context.Context, passwo
 type Peering struct {
 	AwsAccountID string    `json:"aws_account_id" url:"aws_account_id,key"` // The AWS account ID of your Private Space.
 	AwsVpcID     string    `json:"aws_vpc_id" url:"aws_vpc_id,key"`         // The AWS VPC ID of the peer.
-	CidrBlocks   []string  `json:"cidr_blocks" url:"cidr_blocks,key"`       // The CIDR blocks of the peer.
+	CIDRBlocks   []string  `json:"cidr_blocks" url:"cidr_blocks,key"`       // The CIDR blocks of the peer.
 	Expires      time.Time `json:"expires" url:"expires,key"`               // When a peering connection will expire.
 	PcxID        string    `json:"pcx_id" url:"pcx_id,key"`                 // The AWS VPC Peering Connection ID of the peering.
 	Status       string    `json:"status" url:"status,key"`                 // The status of the peering connection.
@@ -3242,9 +3244,9 @@ func (s *Service) PeeringInfo(ctx context.Context, spaceIdentity string, peering
 type PeeringInfo struct {
 	AwsAccountID          string   `json:"aws_account_id" url:"aws_account_id,key"`                   // The AWS account ID of your Private Space.
 	AwsRegion             string   `json:"aws_region" url:"aws_region,key"`                           // region name used by provider
-	DynoCidrBlocks        []string `json:"dyno_cidr_blocks" url:"dyno_cidr_blocks,key"`               // The CIDR ranges that should be routed to the Private Space VPC.
-	UnavailableCidrBlocks []string `json:"unavailable_cidr_blocks" url:"unavailable_cidr_blocks,key"` // The CIDR ranges that you must not conflict with.
-	VpcCidr               string   `json:"vpc_cidr" url:"vpc_cidr,key"`                               // An IP address and the number of significant bits that make up the
+	DynoCIDRBlocks        []string `json:"dyno_cidr_blocks" url:"dyno_cidr_blocks,key"`               // The CIDR ranges that should be routed to the Private Space VPC.
+	UnavailableCIDRBlocks []string `json:"unavailable_cidr_blocks" url:"unavailable_cidr_blocks,key"` // The CIDR ranges that you must not conflict with.
+	VpcCIDR               string   `json:"vpc_cidr" url:"vpc_cidr,key"`                               // An IP address and the number of significant bits that make up the
 	// routing or networking portion.
 	VpcID string `json:"vpc_id" url:"vpc_id,key"` // The AWS VPC ID of the peer.
 }
@@ -3836,9 +3838,9 @@ func (s *Service) SpaceAppAccessInfo(ctx context.Context, spaceIdentity string, 
 }
 
 type SpaceAppAccessUpdateOpts struct {
-	Permissions []*struct {
+	Permissions []struct {
 		Name *string `json:"name,omitempty" url:"name,omitempty,key"`
-	} `json:"permissions,omitempty" url:"permissions,omitempty,key"`
+	} `json:"permissions" url:"permissions,key"`
 }
 
 // Update an existing user's set of permissions on a space.
@@ -3857,7 +3859,7 @@ func (s *Service) SpaceAppAccessList(ctx context.Context, spaceIdentity string, 
 
 // Network address translation (NAT) for stable outbound IP addresses
 // from a space
-type SpaceNat struct {
+type SpaceNAT struct {
 	CreatedAt time.Time `json:"created_at" url:"created_at,key"` // when network address translation for a space was created
 	Sources   []string  `json:"sources" url:"sources,key"`       // potential IPs from which outbound network traffic will originate
 	State     string    `json:"state" url:"state,key"`           // availability of network address translation for a space
@@ -3865,9 +3867,9 @@ type SpaceNat struct {
 }
 
 // Current state of network address translation for a space.
-func (s *Service) SpaceNatInfo(ctx context.Context, spaceIdentity string) (*SpaceNat, error) {
-	var spaceNat SpaceNat
-	return &spaceNat, s.Get(ctx, &spaceNat, fmt.Sprintf("/spaces/%v/nat", spaceIdentity), nil, nil)
+func (s *Service) SpaceNATInfo(ctx context.Context, spaceIdentity string) (*SpaceNAT, error) {
+	var spaceNAT SpaceNAT
+	return &spaceNAT, s.Get(ctx, &spaceNAT, fmt.Sprintf("/spaces/%v/nat", spaceIdentity), nil, nil)
 }
 
 // [SSL Endpoint](https://devcenter.heroku.com/articles/ssl-endpoint) is
@@ -4039,6 +4041,7 @@ type TeamApp struct {
 	CreatedAt                    time.Time `json:"created_at" url:"created_at,key"`                                         // when app was created
 	GitURL                       string    `json:"git_url" url:"git_url,key"`                                               // git repo URL of app
 	ID                           string    `json:"id" url:"id,key"`                                                         // unique identifier of app
+	InternalRouting              *bool     `json:"internal_routing" url:"internal_routing,key"`                             // describes whether a Private Spaces app is externally routable or not
 	Joined                       bool      `json:"joined" url:"joined,key"`                                                 // is the current member a collaborator on this app.
 	Locked                       bool      `json:"locked" url:"locked,key"`                                                 // are other team members forbidden from joining this app.
 	Maintenance                  bool      `json:"maintenance" url:"maintenance,key"`                                       // maintenance status of app
@@ -4069,9 +4072,10 @@ type TeamApp struct {
 	WebURL    string    `json:"web_url" url:"web_url,key"`       // web URL of app
 }
 type TeamAppCreateOpts struct {
-	Locked   *bool   `json:"locked,omitempty" url:"locked,omitempty,key"`     // are other team members forbidden from joining this app.
-	Name     *string `json:"name,omitempty" url:"name,omitempty,key"`         // unique name of app
-	Personal *bool   `json:"personal,omitempty" url:"personal,omitempty,key"` // force creation of the app in the user account even if a default team
+	InternalRouting *bool   `json:"internal_routing,omitempty" url:"internal_routing,omitempty,key"` // describes whether a Private Spaces app is externally routable or not
+	Locked          *bool   `json:"locked,omitempty" url:"locked,omitempty,key"`                     // are other team members forbidden from joining this app.
+	Name            *string `json:"name,omitempty" url:"name,omitempty,key"`                         // unique name of app
+	Personal        *bool   `json:"personal,omitempty" url:"personal,omitempty,key"`                 // force creation of the app in the user account even if a default team
 	// is set.
 	Region *string `json:"region,omitempty" url:"region,omitempty,key"` // unique name of region
 	Space  *string `json:"space,omitempty" url:"space,omitempty,key"`   // unique name of space
@@ -4420,6 +4424,7 @@ type TeamMemberListByMemberResult []struct {
 	CreatedAt                    time.Time `json:"created_at" url:"created_at,key"`                                         // when app was created
 	GitURL                       string    `json:"git_url" url:"git_url,key"`                                               // git repo URL of app
 	ID                           string    `json:"id" url:"id,key"`                                                         // unique identifier of app
+	InternalRouting              *bool     `json:"internal_routing" url:"internal_routing,key"`                             // describes whether a Private Spaces app is externally routable or not
 	Joined                       bool      `json:"joined" url:"joined,key"`                                                 // is the current member a collaborator on this app.
 	Locked                       bool      `json:"locked" url:"locked,key"`                                                 // are other team members forbidden from joining this app.
 	Maintenance                  bool      `json:"maintenance" url:"maintenance,key"`                                       // maintenance status of app
@@ -4519,6 +4524,60 @@ type UserPreferencesUpdateOpts struct {
 func (s *Service) UserPreferencesUpdate(ctx context.Context, userPreferencesIdentity string, o UserPreferencesUpdateOpts) (*UserPreferences, error) {
 	var userPreferences UserPreferences
 	return &userPreferences, s.Patch(ctx, &userPreferences, fmt.Sprintf("/users/%v/preferences", userPreferencesIdentity), o)
+}
+
+// [VPN](https://devcenter.heroku.com/articles/private-spaces-vpn?preview
+// =1) provides a way to connect your Private Spaces to your network via
+// VPN.
+type VPNConnection struct {
+	ID             string   `json:"id" url:"id,key"`                             // VPN ID
+	IKEVersion     int      `json:"ike_version" url:"ike_version,key"`           // IKE Version
+	Name           string   `json:"name" url:"name,key"`                         // VPN Name
+	PublicIP       string   `json:"public_ip" url:"public_ip,key"`               // Public IP of VPN customer gateway
+	RoutableCidrs  []string `json:"routable_cidrs" url:"routable_cidrs,key"`     // Routable CIDRs of VPN
+	SpaceCIDRBlock string   `json:"space_cidr_block" url:"space_cidr_block,key"` // CIDR Block of the Private Space
+	Status         string   `json:"status" url:"status,key"`                     // Status of the VPN
+	StatusMessage  string   `json:"status_message" url:"status_message,key"`     // Details of the status
+	Tunnels        []struct {
+		CustomerIP       string `json:"customer_ip" url:"customer_ip,key"`               // Public IP address for the customer side of the tunnel
+		IP               string `json:"ip" url:"ip,key"`                                 // Public IP address for the tunnel
+		LastStatusChange string `json:"last_status_change" url:"last_status_change,key"` // Timestamp of last status changed
+		PreSharedKey     string `json:"pre_shared_key" url:"pre_shared_key,key"`         // Pre-shared key
+		Status           string `json:"status" url:"status,key"`                         // Status of the tunnel
+		StatusMessage    string `json:"status_message" url:"status_message,key"`         // Details of the status
+	} `json:"tunnels" url:"tunnels,key"`
+}
+
+type VPNConnectionCreateOpts struct {
+	Name          string   `json:"name" url:"name,key"`                     // VPN Name
+	PublicIP      string   `json:"public_ip" url:"public_ip,key"`           // Public IP of VPN customer gateway
+	RoutableCidrs []string `json:"routable_cidrs" url:"routable_cidrs,key"` // Routable CIDRs of VPN
+}
+
+// Create a new VPN connection in a private space.
+func (s *Service) VPNConnectionCreate(ctx context.Context, spaceIdentity string, o VPNConnectionCreateOpts) (*VPNConnection, error) {
+	var vpnConnection VPNConnection
+	return &vpnConnection, s.Post(ctx, &vpnConnection, fmt.Sprintf("/spaces/%v/vpn-connections", spaceIdentity), o)
+}
+
+// Destroy existing VPN Connection
+func (s *Service) VPNConnectionDestroy(ctx context.Context, spaceIdentity string, vpnConnectionIdentity string) (*VPNConnection, error) {
+	var vpnConnection VPNConnection
+	return &vpnConnection, s.Delete(ctx, &vpnConnection, fmt.Sprintf("/spaces/%v/vpn-connections/%v", spaceIdentity, vpnConnectionIdentity))
+}
+
+type VPNConnectionListResult []VPNConnection
+
+// List VPN connections for a space.
+func (s *Service) VPNConnectionList(ctx context.Context, spaceIdentity string, lr *ListRange) (VPNConnectionListResult, error) {
+	var vpnConnection VPNConnectionListResult
+	return vpnConnection, s.Get(ctx, &vpnConnection, fmt.Sprintf("/spaces/%v/vpn-connections", spaceIdentity), nil, lr)
+}
+
+// Info for an existing vpn-connection.
+func (s *Service) VPNConnectionInfo(ctx context.Context, spaceIdentity string, vpnConnectionIdentity string) (*VPNConnection, error) {
+	var vpnConnection VPNConnection
+	return &vpnConnection, s.Get(ctx, &vpnConnection, fmt.Sprintf("/spaces/%v/vpn-connections/%v", spaceIdentity, vpnConnectionIdentity), nil, nil)
 }
 
 // Entities that have been whitelisted to be used by an Organization
