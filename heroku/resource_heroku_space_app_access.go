@@ -2,7 +2,6 @@ package heroku
 
 import (
 	"context"
-	"log"
 
 	heroku "github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -10,9 +9,9 @@ import (
 
 func resourceHerokuSpaceAppAccess() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceHerokuSpaceAppAccessCreate,
+		Create: resourceHerokuSpaceAppAccessSet,
 		Read:   resourceHerokuSpaceAppAccessRead,
-		Update: resourceHerokuSpaceAppAccessUpdate,
+		Update: resourceHerokuSpaceAppAccessSet,
 		Delete: resourceHerokuSpaceAppAccessDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -34,8 +33,7 @@ func resourceHerokuSpaceAppAccess() *schema.Resource {
 
 			"permissions": {
 				Type:     schema.TypeSet,
-				Optional: true,
-				MinItems: 1,
+				Required: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -44,12 +42,9 @@ func resourceHerokuSpaceAppAccess() *schema.Resource {
 	}
 }
 
-//callback for schema Resource.Create
-//There's no actual method to create a space member, so we just need to import
-//the existing member into the state and update if needed.
-func resourceHerokuSpaceAppAccessCreate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] resourceHerokuSpaceAppAccessCreate")
-	err := resourceHerokuSpaceAppAccessUpdate(d, meta)
+//callback for schema Resource.Create and schema Resource.Update
+func resourceHerokuSpaceAppAccessSet(d *schema.ResourceData, meta interface{}) error {
+	_, err := updateSpaceAppAccess(d.Get("permissions").(*schema.Set), d, meta)
 	if err != nil {
 		return err
 	}
@@ -68,22 +63,7 @@ func resourceHerokuSpaceAppAccessRead(d *schema.ResourceData, meta interface{}) 
 	d.SetId(spaceAppAccess.User.ID)
 	d.Set("space", spaceAppAccess.Space.Name)
 	d.Set("email", spaceAppAccess.User.Email)
-	d.Set("permissions", spaceAppAccessPermissionsToList(spaceAppAccess))
-	return err
-}
-
-//callback for schema Resource.Update
-func resourceHerokuSpaceAppAccessUpdate(d *schema.ResourceData, meta interface{}) error {
-	currentPermissionsSet := d.Get("permissions").(*schema.Set)
-	email := d.Get("email").(string)
-	space := d.Get("space").(string)
-	opts := createSpaceAppAccessUpdateOpts(currentPermissionsSet)
-	client := meta.(*heroku.Service)
-	_, err := client.SpaceAppAccessUpdate(context.TODO(), space, email, opts)
-	if err != nil {
-		return err
-	}
-	log.Printf("[DEBUG] updated permissions (%v) for %s", currentPermissionsSet.List(), email)
+	d.Set("permissions", createPermissionsList(spaceAppAccess))
 	return nil
 }
 
@@ -91,15 +71,30 @@ func resourceHerokuSpaceAppAccessUpdate(d *schema.ResourceData, meta interface{}
 //Members cannot be deleted from a space with this resource, they are removed
 //from the state file and their permissions are cleared out.
 func resourceHerokuSpaceAppAccessDelete(d *schema.ResourceData, meta interface{}) error {
-	currentPermissionsSet := d.Get("permissions").(*schema.Set)
-	log.Printf("[DEBUG] removing current permissions (%v) for %s", currentPermissionsSet.List(), d.Get("email").(string))
-	d.Set("permissions", make([]string, 0))
-	return resourceHerokuSpaceAppAccessUpdate(d, meta)
+	_, err := updateSpaceAppAccess(nil, d, meta)
+	if err != nil {
+		return err
+	}
+	d.SetId("")
+	return nil
+}
+
+//utility method to call heroku.SpaceAppAccessUpdate
+func updateSpaceAppAccess(permissions *schema.Set, d *schema.ResourceData, meta interface{}) (*heroku.SpaceAppAccess, error) {
+	email := d.Get("email").(string)
+	space := d.Get("space").(string)
+	opts := createSpaceAppAccessUpdateOpts(permissions)
+	client := meta.(*heroku.Service)
+	spaceAppAccess, err := client.SpaceAppAccessUpdate(context.TODO(), space, email, opts)
+	if err != nil {
+		return nil, err
+	}
+	return spaceAppAccess, nil
 }
 
 //utility method to convert SpaceAppAccess to a simple string array of
 //permission names.
-func spaceAppAccessPermissionsToList(spaceAppAccess *heroku.SpaceAppAccess) []string {
+func createPermissionsList(spaceAppAccess *heroku.SpaceAppAccess) []string {
 	perms := make([]string, 0)
 	if spaceAppAccess != nil {
 		for _, perm := range spaceAppAccess.Permissions {
@@ -118,12 +113,14 @@ func createSpaceAppAccessUpdateOpts(permSet *schema.Set) heroku.SpaceAppAccessUp
 		Name *string `json:"name,omitempty" url:"name,omitempty,key"`
 	}, 0)
 	opts := heroku.SpaceAppAccessUpdateOpts{Permissions: permissions}
-	for _, perm := range permSet.List() {
-		permName := perm.(string)
-		permOpt := struct {
-			Name *string `json:"name,omitempty" url:"name,omitempty,key"`
-		}{&permName}
-		opts.Permissions = append(opts.Permissions, permOpt)
+	if permSet != nil {
+		for _, perm := range permSet.List() {
+			permName := perm.(string)
+			permOpt := struct {
+				Name *string `json:"name,omitempty" url:"name,omitempty,key"`
+			}{&permName}
+			opts.Permissions = append(opts.Permissions, permOpt)
+		}
 	}
 	return opts
 }

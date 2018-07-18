@@ -69,3 +69,9 @@ func testAccPreCheck(t *testing.T) {
 		t.Fatal("HEROKU_API_KEY must be set for acceptance tests")
 	}
 }
+
+func testAccSkipTestMissingOrganization(t *testing.T) {
+	if getTestingOrgName() == "" {
+		t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
+	}
+}
