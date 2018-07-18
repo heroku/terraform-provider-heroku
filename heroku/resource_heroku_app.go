@@ -16,12 +16,13 @@ import (
 
 // herokuApplication is a value type used to hold the details of an
 // application. We use this for common storage of values needed for the
-// heroku.App and heroku.OrganizationApp types
+// heroku.App and heroku.TeamApp types
 type herokuApplication struct {
 	Name             string
 	Region           string
 	Space            string
 	Stack            string
+	InternalRouting  bool
 	GitURL           string
 	WebURL           string
 	OrganizationName string
@@ -56,6 +57,9 @@ func (a *application) Update() error {
 		a.App.GitURL = app.GitURL
 		a.App.WebURL = app.WebURL
 		a.App.Acm = app.Acm
+		if app.InternalRouting != nil {
+			a.App.InternalRouting = *app.InternalRouting
+		}
 		if app.Space != nil {
 			a.App.Space = app.Space.Name
 		}
@@ -125,6 +129,13 @@ func resourceHerokuApp() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+			},
+
+			"internal_routing": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
 			},
 
 			"buildpacks": {
@@ -222,6 +233,9 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	// easy to get, so it makes more sense to just use the name as much as possible.
 	d.SetId(app.Name)
 	d.Set("acm", app.Acm)
+	if app.InternalRouting != nil {
+		d.Set("internal_routing", *app.InternalRouting)
+	}
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -275,7 +289,7 @@ func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 	// Build up our creation options
-	opts := heroku.OrganizationAppCreateOpts{}
+	opts := heroku.TeamAppCreateOpts{}
 
 	v := d.Get("organization").([]interface{})
 	if len(v) > 1 {
@@ -286,7 +300,7 @@ func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error 
 	if v := orgDetails["name"]; v != nil {
 		vs := v.(string)
 		log.Printf("[DEBUG] Organization name: %s", vs)
-		opts.Organization = &vs
+		opts.Team = &vs
 	}
 
 	if v := orgDetails["personal"]; v != nil {
@@ -321,9 +335,14 @@ func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error 
 		log.Printf("[DEBUG] App stack: %s", vs)
 		opts.Stack = &vs
 	}
+	if v, ok := d.GetOk("internal_routing"); ok {
+		vs := v.(bool)
+		log.Printf("[DEBUG] App internal routing: %v", vs)
+		opts.InternalRouting = &vs
+	}
 
 	log.Printf("[DEBUG] Creating Heroku app...")
-	a, err := client.OrganizationAppCreate(context.TODO(), opts)
+	a, err := client.TeamAppCreate(context.TODO(), opts)
 	if err != nil {
 		return err
 	}
@@ -353,6 +372,7 @@ func setOrganizationDetails(d *schema.ResourceData, app *application) (err error
 func setAppDetails(d *schema.ResourceData, app *application) (err error) {
 	d.Set("name", app.App.Name)
 	d.Set("stack", app.App.Stack)
+	d.Set("internal_routing", app.App.InternalRouting)
 	d.Set("region", app.App.Region)
 	d.Set("git_url", app.App.GitURL)
 	d.Set("web_url", app.App.WebURL)
@@ -516,7 +536,7 @@ func resourceHerokuAppExists(d *schema.ResourceData, meta interface{}) (bool, er
 	client := meta.(*heroku.Service)
 
 	if isOrganizationApp(d) {
-		_, err = client.OrganizationAppInfo(context.TODO(), d.Id())
+		_, err = client.TeamAppInfo(context.TODO(), d.Id())
 	} else {
 		_, err = client.AppInfo(context.TODO(), d.Id())
 	}
@@ -544,7 +564,7 @@ func resourceHerokuAppRetrieve(id string, organization bool, client *heroku.Serv
 }
 
 func retrieveOrgLockState(id, org string, client *heroku.Service) (bool, error) {
-	app, err := client.OrganizationAppInfo(context.TODO(), id)
+	app, err := client.TeamAppInfo(context.TODO(), id)
 	if err != nil {
 		return false, err
 	}

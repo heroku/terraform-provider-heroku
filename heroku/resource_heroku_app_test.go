@@ -31,6 +31,8 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 						"heroku_app.foobar", "name", appName),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "config_vars.0.FOO", "bar"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "internal_routing", "false"),
 				),
 			},
 		},
@@ -249,7 +251,7 @@ func TestAccHerokuApp_ACM(t *testing.T) {
 }
 
 func TestAccHerokuApp_Organization(t *testing.T) {
-	var app heroku.OrganizationApp
+	var app heroku.TeamApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	org := os.Getenv("HEROKU_ORGANIZATION")
 
@@ -275,7 +277,7 @@ func TestAccHerokuApp_Organization(t *testing.T) {
 }
 
 func TestAccHerokuApp_Space(t *testing.T) {
-	var app heroku.OrganizationApp
+	var app heroku.TeamApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	org := os.Getenv("HEROKU_SPACES_ORGANIZATION")
 	spaceName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
@@ -476,7 +478,7 @@ func testAccCheckHerokuAppNoBuildpacks(appName string) resource.TestCheckFunc {
 	}
 }
 
-func testAccCheckHerokuAppAttributesOrg(app *heroku.OrganizationApp, appName, space, org string) resource.TestCheckFunc {
+func testAccCheckHerokuAppAttributesOrg(app *heroku.TeamApp, appName, space, org string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := testAccProvider.Meta().(*heroku.Service)
 
@@ -501,8 +503,8 @@ func testAccCheckHerokuAppAttributesOrg(app *heroku.OrganizationApp, appName, sp
 			return fmt.Errorf("Bad name: %s", app.Name)
 		}
 
-		if app.Organization == nil || app.Organization.Name != org {
-			return fmt.Errorf("Bad org: %v", app.Organization)
+		if app.Team == nil || app.Team.Name != org {
+			return fmt.Errorf("Bad org: %v", app.Team)
 		}
 
 		vars, err := client.ConfigVarInfoForApp(context.TODO(), app.Name)
@@ -548,7 +550,7 @@ func testAccCheckHerokuAppExists(n string, app *heroku.App) resource.TestCheckFu
 	}
 }
 
-func testAccCheckHerokuAppExistsOrg(n string, app *heroku.OrganizationApp) resource.TestCheckFunc {
+func testAccCheckHerokuAppExistsOrg(n string, app *heroku.TeamApp) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 
@@ -562,7 +564,7 @@ func testAccCheckHerokuAppExistsOrg(n string, app *heroku.OrganizationApp) resou
 
 		client := testAccProvider.Meta().(*heroku.Service)
 
-		foundApp, err := client.OrganizationAppInfo(context.TODO(), rs.Primary.ID)
+		foundApp, err := client.TeamAppInfo(context.TODO(), rs.Primary.ID)
 
 		if err != nil {
 			return err
