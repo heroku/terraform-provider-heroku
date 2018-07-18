@@ -15125,6 +15125,27 @@
           "description": "Create a new VPN connection in a private space.",
           "href": "/spaces/{(%23%2Fdefinitions%2Fspace%2Fdefinitions%2Fidentity)}/vpn-connections",
           "rel": "create",
+          "schema": {
+            "properties": {
+              "name": {
+                "$ref": "#/definitions/vpn-connection/definitions/name"
+              },
+              "public_ip": {
+                "$ref": "#/definitions/vpn-connection/definitions/public_ip"
+              },
+              "routable_cidrs": {
+                "$ref": "#/definitions/vpn-connection/definitions/routable_cidrs"
+              }
+            },
+            "required": [
+              "name",
+              "public_ip",
+              "routable_cidrs"
+            ],
+            "type": [
+              "object"
+            ]
+          },
           "targetSchema": {
             "$ref": "#/definitions/vpn-connection"
           },

@@ -4548,10 +4548,16 @@ type VPNConnection struct {
 	} `json:"tunnels" url:"tunnels,key"`
 }
 
+type VPNConnectionCreateOpts struct {
+	Name          string   `json:"name" url:"name,key"`                     // VPN Name
+	PublicIP      string   `json:"public_ip" url:"public_ip,key"`           // Public IP of VPN customer gateway
+	RoutableCidrs []string `json:"routable_cidrs" url:"routable_cidrs,key"` // Routable CIDRs of VPN
+}
+
 // Create a new VPN connection in a private space.
-func (s *Service) VPNConnectionCreate(ctx context.Context, spaceIdentity string) (*VPNConnection, error) {
+func (s *Service) VPNConnectionCreate(ctx context.Context, spaceIdentity string, o VPNConnectionCreateOpts) (*VPNConnection, error) {
 	var vpnConnection VPNConnection
-	return &vpnConnection, s.Post(ctx, &vpnConnection, fmt.Sprintf("/spaces/%v/vpn-connections", spaceIdentity), nil)
+	return &vpnConnection, s.Post(ctx, &vpnConnection, fmt.Sprintf("/spaces/%v/vpn-connections", spaceIdentity), o)
 }
 
 // Destroy existing VPN Connection
