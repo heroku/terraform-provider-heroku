@@ -629,38 +629,6 @@ func retrieveConfigVars(id string, client *heroku.Service) (map[string]string, e
 	return nonNullVars, nil
 }
 
-// Updates the config vars for from an expanded configuration.
-func updateConfigVars(
-	id string,
-	client *heroku.Service,
-	o []interface{},
-	n []interface{}) error {
-	vars := make(map[string]*string)
-
-	for _, v := range o {
-		if v != nil {
-			for k := range v.(map[string]interface{}) {
-				vars[k] = nil
-			}
-		}
-	}
-	for _, v := range n {
-		if v != nil {
-			for k, v := range v.(map[string]interface{}) {
-				val := v.(string)
-				vars[k] = &val
-			}
-		}
-	}
-
-	log.Printf("[INFO] Updating config vars: *%#v", vars)
-	if _, err := client.ConfigVarUpdate(context.TODO(), id, vars); err != nil {
-		return fmt.Errorf("Error updating config vars: %s", err)
-	}
-
-	return nil
-}
-
 func updateBuildpacks(id string, client *heroku.Service, v []interface{}) error {
 	opts := heroku.BuildpackInstallationUpdateOpts{
 		Updates: []struct {
@@ -733,4 +701,36 @@ func releaseStateRefreshFunc(client *heroku.Service, appID, releaseID string) re
 		// heroku-go is updated.
 		return (*heroku.Release)(release), release.Status, nil
 	}
+}
+
+// Updates the config vars for from an expanded configuration.
+func updateConfigVars(
+	id string,
+	client *heroku.Service,
+	o []interface{},
+	n []interface{}) error {
+	vars := make(map[string]*string)
+
+	for _, v := range o {
+		if v != nil {
+			for k := range v.(map[string]interface{}) {
+				vars[k] = nil
+			}
+		}
+	}
+	for _, v := range n {
+		if v != nil {
+			for k, v := range v.(map[string]interface{}) {
+				val := v.(string)
+				vars[k] = &val
+			}
+		}
+	}
+
+	log.Printf("[INFO] Updating config vars: *%#v", vars)
+	if _, err := client.ConfigVarUpdate(context.TODO(), id, vars); err != nil {
+		return fmt.Errorf("Error updating config vars: %s", err)
+	}
+
+	return nil
 }

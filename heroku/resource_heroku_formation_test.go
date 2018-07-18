@@ -72,7 +72,7 @@ func testAccCheckHerokuFormationExists(n string, formation *heroku.Formation) re
 		rs, ok := s.RootModule().Resources[n]
 
 		if !ok {
-			return fmt.Errorf("Formation not found: %s", n)
+			return fmt.Errorf("Not found: %s", n)
 		}
 
 		if rs.Primary.ID == "" {
@@ -91,7 +91,9 @@ func testAccCheckHerokuFormationExists(n string, formation *heroku.Formation) re
 			return fmt.Errorf("Formation not found")
 		}
 
-		*formation = *foundFormation
+		if *formation != *foundFormation {
+			return fmt.Errorf("Formation not found")
+		}
 
 		return nil
 	}

@@ -41,6 +41,7 @@ func doesHerokuAppExist(appName string, client *heroku.Service) (*heroku.App, er
 		log.Println(err)
 		return nil, fmt.Errorf("[ERROR] Your app does not exist")
 	}
+
 	return app, nil
 }
 
@@ -57,4 +58,10 @@ func parseCompositeID(id string) (p1 string, p2 string, err error) {
 		err = fmt.Errorf("error: Import composite ID requires two parts separated by colon, eg x:y")
 	}
 	return
+}
+
+func getAppUuid(appName string, client *heroku.Service) string {
+	app, _ := doesHerokuAppExist(appName, client)
+
+	return app.ID
 }
