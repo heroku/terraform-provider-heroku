@@ -2,7 +2,11 @@
 
 IMPROVEMENTS:
 
-* Update the `heroku-go` client to the latest version. (#97)[https://github.com/terraform-providers/terraform-provider-heroku/pull/97]
+* Update the `heroku-go` client to the latest version. [#97](https://github.com/terraform-providers/terraform-provider-heroku/pull/97)
+* Migrate to dep for managing `vendor/` and update packages in `vendor/` [#99](https://github.com/terraform-providers/terraform-provider-heroku/pull/99)
+
+FEATURES:
+* Add `internal_routing` option to `heroku_app` [#100](https://github.com/terraform-providers/terraform-provider-heroku/pull/100)
 
 ## 1.1.1 (July 17, 2018)
 
