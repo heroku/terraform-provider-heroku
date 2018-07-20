@@ -34,6 +34,11 @@ func dataSourceHerokuApp() *schema.Resource {
 				Default:  nil,
 			},
 
+			"internal_routing": {
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
+
 			"buildpacks": {
 				Type:     schema.TypeList,
 				Computed: true,
