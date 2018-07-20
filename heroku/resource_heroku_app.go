@@ -151,7 +151,8 @@ func resourceHerokuApp() *schema.Resource {
 				Optional: true,
 				Computed: true,
 				Elem: &schema.Schema{
-					Type: schema.TypeMap,
+					Type:      schema.TypeMap,
+					Sensitive: true,
 				},
 			},
 
