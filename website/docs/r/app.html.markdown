@@ -61,6 +61,8 @@ The `organization` block supports:
 * `locked` (boolean)
 * `personal` (boolean)
 
+~> **NOTE:** Internal routing is currently a beta feature that requires you email Heroku Support to have it enabled. Without this feature enabled by Heroku Support the `internal_routing` attribute will be ignored.
+
 ## Attributes Reference
 
 The following attributes are exported:
