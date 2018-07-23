@@ -1,8 +1,14 @@
-## 1.2.0 (Unreleased)
+## 1.3.0 (Unreleased)
+## 1.2.0 (July 21, 2018)
 
 IMPROVEMENTS:
-* Better support for addon config referencing for downstream heroku apps. (#101)[https://github.com/terraform-providers/terraform-provider-heroku/pull/102/files]
-* Update the `heroku-go` client to the latest version. (#97)[https://github.com/terraform-providers/terraform-provider-heroku/pull/97]
+
+* Update the `heroku-go` client to the latest version. [#97](https://github.com/terraform-providers/terraform-provider-heroku/pull/97)
+* Migrate to dep for managing `vendor/` and update packages in `vendor/` [#99](https://github.com/terraform-providers/terraform-provider-heroku/pull/99)
+* Better support for addon config referencing for downstream heroku apps. [#101](https://github.com/terraform-providers/terraform-provider-heroku/pull/102/files)
+
+FEATURES:
+* Add `internal_routing` option to `heroku_app` [#100](https://github.com/terraform-providers/terraform-provider-heroku/pull/100)
 
 ## 1.1.1 (July 17, 2018)
 

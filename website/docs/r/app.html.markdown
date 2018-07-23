@@ -46,6 +46,10 @@ The following arguments are supported:
      configuration variables set externally won't be removed by Terraform
      if they aren't present in this list.
 * `space` - (Optional) The name of a private space to create the app in.
+* `internal_routing` - (Optional) If true, the application will be routable
+  only internally in a private space. This option is only available for apps
+  that also specify `space`. This feature is currently only available in
+  private beta. Contact Heroku Support for more details.
 * `organization` - (Optional) A block that can be specified once to define
      organization settings for this app. The fields for this block are
      documented below.
@@ -57,6 +61,8 @@ The `organization` block supports:
 * `locked` (boolean)
 * `personal` (boolean)
 
+~> **NOTE:** Internal routing is currently a beta feature that requires you email Heroku Support to have it enabled. Without this feature enabled by Heroku Support the `internal_routing` attribute will be ignored.
+
 ## Attributes Reference
 
 The following attributes are exported:
@@ -67,6 +73,8 @@ The following attributes are exported:
 * `stack` - The application stack is what platform to run the application
    in.
 * `space` - The private space the app should run in.
+* `internal_routing` - Whether internal routing is enabled the private space
+  app.
 * `region` - The region that the app should be deployed in.
 * `git_url` - The Git URL for the application. This is used for
    deploying new versions of the app.

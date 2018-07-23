@@ -61,10 +61,6 @@ func TestProviderConfigureUsesHeadersForClient(t *testing.T) {
 }
 
 func testAccPreCheck(t *testing.T) {
-	if v := os.Getenv("HEROKU_EMAIL"); v == "" {
-		t.Fatal("HEROKU_EMAIL must be set for acceptance tests")
-	}
-
 	if v := os.Getenv("HEROKU_API_KEY"); v == "" {
 		t.Fatal("HEROKU_API_KEY must be set for acceptance tests")
 	}

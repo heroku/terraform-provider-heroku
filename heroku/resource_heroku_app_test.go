@@ -31,6 +31,8 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 						"heroku_app.foobar", "name", appName),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "config_vars.0.FOO", "bar"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "internal_routing", "false"),
 				),
 			},
 		},
@@ -249,7 +251,7 @@ func TestAccHerokuApp_ACM(t *testing.T) {
 }
 
 func TestAccHerokuApp_Organization(t *testing.T) {
-	var app heroku.OrganizationApp
+	var app heroku.TeamApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	org := os.Getenv("HEROKU_ORGANIZATION")
 
@@ -267,7 +269,7 @@ func TestAccHerokuApp_Organization(t *testing.T) {
 				Config: testAccCheckHerokuAppConfig_organization(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
-					testAccCheckHerokuAppAttributesOrg(&app, appName, "", org),
+					testAccCheckHerokuAppAttributesOrg(&app, appName, "", org, false),
 				),
 			},
 		},
@@ -275,7 +277,7 @@ func TestAccHerokuApp_Organization(t *testing.T) {
 }
 
 func TestAccHerokuApp_Space(t *testing.T) {
-	var app heroku.OrganizationApp
+	var app heroku.TeamApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	org := os.Getenv("HEROKU_SPACES_ORGANIZATION")
 	spaceName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
@@ -294,7 +296,34 @@ func TestAccHerokuApp_Space(t *testing.T) {
 				Config: testAccCheckHerokuAppConfig_space(appName, spaceName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
-					testAccCheckHerokuAppAttributesOrg(&app, appName, spaceName, org),
+					testAccCheckHerokuAppAttributesOrg(&app, appName, spaceName, org, false),
+				),
+			},
+		},
+	})
+}
+
+func TestAccHerokuApp_Space_Internal(t *testing.T) {
+	var app heroku.TeamApp
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := os.Getenv("HEROKU_SPACES_ORGANIZATION")
+	spaceName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			if org == "" {
+				t.Skip("HEROKU_SPACES_ORGANIZATION is not set; skipping test.")
+			}
+		},
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAppDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAppConfig_space_internal(appName, spaceName, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
+					testAccCheckHerokuAppAttributesOrg(&app, appName, spaceName, org, true),
 				),
 			},
 		},
@@ -476,7 +505,7 @@ func testAccCheckHerokuAppNoBuildpacks(appName string) resource.TestCheckFunc {
 	}
 }
 
-func testAccCheckHerokuAppAttributesOrg(app *heroku.OrganizationApp, appName, space, org string) resource.TestCheckFunc {
+func testAccCheckHerokuAppAttributesOrg(app *heroku.TeamApp, appName, space, org string, internal bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := testAccProvider.Meta().(*heroku.Service)
 
@@ -501,8 +530,16 @@ func testAccCheckHerokuAppAttributesOrg(app *heroku.OrganizationApp, appName, sp
 			return fmt.Errorf("Bad name: %s", app.Name)
 		}
 
-		if app.Organization == nil || app.Organization.Name != org {
-			return fmt.Errorf("Bad org: %v", app.Organization)
+		if app.Team == nil || app.Team.Name != org {
+			return fmt.Errorf("Bad org: %v", app.Team)
+		}
+
+		appInternalRouting := false
+		if app.InternalRouting != nil {
+			appInternalRouting = *app.InternalRouting
+		}
+		if appInternalRouting != internal {
+			return fmt.Errorf("Bad internal routing: %v (want %v)", appInternalRouting, internal)
 		}
 
 		vars, err := client.ConfigVarInfoForApp(context.TODO(), app.Name)
@@ -548,7 +585,7 @@ func testAccCheckHerokuAppExists(n string, app *heroku.App) resource.TestCheckFu
 	}
 }
 
-func testAccCheckHerokuAppExistsOrg(n string, app *heroku.OrganizationApp) resource.TestCheckFunc {
+func testAccCheckHerokuAppExistsOrg(n string, app *heroku.TeamApp) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 
@@ -562,7 +599,7 @@ func testAccCheckHerokuAppExistsOrg(n string, app *heroku.OrganizationApp) resou
 
 		client := testAccProvider.Meta().(*heroku.Service)
 
-		foundApp, err := client.OrganizationAppInfo(context.TODO(), rs.Primary.ID)
+		foundApp, err := client.TeamAppInfo(context.TODO(), rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -693,6 +730,29 @@ resource "heroku_app" "foobar" {
   name   = "%s"
   space  = "${heroku_space.foobar.name}"
   region = "virginia"
+
+  organization {
+    name = "%s"
+  }
+
+  config_vars {
+    FOO = "bar"
+  }
+}`, spaceName, org, appName, org)
+}
+
+func testAccCheckHerokuAppConfig_space_internal(appName, spaceName, org string) string {
+	return fmt.Sprintf(`
+resource "heroku_space" "foobar" {
+  name = "%s"
+	organization = "%s"
+	region = "virginia"
+}
+resource "heroku_app" "foobar" {
+  name             = "%s"
+  space            = "${heroku_space.foobar.name}"
+  region           = "virginia"
+	internal_routing = true
 
   organization {
     name = "%s"
