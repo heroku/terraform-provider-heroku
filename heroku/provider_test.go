@@ -65,3 +65,15 @@ func testAccPreCheck(t *testing.T) {
 		t.Fatal("HEROKU_API_KEY must be set for acceptance tests")
 	}
 }
+
+func testAccSkipTestIfOrganizationMissing(t *testing.T) {
+	if os.Getenv("HEROKU_ORGANIZATION") == "" {
+		t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
+	}
+}
+
+func testAccSkipTestIfUserMissing(t *testing.T) {
+	if os.Getenv("HEROKU_TEST_USER") == "" {
+		t.Skip("HEROKU_TEST_USER is not set; skipping test.")
+	}
+}
