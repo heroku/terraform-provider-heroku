@@ -14,7 +14,7 @@ import (
 func TestAccHerokuSpaceAppAccess_Basic(t *testing.T) {
 	var space heroku.Space
 	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
-	org := getTestingOrgName()
+	org := getTestSpaceOrganizationName()
 	testUser := os.Getenv("HEROKU_TEST_USER")
 
 	resource.Test(t, resource.TestCase{

@@ -60,6 +60,22 @@ func TestProviderConfigureUsesHeadersForClient(t *testing.T) {
 	}
 }
 
+func getTestSpaceOrganizationName() string {
+	org := os.Getenv("HEROKU_ORGANIZATION")
+
+	// HEROKU_SPACES_ORGANIZATION allows us to use a special Organization managed by Heroku for the
+	// strict purpose of testing Heroku Spaces. It has the following resource limits
+	// - 2 spaces
+	// - 2 apps per space
+	// - 2 dynos per space
+	spacesOrg := os.Getenv("HEROKU_SPACES_ORGANIZATION")
+	if spacesOrg != "" {
+		org = spacesOrg
+	}
+
+	return org
+}
+
 func testAccPreCheck(t *testing.T) {
 	if v := os.Getenv("HEROKU_API_KEY"); v == "" {
 		t.Fatal("HEROKU_API_KEY must be set for acceptance tests")
@@ -69,6 +85,12 @@ func testAccPreCheck(t *testing.T) {
 func testAccSkipTestIfOrganizationMissing(t *testing.T) {
 	if os.Getenv("HEROKU_ORGANIZATION") == "" {
 		t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
+	}
+}
+
+func testAccSkipTestIfSpaceOrganizationMissing(t *testing.T) {
+	if getTestSpaceOrganizationName() == "" {
+		t.Skip("(HEROKU_ORGANIZATION || HEROKU_SPACES_ORGANIZATION) is not set; skipping test.")
 	}
 }
 
