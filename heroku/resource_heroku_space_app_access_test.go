@@ -2,7 +2,6 @@ package heroku
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 
@@ -15,7 +14,7 @@ func TestAccHerokuSpaceAppAccess_Basic(t *testing.T) {
 	var space heroku.Space
 	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
 	org := getTestSpaceOrganizationName()
-	testUser := os.Getenv("HEROKU_TEST_USER")
+	testUser := getTestUser()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {

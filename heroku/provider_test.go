@@ -60,6 +60,10 @@ func TestProviderConfigureUsesHeadersForClient(t *testing.T) {
 	}
 }
 
+func getTestUser() string {
+	return os.Getenv("HEROKU_TEST_USER")
+}
+
 func getTestSpaceOrganizationName() string {
 	org := os.Getenv("HEROKU_ORGANIZATION")
 
@@ -95,7 +99,7 @@ func testAccSkipTestIfSpaceOrganizationMissing(t *testing.T) {
 }
 
 func testAccSkipTestIfUserMissing(t *testing.T) {
-	if os.Getenv("HEROKU_TEST_USER") == "" {
+	if getTestUser() == "" {
 		t.Skip("HEROKU_TEST_USER is not set; skipping test.")
 	}
 }
