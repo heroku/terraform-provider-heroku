@@ -23,7 +23,7 @@ func TestAccHerokuAddon_importBasic(t *testing.T) {
 				ResourceName:            "heroku_addon.foobar",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"config_vars", "config"},
+				ImportStateVerifyIgnore: []string{"config"},
 			},
 			{
 				Config:             testAccCheckHerokuAddonConfig_basic(appName),

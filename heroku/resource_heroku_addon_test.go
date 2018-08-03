@@ -169,7 +169,7 @@ func testAccCheckHerokuConfigVarExists(resourceName string, appName string, addo
 		if configVarInfo == nil {
 			return nil
 		}
-		configValue := resource.Primary.Attributes["all_config_vars."+configVar]
+		configValue := resource.Primary.Attributes["config_vars."+configVar]
 		if configValue != *configVarInfo[configVar] {
 			return fmt.Errorf("Mismatched config value set %s, actual: %s expected: %s", configVar, configValue, *configVarInfo[configVar])
 		} else {
