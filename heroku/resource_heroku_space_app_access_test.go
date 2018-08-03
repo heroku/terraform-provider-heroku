@@ -22,15 +22,13 @@ func TestAccHerokuSpaceAppAccess_Basic(t *testing.T) {
 			testAccSkipTestIfOrganizationMissing(t)
 			testAccSkipTestIfUserMissing(t)
 		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuSpaceDestroy,
+		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				ResourceName: "heroku_space_app_access.foobar",
-				Config:       testAccCheckHerokuSpaceAppAccessConfig_basic(spaceName, org, testUser, []string{"create_apps"}),
+				Config: testAccCheckHerokuSpaceAppAccessConfig_basic(spaceName, org, testUser, []string{"create_apps"}),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
-					resource.TestCheckResourceAttr("heroku_space_app_access.foobar", "permissions.0", "create_apps"),
+					resource.TestCheckResourceAttr("heroku_space_app_access.foobar", "permissions.3695762012", "create_apps"),
 				),
 			},
 		},
@@ -51,8 +49,8 @@ resource "heroku_space" "foobar" {
 
 resource "heroku_space_app_access" "foobar" {
   space = "${heroku_space.foobar.name}"
-	email = "%s"
-	permissions = %s
+  email = "%s"
+  permissions = %s
 }
 `, spaceName, orgName, testUser, hclPermissionsList)
 }
