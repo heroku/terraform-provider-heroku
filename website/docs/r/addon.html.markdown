@@ -52,8 +52,7 @@ The following attributes are exported:
 * `name` - The add-on name
 * `plan` - The plan name
 * `provider_id` - The ID of the plan provider
-* `config_vars` - List of config variable keys the add-on maintains and attaches to associated heroku apps
-* `all_config_vars` - Map of config variables the add-on attaches to associated heroku apps
+* `config_vars` - Map of config variables the add-on attaches to associated heroku apps
 
 
 ## Import
