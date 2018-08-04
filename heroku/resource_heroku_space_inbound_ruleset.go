@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	heroku "github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
+	heroku "github.com/heroku/heroku-go/v3"
 )
 
 func resourceHerokuSpaceInboundRuleset() *schema.Resource {

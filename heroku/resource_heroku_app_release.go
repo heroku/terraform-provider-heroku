@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/heroku/heroku-go/v3"
 	"log"
 	"time"
 )

@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	heroku "github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
+	heroku "github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuSpaceAppAccess_Basic(t *testing.T) {

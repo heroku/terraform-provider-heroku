@@ -6,8 +6,8 @@ import (
 	"log"
 	"regexp"
 
-	"github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func resourceHerokuAddonAttachment() *schema.Resource {
