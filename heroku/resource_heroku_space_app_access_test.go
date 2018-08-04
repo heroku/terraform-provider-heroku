@@ -1,12 +1,14 @@
 package heroku
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform/terraform"
 	heroku "github.com/heroku/heroku-go/v3"
 )
 
@@ -22,7 +24,8 @@ func TestAccHerokuSpaceAppAccess_Basic(t *testing.T) {
 			testAccSkipTestIfOrganizationMissing(t)
 			testAccSkipTestIfUserMissing(t)
 		},
-		Providers: testAccProviders,
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuSpaceAppAccessDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuSpaceAppAccessConfig_basic(spaceName, org, testUser, []string{"create_apps"}),
@@ -53,4 +56,20 @@ resource "heroku_space_app_access" "foobar" {
   permissions = %s
 }
 `, spaceName, orgName, testUser, hclPermissionsList)
+}
+
+func testAccCheckHerokuSpaceAppAccessDestroy(s *terraform.State) error {
+	client := testAccProvider.Meta().(*heroku.Service)
+
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "heroku_space_app_access" {
+			continue
+		}
+		_, err := client.SpaceAppAccessInfo(context.TODO(), rs.Primary.Attributes["space"], rs.Primary.ID)
+		if err == nil {
+			return fmt.Errorf("heroku_space_app_access still exists")
+		}
+	}
+
+	return nil
 }
