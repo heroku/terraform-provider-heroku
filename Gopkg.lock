@@ -82,12 +82,6 @@
   version = "v3.5.1"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/cyberdelia/heroku-go"
-  packages = ["v3"]
-  revision = "8c8bc985f35406bdef3796aa333a7e410f7157fe"
-
-[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
@@ -266,6 +260,12 @@
   name = "github.com/hashicorp/yamux"
   packages = ["."]
   revision = "3520598351bb3500a49ae9563f5539666ae0a27c"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/heroku/heroku-go"
+  packages = ["v3"]
+  revision = "ef2912d2324ccf45148830d1d1924fdca3b3cd9d"
 
 [[projects]]
   name = "github.com/jmespath/go-jmespath"
@@ -495,6 +495,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8c9edb0a6a04c8b91d1c9b72e1818371e41681ce05b35a275d99abfac5978d8a"
+  inputs-digest = "5cd2f66d4294c0bc3ca767909342397c1ad31e468635d66135c2746c82093d03"
   solver-name = "gps-cdcl"
   solver-version = 1
