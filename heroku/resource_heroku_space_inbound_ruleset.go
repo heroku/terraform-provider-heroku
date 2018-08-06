@@ -6,6 +6,7 @@ import (
 
 	heroku "github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
 func resourceHerokuSpaceInboundRuleset() *schema.Resource {
@@ -35,7 +36,7 @@ func resourceHerokuSpaceInboundRuleset() *schema.Resource {
 						"source": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validateCIDRNetworkAddress,
+							ValidateFunc: validation.CIDRNetwork(0, 32),
 						},
 					},
 				},

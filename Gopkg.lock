@@ -242,6 +242,8 @@
     "helper/logging",
     "helper/resource",
     "helper/schema",
+    "helper/structure",
+    "helper/validation",
     "httpclient",
     "moduledeps",
     "plugin",
@@ -493,6 +495,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f58b3558348d1b1415968a09e5a4c26b19a170880f380e3fc7e77a2708fe0209"
+  inputs-digest = "8c9edb0a6a04c8b91d1c9b72e1818371e41681ce05b35a275d99abfac5978d8a"
   solver-name = "gps-cdcl"
   solver-version = 1
