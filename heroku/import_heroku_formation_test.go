@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"testing"
 
+	"os"
+
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
-	"os"
 )
 
 func TestAccHerokuFormation_importBasic(t *testing.T) {
@@ -32,7 +33,7 @@ func TestAccHerokuFormation_importBasic(t *testing.T) {
 			},
 			{
 				ResourceName:      "heroku_formation.foobar-web",
-				ImportStateId:     appName + ":" + formationType,
+				ImportStateId:     buildCompositeID(appName, formationType),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},

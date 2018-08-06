@@ -27,7 +27,7 @@ func TestAccHerokuSpaceAppAccess_importBasic(t *testing.T) {
 			},
 			{
 				ResourceName:      "heroku_space_app_access.foobar",
-				ImportStateId:     fmt.Sprintf("%s:%s", spaceName, testUser),
+				ImportStateId:     buildCompositeID(spaceName, testUser),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},

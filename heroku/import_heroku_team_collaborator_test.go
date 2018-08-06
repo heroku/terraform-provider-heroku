@@ -25,7 +25,7 @@ func TestAccHerokuTeamCollaborator_importBasic(t *testing.T) {
 			},
 			{
 				ResourceName:            "heroku_team_collaborator.foobar-collaborator",
-				ImportStateId:           appName + ":" + testUser,
+				ImportStateId:           buildCompositeID(appName, testUser),
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"suppress_invites"},
