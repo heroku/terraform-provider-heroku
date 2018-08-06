@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/url"
 	"time"
 
 	heroku "github.com/cyberdelia/heroku-go/v3"
@@ -137,10 +136,6 @@ func resourceHerokuSpaceVPNConnectionCreate(d *schema.ResourceData, meta interfa
 		Refresh: func() (interface{}, string, error) {
 			conn, err := client.VPNConnectionInfo(context.TODO(), space, id)
 			if err != nil {
-				if herr, ok := err.(*url.Error).Err.(heroku.Error); ok && herr.ID == "not_found" {
-					// VPN creation is eventually consistent
-					return nil, "pending", nil
-				}
 				return nil, "", fmt.Errorf("Error getting VPN status: %v", err)
 			}
 
