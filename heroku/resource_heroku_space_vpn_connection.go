@@ -84,9 +84,9 @@ func resourceHerokuSpaceVPNConnection() *schema.Resource {
 
 func resourceHerokuSpaceVPNConnectionRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
-	space := d.Get("space").(string)
+	space, id := parseCompositeID(d.Id())
 
-	conn, err := client.VPNConnectionInfo(context.TODO(), space, d.Id())
+	conn, err := client.VPNConnectionInfo(context.TODO(), space, id)
 	if err != nil {
 		return fmt.Errorf("Error reading VPN information: %v", err)
 	}
@@ -129,7 +129,7 @@ func resourceHerokuSpaceVPNConnectionCreate(d *schema.ResourceData, meta interfa
 	}
 	id := conn.ID
 
-	log.Printf("[DEBUG] Waiting for VPN (%s) to be allocated", d.Id())
+	log.Printf("[DEBUG] Waiting for VPN (%s) to be allocated", id)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{"pending", "provisioning"},
 		Target:  []string{"active"},
@@ -149,16 +149,16 @@ func resourceHerokuSpaceVPNConnectionCreate(d *schema.ResourceData, meta interfa
 		return fmt.Errorf("Error waiting for VPN to become available: %v", err)
 	}
 
-	d.SetId(id)
+	d.SetId(buildCompositeID(space, id))
 
 	return resourceHerokuSpaceVPNConnectionRead(d, meta)
 }
 
 func resourceHerokuSpaceVPNConnectionDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
-	space := d.Get("space").(string)
+	space, id := parseCompositeID(d.Id())
 
-	_, err := client.VPNConnectionDestroy(context.TODO(), space, d.Id())
+	_, err := client.VPNConnectionDestroy(context.TODO(), space, id)
 	if err != nil {
 		return fmt.Errorf("Error deleting VPN: %v", err)
 	}
