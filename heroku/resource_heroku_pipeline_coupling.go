@@ -7,6 +7,7 @@ import (
 
 	"github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
 func resourceHerokuPipelineCoupling() *schema.Resource {
@@ -36,10 +37,13 @@ func resourceHerokuPipelineCoupling() *schema.Resource {
 				ValidateFunc: validateUUID,
 			},
 			"stage": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validatePipelineStageName,
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+				ValidateFunc: validation.StringInSlice(
+					[]string{"review", "development", "staging", "production"},
+					false,
+				),
 			},
 		},
 	}
