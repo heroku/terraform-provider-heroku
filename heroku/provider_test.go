@@ -2,6 +2,7 @@ package heroku
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,12 +15,14 @@ import (
 
 var testAccProviders map[string]terraform.ResourceProvider
 var testAccProvider *schema.Provider
+var testAccConfig *TestConfig
 
 func init() {
 	testAccProvider = Provider().(*schema.Provider)
 	testAccProviders = map[string]terraform.ResourceProvider{
 		"heroku": testAccProvider,
 	}
+	testAccConfig = NewTestConfig()
 }
 
 func TestProvider(t *testing.T) {
@@ -60,46 +63,93 @@ func TestProviderConfigureUsesHeadersForClient(t *testing.T) {
 	}
 }
 
+type TestConfigKey int
+
+const (
+	TestConfigUserKey TestConfigKey = iota
+	TestConfigNonAdminUserKey
+	TestConfigAPIKey
+	TestConfigOrganizationKey
+	TestConfigSpaceOrganizationKey
+)
+
+var testConfigKeyToEnvName = map[TestConfigKey]string{
+	TestConfigUserKey:              "HEROKU_TEST_USER",
+	TestConfigNonAdminUserKey:      "HEROKU_NON_ADMIN_TEST_USER",
+	TestConfigAPIKey:               "HEROKU_API_KEY",
+	TestConfigOrganizationKey:      "HEROKU_ORGANIZATION",
+	TestConfigSpaceOrganizationKey: "HEROKU_SPACES_ORGANIZATION",
+}
+
+func (k TestConfigKey) String() (name string) {
+	if val, ok := testConfigKeyToEnvName[k]; ok {
+		name = val
+	}
+	return
+}
+
+type TestConfigKeyNotFoundAction int
+
+const (
+	TestConfigKeyNotFoundNoopAction TestConfigKeyNotFoundAction = iota
+	TestConfigKeyNotFoundSkipAction
+	TestConfigKeyNotFoundAbortAction
+)
+
+type TestConfig struct{}
+
+func NewTestConfig() *TestConfig {
+	return &TestConfig{}
+}
+
+func (t *TestConfig) GetWithAction(key TestConfigKey, testing *testing.T, notFoundAction TestConfigKeyNotFoundAction, defaultValue ...string) (val string) {
+	val = os.Getenv(key.String())
+	if val == "" && len(defaultValue) > 0 {
+		val = defaultValue[0]
+	}
+	if val == "" && testing != nil {
+		switch notFoundAction {
+		case TestConfigKeyNotFoundSkipAction:
+			testing.Skip(fmt.Sprintf("skipping test: config %s not set", key))
+		case TestConfigKeyNotFoundAbortAction:
+			testing.Fatal(fmt.Sprintf("stopping test: config %s must be set", key))
+		}
+	}
+	return
+}
+
+func (t *TestConfig) Get(key TestConfigKey, testing *testing.T, defaultValue ...string) (val string) {
+	return t.GetWithAction(key, testing, TestConfigKeyNotFoundNoopAction, defaultValue...)
+}
+
+func (t *TestConfig) GetOrSkip(key TestConfigKey, testing *testing.T, defaultValue ...string) (val string) {
+	return t.GetWithAction(key, testing, TestConfigKeyNotFoundSkipAction, defaultValue...)
+}
+
+func (t *TestConfig) GetOrAbort(key TestConfigKey, testing *testing.T, defaultValue ...string) (val string) {
+	return t.GetWithAction(key, testing, TestConfigKeyNotFoundAbortAction, defaultValue...)
+}
+
+func (t *TestConfig) GetSpaceOrganizationOrSkip(testing *testing.T) (val string) {
+	return t.GetWithAction(TestConfigSpaceOrganizationKey, testing, TestConfigKeyNotFoundSkipAction, t.Get(TestConfigOrganizationKey, testing))
+}
+
+func (t *TestConfig) GetNonAdminUserOrAbort(testing *testing.T) (val string) {
+	return t.GetWithAction(TestConfigNonAdminUserKey, testing, TestConfigKeyNotFoundAbortAction)
+}
+
+func (t *TestConfig) GetUserOrSkip(testing *testing.T) (val string) {
+	return t.GetWithAction(TestConfigUserKey, testing, TestConfigKeyNotFoundSkipAction)
+}
+
 func getTestUser() string {
-	return os.Getenv("HEROKU_TEST_USER")
+	return testAccConfig.Get(TestConfigUserKey, nil)
 }
 
 func getTestSpaceOrganizationName() string {
-	org := os.Getenv("HEROKU_ORGANIZATION")
-
-	// HEROKU_SPACES_ORGANIZATION allows us to use a special Organization managed by Heroku for the
-	// strict purpose of testing Heroku Spaces. It has the following resource limits
-	// - 2 spaces
-	// - 2 apps per space
-	// - 2 dynos per space
-	spacesOrg := os.Getenv("HEROKU_SPACES_ORGANIZATION")
-	if spacesOrg != "" {
-		org = spacesOrg
-	}
-
-	return org
+	return testAccConfig.Get(TestConfigSpaceOrganizationKey, nil, testAccConfig.Get(TestConfigOrganizationKey, nil))
 }
 
 func testAccPreCheck(t *testing.T) {
-	if v := os.Getenv("HEROKU_API_KEY"); v == "" {
-		t.Fatal("HEROKU_API_KEY must be set for acceptance tests")
-	}
-}
-
-func testAccSkipTestIfOrganizationMissing(t *testing.T) {
-	if os.Getenv("HEROKU_ORGANIZATION") == "" {
-		t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
-	}
-}
-
-func testAccSkipTestIfSpaceOrganizationMissing(t *testing.T) {
-	if getTestSpaceOrganizationName() == "" {
-		t.Skip("(HEROKU_ORGANIZATION || HEROKU_SPACES_ORGANIZATION) is not set; skipping test.")
-	}
-}
-
-func testAccSkipTestIfUserMissing(t *testing.T) {
-	if getTestUser() == "" {
-		t.Skip("HEROKU_TEST_USER is not set; skipping test.")
-	}
+	testAccConfig.GetOrAbort(TestConfigAPIKey, t)
 }

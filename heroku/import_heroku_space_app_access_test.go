@@ -10,14 +10,14 @@ import (
 
 func TestAccHerokuSpaceAppAccess_importBasic(t *testing.T) {
 	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
-	org := getTestSpaceOrganizationName()
-	testUser := getTestUser()
+	var org string
+	var testUser string
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			testAccSkipTestIfOrganizationMissing(t)
-			testAccSkipTestIfUserMissing(t)
+			org = testAccConfig.GetSpaceOrganizationOrSkip(t)
+			testUser = testAccConfig.GetNonAdminUserOrAbort(t)
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuSpaceDestroy,

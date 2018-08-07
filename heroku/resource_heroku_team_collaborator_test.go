@@ -17,17 +17,15 @@ func TestAccHerokuTeamCollaborator_Org(t *testing.T) {
 	var teamCollaborator heroku.TeamAppCollaborator
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	org := os.Getenv("HEROKU_ORGANIZATION")
-	testUser := getTestUser()
+	var org string
+	var testUser string
 	perms := "[\"deploy\", \"operate\", \"view\"]"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if org == "" {
-				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
-			}
-			testAccSkipTestIfUserMissing(t)
+			org = testAccConfig.GetSpaceOrganizationOrSkip(t)
+			testUser = testAccConfig.GetUserOrSkip(t)
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
@@ -55,11 +53,8 @@ func TestAccHerokuTeamCollaboratorPermsOutOfOrder_Org(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if org == "" {
-				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
-			}
-
-			testAccSkipTestIfUserMissing(t)
+			org = testAccConfig.GetSpaceOrganizationOrSkip(t)
+			testUser = testAccConfig.GetUserOrSkip(t)
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
