@@ -2,7 +2,7 @@
 
 IMPROVEMENTS:
 
-* Repurpose config_vars attribute on addon resource from list of config keys to map of config keys to values [#102](https://github.com/terraform-providers/terraform-provider-heroku/pull/102/files)
+* Better support for addon config referencing for downstream heroku apps. [#102](https://github.com/terraform-providers/terraform-provider-heroku/pull/102/files)
 
 ## 1.2.0 (July 21, 2018)
 
