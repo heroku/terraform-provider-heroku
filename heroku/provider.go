@@ -15,18 +15,18 @@ import (
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"email": &schema.Schema{
+			"email": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HEROKU_EMAIL", nil),
 			},
 
-			"api_key": &schema.Schema{
+			"api_key": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HEROKU_API_KEY", nil),
 			},
-			"headers": &schema.Schema{
+			"headers": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HEROKU_HEADERS", nil),
@@ -47,7 +47,9 @@ func Provider() terraform.ResourceProvider {
 			"heroku_pipeline_coupling":                 resourceHerokuPipelineCoupling(),
 			"heroku_space":                             resourceHerokuSpace(),
 			"heroku_space_inbound_ruleset":             resourceHerokuSpaceInboundRuleset(),
+			"heroku_space_app_access":                  resourceHerokuSpaceAppAccess(),
 			"heroku_space_peering_connection_accepter": resourceHerokuSpacePeeringConnectionAccepter(),
+			"heroku_space_vpn_connection":              resourceHerokuSpaceVPNConnection(),
 			"heroku_team_collaborator":                 resourceHerokuTeamCollaborator(),
 		},
 

@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/heroku/heroku-go/v3"
 )
 
 // We break apart testing for EU and US because at present, Heroku deals with
