@@ -30,6 +30,7 @@ func resourceHerokuAddon() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
+
 		SchemaVersion: 1,
 		MigrateState:  resourceHerokuAddonMigrate,
 
@@ -54,7 +55,7 @@ func resourceHerokuAddon() *schema.Resource {
 				},
 			},
 
-			"config_vars": {
+			"all_config_vars": {
 				Type:     schema.TypeMap,
 				Computed: true,
 			},
@@ -67,6 +68,14 @@ func resourceHerokuAddon() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+
+			"config_vars": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 		},
 	}
@@ -147,6 +156,9 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("app", addon.App.Name)
 	d.Set("plan", plan)
 	d.Set("provider_id", addon.ProviderID)
+	if err := d.Set("config_vars", addon.ConfigVars); err != nil {
+		return err
+	}
 
 	appConfigInfo, err := client.ConfigVarInfoForApp(context.TODO(), addon.App.Name)
 	if err != nil {
@@ -159,7 +171,7 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 		configMap[configKey] = *(appConfigInfo[configKey])
 	}
 
-	if err := d.Set("config_vars", configMap); err != nil {
+	if err := d.Set("all_config_vars", configMap); err != nil {
 		log.Printf("[WARN] Error setting all_config_vars: %s", err)
 	}
 
