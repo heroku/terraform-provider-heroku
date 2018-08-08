@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	heroku "github.com/cyberdelia/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go/v3"
 )
 
 type Config struct {

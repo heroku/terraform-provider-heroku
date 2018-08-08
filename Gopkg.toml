@@ -27,7 +27,7 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/cyberdelia/heroku-go"
+  name = "github.com/heroku/heroku-go"
 
 [[constraint]]
   branch = "master"

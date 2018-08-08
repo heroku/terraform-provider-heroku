@@ -6,9 +6,9 @@ import (
 	"log"
 	"time"
 
-	heroku "github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	heroku "github.com/heroku/heroku-go/v3"
 )
 
 func resourceHerokuSpaceVPNConnection() *schema.Resource {

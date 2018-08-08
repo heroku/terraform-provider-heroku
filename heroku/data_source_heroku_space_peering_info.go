@@ -3,8 +3,8 @@ package heroku
 import (
 	"context"
 
-	"github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func dataSourceHerokuSpacePeeringInfo() *schema.Resource {

@@ -7,9 +7,9 @@ import (
 	"os"
 	"testing"
 
-	heroku "github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
+	heroku "github.com/heroku/heroku-go/v3"
 )
 
 var testAccProviders map[string]terraform.ResourceProvider

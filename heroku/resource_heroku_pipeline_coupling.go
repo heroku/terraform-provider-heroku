@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func resourceHerokuPipelineCoupling() *schema.Resource {

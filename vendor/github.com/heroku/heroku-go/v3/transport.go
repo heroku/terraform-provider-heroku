@@ -25,6 +25,10 @@ type Transport struct {
 	// Password is the HTTP basic auth password for API calls made by this Client.
 	Password string
 
+	// BearerToken is a bearer token to authorize the request with. If this is
+	// set, the basic auth credentials will be ignored.
+	BearerToken string
+
 	// UserAgent to be provided in API requests. Set to DefaultUserAgent if not
 	// specified.
 	UserAgent string
@@ -69,7 +73,13 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	req.Header.Set("Accept", "application/vnd.heroku+json; version=3")
 	req.Header.Set("Request-Id", uuid.New())
-	req.SetBasicAuth(t.Username, t.Password)
+
+	if t.BearerToken != "" {
+		req.Header.Add("Authorization", "Bearer "+t.BearerToken)
+	} else if t.Username != "" || t.Password != "" {
+		req.SetBasicAuth(t.Username, t.Password)
+	}
+
 	for k, v := range t.AdditionalHeaders {
 		req.Header[k] = v
 	}
@@ -114,6 +124,8 @@ type Error struct {
 	error
 	ID  string
 	URL string
+	// StatusCode is the HTTP status code returned from the remote server.
+	StatusCode int
 }
 
 func checkResponse(resp *http.Response) error {
@@ -127,7 +139,7 @@ func checkResponse(resp *http.Response) error {
 		if err != nil {
 			return fmt.Errorf("encountered an error : %s", resp.Status)
 		}
-		return Error{error: errors.New(e.Message), ID: e.ID, URL: e.URL}
+		return Error{error: errors.New(e.Message), ID: e.ID, URL: e.URL, StatusCode: resp.StatusCode}
 	}
 	if msg := resp.Header.Get("X-Heroku-Warning"); msg != "" {
 		log.Println(strings.TrimSpace(msg))
