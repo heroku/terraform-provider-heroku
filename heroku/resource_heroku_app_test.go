@@ -3,7 +3,6 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/acctest"
@@ -213,14 +212,12 @@ func TestAccHerokuApp_ExternallySetBuildpacks(t *testing.T) {
 func TestAccHerokuApp_ACM(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	org := os.Getenv("HEROKU_ORGANIZATION")
+	var org string
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if org == "" {
-				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
-			}
+			org = testAccConfig.GetOrganizationOrSkip(t)
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuAppDestroy,
@@ -253,14 +250,12 @@ func TestAccHerokuApp_ACM(t *testing.T) {
 func TestAccHerokuApp_Organization(t *testing.T) {
 	var app heroku.TeamApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	org := os.Getenv("HEROKU_ORGANIZATION")
+	var org string
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if org == "" {
-				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
-			}
+			org = testAccConfig.GetOrganizationOrSkip(t)
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuAppDestroy,
@@ -279,15 +274,13 @@ func TestAccHerokuApp_Organization(t *testing.T) {
 func TestAccHerokuApp_Space(t *testing.T) {
 	var app heroku.TeamApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	org := os.Getenv("HEROKU_SPACES_ORGANIZATION")
+	var org string
 	spaceName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if org == "" {
-				t.Skip("HEROKU_SPACES_ORGANIZATION is not set; skipping test.")
-			}
+			org = testAccConfig.GetSpaceOrganizationOrSkip(t)
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuAppDestroy,
@@ -306,15 +299,13 @@ func TestAccHerokuApp_Space(t *testing.T) {
 func TestAccHerokuApp_Space_Internal(t *testing.T) {
 	var app heroku.TeamApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	org := os.Getenv("HEROKU_SPACES_ORGANIZATION")
+	var org string
 	spaceName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if org == "" {
-				t.Skip("HEROKU_SPACES_ORGANIZATION is not set; skipping test.")
-			}
+			org = testAccConfig.GetSpaceOrganizationOrSkip(t)
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuAppDestroy,

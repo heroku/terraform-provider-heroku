@@ -21,7 +21,7 @@ func TestAccHerokuSpaceAppAccess_Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetSpaceOrganizationOrSkip(t)
+			org = testAccConfig.GetAnyOrganizationOrSkip(t)
 			testUser = testAccConfig.GetNonAdminUserOrAbort(t)
 		},
 		Providers:    testAccProviders,

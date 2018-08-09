@@ -21,7 +21,7 @@ func TestAccHerokuSpace_Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetSpaceOrganizationOrSkip(t)
+			org = testAccConfig.GetAnyOrganizationOrSkip(t)
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuSpaceDestroy,
@@ -57,7 +57,7 @@ func TestAccHerokuSpace_Shield(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetSpaceOrganizationOrSkip(t)
+			org = testAccConfig.GetAnyOrganizationOrSkip(t)
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuSpaceDestroy,
@@ -83,7 +83,7 @@ func TestAccHerokuSpace_IPRange(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetSpaceOrganizationOrSkip(t)
+			org = testAccConfig.GetAnyOrganizationOrSkip(t)
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuSpaceDestroy,

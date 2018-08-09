@@ -4,32 +4,26 @@ import (
 	"fmt"
 	"testing"
 
-	"os"
-
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 )
 
 func TestAccHerokuFormation_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	slugId := os.Getenv("HEROKU_SLUG_ID")
-	org := os.Getenv("HEROKU_ORGANIZATION")
+	var slugID string
+	var org string
 	formationType := "web"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if slugId == "" {
-				t.Skip("HEROKU_SLUG_ID is not set; skipping test.")
-			}
-			if org == "" {
-				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
-			}
+			org = testAccConfig.GetOrganizationOrSkip(t)
+			slugID = testAccConfig.GetSlugIDOrSkip(t)
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuFormationConfig_WithOrg(org, appName, slugId, "standard-2x", 2),
+				Config: testAccCheckHerokuFormationConfig_WithOrg(org, appName, slugID, "standard-2x", 2),
 			},
 			{
 				ResourceName:      "heroku_formation.foobar-web",

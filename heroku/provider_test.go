@@ -71,6 +71,7 @@ const (
 	TestConfigAPIKey
 	TestConfigOrganizationKey
 	TestConfigSpaceOrganizationKey
+	TestConfigSlugIDKey
 )
 
 var testConfigKeyToEnvName = map[TestConfigKey]string{
@@ -79,6 +80,7 @@ var testConfigKeyToEnvName = map[TestConfigKey]string{
 	TestConfigAPIKey:               "HEROKU_API_KEY",
 	TestConfigOrganizationKey:      "HEROKU_ORGANIZATION",
 	TestConfigSpaceOrganizationKey: "HEROKU_SPACES_ORGANIZATION",
+	TestConfigSlugIDKey:            "HEROKU_SLUG_ID",
 }
 
 func (k TestConfigKey) String() (name string) {
@@ -88,68 +90,74 @@ func (k TestConfigKey) String() (name string) {
 	return
 }
 
-type TestConfigKeyNotFoundAction int
-
-const (
-	TestConfigKeyNotFoundNoopAction TestConfigKeyNotFoundAction = iota
-	TestConfigKeyNotFoundSkipAction
-	TestConfigKeyNotFoundAbortAction
-)
-
 type TestConfig struct{}
 
 func NewTestConfig() *TestConfig {
 	return &TestConfig{}
 }
 
-func (t *TestConfig) GetWithAction(key TestConfigKey, testing *testing.T, notFoundAction TestConfigKeyNotFoundAction, defaultValue ...string) (val string) {
-	val = os.Getenv(key.String())
-	if val == "" && len(defaultValue) > 0 {
-		val = defaultValue[0]
-	}
-	if val == "" && testing != nil {
-		switch notFoundAction {
-		case TestConfigKeyNotFoundSkipAction:
-			testing.Skip(fmt.Sprintf("skipping test: config %s not set", key))
-		case TestConfigKeyNotFoundAbortAction:
-			testing.Fatal(fmt.Sprintf("stopping test: config %s must be set", key))
+func (t *TestConfig) Get(keys ...TestConfigKey) (val string) {
+	for _, key := range keys {
+		val = os.Getenv(key.String())
+		if val != "" {
+			break
 		}
 	}
 	return
 }
 
-func (t *TestConfig) Get(key TestConfigKey, testing *testing.T, defaultValue ...string) (val string) {
-	return t.GetWithAction(key, testing, TestConfigKeyNotFoundNoopAction, defaultValue...)
+func (t *TestConfig) GetOrSkip(testing *testing.T, keys ...TestConfigKey) (val string) {
+	val = t.Get(keys...)
+	if val == "" {
+		testing.Skip(fmt.Sprintf("skipping test: config %v not set", keys))
+	}
+	return
 }
 
-func (t *TestConfig) GetOrSkip(key TestConfigKey, testing *testing.T, defaultValue ...string) (val string) {
-	return t.GetWithAction(key, testing, TestConfigKeyNotFoundSkipAction, defaultValue...)
+func (t *TestConfig) GetOrAbort(testing *testing.T, keys ...TestConfigKey) (val string) {
+	val = t.Get(keys...)
+	if val == "" {
+		testing.Fatal(fmt.Sprintf("stopping test: config %v must be set", keys))
+	}
+	return
 }
 
-func (t *TestConfig) GetOrAbort(key TestConfigKey, testing *testing.T, defaultValue ...string) (val string) {
-	return t.GetWithAction(key, testing, TestConfigKeyNotFoundAbortAction, defaultValue...)
-}
-
-func (t *TestConfig) GetSpaceOrganizationOrSkip(testing *testing.T) (val string) {
-	return t.GetWithAction(TestConfigSpaceOrganizationKey, testing, TestConfigKeyNotFoundSkipAction, t.Get(TestConfigOrganizationKey, testing))
+func (t *TestConfig) GetAnyOrganizationOrSkip(testing *testing.T) (val string) {
+	return t.GetOrSkip(testing, TestConfigSpaceOrganizationKey, TestConfigOrganizationKey)
 }
 
 func (t *TestConfig) GetNonAdminUserOrAbort(testing *testing.T) (val string) {
-	return t.GetWithAction(TestConfigNonAdminUserKey, testing, TestConfigKeyNotFoundAbortAction)
+	return t.GetOrAbort(testing, TestConfigNonAdminUserKey)
+}
+
+func (t *TestConfig) GetOrganizationOrAbort(testing *testing.T) (val string) {
+	return t.GetOrAbort(testing, TestConfigOrganizationKey)
+}
+
+func (t *TestConfig) GetOrganizationOrSkip(testing *testing.T) (val string) {
+	return t.GetOrSkip(testing, TestConfigOrganizationKey)
+}
+
+func (t *TestConfig) GetSlugIDOrAbort(testing *testing.T) (val string) {
+	return t.GetOrAbort(testing, TestConfigSlugIDKey)
+}
+
+func (t *TestConfig) GetSlugIDOrSkip(testing *testing.T) (val string) {
+	return t.GetOrSkip(testing, TestConfigSlugIDKey)
+}
+
+func (t *TestConfig) GetSpaceOrganizationOrSkip(testing *testing.T) (val string) {
+	return t.GetOrSkip(testing, TestConfigSpaceOrganizationKey)
+}
+
+func (t *TestConfig) GetUserOrAbort(testing *testing.T) (val string) {
+	return t.GetOrAbort(testing, TestConfigUserKey)
 }
 
 func (t *TestConfig) GetUserOrSkip(testing *testing.T) (val string) {
-	return t.GetWithAction(TestConfigUserKey, testing, TestConfigKeyNotFoundSkipAction)
-}
-
-func getTestUser() string {
-	return testAccConfig.Get(TestConfigUserKey, nil)
-}
-
-func getTestSpaceOrganizationName() string {
-	return testAccConfig.Get(TestConfigSpaceOrganizationKey, nil, testAccConfig.Get(TestConfigOrganizationKey, nil))
+	return t.GetOrSkip(testing, TestConfigUserKey)
 }
 
 func testAccPreCheck(t *testing.T) {
-	testAccConfig.GetOrAbort(TestConfigAPIKey, t)
+	testAccConfig.GetOrAbort(t, TestConfigAPIKey)
 }

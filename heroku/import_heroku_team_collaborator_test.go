@@ -4,20 +4,22 @@ import (
 	"fmt"
 	"testing"
 
-	"os"
-
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 )
 
 func TestAccHerokuTeamCollaborator_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	org := os.Getenv("HEROKU_ORGANIZATION")
-	testUser := getTestUser()
+	var org string
+	var testUser string
 	perms := "[\"deploy\", \"operate\", \"view\"]"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
+		PreCheck: func() {
+			testAccPreCheck(t)
+			org = testAccConfig.GetOrganizationOrAbort(t)
+			testUser = testAccConfig.GetUserOrAbort(t)
+		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{

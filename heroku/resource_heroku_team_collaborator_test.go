@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"os"
-
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
@@ -24,7 +22,7 @@ func TestAccHerokuTeamCollaborator_Org(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetSpaceOrganizationOrSkip(t)
+			org = testAccConfig.GetAnyOrganizationOrSkip(t)
 			testUser = testAccConfig.GetUserOrSkip(t)
 		},
 		Providers: testAccProviders,
@@ -46,14 +44,14 @@ func TestAccHerokuTeamCollaboratorPermsOutOfOrder_Org(t *testing.T) {
 	var teamCollaborator heroku.TeamAppCollaborator
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	org := os.Getenv("HEROKU_ORGANIZATION")
-	testUser := getTestUser()
+	var org string
+	var testUser string
 	perms := "[\"view\", \"operate\", \"deploy\"]"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetSpaceOrganizationOrSkip(t)
+			org = testAccConfig.GetAnyOrganizationOrSkip(t)
 			testUser = testAccConfig.GetUserOrSkip(t)
 		},
 		Providers: testAccProviders,

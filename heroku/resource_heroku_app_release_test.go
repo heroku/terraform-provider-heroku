@@ -3,37 +3,34 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/heroku/heroku-go/v3"
-	"os"
-	"testing"
+	heroku "github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuAppRelease_Basic(t *testing.T) {
 	var appRelease heroku.Release
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	slugId := os.Getenv("HEROKU_SLUG_ID")
+	var slugID string
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-
-			if slugId == "" {
-				t.Skip("HEROKU_SLUG_ID is not set; skipping test.")
-			}
+			slugID = testAccConfig.GetSlugIDOrSkip(t)
 		},
 
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppRelease_Basic(appName, slugId),
+				Config: testAccCheckHerokuAppRelease_Basic(appName, slugID),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppReleaseExists("heroku_app_release.foobar-release", &appRelease),
 					resource.TestCheckResourceAttr(
-						"heroku_app_release.foobar-release", "slug_id", slugId),
+						"heroku_app_release.foobar-release", "slug_id", slugID),
 				),
 			},
 		},
@@ -44,29 +41,25 @@ func TestAccHerokuAppRelease_OrgBasic(t *testing.T) {
 	var appRelease heroku.Release
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	org := os.Getenv("HEROKU_ORGANIZATION")
-	slugId := os.Getenv("HEROKU_SLUG_ID")
+	var org string
+	var slugID string
 	desc := fmt.Sprintf("some release description %s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if org == "" {
-				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
-			}
-			if slugId == "" {
-				t.Skip("HEROKU_SLUG_ID is not set; skipping test.")
-			}
+			org = testAccConfig.GetAnyOrganizationOrSkip(t)
+			slugID = testAccConfig.GetSlugIDOrSkip(t)
 		},
 
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppRelease_OrgBasic(appName, org, slugId, desc),
+				Config: testAccCheckHerokuAppRelease_OrgBasic(appName, org, slugID, desc),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppReleaseExists("heroku_app_release.foobar-release", &appRelease),
 					resource.TestCheckResourceAttr(
-						"heroku_app_release.foobar-release", "slug_id", slugId),
+						"heroku_app_release.foobar-release", "slug_id", slugID),
 					resource.TestCheckResourceAttr(
 						"heroku_app_release.foobar-release", "description", desc),
 				),
