@@ -32,12 +32,11 @@ func TestAccHerokuApp_importBasic(t *testing.T) {
 
 func TestAccHerokuApp_importOrganization(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	var org string
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetOrganizationOrSkip(t)
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuAppDestroy,

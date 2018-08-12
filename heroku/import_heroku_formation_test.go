@@ -10,15 +10,13 @@ import (
 
 func TestAccHerokuFormation_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	var slugID string
-	var org string
+	org := testAccConfig.GetOrganizationOrSkip(t)
+	slugID := testAccConfig.GetSlugIDOrSkip(t)
 	formationType := "web"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetOrganizationOrSkip(t)
-			slugID = testAccConfig.GetSlugIDOrSkip(t)
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{

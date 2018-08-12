@@ -15,14 +15,12 @@ func TestAccHerokuFormationSingleUpdate_WithOrg(t *testing.T) {
 	var formation heroku.Formation
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	var slugID string
-	var org string
+	org := testAccConfig.GetOrganizationOrSkip(t)
+	slugID := testAccConfig.GetSlugIDOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetOrganizationOrSkip(t)
-			slugID = testAccConfig.GetSlugIDOrSkip(t)
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
@@ -45,12 +43,11 @@ func TestAccHerokuFormationUpdateFreeDyno(t *testing.T) {
 	var formation heroku.Formation
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	var slugID string
+	slugID := testAccConfig.GetSlugIDOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			slugID = testAccConfig.GetSlugIDOrSkip(t)
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{

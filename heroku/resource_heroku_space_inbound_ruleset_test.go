@@ -12,12 +12,11 @@ import (
 func TestAccHerokuSpaceInboundRuleset_Basic(t *testing.T) {
 	var space heroku.Space
 	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
-	var org string
+	org := testAccConfig.GetAnyOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetAnyOrganizationOrSkip(t)
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuSpaceDestroy,

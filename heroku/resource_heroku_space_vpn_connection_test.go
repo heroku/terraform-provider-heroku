@@ -3,7 +3,6 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 
@@ -16,14 +15,11 @@ import (
 func TestAccHerokuVPNConnection_basic(t *testing.T) {
 	var vpnConnection heroku.VPNConnection
 	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
-	org := os.Getenv("HEROKU_SPACES_ORGANIZATION")
+	org := testAccConfig.GetSpaceOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if org == "" {
-				t.Skip("HEROKU_SPACES_ORGANIZATION is not set; skipping test.")
-			}
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuVPNConnectionDestroy,

@@ -212,12 +212,11 @@ func TestAccHerokuApp_ExternallySetBuildpacks(t *testing.T) {
 func TestAccHerokuApp_ACM(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	var org string
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetOrganizationOrSkip(t)
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuAppDestroy,
@@ -250,12 +249,11 @@ func TestAccHerokuApp_ACM(t *testing.T) {
 func TestAccHerokuApp_Organization(t *testing.T) {
 	var app heroku.TeamApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	var org string
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetOrganizationOrSkip(t)
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuAppDestroy,
@@ -274,13 +272,12 @@ func TestAccHerokuApp_Organization(t *testing.T) {
 func TestAccHerokuApp_Space(t *testing.T) {
 	var app heroku.TeamApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	var org string
 	spaceName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetSpaceOrganizationOrSkip(t)
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuAppDestroy,
@@ -299,13 +296,12 @@ func TestAccHerokuApp_Space(t *testing.T) {
 func TestAccHerokuApp_Space_Internal(t *testing.T) {
 	var app heroku.TeamApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	var org string
+	org := testAccConfig.GetOrganizationOrSkip(t)
 	spaceName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetSpaceOrganizationOrSkip(t)
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuAppDestroy,

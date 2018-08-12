@@ -10,15 +10,13 @@ import (
 
 func TestAccHerokuTeamCollaborator_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	var org string
-	var testUser string
+	org := testAccConfig.GetOrganizationOrAbort(t)
+	testUser := testAccConfig.GetUserOrAbort(t)
 	perms := "[\"deploy\", \"operate\", \"view\"]"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetOrganizationOrAbort(t)
-			testUser = testAccConfig.GetUserOrAbort(t)
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{

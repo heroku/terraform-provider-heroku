@@ -15,12 +15,11 @@ func TestAccHerokuAppRelease_Basic(t *testing.T) {
 	var appRelease heroku.Release
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	var slugID string
+	slugID := testAccConfig.GetSlugIDOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			slugID = testAccConfig.GetSlugIDOrSkip(t)
 		},
 
 		Providers: testAccProviders,
@@ -41,15 +40,13 @@ func TestAccHerokuAppRelease_OrgBasic(t *testing.T) {
 	var appRelease heroku.Release
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	var org string
-	var slugID string
+	org := testAccConfig.GetAnyOrganizationOrSkip(t)
+	slugID := testAccConfig.GetSlugIDOrSkip(t)
 	desc := fmt.Sprintf("some release description %s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetAnyOrganizationOrSkip(t)
-			slugID = testAccConfig.GetSlugIDOrSkip(t)
 		},
 
 		Providers: testAccProviders,

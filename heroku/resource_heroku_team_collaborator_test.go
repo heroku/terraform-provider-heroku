@@ -15,15 +15,13 @@ func TestAccHerokuTeamCollaborator_Org(t *testing.T) {
 	var teamCollaborator heroku.TeamAppCollaborator
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	var org string
-	var testUser string
+	org := testAccConfig.GetAnyOrganizationOrSkip(t)
+	testUser := testAccConfig.GetUserOrSkip(t)
 	perms := "[\"deploy\", \"operate\", \"view\"]"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetAnyOrganizationOrSkip(t)
-			testUser = testAccConfig.GetUserOrSkip(t)
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
@@ -44,15 +42,13 @@ func TestAccHerokuTeamCollaboratorPermsOutOfOrder_Org(t *testing.T) {
 	var teamCollaborator heroku.TeamAppCollaborator
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	var org string
-	var testUser string
+	org := testAccConfig.GetAnyOrganizationOrSkip(t)
+	testUser := testAccConfig.GetUserOrSkip(t)
 	perms := "[\"view\", \"operate\", \"deploy\"]"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			org = testAccConfig.GetAnyOrganizationOrSkip(t)
-			testUser = testAccConfig.GetUserOrSkip(t)
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
