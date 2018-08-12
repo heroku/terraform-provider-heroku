@@ -8,6 +8,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	heroku "github.com/heroku/heroku-go/v3"
@@ -67,6 +68,7 @@ type TestConfigKey int
 
 const (
 	TestConfigUserKey TestConfigKey = iota
+	TestConfigAcceptanceTestKey
 	TestConfigNonAdminUserKey
 	TestConfigAPIKey
 	TestConfigOrganizationKey
@@ -81,6 +83,7 @@ var testConfigKeyToEnvName = map[TestConfigKey]string{
 	TestConfigOrganizationKey:      "HEROKU_ORGANIZATION",
 	TestConfigSpaceOrganizationKey: "HEROKU_SPACES_ORGANIZATION",
 	TestConfigSlugIDKey:            "HEROKU_SLUG_ID",
+	TestConfigAcceptanceTestKey:    resource.TestEnvVar,
 }
 
 func (k TestConfigKey) String() (name string) {
@@ -107,6 +110,7 @@ func (t *TestConfig) Get(keys ...TestConfigKey) (val string) {
 }
 
 func (t *TestConfig) GetOrSkip(testing *testing.T, keys ...TestConfigKey) (val string) {
+	t.SkipUnlessAccTest(testing)
 	val = t.Get(keys...)
 	if val == "" {
 		testing.Skip(fmt.Sprintf("skipping test: config %v not set", keys))
@@ -115,11 +119,19 @@ func (t *TestConfig) GetOrSkip(testing *testing.T, keys ...TestConfigKey) (val s
 }
 
 func (t *TestConfig) GetOrAbort(testing *testing.T, keys ...TestConfigKey) (val string) {
+	t.SkipUnlessAccTest(testing)
 	val = t.Get(keys...)
 	if val == "" {
 		testing.Fatal(fmt.Sprintf("stopping test: config %v must be set", keys))
 	}
 	return
+}
+
+func (t *TestConfig) SkipUnlessAccTest(testing *testing.T) {
+	val := t.Get(TestConfigAcceptanceTestKey)
+	if val == "" {
+		testing.Skip(fmt.Sprintf("Acceptance tests skipped unless env '%s' set", TestConfigAcceptanceTestKey.String()))
+	}
 }
 
 func (t *TestConfig) GetAnyOrganizationOrSkip(testing *testing.T) (val string) {
