@@ -51,4 +51,4 @@ $ $GOPATH/bin/terraform-provider-heroku
 ...
 ```
 
-Please see the [TESTING](TESTING.MD) guide for detailed instructions on running tests.
+Please see the [TESTING](TESTING.md) guide for detailed instructions on running tests.
