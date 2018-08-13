@@ -38,7 +38,7 @@ The following parameters are available for running the test. The absence of some
 * **HEROKU_NON_ADMIN_TEST_USER**(`string`) The name of an existing non-admin user belonging to the organization, that will be used for various test cases.
 * **HEROKU_ORGANIZATION**(`string`) **Required** The organization for which the tests will run under.
 * **HEROKU_TEST_USER**(`string`) **Required** The name of an existing user belonging to the organization, that will be used for various test cases.
-* **HEROKU_SLUG_ID**(`string`) ???
+* **HEROKU_SLUG_ID**(`string`) The ID of an existing slug, that will be used for various test cases.
 * **HEROKU_SPACES_ORGANIZATION**(`string`) The organization for which Heroku Private Space tests will be run under.
 * **TF_LOG**(`DEBUG|TRACE`) Enables more detailed logging of tests, including http request/responses. 
 
