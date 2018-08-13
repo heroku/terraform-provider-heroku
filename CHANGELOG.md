@@ -1,4 +1,9 @@
 ## 1.3.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* Better support for addon config referencing for downstream heroku apps. [#102](https://github.com/terraform-providers/terraform-provider-heroku/pull/102/files)
+
 ## 1.2.0 (July 21, 2018)
 
 IMPROVEMENTS:

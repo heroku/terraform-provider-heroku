@@ -55,6 +55,11 @@ func resourceHerokuAddon() *schema.Resource {
 				},
 			},
 
+			"all_config_vars": {
+				Type:     schema.TypeMap,
+				Computed: true,
+			},
+
 			"provider_id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -120,6 +125,7 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	if _, err := stateConf.WaitForState(); err != nil {
 		return fmt.Errorf("Error waiting for Addon (%s) to be provisioned: %s", d.Id(), err)
 	}
+
 	log.Printf("[INFO] Addon provisioned: %s", d.Id())
 
 	return resourceHerokuAddonRead(d, meta)
@@ -152,6 +158,21 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("provider_id", addon.ProviderID)
 	if err := d.Set("config_vars", addon.ConfigVars); err != nil {
 		return err
+	}
+
+	appConfigInfo, err := client.ConfigVarInfoForApp(context.TODO(), addon.App.Name)
+	if err != nil {
+		return err
+	}
+
+	configMap := make(map[string]string)
+
+	for _, configKey := range addon.ConfigVars {
+		configMap[configKey] = *(appConfigInfo[configKey])
+	}
+
+	if err := d.Set("all_config_vars", configMap); err != nil {
+		log.Printf("[WARN] Error setting all_config_vars: %s", err)
 	}
 
 	return nil

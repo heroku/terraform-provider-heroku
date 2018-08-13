@@ -73,6 +73,30 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 	})
 }
 
+/**
+* When an addon is attached to an app, its useful to see the values of config vars attached to said heroku_app resource without
+* having to do a state refresh on the heroku_app resource. Instead, embed that info into the heroku_addon.
+**/
+func TestAccHerokuAddon_ConfigAdded(t *testing.T) {
+	var addon heroku.AddOn
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAddonConfig_hostedgraphite(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
+					testAccCheckHerokuConfigVarExists("heroku_addon.foobar", appName, addon.ID, "HOSTEDGRAPHITE_APIKEY"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccHerokuAddon_Disappears(t *testing.T) {
 	var addon heroku.AddOn
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
@@ -120,6 +144,38 @@ func testAccCheckHerokuAddonAttributes(addon *heroku.AddOn, n string) resource.T
 		}
 
 		return nil
+	}
+}
+
+func testAccCheckHerokuConfigVarExists(resourceName string, appName string, addonId string, configVar string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rootModule := s.RootModule()
+		resource, ok := rootModule.Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Not found: %s", resourceName)
+		}
+
+		if resource.Primary.ID == "" {
+			return fmt.Errorf("No addon Id found %s", resourceName)
+		}
+
+		client := testAccProvider.Meta().(*heroku.Service)
+
+		configVarInfo, err := client.ConfigVarInfoForApp(context.TODO(), appName)
+
+		if err != nil {
+			return err
+		}
+		if configVarInfo == nil {
+			return nil
+		}
+		configValue := resource.Primary.Attributes["all_config_vars."+configVar]
+		if configValue != *configVarInfo[configVar] {
+			return fmt.Errorf("Mismatched config value set %s, actual: %s expected: %s", configVar, configValue, *configVarInfo[configVar])
+		} else {
+			//happy path, expected config key found, and value matches
+			return nil
+		}
 	}
 }
 
@@ -175,6 +231,19 @@ resource "heroku_addon" "foobar" {
     config {
         url = "http://google.com"
     }
+}`, appName)
+}
+
+func testAccCheckHerokuAddonConfig_hostedgraphite(appName string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_addon" "foobar" {
+    app = "${heroku_app.foobar.name}"
+    plan = "hostedgraphite:free"
 }`, appName)
 }
 
