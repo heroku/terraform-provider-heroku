@@ -35,7 +35,7 @@ The following parameters are available for running the test. The absence of some
 
 * **HEROKU_API_KEY**(`string`) **Required** The api key of the user running the test.
 * **HEROKU_EMAIL**(`string`) **Required** The email of the user running the test.
-* **HEROKU_NON_ADIM_TEST_USER**(`string`) The name of an existing non-admin user belonging to the organization, that will be used for various test cases.
+* **HEROKU_NON_ADMIN_TEST_USER**(`string`) The name of an existing non-admin user belonging to the organization, that will be used for various test cases.
 * **HEROKU_ORGANIZATION**(`string`) **Required** The organization for which the tests will run under.
 * **HEROKU_TEST_USER**(`string`) **Required** The name of an existing user belonging to the organization, that will be used for various test cases.
 * **HEROKU_SLUG_ID**(`string`) ???
