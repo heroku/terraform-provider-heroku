@@ -2,7 +2,6 @@ package heroku
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/acctest"
@@ -33,14 +32,11 @@ func TestAccHerokuApp_importBasic(t *testing.T) {
 
 func TestAccHerokuApp_importOrganization(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	org := os.Getenv("HEROKU_ORGANIZATION")
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if org == "" {
-				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
-			}
 		},
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuAppDestroy,

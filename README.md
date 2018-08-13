@@ -51,23 +51,4 @@ $ $GOPATH/bin/terraform-provider-heroku
 ...
 ```
 
-In order to test the provider, you can simply run `make test`.
-
-```sh
-$ make test
-```
-
-In order to run the full suite of Acceptance tests, run `make testacc`. You will need to set at least three environment variables to run them:
-
-* `HEROKU_ORGANIZATION` – The organization to run the tests against.
-* `HEROKU_SPACES_ORGANIZATION` – The organization to run the Heroku Private Space tests against. 
-* `HEROKU_API_KEY` – A valid API key that has access to the two organizations listed above.
-
-Things to keep in mind when running acceptance tests:
-
-* The tests take roughly 60 minutes to run. Creating Heroku Private Spaces can take 10 minutes and the tests create/destroy a few private spaces.
-* **Acceptance tests create real resources and cost money to run. You are responsible for any costs incurred!**
-
-```sh
-$ make testacc
-```
+Please see the [TESTING](TESTING.MD) guide for detailed instructions on running tests.

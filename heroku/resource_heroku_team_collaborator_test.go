@@ -8,28 +8,20 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/heroku/heroku-go/v3"
-	"os"
+	heroku "github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuTeamCollaborator_Org(t *testing.T) {
 	var teamCollaborator heroku.TeamAppCollaborator
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	org := os.Getenv("HEROKU_ORGANIZATION")
-	testUser := os.Getenv("HEROKU_TEST_USER")
+	org := testAccConfig.GetAnyOrganizationOrSkip(t)
+	testUser := testAccConfig.GetUserOrSkip(t)
 	perms := "[\"deploy\", \"operate\", \"view\"]"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if org == "" {
-				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
-			}
-
-			if testUser == "" {
-				t.Skip("HEROKU_TEST_USER is not set; skipping test.")
-			}
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
@@ -50,20 +42,13 @@ func TestAccHerokuTeamCollaboratorPermsOutOfOrder_Org(t *testing.T) {
 	var teamCollaborator heroku.TeamAppCollaborator
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	org := os.Getenv("HEROKU_ORGANIZATION")
-	testUser := os.Getenv("HEROKU_TEST_USER")
+	org := testAccConfig.GetAnyOrganizationOrSkip(t)
+	testUser := testAccConfig.GetUserOrSkip(t)
 	perms := "[\"view\", \"operate\", \"deploy\"]"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if org == "" {
-				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
-			}
-
-			if testUser == "" {
-				t.Skip("HEROKU_TEST_USER is not set; skipping test.")
-			}
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{

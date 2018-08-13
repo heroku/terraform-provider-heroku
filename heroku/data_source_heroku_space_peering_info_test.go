@@ -2,7 +2,6 @@ package heroku
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/acctest"
@@ -11,14 +10,11 @@ import (
 
 func TestAccDatasourceHerokuSpacePeeringInfo_Basic(t *testing.T) {
 	spaceName := fmt.Sprintf("tftest-space-peer-info-%s", acctest.RandString(3))
-	orgName := os.Getenv("HEROKU_SPACES_ORGANIZATION")
+	orgName := testAccConfig.GetSpaceOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if orgName == "" {
-				t.Skip("HEROKU_SPACES_ORGANIZATION is not set; skipping test.")
-			}
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{

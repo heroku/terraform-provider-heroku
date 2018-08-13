@@ -15,7 +15,7 @@ func resourceHerokuSpaceAppAccess() *schema.Resource {
 		Delete: resourceHerokuSpaceAppAccessDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourceHerokuSpaceAppAccessImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -40,6 +40,15 @@ func resourceHerokuSpaceAppAccess() *schema.Resource {
 			},
 		},
 	}
+}
+
+//callback for schema.ResourceImporter
+func resourceHerokuSpaceAppAccessImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	space, email := parseCompositeID(d.Id())
+	d.Set("space", space)
+	d.Set("email", email)
+	resourceHerokuSpaceAppAccessRead(d, meta)
+	return []*schema.ResourceData{d}, nil
 }
 
 //callback for schema Resource.Create and schema Resource.Update

@@ -8,32 +8,24 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/heroku/heroku-go/v3"
-	"os"
+	heroku "github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuFormationSingleUpdate_WithOrg(t *testing.T) {
 	var formation heroku.Formation
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	slugId := os.Getenv("HEROKU_SLUG_ID")
-	org := os.Getenv("HEROKU_ORGANIZATION")
+	org := testAccConfig.GetOrganizationOrSkip(t)
+	slugID := testAccConfig.GetSlugIDOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if org == "" {
-				t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
-			}
-
-			if slugId == "" {
-				t.Skip("HEROKU_SLUG_ID is not set; skipping test.")
-			}
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuFormationConfig_WithOrg(org, appName, slugId, "standard-2x", 2),
+				Config: testAccCheckHerokuFormationConfig_WithOrg(org, appName, slugID, "standard-2x", 2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuFormationExists("heroku_formation.foobar-web", &formation),
 					testAccCheckHerokuFormationSizeAttribute(&formation, "Standard-2X"),
@@ -51,19 +43,16 @@ func TestAccHerokuFormationUpdateFreeDyno(t *testing.T) {
 	var formation heroku.Formation
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	slugId := os.Getenv("HEROKU_SLUG_ID")
+	slugID := testAccConfig.GetSlugIDOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
-			if slugId == "" {
-				t.Skip("HEROKU_SLUG_ID is not set; skipping test.")
-			}
 		},
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuFormationConfig_WithOrg("", appName, slugId, "free", 1),
+				Config: testAccCheckHerokuFormationConfig_WithOrg("", appName, slugID, "free", 1),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuFormationExists("heroku_formation.foobar-web", &formation),
 					testAccCheckHerokuFormationSizeAttribute(&formation, "Free"),

@@ -4,22 +4,24 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	heroku "github.com/heroku/heroku-go/v3"
+	helper "github.com/terraform-providers/terraform-provider-heroku/helper/test"
 )
 
 var testAccProviders map[string]terraform.ResourceProvider
 var testAccProvider *schema.Provider
+var testAccConfig *helper.TestConfig
 
 func init() {
 	testAccProvider = Provider().(*schema.Provider)
 	testAccProviders = map[string]terraform.ResourceProvider{
 		"heroku": testAccProvider,
 	}
+	testAccConfig = helper.NewTestConfig()
 }
 
 func TestProvider(t *testing.T) {
@@ -61,19 +63,5 @@ func TestProviderConfigureUsesHeadersForClient(t *testing.T) {
 }
 
 func testAccPreCheck(t *testing.T) {
-	if v := os.Getenv("HEROKU_API_KEY"); v == "" {
-		t.Fatal("HEROKU_API_KEY must be set for acceptance tests")
-	}
-}
-
-func testAccSkipTestIfOrganizationMissing(t *testing.T) {
-	if os.Getenv("HEROKU_ORGANIZATION") == "" {
-		t.Skip("HEROKU_ORGANIZATION is not set; skipping test.")
-	}
-}
-
-func testAccSkipTestIfUserMissing(t *testing.T) {
-	if os.Getenv("HEROKU_TEST_USER") == "" {
-		t.Skip("HEROKU_TEST_USER is not set; skipping test.")
-	}
+	testAccConfig.GetOrAbort(t, helper.TestConfigAPIKey)
 }
