@@ -15,7 +15,7 @@ Use this data source to get latest config_vars from a heroku app. This allows pu
 ```hcl
 # Look up a Heroku Private Space's peering info. 
 data "heroku_app_config_vars" "foo_configs" {
-  name   = "${heroku_app.foo.name}"
+  app   = "${heroku_app.foo.name}"
 }
 
 # Initiate a VPC peering connection request.
