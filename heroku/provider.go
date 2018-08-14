@@ -57,6 +57,7 @@ func Provider() terraform.ResourceProvider {
 			"heroku_space":              dataSourceHerokuSpace(),
 			"heroku_space_peering_info": dataSourceHerokuSpacePeeringInfo(),
 			"heroku_app":                dataSourceHerokuApp(),
+			"heroku_app_config_vars":    dataSourceHerokuAppConfigVars(),
 		},
 
 		ConfigureFunc: providerConfigure,
