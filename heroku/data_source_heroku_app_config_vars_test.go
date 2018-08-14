@@ -11,7 +11,7 @@ import (
 	heroku "github.com/heroku/heroku-go/v3"
 )
 
-func TestAccDatasourceHerokuAppConfigVars_broken(t *testing.T) {
+func TestAccDatasourceHerokuAppConfigVars(t *testing.T) {
 	appName := fmt.Sprintf("tftest-app-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{

@@ -17,10 +17,6 @@ func dataSourceHerokuAppConfigVars() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"name": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"all_config_vars": {
 				Type:     schema.TypeMap,
 				Computed: true,
@@ -33,7 +29,6 @@ func dataSourceHerokuAppConfigVarsRead(d *schema.ResourceData, m interface{}) er
 	client := m.(*heroku.Service)
 
 	appName := d.Get("app").(string)
-	d.Set("name", appName)
 	d.SetId(appName)
 	configVarInfo, err := client.ConfigVarInfoForApp(context.TODO(), appName)
 	if err != nil {
