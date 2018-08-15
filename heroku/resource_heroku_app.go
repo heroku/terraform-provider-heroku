@@ -348,7 +348,18 @@ func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	d.SetId(a.Name)
-	log.Printf("[INFO] App ID: %s", d.Id())
+
+	log.Printf("[INFO] Waiting for app (%s) to be allocated", d.Id())
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{"allocating"},
+		Target:  []string{"allocated"},
+		Refresh: appStateRefreshFunc(client, d.Id()),
+		Timeout: 15 * time.Minute,
+	}
+
+	if _, err := stateConf.WaitForState(); err != nil {
+		return fmt.Errorf("Error waiting for app (%s) to become available: %s", d.Id(), err)
+	}
 
 	if err := performAppPostCreateTasks(d, client); err != nil {
 		return err
@@ -702,6 +713,29 @@ func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) e
 	}
 
 	return nil
+}
+
+//Creates a closure for StateRefreshFunc that checks the state of the app (only
+//applicable to organization apps). The API endpoints for `/app` don't include
+//json responses with a `status` field. However, we can look for a specific
+//(not publically documented) Heroku error code "app_not_provisioned". For
+//additional context reach out to @bernerdschaefer.
+func appStateRefreshFunc(client *heroku.Service, appID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		appInfo, err := client.AppInfo(context.TODO(), appID)
+		if err != nil {
+			if herr, ok := err.(*url.Error).Err.(heroku.Error); ok {
+				if herr.ID == "app_not_provisioned" {
+					log.Printf("[DEBUG] Still allocating: %s", appID)
+					return nil, "allocating", nil
+				} else {
+					log.Printf("[WARN] Unexpected response waiting for allocation: %s", herr.ID)
+				}
+			}
+			return nil, "", err
+		}
+		return appInfo, "allocated", nil
+	}
 }
 
 func releaseStateRefreshFunc(client *heroku.Service, appID, releaseID string) resource.StateRefreshFunc {
