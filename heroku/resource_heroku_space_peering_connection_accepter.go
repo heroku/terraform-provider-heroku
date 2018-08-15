@@ -114,7 +114,7 @@ func resourceHerokuSpacePeeringConnectionAccepterRead(d *schema.ResourceData, me
 	d.SetId(peeringConn.PcxID)
 	d.Set("status", peeringConn.Status)
 	d.Set("type", peeringConn.Type)
-	d.Set("vpc_peering_connection_id", peeringConn.AwsVpcID)
+	d.Set("vpc_peering_connection_id", peeringConn.PcxID)
 
 	return nil
 }
