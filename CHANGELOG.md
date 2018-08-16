@@ -2,7 +2,7 @@
 
 FEATURES:
 * **New Resource:** `heroku_space_app_access` (for managing space access) [#83](https://github.com/terraform-providers/terraform-provider-heroku/pull/83)
-* Add `heroku_space_vpn_connection` to establish VPN connections [#104](https://github.com/terraform-providers/terraform-provider-heroku/pull/104)
+* **New Resource:** `heroku_space_vpn_connection` (to establish VPN connections) [#104](https://github.com/terraform-providers/terraform-provider-heroku/pull/104)
 
 IMPROVEMENTS:
 * Replace custom validators with validators provided by terraform [#107](https://github.com/terraform-providers/terraform-provider-heroku/pull/107)
