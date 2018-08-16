@@ -7,8 +7,12 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/bgentry/go-netrc/netrc"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/mitchellh/go-homedir"
+	"os"
+	"runtime"
 )
 
 // Provider returns a terraform.ResourceProvider.
@@ -66,6 +70,8 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
+	config := Config{}
+
 	headers := make(map[string]string)
 	if h := d.Get("headers").(string); h != "" {
 		if err := json.Unmarshal([]byte(h), &headers); err != nil {
@@ -78,10 +84,16 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		h.Set(k, v)
 	}
 
-	config := Config{
-		Email:   d.Get("email").(string),
-		APIKey:  d.Get("api_key").(string),
-		Headers: h,
+	// Read from netrc file first. If not available fall back to original authentication
+	err := readNetrcFile(&config, h)
+	if err != nil {
+		log.Println("Unable to read from netrc. Failing back to default authentication.")
+
+		config = Config{
+			Email:   d.Get("email").(string),
+			APIKey:  d.Get("api_key").(string),
+			Headers: h,
+		}
 	}
 
 	log.Println("[INFO] Initializing Heroku client")
@@ -95,4 +107,55 @@ func buildCompositeID(a, b string) string {
 func parseCompositeID(id string) (string, string) {
 	parts := strings.SplitN(id, ":", 2)
 	return parts[0], parts[1]
+}
+
+func readNetrcFile(config *Config, headers http.Header) error {
+	// Get the netrc file path. If path not shown, then fall back to default netrc path value
+	path := os.Getenv("NETRC_PATH")
+
+	if path == "" {
+		filename := ".netrc"
+		if runtime.GOOS == "windows" {
+			filename = "_netrc"
+		}
+
+		var err error
+		path, err = homedir.Expand("~/" + filename)
+		if err != nil {
+			return err
+		}
+	}
+
+	// If the file is not a file, then do nothing
+	if fi, err := os.Stat(path); err != nil {
+		// File doesn't exist, do nothing
+		if os.IsNotExist(err) {
+			return nil
+		}
+
+		// Some other error!
+		return err
+	} else if fi.IsDir() {
+		// File is directory, ignore
+		return nil
+	}
+
+	// Load up the netrc file
+	net, err := netrc.ParseFile(path)
+	if err != nil {
+		return fmt.Errorf("error parsing netrc file at %q: %s", path, err)
+	}
+
+	machine := net.FindMachine("api.heroku.com")
+	if machine == nil {
+		// Machine not found, no problem
+		return nil
+	}
+
+	// Set the user/api key/headers
+	config.Email = machine.Login
+	config.APIKey = machine.Password
+	config.Headers = headers
+
+	return nil
 }
