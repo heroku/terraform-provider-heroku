@@ -84,17 +84,17 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		h.Set(k, v)
 	}
 
-	// Read from netrc file first. If not available fall back to original authentication
-	// TODO: do we need to read from netrc during a test run?
 	err := readNetrcFile(&config, h)
 	if err != nil {
 		return nil, err
 	}
 
-	config = Config{
-		Email:   d.Get("email").(string),
-		APIKey:  d.Get("api_key").(string),
-		Headers: h,
+	if email, ok := d.GetOk("email"); ok {
+		config.Email = email.(string)
+	}
+
+	if apiKey, ok := d.GetOk("api_key"); ok {
+		config.APIKey = apiKey.(string)
 	}
 
 	log.Println("[INFO] Initializing Heroku client")

@@ -1,11 +1,10 @@
 package heroku
 
 import (
-	"log"
-	"net/http"
-
 	"github.com/hashicorp/terraform/helper/logging"
 	heroku "github.com/heroku/heroku-go/v3"
+	"log"
+	"net/http"
 )
 
 type Config struct {
@@ -16,7 +15,7 @@ type Config struct {
 	Api *heroku.Service
 }
 
-// Client returns a new Service for accessing Heroku.
+// Client returns a new Config for accessing Heroku.
 func (c *Config) loadAndInitialize() error {
 	var debugHTTP = false
 	if logging.IsDebugOrHigher() {

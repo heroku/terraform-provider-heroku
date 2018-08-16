@@ -89,8 +89,8 @@ func TestProviderConfigureUseNetrc(t *testing.T) {
 	}
 	configuration := meta.(*Config)
 
-	assert.Equal(t, "email_login", configuration)
-	//assert.Equal(t, "api_key", configuration.APIKey)
+	assert.Equal(t, "email_login", configuration.Email)
+	assert.Equal(t, "api_key", configuration.APIKey)
 }
 
 func testAccPreCheck(t *testing.T) {
