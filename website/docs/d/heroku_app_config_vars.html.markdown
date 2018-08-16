@@ -31,6 +31,7 @@ resource "heroku_app" "foo" {
 The following arguments are supported:
 
 * `app` - The name of the heroku app to pull config_vars off of
+* `depends` - List of strings that are ignored, but can be used to force dependency resolution, if say, you'd like to wait until an addon is provisioned before referencing this resource on another downstream app. This is working around a terraform issue with data sources and the `depends_on` attribute[hashicorp/terraform/issues/11806](https://github.com/hashicorp/terraform/issues/11806)
 
 ## Attributes Reference
 
