@@ -1,4 +1,4 @@
-## 1.3.0 (Unreleased)
+## 1.3.0 (August 16, 2018)
 
 FEATURES:
 * **New Resource:** `heroku_space_app_access` (for managing space access) [#83](https://github.com/terraform-providers/terraform-provider-heroku/pull/83)
