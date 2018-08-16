@@ -21,8 +21,7 @@ func TestAccDatasourceHerokuAppConfigVars(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccCheckHerokuAppConfigVar(appName),
-				ExpectNonEmptyPlan: true, // todo: why do we get non-empty plans after an apply.... boo
+				Config: testAccCheckHerokuAppConfigVar(appName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"heroku_app.app", "name", appName),
@@ -51,7 +50,7 @@ resource "heroku_addon" "hostedgraphite" {
 
 data "heroku_app_config_vars" "app_config_vars" {
   app = "${heroku_app.app.name}"
-  depends_on = ["heroku_addon.hostedgraphite"]
+  depends = ["${heroku_addon.hostedgraphite.app}"]
 }
 
 resource "heroku_app" "app2" {

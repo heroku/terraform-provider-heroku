@@ -12,7 +12,6 @@ func dataSourceHerokuAppConfigVars() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceHerokuAppConfigVarsRead,
 		Schema: map[string]*schema.Schema{
-
 			"app": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -20,6 +19,13 @@ func dataSourceHerokuAppConfigVars() *schema.Resource {
 			"all_config_vars": {
 				Type:     schema.TypeMap,
 				Computed: true,
+			},
+			"depends": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 		},
 	}
