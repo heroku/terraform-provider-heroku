@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	multierror "github.com/hashicorp/go-multierror"
+	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heroku/heroku-go/v3"
@@ -35,7 +35,7 @@ type application struct {
 	Id string // Id of the resource
 
 	App          *herokuApplication // The heroku application
-	Client       *heroku.Service    // Client to interact with the heroku API
+	Client       *Config            // Client to interact with the heroku API
 	Vars         map[string]string  // The vars on the application
 	Buildpacks   []string           // The application's buildpack names or URLs
 	Organization bool               // is the application organization app
@@ -46,7 +46,7 @@ func (a *application) Update() error {
 	var errs []error
 	var err error
 
-	app, err := a.Client.AppInfo(context.TODO(), a.Id)
+	app, err := a.Client.Api.AppInfo(context.TODO(), a.Id)
 	if err != nil {
 		errs = append(errs, err)
 	} else {
@@ -213,9 +213,9 @@ func isOrganizationApp(d *schema.ResourceData) bool {
 }
 
 func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*heroku.Service)
+	client := m.(*Config)
 
-	app, err := client.AppInfo(context.TODO(), d.Id())
+	app, err := client.Api.AppInfo(context.TODO(), d.Id())
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func switchHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config)
 
 	// Build up our creation options
 	opts := heroku.AppCreateOpts{}
@@ -271,7 +271,7 @@ func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[DEBUG] Creating Heroku app...")
-	a, err := client.AppCreate(context.TODO(), opts)
+	a, err := client.Api.AppCreate(context.TODO(), opts)
 	if err != nil {
 		return err
 	}
@@ -287,7 +287,7 @@ func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config)
 	// Build up our creation options
 	opts := heroku.TeamAppCreateOpts{}
 
@@ -342,7 +342,7 @@ func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	log.Printf("[DEBUG] Creating Heroku app...")
-	a, err := client.TeamAppCreate(context.TODO(), opts)
+	a, err := client.Api.TeamAppCreate(context.TODO(), opts)
 	if err != nil {
 		return err
 	}
@@ -382,7 +382,7 @@ func setAppDetails(d *schema.ResourceData, app *application) (err error) {
 }
 
 func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config)
 
 	care := make(map[string]struct{})
 	configVars := make(map[string]string)
@@ -443,7 +443,7 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config)
 	opts := heroku.AppUpdateOpts{}
 
 	if d.HasChange("name") {
@@ -455,7 +455,7 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		opts.BuildStack = &v
 	}
 
-	updatedApp, err := client.AppUpdate(context.TODO(), d.Id(), opts)
+	updatedApp, err := client.Api.AppUpdate(context.TODO(), d.Id(), opts)
 	if err != nil {
 		return err
 	}
@@ -484,7 +484,7 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 
-		releases, err := client.ReleaseList(
+		releases, err := client.Api.ReleaseList(
 			context.TODO(),
 			d.Id(),
 			&heroku.ListRange{Descending: true, Field: "version", Max: 1},
@@ -519,10 +519,10 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuAppDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config)
 
 	log.Printf("[INFO] Deleting App: %s", d.Id())
-	_, err := client.AppDelete(context.TODO(), d.Id())
+	_, err := client.Api.AppDelete(context.TODO(), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting App: %s", err)
 	}
@@ -533,12 +533,12 @@ func resourceHerokuAppDelete(d *schema.ResourceData, meta interface{}) error {
 
 func resourceHerokuAppExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	var err error
-	client := meta.(*heroku.Service)
+	client := meta.(*Config)
 
 	if isOrganizationApp(d) {
-		_, err = client.TeamAppInfo(context.TODO(), d.Id())
+		_, err = client.Api.TeamAppInfo(context.TODO(), d.Id())
 	} else {
-		_, err = client.AppInfo(context.TODO(), d.Id())
+		_, err = client.Api.AppInfo(context.TODO(), d.Id())
 	}
 	if err != nil {
 		// Make sure it's a missing app error.
@@ -551,7 +551,7 @@ func resourceHerokuAppExists(d *schema.ResourceData, meta interface{}) (bool, er
 	return true, nil
 }
 
-func resourceHerokuAppRetrieve(id string, organization bool, client *heroku.Service) (*application, error) {
+func resourceHerokuAppRetrieve(id string, organization bool, client *Config) (*application, error) {
 	app := application{Id: id, Client: client, Organization: organization}
 
 	err := app.Update()
@@ -563,8 +563,8 @@ func resourceHerokuAppRetrieve(id string, organization bool, client *heroku.Serv
 	return &app, nil
 }
 
-func retrieveOrgLockState(id, org string, client *heroku.Service) (bool, error) {
-	app, err := client.TeamAppInfo(context.TODO(), id)
+func retrieveOrgLockState(id, org string, client *Config) (bool, error) {
+	app, err := client.Api.TeamAppInfo(context.TODO(), id)
 	if err != nil {
 		return false, err
 	}
@@ -572,8 +572,8 @@ func retrieveOrgLockState(id, org string, client *heroku.Service) (bool, error) 
 	return app.Locked, nil
 }
 
-func retrieveBuildpacks(id string, client *heroku.Service) ([]string, error) {
-	results, err := client.BuildpackInstallationList(context.TODO(), id, nil)
+func retrieveBuildpacks(id string, client *Config) ([]string, error) {
+	results, err := client.Api.BuildpackInstallationList(context.TODO(), id, nil)
 
 	if err != nil {
 		return nil, err
@@ -587,16 +587,16 @@ func retrieveBuildpacks(id string, client *heroku.Service) ([]string, error) {
 	return buildpacks, nil
 }
 
-func retrieveAcm(id string, client *heroku.Service) (bool, error) {
-	result, err := client.AppInfo(context.TODO(), id)
+func retrieveAcm(id string, client *Config) (bool, error) {
+	result, err := client.Api.AppInfo(context.TODO(), id)
 	if err != nil {
 		return false, err
 	}
 	return result.Acm, nil
 }
 
-func retrieveConfigVars(id string, client *heroku.Service) (map[string]string, error) {
-	vars, err := client.ConfigVarInfoForApp(context.TODO(), id)
+func retrieveConfigVars(id string, client *Config) (map[string]string, error) {
+	vars, err := client.Api.ConfigVarInfoForApp(context.TODO(), id)
 
 	if err != nil {
 		return nil, err
@@ -615,7 +615,7 @@ func retrieveConfigVars(id string, client *heroku.Service) (map[string]string, e
 // Updates the config vars for from an expanded configuration.
 func updateConfigVars(
 	id string,
-	client *heroku.Service,
+	client *Config,
 	o []interface{},
 	n []interface{}) error {
 	vars := make(map[string]*string)
@@ -637,14 +637,14 @@ func updateConfigVars(
 	}
 
 	log.Printf("[INFO] Updating config vars: *%#v", vars)
-	if _, err := client.ConfigVarUpdate(context.TODO(), id, vars); err != nil {
+	if _, err := client.Api.ConfigVarUpdate(context.TODO(), id, vars); err != nil {
 		return fmt.Errorf("Error updating config vars: %s", err)
 	}
 
 	return nil
 }
 
-func updateBuildpacks(id string, client *heroku.Service, v []interface{}) error {
+func updateBuildpacks(id string, client *Config, v []interface{}) error {
 	opts := heroku.BuildpackInstallationUpdateOpts{
 		Updates: []struct {
 			Buildpack string `json:"buildpack" url:"buildpack,key"`
@@ -658,20 +658,20 @@ func updateBuildpacks(id string, client *heroku.Service, v []interface{}) error 
 		})
 	}
 
-	if _, err := client.BuildpackInstallationUpdate(context.TODO(), id, opts); err != nil {
+	if _, err := client.Api.BuildpackInstallationUpdate(context.TODO(), id, opts); err != nil {
 		return fmt.Errorf("Error updating buildpacks: %s", err)
 	}
 
 	return nil
 }
 
-func updateAcm(id string, client *heroku.Service, enabled bool) error {
+func updateAcm(id string, client *Config, enabled bool) error {
 	if enabled {
-		if _, err := client.AppEnableACM(context.TODO(), id); err != nil {
+		if _, err := client.Api.AppEnableACM(context.TODO(), id); err != nil {
 			return err
 		}
 	} else {
-		if _, err := client.AppDisableACM(context.TODO(), id); err != nil {
+		if _, err := client.Api.AppDisableACM(context.TODO(), id); err != nil {
 			return err
 		}
 	}
@@ -679,7 +679,7 @@ func updateAcm(id string, client *heroku.Service, enabled bool) error {
 }
 
 // performAppPostCreateTasks performs post-create tasks common to both org and non-org apps.
-func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) error {
+func performAppPostCreateTasks(d *schema.ResourceData, client *Config) error {
 	if v, ok := d.GetOk("config_vars"); ok {
 		if err := updateConfigVars(d.Id(), client, nil, v.([]interface{})); err != nil {
 			return err
@@ -704,9 +704,9 @@ func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) e
 	return nil
 }
 
-func releaseStateRefreshFunc(client *heroku.Service, appID, releaseID string) resource.StateRefreshFunc {
+func releaseStateRefreshFunc(client *Config, appID, releaseID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		release, err := client.ReleaseInfo(context.TODO(), appID, releaseID)
+		release, err := client.Api.ReleaseInfo(context.TODO(), appID, releaseID)
 
 		if err != nil {
 			return nil, "", err

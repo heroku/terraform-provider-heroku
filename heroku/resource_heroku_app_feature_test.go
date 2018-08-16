@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuAppFeature(t *testing.T) {
@@ -45,14 +45,14 @@ func TestAccHerokuAppFeature(t *testing.T) {
 }
 
 func testAccCheckHerokuFeatureDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*heroku.Service)
+	client := testAccProvider.Meta().(*Config)
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_app_feature" {
 			continue
 		}
 
-		_, err := client.AppFeatureInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		_, err := client.Api.AppFeatureInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Feature still exists")
@@ -79,9 +79,9 @@ func testAccCheckHerokuFeatureExists(n string, feature *heroku.AppFeature) resou
 			return fmt.Errorf("Bad app: %s", app)
 		}
 
-		client := testAccProvider.Meta().(*heroku.Service)
+		client := testAccProvider.Meta().(*Config)
 
-		foundFeature, err := client.AppFeatureInfo(context.TODO(), app, id)
+		foundFeature, err := client.Api.AppFeatureInfo(context.TODO(), app, id)
 		if err != nil {
 			return err
 		}

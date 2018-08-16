@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuPipelineCoupling_Basic(t *testing.T) {
@@ -69,9 +69,9 @@ func testAccCheckHerokuPipelineCouplingExists(n string, pipeline *heroku.Pipelin
 			return fmt.Errorf("No coupling ID set")
 		}
 
-		client := testAccProvider.Meta().(*heroku.Service)
+		client := testAccProvider.Meta().(*Config)
 
-		foundPipelineCoupling, err := client.PipelineCouplingInfo(context.TODO(), rs.Primary.ID)
+		foundPipelineCoupling, err := client.Api.PipelineCouplingInfo(context.TODO(), rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -105,14 +105,14 @@ func testAccCheckHerokuPipelineCouplingAttributes(coupling *heroku.PipelineCoupl
 }
 
 func testAccCheckHerokuPipelineCouplingDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*heroku.Service)
+	client := testAccProvider.Meta().(*Config)
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_pipeline_coupling" {
 			continue
 		}
 
-		_, err := client.PipelineCouplingInfo(context.TODO(), rs.Primary.ID)
+		_, err := client.Api.PipelineCouplingInfo(context.TODO(), rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("PipelineCoupling still exists")

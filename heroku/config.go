@@ -12,15 +12,17 @@ type Config struct {
 	Email   string
 	APIKey  string
 	Headers http.Header
+
+	Api *heroku.Service
 }
 
 // Client returns a new Service for accessing Heroku.
-func (c *Config) Client() (*heroku.Service, error) {
+func (c *Config) loadAndInitialize() error {
 	var debugHTTP = false
 	if logging.IsDebugOrHigher() {
 		debugHTTP = true
 	}
-	service := heroku.NewService(&http.Client{
+	c.Api = heroku.NewService(&http.Client{
 		Transport: &heroku.Transport{
 			Username:          c.Email,
 			Password:          c.APIKey,
@@ -32,5 +34,5 @@ func (c *Config) Client() (*heroku.Service, error) {
 
 	log.Printf("[INFO] Heroku Client configured for user: %s", c.Email)
 
-	return service, nil
+	return nil
 }

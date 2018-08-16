@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func resourceHerokuSpaceVPNConnection() *schema.Resource {
@@ -83,10 +83,10 @@ func resourceHerokuSpaceVPNConnection() *schema.Resource {
 }
 
 func resourceHerokuSpaceVPNConnectionRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config)
 	space, id := parseCompositeID(d.Id())
 
-	conn, err := client.VPNConnectionInfo(context.TODO(), space, id)
+	conn, err := client.Api.VPNConnectionInfo(context.TODO(), space, id)
 	if err != nil {
 		return fmt.Errorf("Error reading VPN information: %v", err)
 	}
@@ -111,7 +111,7 @@ func resourceHerokuSpaceVPNConnectionRead(d *schema.ResourceData, meta interface
 }
 
 func resourceHerokuSpaceVPNConnectionCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config)
 	space := d.Get("space").(string)
 
 	routableCIDRs := []string{}
@@ -119,7 +119,7 @@ func resourceHerokuSpaceVPNConnectionCreate(d *schema.ResourceData, meta interfa
 		routableCIDRs = append(routableCIDRs, v.(string))
 	}
 
-	conn, err := client.VPNConnectionCreate(context.TODO(), space, heroku.VPNConnectionCreateOpts{
+	conn, err := client.Api.VPNConnectionCreate(context.TODO(), space, heroku.VPNConnectionCreateOpts{
 		Name:          d.Get("name").(string),
 		PublicIP:      d.Get("public_ip").(string),
 		RoutableCidrs: routableCIDRs,
@@ -134,7 +134,7 @@ func resourceHerokuSpaceVPNConnectionCreate(d *schema.ResourceData, meta interfa
 		Pending: []string{"pending", "provisioning"},
 		Target:  []string{"active"},
 		Refresh: func() (interface{}, string, error) {
-			conn, err := client.VPNConnectionInfo(context.TODO(), space, id)
+			conn, err := client.Api.VPNConnectionInfo(context.TODO(), space, id)
 			if err != nil {
 				return nil, "", fmt.Errorf("Error getting VPN status: %v", err)
 			}
@@ -155,10 +155,10 @@ func resourceHerokuSpaceVPNConnectionCreate(d *schema.ResourceData, meta interfa
 }
 
 func resourceHerokuSpaceVPNConnectionDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config)
 	space, id := parseCompositeID(d.Id())
 
-	_, err := client.VPNConnectionDestroy(context.TODO(), space, id)
+	_, err := client.Api.VPNConnectionDestroy(context.TODO(), space, id)
 	if err != nil {
 		return fmt.Errorf("Error deleting VPN: %v", err)
 	}

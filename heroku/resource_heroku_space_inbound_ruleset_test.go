@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuSpaceInboundRuleset_Basic(t *testing.T) {

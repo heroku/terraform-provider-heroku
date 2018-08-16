@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuSpaceAppAccess_Basic(t *testing.T) {
@@ -57,13 +57,13 @@ resource "heroku_space_app_access" "foobar" {
 }
 
 func testAccCheckHerokuSpaceAppAccessDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*heroku.Service)
+	client := testAccProvider.Meta().(*Config)
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_space_app_access" {
 			continue
 		}
-		_, err := client.SpaceAppAccessInfo(context.TODO(), rs.Primary.Attributes["space"], rs.Primary.ID)
+		_, err := client.Api.SpaceAppAccessInfo(context.TODO(), rs.Primary.Attributes["space"], rs.Primary.ID)
 		if err == nil {
 			return fmt.Errorf("heroku_space_app_access still exists")
 		}
