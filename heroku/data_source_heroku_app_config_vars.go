@@ -20,8 +20,8 @@ func dataSourceHerokuAppConfigVars() *schema.Resource {
 				Type:     schema.TypeMap,
 				Computed: true,
 			},
-			"depends": {
-				Type:     schema.TypeList,
+			"wait_for_resources": {
+				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,

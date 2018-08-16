@@ -50,7 +50,7 @@ resource "heroku_addon" "hostedgraphite" {
 
 data "heroku_app_config_vars" "app_config_vars" {
   app = "${heroku_app.app.name}"
-  depends = ["${heroku_addon.hostedgraphite.app}"]
+  wait_for_resources = ["${heroku_addon.hostedgraphite.app}"]
 }
 
 resource "heroku_app" "app2" {

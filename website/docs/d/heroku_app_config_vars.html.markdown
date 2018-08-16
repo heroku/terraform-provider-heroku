@@ -13,17 +13,18 @@ Use this data source to get latest config_vars from a heroku app. This allows pu
 ## Example Usage
 
 ```hcl
-# Look up a Heroku Private Space's peering info. 
-data "heroku_app_config_vars" "foo_configs" {
-  app   = "${heroku_app.foo.name}"
-}
-
-# Initiate a VPC peering connection request.
+# Create a heroku app
 resource "heroku_app" "foo" {
     name         = "foo"
     organization = "foobars"
     region       = "virginia"
 }
+
+# Look up a Heroku App's config vars
+data "heroku_app_config_vars" "foo_configs" {
+  app   = "${heroku_app.foo.name}"
+}
+
 ```
 
 ## Argument Reference
@@ -31,7 +32,7 @@ resource "heroku_app" "foo" {
 The following arguments are supported:
 
 * `app` - The name of the heroku app to pull config_vars off of
-* `depends` - List of strings that are ignored, but can be used to force dependency resolution, if say, you'd like to wait until an addon is provisioned before referencing this resource on another downstream app. This is working around a terraform issue with data sources and the `depends_on` attribute[hashicorp/terraform/issues/11806](https://github.com/hashicorp/terraform/issues/11806)
+* `wait_for_resources` - Optional set of strings that are ignored, but can be used to force dependency resolution, if say, you'd like to wait until an addon is provisioned before referencing this resource on another downstream app. This is working around a terraform issue with data sources and the `depends_on` attribute[hashicorp/terraform/issues/11806](https://github.com/hashicorp/terraform/issues/11806)
 
 ## Attributes Reference
 
