@@ -85,19 +85,20 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	// Read from netrc file first. If not available fall back to original authentication
+	// TODO: do we need to read from netrc during a test run?
 	err := readNetrcFile(&config, h)
 	if err != nil {
-		log.Println("Unable to read from netrc. Failing back to default authentication.")
+		return nil, err
+	}
 
-		config = Config{
-			Email:   d.Get("email").(string),
-			APIKey:  d.Get("api_key").(string),
-			Headers: h,
-		}
+	config = Config{
+		Email:   d.Get("email").(string),
+		APIKey:  d.Get("api_key").(string),
+		Headers: h,
 	}
 
 	log.Println("[INFO] Initializing Heroku client")
-	return &config, nil
+	return config.Client()
 }
 
 func buildCompositeID(a, b string) string {
@@ -110,6 +111,8 @@ func parseCompositeID(id string) (string, string) {
 }
 
 func readNetrcFile(config *Config, headers http.Header) error {
+	// Credit of this method is from https://github.com/Yelp/terraform-provider-signalform
+
 	// Get the netrc file path. If path not shown, then fall back to default netrc path value
 	path := os.Getenv("NETRC_PATH")
 
