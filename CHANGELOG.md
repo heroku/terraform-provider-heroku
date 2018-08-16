@@ -3,6 +3,7 @@
 IMPROVEMENTS:
 * Replace custom validators with validators provided by terraform [#107](https://github.com/terraform-providers/terraform-provider-heroku/pull/107)
 * Various test improvements and fixes [#105](https://github.com/terraform-providers/terraform-provider-heroku/pull/105)
+* Update heroku dep to point at heroku repo [#106](https://github.com/terraform-providers/terraform-provider-heroku/pull/106)
 
 FEATURES:
 * Create a resource for managing space access [#83](https://github.com/terraform-providers/terraform-provider-heroku/pull/83)
@@ -10,7 +11,6 @@ FEATURES:
 
 BUG FIXES:
 * Set vpc_peering_connection_id attribute to the correct value [#110](https://github.com/terraform-providers/terraform-provider-heroku/pull/110)
-* [#104](https://github.com/terraform-providers/terraform-provider-heroku/pull/104)
 
 ## 1.2.0 (July 21, 2018)
 
