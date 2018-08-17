@@ -29,6 +29,12 @@ func TestAccDatasourceHerokuSpacePeeringInfo_Basic(t *testing.T) {
 						"data.heroku_space_peering_info.foobar", "aws_region", "us-east-1"),
 					resource.TestCheckResourceAttrSet(
 						"data.heroku_space_peering_info.foobar", "vpc_id"),
+					resource.TestCheckResourceAttrSet(
+						"data.heroku_space_peering_info.foobar", "vpc_cidr"),
+					resource.TestCheckResourceAttrSet(
+						"data.heroku_space_peering_info.foobar", "dyno_cidr_blocks.#"),
+					resource.TestCheckResourceAttrSet(
+						"data.heroku_space_peering_info.foobar", "unavailable_cidr_blocks.#"),
 				),
 			},
 		},
