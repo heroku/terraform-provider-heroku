@@ -1,4 +1,8 @@
+
 ## 1.4.0 (Unreleased)
+FEATURES:
+* New `heroku_app_config_vars` data source added to better share environment variables attached to an app with other resources. [#109](https://github.com/terraform-providers/terraform-provider-heroku/pull/109)
+
 ## 1.3.0 (August 16, 2018)
 
 FEATURES:
