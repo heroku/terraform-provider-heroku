@@ -45,6 +45,7 @@ func Provider() terraform.ResourceProvider {
 			"heroku_formation":                         resourceHerokuFormation(),
 			"heroku_pipeline":                          resourceHerokuPipeline(),
 			"heroku_pipeline_coupling":                 resourceHerokuPipelineCoupling(),
+			"heroku_slug":                              resourceHerokuSlug(),
 			"heroku_space":                             resourceHerokuSpace(),
 			"heroku_space_inbound_ruleset":             resourceHerokuSpaceInboundRuleset(),
 			"heroku_space_app_access":                  resourceHerokuSpaceAppAccess(),
