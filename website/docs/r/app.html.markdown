@@ -48,8 +48,7 @@ The following arguments are supported:
 * `space` - (Optional) The name of a private space to create the app in.
 * `internal_routing` - (Optional) If true, the application will be routable
   only internally in a private space. This option is only available for apps
-  that also specify `space`. This feature is currently only available in
-  private beta. Contact Heroku Support for more details.
+  that also specify `space`.
 * `organization` - (Optional) A block that can be specified once to define
      organization settings for this app. The fields for this block are
      documented below.
@@ -60,8 +59,6 @@ The `organization` block supports:
 * `name` (string) - The name of the organization.
 * `locked` (boolean)
 * `personal` (boolean)
-
-~> **NOTE:** Internal routing is currently a beta feature that requires you email Heroku Support to have it enabled. Without this feature enabled by Heroku Support the `internal_routing` attribute will be ignored.
 
 ## Attributes Reference
 
