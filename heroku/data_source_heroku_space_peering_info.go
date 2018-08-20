@@ -32,7 +32,7 @@ func dataSourceHerokuSpacePeeringInfo() *schema.Resource {
 			},
 
 			"vpc_cidr": {
-				Type:     schema.TypeBool,
+				Type:     schema.TypeString,
 				Computed: true,
 			},
 
