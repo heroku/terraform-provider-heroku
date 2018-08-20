@@ -4,6 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
+	"net/http/httputil"
+	"os"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heroku/heroku-go/v3"
@@ -23,6 +27,13 @@ func resourceHerokuSlug() *schema.Resource {
 			"app": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
+			},
+
+			// Local tarball to be uploaded after slug creation
+			"file_path": {
+				Type:     schema.TypeString,
+				Optional: true,
 				ForceNew: true,
 			},
 
@@ -174,6 +185,15 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error creating slug: %s opts %+v", err, opts)
 	}
 
+	if v, ok := d.GetOk("file_path"); ok {
+		filePath := v.(string)
+		err := uploadSlug(filePath, do.Blob.Method, do.Blob.URL)
+		if err != nil {
+			return err
+		}
+		d.Set("file_path", filePath)
+	}
+
 	d.SetId(do.ID)
 
 	blob := []map[string]string{{
@@ -230,5 +250,44 @@ func resourceHerokuSlugRead(d *schema.ResourceData, meta interface{}) error {
 // in the Heroku Platform APIs.
 func resourceHerokuSlugDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] There is no DELETE for slug resource so this is a no-op. Slug will be removed from state.")
+	return nil
+}
+
+func uploadSlug(filePath, httpMethod, httpUrl string) error {
+	method := strings.ToUpper(httpMethod)
+	log.Printf("[DEBUG] Uploading slug '%s' to %s %s", filePath, method, httpUrl)
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("Error opening slug file_path: %s", err)
+	}
+	stat, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("Error stating slug file_path: %s", err)
+	}
+	defer file.Close()
+
+	httpClient := &http.Client{}
+	req, err := http.NewRequest(method, httpUrl, file)
+	if err != nil {
+		return fmt.Errorf("Error creating slug upload request: %s", err)
+	}
+	req.ContentLength = stat.Size()
+	log.Printf("[DEBUG] Upload slug request: %+v", req)
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("Error uploading slug: %s", err)
+	}
+
+	b, err := httputil.DumpResponse(res, true)
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("[DEBUG] Slug upload response: %s", b)
+
+	defer res.Body.Close()
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		return fmt.Errorf("Unsuccessful HTTP response from slug upload: %s", res.Status)
+	}
 	return nil
 }
