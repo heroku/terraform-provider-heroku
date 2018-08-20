@@ -153,28 +153,20 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	stack := d.Get("stack").(string)
-	opts.Stack = &stack
-
 	if v, ok := d.GetOk("buildpack_provided_description"); ok {
-		vs := v.(string)
-		log.Printf("[DEBUG] Slug buildpack_provided_description: %s", vs)
-		opts.BuildpackProvidedDescription = &vs
+		opts.BuildpackProvidedDescription = heroku.String(v.(string))
 	}
 	if v, ok := d.GetOk("checksum"); ok {
-		vs := v.(string)
-		log.Printf("[DEBUG] Slug checksum: %s", vs)
-		opts.Checksum = &vs
+		opts.Checksum = heroku.String(v.(string))
 	}
 	if v, ok := d.GetOk("commit"); ok {
-		vs := v.(string)
-		log.Printf("[DEBUG] Slug commit: %s", vs)
-		opts.Commit = &vs
+		opts.Commit = heroku.String(v.(string))
 	}
 	if v, ok := d.GetOk("commit_description"); ok {
-		vs := v.(string)
-		log.Printf("[DEBUG] Slug commit_description: %s", vs)
-		opts.CommitDescription = &vs
+		opts.CommitDescription = heroku.String(v.(string))
+	}
+	if v, ok := d.GetOk("stack"); ok {
+		opts.Stack = heroku.String(v.(string))
 	}
 
 	do, err := client.SlugCreate(context.TODO(), app, opts)
