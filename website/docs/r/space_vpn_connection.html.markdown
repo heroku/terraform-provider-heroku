@@ -10,8 +10,6 @@ description: |-
 
 Provides a resource for creating a VPN connection between a network and a Heroku Private Space. For more information, see [Private Spaces VPN Connection](https://devcenter.heroku.com/articles/private-space-vpn-connection?preview=1) in the Heroku DevCenter.
 
-~> **NOTE:** VPN connections are currently a beta feature that requires you email Heroku Support to have it enabled. Attempting to create a VPN connection without the feature enabled by Heroku Support will fail.
-
 ## Example Usage
 
 ```hcl
