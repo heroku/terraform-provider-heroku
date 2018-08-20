@@ -179,7 +179,7 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 
 	do, err := client.SlugCreate(context.TODO(), app, opts)
 	if err != nil {
-		return fmt.Errorf("Error creating slug: %s", err)
+		return fmt.Errorf("Error creating slug: %s opts %+v", err, opts)
 	}
 
 	d.SetId(do.ID)
