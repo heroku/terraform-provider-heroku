@@ -117,17 +117,16 @@ func resourceHerokuSlug() *schema.Resource {
 func resourceHerokuSlugImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client := meta.(*heroku.Service)
 
-	app := d.Get("app").(string)
+	app, slugID := parseCompositeID(d.Id())
 
-	slug, err := client.SlugInfo(context.Background(), app, d.Id())
+	slug, err := client.SlugInfo(context.Background(), app, slugID)
 	if err != nil {
 		return nil, err
 	}
 
 	d.SetId(slug.ID)
+	d.Set("app", app)
 	setState(d, slug)
-
-	log.Printf("[INFO] Imported slug ID: %s", d.Id())
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -259,7 +258,10 @@ func setState(d *schema.ResourceData, slug *heroku.Slug) error {
 	d.Set("checksum", slug.Checksum)
 	d.Set("commit", slug.Commit)
 	d.Set("commit_description", slug.CommitDescription)
-	d.Set("process_types", slug.ProcessTypes)
+	processTypes := []map[string]string{slug.ProcessTypes}
+	if err := d.Set("process_types", processTypes); err != nil {
+		log.Printf("[WARN] Error setting process_types: %s", err)
+	}
 	d.Set("size", slug.Size)
 	d.Set("stack_id", slug.Stack.ID)
 	d.Set("stack_name", slug.Stack.Name)
