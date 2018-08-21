@@ -51,6 +51,7 @@ func Provider() terraform.ResourceProvider {
 			"heroku_space_peering_connection_accepter": resourceHerokuSpacePeeringConnectionAccepter(),
 			"heroku_space_vpn_connection":              resourceHerokuSpaceVPNConnection(),
 			"heroku_team_collaborator":                 resourceHerokuTeamCollaborator(),
+			"heroku_team_member":                       resourceHerokuTeamMember(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
