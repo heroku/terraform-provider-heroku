@@ -93,19 +93,19 @@ func resourceHerokuSlug() *schema.Resource {
 				Computed: true,
 			},
 
-			// Create argument; equivalent value as `stack_id`
+			// Create argument; equivalent value as `stack_name`
 			"stack": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			// Read attribute; equivalent value as `stack`
 			"stack_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
+			// Read attribute; equivalent value as `stack`
 			"stack_name": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -119,29 +119,13 @@ func resourceHerokuSlugImport(d *schema.ResourceData, meta interface{}) ([]*sche
 
 	app := d.Get("app").(string)
 
-	do, err := client.SlugInfo(context.Background(), app, d.Id())
+	slug, err := client.SlugInfo(context.Background(), app, d.Id())
 	if err != nil {
 		return nil, err
 	}
 
-	d.SetId(do.ID)
-
-	blob := []map[string]string{{
-		"method": do.Blob.Method,
-		"url":    do.Blob.URL,
-	}}
-	if err := d.Set("blob", blob); err != nil {
-		log.Printf("[WARN] Error setting blob: %s", err)
-	}
-
-	d.Set("buildpack_provided_description", do.BuildpackProvidedDescription)
-	d.Set("checksum", do.Checksum)
-	d.Set("commit", do.Commit)
-	d.Set("commit_description", do.CommitDescription)
-	d.Set("process_types", do.ProcessTypes)
-	d.Set("size", do.Size)
-	d.Set("stack_id", do.Stack.ID)
-	d.Set("stack_name", do.Stack.Name)
+	d.SetId(slug.ID)
+	setState(d, slug)
 
 	log.Printf("[INFO] Imported slug ID: %s", d.Id())
 
@@ -180,38 +164,25 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 		opts.Stack = heroku.String(v.(string))
 	}
 
-	do, err := client.SlugCreate(context.TODO(), app, opts)
+	slug, err := client.SlugCreate(context.TODO(), app, opts)
 	if err != nil {
 		return fmt.Errorf("Error creating slug: %s opts %+v", err, opts)
 	}
 
+	// Optionally upload slug before setting ID, so that an upload failure
+	// causes a resource creation error, is not saved in state.
 	if v, ok := d.GetOk("file_path"); ok {
 		filePath := v.(string)
-		err := uploadSlug(filePath, do.Blob.Method, do.Blob.URL)
+		err := uploadSlug(filePath, slug.Blob.Method, slug.Blob.URL)
 		if err != nil {
 			return err
 		}
+		// file_path being set indicates a successful upload.
 		d.Set("file_path", filePath)
 	}
 
-	d.SetId(do.ID)
-
-	blob := []map[string]string{{
-		"method": do.Blob.Method,
-		"url":    do.Blob.URL,
-	}}
-	if err := d.Set("blob", blob); err != nil {
-		log.Printf("[WARN] Error setting blob: %s", err)
-	}
-
-	d.Set("buildpack_provided_description", do.BuildpackProvidedDescription)
-	d.Set("checksum", do.Checksum)
-	d.Set("commit", do.Commit)
-	d.Set("commit_description", do.CommitDescription)
-	d.Set("process_types", do.ProcessTypes)
-	d.Set("size", do.Size)
-	d.Set("stack_id", do.Stack.ID)
-	d.Set("stack_name", do.Stack.Name)
+	d.SetId(slug.ID)
+	setState(d, slug)
 
 	log.Printf("[INFO] Created slug ID: %s", d.Id())
 	return nil
@@ -221,33 +192,17 @@ func resourceHerokuSlugRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 
 	app := d.Get("app").(string)
-	do, err := client.SlugInfo(context.TODO(), app, d.Id())
+	slug, err := client.SlugInfo(context.TODO(), app, d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving slug: %s", err)
 	}
 
-	blob := []map[string]string{{
-		"method": do.Blob.Method,
-		"url":    do.Blob.URL,
-	}}
-	if err := d.Set("blob", blob); err != nil {
-		log.Printf("[WARN] Error setting blob: %s", err)
-	}
-
-	d.Set("buildpack_provided_description", do.BuildpackProvidedDescription)
-	d.Set("checksum", do.Checksum)
-	d.Set("commit", do.Commit)
-	d.Set("commit_description", do.CommitDescription)
-	d.Set("process_types", do.ProcessTypes)
-	d.Set("size", do.Size)
-	d.Set("stack_id", do.Stack.ID)
-	d.Set("stack_name", do.Stack.Name)
+	setState(d, slug)
 
 	return nil
 }
 
-// resourceHerokuSlugDelete will be a no-op method as there is no DELETE endpoint for the slug resource
-// in the Heroku Platform APIs.
+// A no-op method as there is no DELETE slug in Heroku Platform API.
 func resourceHerokuSlugDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] There is no DELETE for slug resource so this is a no-op. Slug will be removed from state.")
 	return nil
@@ -280,14 +235,33 @@ func uploadSlug(filePath, httpMethod, httpUrl string) error {
 	}
 
 	b, err := httputil.DumpResponse(res, true)
-	if err != nil {
-		panic(err)
+	if err == nil {
+		// generate debug output if it's available
+		log.Printf("[DEBUG] Slug upload response: %s", b)
 	}
-	log.Printf("[DEBUG] Slug upload response: %s", b)
 
 	defer res.Body.Close()
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		return fmt.Errorf("Unsuccessful HTTP response from slug upload: %s", res.Status)
 	}
+	return nil
+}
+
+func setState(d *schema.ResourceData, slug *heroku.Slug) error {
+	blob := []map[string]string{{
+		"method": slug.Blob.Method,
+		"url":    slug.Blob.URL,
+	}}
+	if err := d.Set("blob", blob); err != nil {
+		log.Printf("[WARN] Error setting blob: %s", err)
+	}
+	d.Set("buildpack_provided_description", slug.BuildpackProvidedDescription)
+	d.Set("checksum", slug.Checksum)
+	d.Set("commit", slug.Commit)
+	d.Set("commit_description", slug.CommitDescription)
+	d.Set("process_types", slug.ProcessTypes)
+	d.Set("size", slug.Size)
+	d.Set("stack_id", slug.Stack.ID)
+	d.Set("stack_name", slug.Stack.Name)
 	return nil
 }
