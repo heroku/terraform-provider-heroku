@@ -2,7 +2,9 @@ package heroku
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -65,6 +67,7 @@ func resourceHerokuSlug() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+				Computed: true,
 			},
 
 			"commit": {
@@ -151,8 +154,21 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 		opts.BuildpackProvidedDescription = heroku.String(v.(string))
 	}
 	if v, ok := d.GetOk("checksum"); ok {
+		// Use specified checksum when its set
 		opts.Checksum = heroku.String(v.(string))
+	} else {
+		// Optionally capture the checksum (really sha256 hash) of the slug file.
+		if v, ok := d.GetOk("file_path"); ok {
+			filePath := v.(string)
+			checksum, err := checksumSlug(filePath)
+			if err != nil {
+				return err
+			}
+			log.Printf("[DEBUG] Slug checksum: %s", checksum)
+			opts.Checksum = heroku.String(checksum)
+		}
 	}
+
 	if v, ok := d.GetOk("commit"); ok {
 		opts.Commit = heroku.String(v.(string))
 	}
@@ -244,6 +260,23 @@ func uploadSlug(filePath, httpMethod, httpUrl string) error {
 		return fmt.Errorf("Unsuccessful HTTP response from slug upload: %s", res.Status)
 	}
 	return nil
+}
+
+func checksumSlug(filePath string) (string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", fmt.Errorf("Error opening slug file_path: %s", err)
+	}
+	hash := sha256.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return "", fmt.Errorf("Error reading slug for checksum: %s", err)
+	}
+	file.Close()
+	checksum := fmt.Sprintf("SHA256:%x", hash.Sum(nil))
+	if err != nil {
+		return "", fmt.Errorf("Error generating slug checksum: %s", err)
+	}
+	return checksum, nil
 }
 
 func setState(d *schema.ResourceData, slug *heroku.Slug) error {
