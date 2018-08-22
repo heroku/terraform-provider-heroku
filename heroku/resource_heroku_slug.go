@@ -251,7 +251,7 @@ func uploadSlug(filePath, httpMethod, httpUrl string) error {
 	if err != nil {
 		return fmt.Errorf("Error uploading slug: %s", err)
 	}
-	
+
 	if os.Getenv("TF_LOG") == "TRACE" || os.Getenv("TF_LOG") == "DEBUG" {
 		b, err := httputil.DumpResponse(res, true)
 		if err == nil {
