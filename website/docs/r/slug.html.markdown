@@ -84,7 +84,7 @@ The following attributes are exported:
   * `method` - HTTP method to upload the archive
   * `url` - Pre-signed, expiring URL to upload the archive
 * `buildpack_provided_description` - Description of language or app framework, `"Ruby/Rack"`
-* `checksum` - Hash of the slug for verifying its integrity, `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+* `checksum` - Hash of the slug for verifying its integrity, auto-generated when `file_path` is set to upload a slug archive, `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 * `commit` - Identification of the code with your version control system (eg: SHA of the git HEAD), `"60883d9e8947a57e04dc9124f25df004866a2051"`
 * `commit_description` - Description of the provided commit
 * `process_types` - Map of [processes to launch on Heroku Dynos](https://devcenter.heroku.com/articles/process-model)
