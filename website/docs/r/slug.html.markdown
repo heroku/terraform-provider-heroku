@@ -97,5 +97,11 @@ Existing slugs can be imported using the combination of the application name, a 
 
 For example:
 ```
-$ terraform import heroku_slug.foobar foobar
+$ terraform import heroku_slug.foobar bazbux:4f1db8ef-ed5c-4c42-a3d6-3c28262d5abc
 ```
+
+* `foobar` is the **heroku_slug** resource's name
+* `bazbux` is the Heroku app name (or ID) that the slug belongs to
+* `:` separates the app identifier & the slug identifier
+* `4f1db8ef…` is the slug ID
+
