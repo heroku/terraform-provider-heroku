@@ -228,7 +228,7 @@ func resourceHerokuSlugDelete(d *schema.ResourceData, meta interface{}) error {
 
 func uploadSlug(filePath, httpMethod, httpUrl string) error {
 	method := strings.ToUpper(httpMethod)
-	log.Printf("[INFO] Uploading slug '%s' to %s %s", filePath, method, httpUrl)
+	log.Printf("[DEBUG] Uploading slug '%s' to %s %s", filePath, method, httpUrl)
 
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -246,21 +246,16 @@ func uploadSlug(filePath, httpMethod, httpUrl string) error {
 		return fmt.Errorf("Error creating slug upload request: %s", err)
 	}
 	req.ContentLength = stat.Size()
-	if os.Getenv("TF_LOG") == "TRACE" || os.Getenv("TF_LOG") == "DEBUG" {
-		log.Printf("[DEBUG] Upload slug request: %+v", req)
-	}
-
+	log.Printf("[DEBUG] Upload slug request: %+v", req)
 	res, err := httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("Error uploading slug: %s", err)
 	}
 
-	if os.Getenv("TF_LOG") == "TRACE" || os.Getenv("TF_LOG") == "DEBUG" {
-		b, err := httputil.DumpResponse(res, true)
-		if err == nil {
-			// generate debug output if it's available
-			log.Printf("[DEBUG] Slug upload response: %s", b)
-		}
+	b, err := httputil.DumpResponse(res, true)
+	if err == nil {
+		// generate debug output if it's available
+		log.Printf("[DEBUG] Slug upload response: %s", b)
 	}
 
 	defer res.Body.Close()
