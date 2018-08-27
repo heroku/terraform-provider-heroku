@@ -11,13 +11,17 @@ description: |-
 Provides a [Heroku Slug](https://devcenter.heroku.com/articles/platform-api-reference#slug)
 resource.
 
-This resource supports [Creating Slugs from Scratch](https://devcenter.heroku.com/articles/platform-api-deploying-slugs), making it possible to launch apps directly from a Terraform config.
-
-If `file_path` is not specified for a slug, then the slug archive must be uploaded to `blob.method` + `blob.url` by some other means. Otherwise, a release will not be possible because there's no executable code.
+This resource supports uploading a pre-generated archive file of executable code, making it possible to launch apps directly from a Terraform config. This resource does not itself generate the slug archive. [A guide to creating slug archives](https://devcenter.heroku.com/articles/platform-api-deploying-slugs) is available in the Heroku Devcenter.
 
 ## Minimal Example
 
 All that is required to create a ready-to-release slug:
+
+~> **NOTE:** 
+- A pre-existing slug archive of executable code must be available at `file_path`
+- The archive must follow the prescribed layout from [Create slug archive](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#create-slug-archive) in the Heroku Devcenter
+- The archive may be created by an external build system, downloaded from another Heroku app, or otherwise provided outside of the context of this Terraform resource
+- If `file_path` is empty when creating this resource, then the slug archive must be uploaded to the resulting computed `blob.method` + `blob.url` by some other means, otherwise an app release with the slug will not be possible because there's no executable code.
 
 ```hcl
 resource "heroku_slug" "foobar" {
@@ -69,7 +73,7 @@ resource "heroku_formation" "foobar" {
 
 ## Argument Reference
 * `app` - (Required) The name of the application
-* `file_path` - Path to a slug archive, see [Creating Slugs from Scratch](https://devcenter.heroku.com/articles/platform-api-deploying-slugs), `"slugs/current.tgz"`
+* `file_path` - Path to a slug archive, see [Create slug archive](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#create-slug-archive) in the Heroku Devcenter, if `file_path` is not specified for a slug, then the slug archive must be uploaded to the computed `blob.method` + `blob.url` by some other means, otherwise an app release with the slug will not be possible because there's no executable code, `"slugs/current.tgz"`
 * `buildpack_provided_description` - Description of language or app framework, `"Ruby/Rack"`; displayed as the app's language in the Heroku Dashboard
 * `checksum` - Hash of the slug for verifying its integrity, auto-generated when `file_path` is set to upload a slug archive, `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 * `commit` - Identification of the code with your version control system (eg: SHA of the git HEAD), `"60883d9e8947a57e04dc9124f25df004866a2051"`
