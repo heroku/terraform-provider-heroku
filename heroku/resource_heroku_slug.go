@@ -40,7 +40,7 @@ func resourceHerokuSlug() *schema.Resource {
 			},
 
 			"blob": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -83,7 +83,7 @@ func resourceHerokuSlug() *schema.Resource {
 			},
 
 			"process_types": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Required: true,
 				ForceNew: true,
 				Elem: &schema.Schema{
@@ -142,11 +142,14 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 	// Build up our creation options
 	opts := heroku.SlugCreateOpts{}
 
-	opts.ProcessTypes = make(map[string]string)
-	pt := d.Get("process_types").([]interface{})
-	for _, v := range pt {
-		for kk, vv := range v.(map[string]interface{}) {
-			opts.ProcessTypes[kk] = vv.(string)
+	if pt, ok := d.GetOk("process_types"); ok {
+		ptSet := pt.(*schema.Set)
+		opts.ProcessTypes = make(map[string]string)
+
+		for _, v := range ptSet.List() {
+			for kk, vv := range v.(map[string]interface{}) {
+				opts.ProcessTypes[kk] = vv.(string)
+			}
 		}
 	}
 
