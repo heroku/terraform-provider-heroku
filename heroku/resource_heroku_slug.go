@@ -137,7 +137,7 @@ func resourceHerokuSlugImport(d *schema.ResourceData, meta interface{}) ([]*sche
 func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 
-	app := d.Get("app").(string)
+	app := getAppName(d)
 
 	// Build up our creation options
 	opts := heroku.SlugCreateOpts{}
@@ -209,7 +209,7 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceHerokuSlugRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 
-	app := d.Get("app").(string)
+	app := getAppName(d)
 	slug, err := client.SlugInfo(context.TODO(), app, d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving slug: %s", err)
