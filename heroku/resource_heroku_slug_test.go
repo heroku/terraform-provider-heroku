@@ -3,7 +3,6 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/acctest"
@@ -138,7 +137,6 @@ func testAccCheckHerokuSlugConfig_basic(appName string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
-    stack = "heroku-18"
 }
 
 resource "heroku_slug" "foobar" {
@@ -154,7 +152,6 @@ func testAccCheckHerokuSlugConfig_allOpts(appName string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
-    stack = "heroku-18"
 }
 
 resource "heroku_slug" "foobar" {
@@ -172,24 +169,17 @@ resource "heroku_slug" "foobar" {
 }
 
 func testAccCheckHerokuSlugConfig_withFile(appName string) string {
-	wd, _ := os.Getwd()
-	filePath := wd + "/test-fixtures/slug.tgz"
-
-	file, _ := os.Open(filePath)
-	defer file.Close()
-
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
-    stack = "heroku-18"
 }
 
 resource "heroku_slug" "foobar" {
     app = "${heroku_app.foobar.name}"
     buildpack_provided_description = "Ruby"
-    file_path = "%s"
+    file_path = "test-fixtures/slug.tgz"
     process_types = {
     	web = "ruby server.rb"
     }
-}`, appName, filePath)
+}`, appName)
 }
