@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	heroku "github.com/heroku/heroku-go/v3"
 )
@@ -17,7 +18,7 @@ type Config struct {
 // Client returns a new Service for accessing Heroku.
 func (c *Config) Client() (*heroku.Service, error) {
 	var debugHTTP = false
-	if os.Getenv("TF_LOG") == "TRACE" || os.Getenv("TF_LOG") == "DEBUG" {
+	if strings.EqualFold(os.Getenv("TF_LOG"), "trace") || strings.EqualFold(os.Getenv("TF_LOG"), "debug") {
 		debugHTTP = true
 	}
 	service := heroku.NewService(&http.Client{
