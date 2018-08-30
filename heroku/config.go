@@ -3,8 +3,8 @@ package heroku
 import (
 	"log"
 	"net/http"
-	"os"
 
+	"github.com/hashicorp/terraform/helper/logging"
 	heroku "github.com/heroku/heroku-go/v3"
 )
 
@@ -17,7 +17,7 @@ type Config struct {
 // Client returns a new Service for accessing Heroku.
 func (c *Config) Client() (*heroku.Service, error) {
 	var debugHTTP = false
-	if os.Getenv("TF_LOG") == "TRACE" || os.Getenv("TF_LOG") == "DEBUG" {
+	if logging.IsDebugOrHigher() {
 		debugHTTP = true
 	}
 	service := heroku.NewService(&http.Client{
