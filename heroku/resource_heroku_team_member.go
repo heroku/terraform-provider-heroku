@@ -51,7 +51,7 @@ func resourceHerokuTeamMemberImport(d *schema.ResourceData, meta interface{}) ([
 	team, email := parseCompositeID(d.Id())
 	d.Set("team", team)
 	d.Set("email", email)
-	resourceHerokuSpaceAppAccessRead(d, meta)
+	resourceHerokuTeamMemberRead(d, meta)
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -62,6 +62,7 @@ func resourceHerokuTeamMemberSet(d *schema.ResourceData, meta interface{}) error
 	email := d.Get("email").(string)
 	federated := d.Get("federated").(bool)
 	role := d.Get("role").(string)
+	team := d.Get("team").(string)
 
 	opts := heroku.TeamMemberCreateOrUpdateOpts{
 		Email:     email,
@@ -74,7 +75,8 @@ func resourceHerokuTeamMemberSet(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	return resourceHerokuSpaceAppAccessRead(d, meta)
+	d.SetId(buildCompositeID(team, email))
+	return resourceHerokuTeamMemberRead(d, meta)
 }
 
 // Callback for schema Resource.Read
@@ -99,7 +101,6 @@ func resourceHerokuTeamMemberRead(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("Could not find member record for %s on team %s", email, team)
 	}
 
-	d.SetId(buildCompositeID(team, email))
 	d.Set("team", team)
 	d.Set("email", found.Email)
 	d.Set("role", found.Role)
