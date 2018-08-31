@@ -17,9 +17,10 @@ import (
 
 func resourceHerokuSlug() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceHerokuSlugCreate,
-		Read:   resourceHerokuSlugRead,
-		Delete: resourceHerokuSlugDelete,
+		Create:        resourceHerokuSlugCreate,
+		Read:          resourceHerokuSlugRead,
+		Delete:        resourceHerokuSlugDelete,
+		CustomizeDiff: resourceHerokuSlugCustomizeDiff,
 
 		Importer: &schema.ResourceImporter{
 			State: resourceHerokuSlugImport,
@@ -187,6 +188,9 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error creating slug: %s opts %+v", err, opts)
 	}
 
+	d.SetId(slug.ID)
+	setState(d, slug)
+
 	// Optionally upload slug before setting ID, so that an upload failure
 	// causes a resource creation error, is not saved in state.
 	if v, ok := d.GetOk("file_path"); ok {
@@ -198,9 +202,6 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 		// file_path being set indicates a successful upload.
 		d.Set("file_path", filePath)
 	}
-
-	d.SetId(slug.ID)
-	setState(d, slug)
 
 	log.Printf("[INFO] Created slug ID: %s", d.Id())
 	return nil
@@ -223,6 +224,28 @@ func resourceHerokuSlugRead(d *schema.ResourceData, meta interface{}) error {
 // A no-op method as there is no DELETE slug in Heroku Platform API.
 func resourceHerokuSlugDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] There is no DELETE for slug resource so this is a no-op. Slug will be removed from state.")
+	return nil
+}
+
+func resourceHerokuSlugCustomizeDiff(diff *schema.ResourceDiff, v interface{}) error {
+	// Detect changes to the content of local slug archive.
+	if v, ok := diff.GetOk("file_path"); ok {
+		filePath := v.(string)
+		realChecksum, err := checksumSlug(filePath)
+		if err == nil {
+			oldChecksum, newChecksum := diff.GetChange("checksum")
+			log.Printf("[DEBUG] Diffing slug: old '%s', new '%s', real '%s'", oldChecksum, newChecksum, realChecksum)
+			if newChecksum != realChecksum {
+				if err := diff.SetNew("checksum", realChecksum); err != nil {
+					return fmt.Errorf("Error updating slug archive checksum: %s", err)
+				}
+				if err := diff.ForceNew("checksum"); err != nil {
+					return fmt.Errorf("Error forcing new slug resource: %s", err)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 

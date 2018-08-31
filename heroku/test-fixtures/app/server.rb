@@ -1,3 +1,4 @@
+# A tiny server using the Heroku stack's built-in Ruby.
 require 'webrick'
 
 server = WEBrick::HTTPServer.new :Port => ENV["PORT"]
