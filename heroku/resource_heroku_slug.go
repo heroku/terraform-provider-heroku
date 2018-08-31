@@ -97,7 +97,8 @@ func resourceHerokuSlug() *schema.Resource {
 				Computed: true,
 			},
 
-			// Create argument; equivalent value as `stack_name`
+			// Create argument; equivalent value as `stack_name` or `stack_id`
+			// depending on whether a UUID or stack name is set.
 			"stack": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -109,7 +110,6 @@ func resourceHerokuSlug() *schema.Resource {
 				Computed: true,
 			},
 
-			// Read attribute; equivalent value as `stack`
 			"stack_name": {
 				Type:     schema.TypeString,
 				Computed: true,

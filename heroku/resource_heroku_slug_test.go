@@ -3,7 +3,6 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"testing"
 
@@ -151,7 +150,6 @@ resource "heroku_slug" "foobar" {
 }
 
 func testAccCheckHerokuSlugConfig_withFile(appName string) string {
-	log.Printf("[DEBUG] test SlugConfig withFile")
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"

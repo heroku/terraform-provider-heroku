@@ -15,17 +15,18 @@ This resource supports uploading a pre-generated archive file of executable code
 
 ## Minimal Example
 
-All that is required to create a ready-to-release slug:
+Create a ready-to-release slug:
 
 ~> **NOTE:** 
-- A pre-existing slug archive of executable code must be available at `file_path`
-- The archive must follow the prescribed layout from [Create slug archive](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#create-slug-archive) in the Heroku Devcenter
+- When `file_path` is specified, the file it references must contain a slug archive of executable code and must follow the prescribed layout from [Create slug archive](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#create-slug-archive) in the Heroku Devcenter (nested within an `./app` directory)
+- When `file_path` is not specified, then the slug archive must be uploaded to the resulting computed `blob.method` + `blob.url` by some other means, otherwise app release will fail with _Compiled slug couldn't be found_
 - The archive may be created by an external build system, downloaded from another Heroku app, or otherwise provided outside of the context of this Terraform resource
-- If `file_path` is empty when creating this resource, then the slug archive must be uploaded to the resulting computed `blob.method` + `blob.url` by some other means, otherwise an app release with the slug will not be possible because there's no executable code.
+- If the contents (SHA256) of the file at `file_path` change, then a new resource will be forced on the next plan/apply; if the file does not exist, the difference is ignored.
 
 ```hcl
 resource "heroku_slug" "foobar" {
   app       = "${heroku_app.foobar.id}"
+  // The slug archive file must already exist
   file_path = "slug.tgz"
 
   process_types = {
@@ -48,6 +49,7 @@ resource "heroku_app" "foobar" {
 resource "heroku_slug" "foobar" {
   app                            = "${heroku_app.foobar.id}"
   buildpack_provided_description = "Ruby"
+  // The slug archive file must already exist
   file_path                      = "slug.tgz"
 
   process_types = {
@@ -79,7 +81,7 @@ resource "heroku_formation" "foobar" {
 * `commit` - Identification of the code with your version control system (eg: SHA of the git HEAD), `"60883d9e8947a57e04dc9124f25df004866a2051"`
 * `commit_description` - Description of the provided commit
 * `process_types` - (Required) Map of [processes to launch on Heroku Dynos](https://devcenter.heroku.com/articles/process-model)
-* `stack` - Name or ID of the [Heroku stack](https://devcenter.heroku.com/articles/stack)
+* `stack` - Name or UUID of the [Heroku stack](https://devcenter.heroku.com/articles/stack)
 
 ## Attributes Reference
 The following attributes are exported:
@@ -93,8 +95,8 @@ The following attributes are exported:
 * `commit_description` - Description of the provided commit
 * `process_types` - Map of [processes to launch on Heroku Dynos](https://devcenter.heroku.com/articles/process-model)
 * `size` - Slug archive filesize in bytes
-* `stack_id` - [Heroku stack](https://devcenter.heroku.com/articles/stack) identifier
-* `stack_name` - [Heroku stack](https://devcenter.heroku.com/articles/stack) name
+* `stack_id` - [Heroku stack](https://devcenter.heroku.com/articles/stack) UUID identifier
+* `stack_name` - [Heroku stack](https://devcenter.heroku.com/articles/stack) human-friendly name identifier
 
 ## Import
 Existing slugs can be imported using the combination of the application name, a colon, and the slug ID.
