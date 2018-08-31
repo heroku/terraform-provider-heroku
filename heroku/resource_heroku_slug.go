@@ -188,9 +188,6 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error creating slug: %s opts %+v", err, opts)
 	}
 
-	d.SetId(slug.ID)
-	setState(d, slug)
-
 	// Optionally upload slug before setting ID, so that an upload failure
 	// causes a resource creation error, is not saved in state.
 	if v, ok := d.GetOk("file_path"); ok {
@@ -202,6 +199,9 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 		// file_path being set indicates a successful upload.
 		d.Set("file_path", filePath)
 	}
+
+	d.SetId(slug.ID)
+	setState(d, slug)
 
 	log.Printf("[INFO] Created slug ID: %s", d.Id())
 	return nil
