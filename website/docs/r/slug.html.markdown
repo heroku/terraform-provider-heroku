@@ -81,7 +81,7 @@ resource "heroku_formation" "foobar" {
 * `commit` - Identification of the code with your version control system (eg: SHA of the git HEAD), `"60883d9e8947a57e04dc9124f25df004866a2051"`
 * `commit_description` - Description of the provided commit
 * `process_types` - (Required) Map of [processes to launch on Heroku Dynos](https://devcenter.heroku.com/articles/process-model)
-* `stack` - Name or UUID of the [Heroku stack](https://devcenter.heroku.com/articles/stack)
+* `stack` - Name or ID of the [Heroku stack](https://devcenter.heroku.com/articles/stack)
 
 ## Attributes Reference
 The following attributes are exported:
@@ -95,8 +95,8 @@ The following attributes are exported:
 * `commit_description` - Description of the provided commit
 * `process_types` - Map of [processes to launch on Heroku Dynos](https://devcenter.heroku.com/articles/process-model)
 * `size` - Slug archive filesize in bytes
-* `stack_id` - [Heroku stack](https://devcenter.heroku.com/articles/stack) UUID identifier
-* `stack_name` - [Heroku stack](https://devcenter.heroku.com/articles/stack) human-friendly name identifier
+* `stack` - [Heroku stack](https://devcenter.heroku.com/articles/stack) name
+* `stack_id` - [Heroku stack](https://devcenter.heroku.com/articles/stack) ID
 
 ## Import
 Existing slugs can be imported using the combination of the application name, a colon, and the slug ID.

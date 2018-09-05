@@ -97,20 +97,16 @@ func resourceHerokuSlug() *schema.Resource {
 				Computed: true,
 			},
 
-			// Create argument; equivalent value as `stack_name` or `stack_id`
-			// depending on whether a UUID or stack name is set.
+			// Create/argument: either a name or UUID.
+			// Read/attribute: name of the stack.
 			"stack": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-			},
-
-			"stack_id": {
-				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"stack_name": {
+			"stack_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -323,6 +319,6 @@ func setState(d *schema.ResourceData, slug *heroku.Slug) error {
 	}
 	d.Set("size", slug.Size)
 	d.Set("stack_id", slug.Stack.ID)
-	d.Set("stack_name", slug.Stack.Name)
+	d.Set("stack", slug.Stack.Name)
 	return nil
 }

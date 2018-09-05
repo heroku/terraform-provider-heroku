@@ -46,8 +46,7 @@ func TestAccHerokuSlug_importAllOpts(t *testing.T) {
 				ImportState:         true,
 				ImportStateVerify:   true,
 				// "blob" ignored because generated uniquely by Heroku for each Slug
-				// "stack" ignored because it is an ephemeral create-only attribute
-				ImportStateVerifyIgnore: []string{"blob", "stack"},
+				ImportStateVerifyIgnore: []string{"blob"},
 			},
 		},
 	})
