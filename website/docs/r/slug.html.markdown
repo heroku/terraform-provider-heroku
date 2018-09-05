@@ -75,11 +75,11 @@ resource "heroku_formation" "foobar" {
 
 ## Argument Reference
 * `app` - (Required) The name of the application
-* `file_path` - Path to a slug archive, see [Create slug archive](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#create-slug-archive) in the Heroku Devcenter, if `file_path` is not specified for a slug, then the slug archive must be uploaded to the computed `blob.method` + `blob.url` by some other means, otherwise an app release with the slug will not be possible because there's no executable code, `"slugs/current.tgz"`
 * `buildpack_provided_description` - Description of language or app framework, `"Ruby/Rack"`; displayed as the app's language in the Heroku Dashboard
 * `checksum` - Hash of the slug for verifying its integrity, auto-generated when `file_path` is set to upload a slug archive, `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 * `commit` - Identification of the code with your version control system (eg: SHA of the git HEAD), `"60883d9e8947a57e04dc9124f25df004866a2051"`
 * `commit_description` - Description of the provided commit
+* `file_path` - Path to a slug archive, see [Create slug archive](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#create-slug-archive) in the Heroku Devcenter, if `file_path` is not specified for a slug, then the slug archive must be uploaded to the computed `blob.method` + `blob.url` by some other means, otherwise an app release with the slug will not be possible because there's no executable code, `"slugs/current.tgz"`
 * `process_types` - (Required) Map of [processes to launch on Heroku Dynos](https://devcenter.heroku.com/articles/process-model)
 * `stack` - Name or ID of the [Heroku stack](https://devcenter.heroku.com/articles/stack)
 
