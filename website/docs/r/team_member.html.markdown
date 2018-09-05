@@ -17,7 +17,7 @@ Provides a [Heroku Team Collaborator](https://devcenter.heroku.com/articles/plat
 ```hcl
 # Adds a Heroku user to a Heroku team as a viewer.
 resource "heroku_team_member" "foobar-member" {
-  team  = "${heroku_app.foobar.name}"
+  team  = "my-team"
   email = "some-user@example.com"
   role  = "member"
 }
@@ -34,5 +34,5 @@ resource "heroku_team_member" "foobar-member" {
 Team members can be imported using the combination of the team application name, a colon, and the member's email address.
 
 ```
-$ terraform import heroku_team_member.foobar-member foobar_app:some-user@example.com
+$ terraform import heroku_team_member.foobar-member my-team-foobar:some-user@example.com
 ```

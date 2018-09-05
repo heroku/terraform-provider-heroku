@@ -70,7 +70,7 @@ func resourceHerokuTeamMemberSet(d *schema.ResourceData, meta interface{}) error
 		Federated: &federated,
 	}
 
-	_, err := client.TeamMemberCreateOrUpdate(context.TODO(), d.Get("team").(string), opts)
+	_, err := client.TeamMemberCreateOrUpdate(context.TODO(), team, opts)
 	if err != nil {
 		return err
 	}
