@@ -114,9 +114,8 @@ func parseCompositeID(id string) (string, string) {
 	return parts[0], parts[1]
 }
 
+// Credit of this method is from https://github.com/Yelp/terraform-provider-signalform
 func readNetrcFile(config *Config, headers http.Header) error {
-	// Credit of this method is from https://github.com/Yelp/terraform-provider-signalform
-
 	// Get the netrc file path. If path not shown, then fall back to default netrc path value
 	path := os.Getenv("NETRC_PATH")
 
