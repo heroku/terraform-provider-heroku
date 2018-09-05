@@ -84,7 +84,9 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		h.Set(k, v)
 	}
 
-	err := readNetrcFile(&config, h)
+	config.Headers = h
+
+	err := readNetrcFile(&config)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +117,7 @@ func parseCompositeID(id string) (string, string) {
 }
 
 // Credit of this method is from https://github.com/Yelp/terraform-provider-signalform
-func readNetrcFile(config *Config, headers http.Header) error {
+func readNetrcFile(config *Config) error {
 	// Get the netrc file path. If path not shown, then fall back to default netrc path value
 	path := os.Getenv("NETRC_PATH")
 
@@ -161,7 +163,6 @@ func readNetrcFile(config *Config, headers http.Header) error {
 	// Set the user/api key/headers
 	config.Email = machine.Login
 	config.APIKey = machine.Password
-	config.Headers = headers
 
 	return nil
 }
