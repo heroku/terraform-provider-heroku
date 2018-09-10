@@ -1,6 +1,7 @@
 ## 1.4.0 (Unreleased)
 
 FEATURES:
+* **New Resource:** `heroku_slug` - Provides the ability to create & upload a slug (archive of executable code) to an app [#119](https://github.com/terraform-providers/terraform-provider-heroku/pull/119)
 * **New Resource:** `heroku_team_member` - Ability to manage members of a Heroku team [#121](https://github.com/terraform-providers/terraform-provider-heroku/pull/121)
 
 IMPROVEMENTS:
