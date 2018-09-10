@@ -1,4 +1,16 @@
 ## 1.4.0 (Unreleased)
+
+FEATURES:
+* **New Resource:** `heroku_team_member` - Ability to manage members of a Heroku team [#121](https://github.com/terraform-providers/terraform-provider-heroku/pull/121)
+
+IMPROVEMENTS:
+* `heroku_app` - Remove notes about private beta for internal apps and VPN connections [#115](https://github.com/terraform-providers/terraform-provider-heroku/pull/115)
+* `heroku_space_vpn_connection` - Remove notes about private beta for internal apps and VPN connections [#115](https://github.com/terraform-providers/terraform-provider-heroku/pull/115)
+
+BUG FIXES:
+* `data_source_heroku_space_peering_info` - Fix missing vpc_cidr attribute [#114](https://github.com/terraform-providers/terraform-provider-heroku/pull/114)
+* logging - Case insensitive logging check for TF_LOG [#120](https://github.com/terraform-providers/terraform-provider-heroku/pull/120)
+
 ## 1.3.0 (August 16, 2018)
 
 FEATURES:
