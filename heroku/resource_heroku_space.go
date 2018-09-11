@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	heroku "github.com/heroku/heroku-go/v3"
+	"strings"
 )
 
 type spaceWithRanges struct {
@@ -212,9 +213,24 @@ func resourceHerokuSpaceDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*heroku.Service)
 
 	log.Printf("[INFO] Deleting space: %s", d.Id())
-	_, err := client.SpaceDelete(context.TODO(), d.Id())
-	if err != nil {
-		return err
+
+	// When deleting apps in a space and then the space itself,
+	// it is common that the apps aren't completely deleted
+	// when the space delete is attempted. Retrying a few seconds later
+	// usually resolves the issue, so retry for a minute.
+	retryError := resource.Retry(time.Minute, func() *resource.RetryError {
+		if _, err := client.SpaceDelete(context.TODO(), d.Id()); err != nil {
+			if strings.Contains(err.Error(), "Apps exist in this space") {
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+
+		return nil
+	})
+
+	if retryError != nil {
+		return retryError
 	}
 
 	d.SetId("")
