@@ -1,4 +1,4 @@
-## 1.4.0 (Unreleased)
+## 1.4.0 (September 11, 2018)
 
 FEATURES:
 * **New Resource:** `heroku_slug` - Provides the ability to create & upload a slug (archive of executable code) to an app [#119](https://github.com/terraform-providers/terraform-provider-heroku/pull/119)
