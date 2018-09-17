@@ -11,17 +11,16 @@ description: |-
 Provides a [Heroku Slug](https://devcenter.heroku.com/articles/platform-api-reference#slug)
 resource.
 
-This resource supports uploading a pre-generated archive file of executable code, making it possible to launch apps directly from a Terraform config. This resource does not itself generate the slug archive. [A guide to creating slug archives](https://devcenter.heroku.com/articles/platform-api-deploying-slugs) is available in the Heroku Devcenter.
+This resource supports uploading a pre-generated archive file of executable code, making it possible to launch apps directly from a Terraform config. This resource does not itself generate the slug archive. [A guide to creating slug archives](https://devcenter.heroku.com/articles/platform-api-deploying-slugs) is available in the Heroku Dev Center.
 
 ## Minimal Example
 
 Create a ready-to-release slug:
 
-~> **NOTE:** 
-- When `file_path` is specified, the file it references must contain a slug archive of executable code and must follow the prescribed layout from [Create slug archive](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#create-slug-archive) in the Heroku Devcenter (nested within an `./app` directory)
-- When `file_path` is not specified, then the slug archive must be uploaded to the resulting computed `blob.method` + `blob.url` by some other means, otherwise app release will fail with _Compiled slug couldn't be found_
-- The archive may be created by an external build system, downloaded from another Heroku app, or otherwise provided outside of the context of this Terraform resource
-- If the contents (SHA256) of the file at `file_path` change, then a new resource will be forced on the next plan/apply; if the file does not exist, the difference is ignored.
+* When `file_path` is specified, the file it references must contain a slug archive of executable code and must follow the prescribed layout from [Create slug archive](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#create-slug-archive) in the Heroku Dev Center (nested within an `./app` directory)
+* When `file_path` is not specified, then the [slug archive must be uploaded](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#publish-to-the-platform) to the resulting computed `blob.method` + `blob.url` by some other means, otherwise app release will fail with _Compiled slug couldn't be found_
+* The archive may be created by an external build system, downloaded from another Heroku app, or otherwise provided outside of the context of this Terraform resource
+* If the contents (SHA256) of the file at `file_path` change, then a new resource will be forced on the next plan/apply; if the file does not exist, the difference is ignored.
 
 ```hcl
 resource "heroku_slug" "foobar" {
@@ -74,18 +73,24 @@ resource "heroku_formation" "foobar" {
 ```
 
 ## Argument Reference
-* `app` - (Required) The name of the application
+
+The following arguments are supported:
+
+* `app` - (Required) The ID of the Heroku app
 * `buildpack_provided_description` - Description of language or app framework, `"Ruby/Rack"`; displayed as the app's language in the Heroku Dashboard
 * `checksum` - Hash of the slug for verifying its integrity, auto-generated when `file_path` is set to upload a slug archive, `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 * `commit` - Identification of the code with your version control system (eg: SHA of the git HEAD), `"60883d9e8947a57e04dc9124f25df004866a2051"`
 * `commit_description` - Description of the provided commit
-* `file_path` - Path to a slug archive, see [Create slug archive](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#create-slug-archive) in the Heroku Devcenter, if `file_path` is not specified for a slug, then the slug archive must be uploaded to the computed `blob.method` + `blob.url` by some other means, otherwise an app release with the slug will not be possible because there's no executable code, `"slugs/current.tgz"`
+* `file_path` - Local path to a slug archive, see [Minimal Example](#minimal-example), `"slugs/current.tgz"`
 * `process_types` - (Required) Map of [processes to launch on Heroku Dynos](https://devcenter.heroku.com/articles/process-model)
 * `stack` - Name or ID of the [Heroku stack](https://devcenter.heroku.com/articles/stack)
 
 ## Attributes Reference
+
 The following attributes are exported:
+
 * `id` - The ID of the slug
+* `app` - The ID or unique name of the Heroku app
 * `blob` - Slug archive (compressed tar of executable code)
   * `method` - HTTP method to upload the archive
   * `url` - Pre-signed, expiring URL to upload the archive
