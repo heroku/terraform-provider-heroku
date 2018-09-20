@@ -69,9 +69,9 @@ func testAccCheckHerokuPipelineCouplingExists(n string, pipeline *heroku.Pipelin
 			return fmt.Errorf("No coupling ID set")
 		}
 
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
-		foundPipelineCoupling, err := client.Api.PipelineCouplingInfo(context.TODO(), rs.Primary.ID)
+		foundPipelineCoupling, err := config.Api.PipelineCouplingInfo(context.TODO(), rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -105,14 +105,14 @@ func testAccCheckHerokuPipelineCouplingAttributes(coupling *heroku.PipelineCoupl
 }
 
 func testAccCheckHerokuPipelineCouplingDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config)
+	config := testAccProvider.Meta().(*Config)
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_pipeline_coupling" {
 			continue
 		}
 
-		_, err := client.Api.PipelineCouplingInfo(context.TODO(), rs.Primary.ID)
+		_, err := config.Api.PipelineCouplingInfo(context.TODO(), rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("PipelineCoupling still exists")

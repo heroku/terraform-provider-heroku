@@ -22,7 +22,7 @@ func resourceHerokuAddonAttachmentMigrateState(v int, is *terraform.InstanceStat
 }
 
 // Migrate attachment addons in state file to use the UUID for addon_id instead of the NAME for addon_id
-func migrateAddonAttachmentStateV0toV1(is *terraform.InstanceState, client *Config) (*terraform.InstanceState, error) {
+func migrateAddonAttachmentStateV0toV1(is *terraform.InstanceState, config *Config) (*terraform.InstanceState, error) {
 	if is.Empty() || is.Attributes == nil {
 		log.Println("[DEBUG] Empty Heroku Addon Attachment State; nothing to migrate.")
 		return is, nil
@@ -33,7 +33,7 @@ func migrateAddonAttachmentStateV0toV1(is *terraform.InstanceState, client *Conf
 	attachmentAppId := is.Attributes["app_id"]
 	attachmentAddOnId := is.Attributes["id"]
 
-	addon, err := client.Api.AddOnInfoByApp(context.TODO(), attachmentAppId, attachmentAddOnId)
+	addon, err := config.Api.AddOnInfoByApp(context.TODO(), attachmentAppId, attachmentAddOnId)
 	if err != nil {
 		return nil, fmt.Errorf("Error retrieving addon: %s", err)
 	}

@@ -341,14 +341,14 @@ func TestAccHerokuApp_EmptyConfigVars(t *testing.T) {
 }
 
 func testAccCheckHerokuAppDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config)
+	config := testAccProvider.Meta().(*Config)
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_app" {
 			continue
 		}
 
-		_, err := client.Api.AppInfo(context.TODO(), rs.Primary.ID)
+		_, err := config.Api.AppInfo(context.TODO(), rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("App still exists")
@@ -360,7 +360,7 @@ func testAccCheckHerokuAppDestroy(s *terraform.State) error {
 
 func testAccCheckHerokuAppAttributes(app *heroku.App, appName, stackName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
 		if app.Region.Name != "us" {
 			return fmt.Errorf("Bad region: %s", app.Region.Name)
@@ -374,7 +374,7 @@ func testAccCheckHerokuAppAttributes(app *heroku.App, appName, stackName string)
 			return fmt.Errorf("Bad name: %s", app.Name)
 		}
 
-		vars, err := client.Api.ConfigVarInfoForApp(context.TODO(), app.Name)
+		vars, err := config.Api.ConfigVarInfoForApp(context.TODO(), app.Name)
 		if err != nil {
 			return err
 		}
@@ -389,7 +389,7 @@ func testAccCheckHerokuAppAttributes(app *heroku.App, appName, stackName string)
 
 func testAccCheckHerokuAppAttributesUpdated(app *heroku.App, appName, stackName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
 		if app.BuildStack.Name != stackName {
 			return fmt.Errorf("Bad stack: %s", app.BuildStack.Name)
@@ -399,7 +399,7 @@ func testAccCheckHerokuAppAttributesUpdated(app *heroku.App, appName, stackName 
 			return fmt.Errorf("Bad name: %s", app.Name)
 		}
 
-		vars, err := client.Api.ConfigVarInfoForApp(context.TODO(), app.Name)
+		vars, err := config.Api.ConfigVarInfoForApp(context.TODO(), app.Name)
 		if err != nil {
 			return err
 		}
@@ -420,13 +420,13 @@ func testAccCheckHerokuAppAttributesUpdated(app *heroku.App, appName, stackName 
 
 func testAccCheckHerokuAppAttributesNoVars(app *heroku.App, appName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
 		if app.Name != appName {
 			return fmt.Errorf("Bad name: %s", app.Name)
 		}
 
-		vars, err := client.Api.ConfigVarInfoForApp(context.TODO(), app.Name)
+		vars, err := config.Api.ConfigVarInfoForApp(context.TODO(), app.Name)
 		if err != nil {
 			return err
 		}
@@ -441,9 +441,9 @@ func testAccCheckHerokuAppAttributesNoVars(app *heroku.App, appName string) reso
 
 func testAccCheckHerokuAppBuildpacks(appName string, multi bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
-		results, err := client.Api.BuildpackInstallationList(context.TODO(), appName, nil)
+		results, err := config.Api.BuildpackInstallationList(context.TODO(), appName, nil)
 		if err != nil {
 			return err
 		}
@@ -472,9 +472,9 @@ func testAccCheckHerokuAppBuildpacks(appName string, multi bool) resource.TestCh
 
 func testAccCheckHerokuAppNoBuildpacks(appName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
-		results, err := client.Api.BuildpackInstallationList(context.TODO(), appName, nil)
+		results, err := config.Api.BuildpackInstallationList(context.TODO(), appName, nil)
 		if err != nil {
 			return err
 		}
@@ -494,7 +494,7 @@ func testAccCheckHerokuAppNoBuildpacks(appName string) resource.TestCheckFunc {
 
 func testAccCheckHerokuAppAttributesOrg(app *heroku.TeamApp, appName, space, org string, internal bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
 		if app.Region.Name != "us" && app.Region.Name != "virginia" {
 			return fmt.Errorf("Bad region: %s", app.Region.Name)
@@ -529,7 +529,7 @@ func testAccCheckHerokuAppAttributesOrg(app *heroku.TeamApp, appName, space, org
 			return fmt.Errorf("Bad internal routing: %v (want %v)", appInternalRouting, internal)
 		}
 
-		vars, err := client.Api.ConfigVarInfoForApp(context.TODO(), app.Name)
+		vars, err := config.Api.ConfigVarInfoForApp(context.TODO(), app.Name)
 		if err != nil {
 			return err
 		}
@@ -554,9 +554,9 @@ func testAccCheckHerokuAppExists(n string, app *heroku.App) resource.TestCheckFu
 			return fmt.Errorf("No App Name is set")
 		}
 
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
-		foundApp, err := client.Api.AppInfo(context.TODO(), rs.Primary.ID)
+		foundApp, err := config.Api.AppInfo(context.TODO(), rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -584,9 +584,9 @@ func testAccCheckHerokuAppExistsOrg(n string, app *heroku.TeamApp) resource.Test
 			return fmt.Errorf("No App Name is set")
 		}
 
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
-		foundApp, err := client.Api.TeamAppInfo(context.TODO(), rs.Primary.ID)
+		foundApp, err := config.Api.TeamAppInfo(context.TODO(), rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -604,7 +604,7 @@ func testAccCheckHerokuAppExistsOrg(n string, app *heroku.TeamApp) resource.Test
 
 func testAccInstallUnconfiguredBuildpack(t *testing.T, appName string) func() {
 	return func() {
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
 		opts := heroku.BuildpackInstallationUpdateOpts{
 			Updates: []struct {
@@ -614,7 +614,7 @@ func testAccInstallUnconfiguredBuildpack(t *testing.T, appName string) func() {
 			},
 		}
 
-		_, err := client.Api.BuildpackInstallationUpdate(context.TODO(), appName, opts)
+		_, err := config.Api.BuildpackInstallationUpdate(context.TODO(), appName, opts)
 		if err != nil {
 			t.Fatalf("Error updating buildpacks: %s", err)
 		}
@@ -623,9 +623,9 @@ func testAccInstallUnconfiguredBuildpack(t *testing.T, appName string) func() {
 
 func testAccCheckHerokuAppDisappears(appName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
-		_, err := client.Api.AppDelete(context.TODO(), appName)
+		_, err := config.Api.AppDelete(context.TODO(), appName)
 		return err
 	}
 }

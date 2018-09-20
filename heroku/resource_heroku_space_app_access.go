@@ -62,10 +62,10 @@ func resourceHerokuSpaceAppAccessSet(d *schema.ResourceData, meta interface{}) e
 
 //callback for schema Resource.Read
 func resourceHerokuSpaceAppAccessRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	config := meta.(*Config)
 	space := d.Get("space").(string)
 	email := d.Get("email").(string)
-	spaceAppAccess, err := client.Api.SpaceAppAccessInfo(context.TODO(), space, email)
+	spaceAppAccess, err := config.Api.SpaceAppAccessInfo(context.TODO(), space, email)
 	if err != nil {
 		return err
 	}
@@ -93,8 +93,8 @@ func updateSpaceAppAccess(permissions *schema.Set, d *schema.ResourceData, meta 
 	email := d.Get("email").(string)
 	space := d.Get("space").(string)
 	opts := createSpaceAppAccessUpdateOpts(permissions)
-	client := meta.(*Config)
-	spaceAppAccess, err := client.Api.SpaceAppAccessUpdate(context.TODO(), space, email, opts)
+	config := meta.(*Config)
+	spaceAppAccess, err := config.Api.SpaceAppAccessUpdate(context.TODO(), space, email, opts)
 	if err != nil {
 		return nil, err
 	}

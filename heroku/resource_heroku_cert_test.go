@@ -165,14 +165,14 @@ func sleep(t *testing.T, amount time.Duration) func() {
 }
 
 func testAccCheckHerokuCertDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config)
+	config := testAccProvider.Meta().(*Config)
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_cert" {
 			continue
 		}
 
-		_, err := client.Api.SSLEndpointInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		_, err := config.Api.SSLEndpointInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Cerfificate still exists")
@@ -205,9 +205,9 @@ func testAccCheckHerokuCertExists(n string, endpoint *heroku.SSLEndpoint) resour
 			return fmt.Errorf("No SSL endpoint ID is set")
 		}
 
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
-		foundEndpoint, err := client.Api.SSLEndpointInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundEndpoint, err := config.Api.SSLEndpointInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
 		if err != nil {
 			return err

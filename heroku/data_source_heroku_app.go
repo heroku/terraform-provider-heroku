@@ -98,10 +98,10 @@ func dataSourceHerokuApp() *schema.Resource {
 }
 
 func dataSourceHerokuAppRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Config)
+	config := m.(*Config)
 
 	name := d.Get("name").(string)
-	app, err := resourceHerokuAppRetrieve(name, true, client)
+	app, err := resourceHerokuAppRetrieve(name, true, config)
 	if err != nil {
 		return err
 	}

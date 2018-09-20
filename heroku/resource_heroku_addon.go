@@ -80,7 +80,7 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	addonLock.Lock()
 	defer addonLock.Unlock()
 
-	client := meta.(*Config)
+	config := meta.(*Config)
 
 	app := d.Get("app").(string)
 	opts := heroku.AddOnCreateOpts{
@@ -100,7 +100,7 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[DEBUG] Addon create configuration: %#v, %#v", app, opts)
-	a, err := client.Api.AddOnCreate(context.TODO(), app, opts)
+	a, err := config.Api.AddOnCreate(context.TODO(), app, opts)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{"provisioning"},
 		Target:  []string{"provisioned"},
-		Refresh: AddOnStateRefreshFunc(client, app, d.Id()),
+		Refresh: AddOnStateRefreshFunc(config, app, d.Id()),
 		Timeout: 20 * time.Minute,
 	}
 
@@ -126,9 +126,9 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	config := meta.(*Config)
 
-	addon, err := resourceHerokuAddonRetrieve(d.Id(), client)
+	addon, err := resourceHerokuAddonRetrieve(d.Id(), config)
 	if err != nil {
 		return err
 	}
@@ -158,12 +158,12 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuAddonUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	config := meta.(*Config)
 
 	app := d.Get("app").(string)
 
 	if d.HasChange("plan") {
-		ad, err := client.Api.AddOnUpdate(
+		ad, err := config.Api.AddOnUpdate(
 			context.TODO(), app, d.Id(), heroku.AddOnUpdateOpts{Plan: d.Get("plan").(string)})
 		if err != nil {
 			return err
@@ -177,12 +177,12 @@ func resourceHerokuAddonUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuAddonDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	config := meta.(*Config)
 
 	log.Printf("[INFO] Deleting Addon: %s", d.Id())
 
 	// Destroy the app
-	_, err := client.Api.AddOnDelete(context.TODO(), d.Get("app").(string), d.Id())
+	_, err := config.Api.AddOnDelete(context.TODO(), d.Get("app").(string), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting addon: %s", err)
 	}
@@ -192,9 +192,9 @@ func resourceHerokuAddonDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuAddonExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	client := meta.(*Config)
+	config := meta.(*Config)
 
-	_, err := client.Api.AddOnInfo(context.TODO(), d.Id())
+	_, err := config.Api.AddOnInfo(context.TODO(), d.Id())
 	if err != nil {
 		if herr, ok := err.(*url.Error).Err.(heroku.Error); ok && herr.ID == "not_found" {
 			return false, nil
@@ -205,8 +205,8 @@ func resourceHerokuAddonExists(d *schema.ResourceData, meta interface{}) (bool, 
 	return true, nil
 }
 
-func resourceHerokuAddonRetrieve(id string, client *Config) (*heroku.AddOn, error) {
-	addon, err := client.Api.AddOnInfo(context.TODO(), id)
+func resourceHerokuAddonRetrieve(id string, config *Config) (*heroku.AddOn, error) {
+	addon, err := config.Api.AddOnInfo(context.TODO(), id)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error retrieving addon: %s", err)
@@ -215,8 +215,8 @@ func resourceHerokuAddonRetrieve(id string, client *Config) (*heroku.AddOn, erro
 	return addon, nil
 }
 
-func resourceHerokuAddonRetrieveByApp(app string, id string, client *Config) (*heroku.AddOn, error) {
-	addon, err := client.Api.AddOnInfoByApp(context.TODO(), app, id)
+func resourceHerokuAddonRetrieveByApp(app string, id string, config *Config) (*heroku.AddOn, error) {
+	addon, err := config.Api.AddOnInfoByApp(context.TODO(), app, id)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error retrieving addon: %s", err)
@@ -227,9 +227,9 @@ func resourceHerokuAddonRetrieveByApp(app string, id string, client *Config) (*h
 
 // AddOnStateRefreshFunc returns a resource.StateRefreshFunc that is used to
 // watch an AddOn.
-func AddOnStateRefreshFunc(client *Config, appID, addOnID string) resource.StateRefreshFunc {
+func AddOnStateRefreshFunc(config *Config, appID, addOnID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		addon, err := resourceHerokuAddonRetrieveByApp(appID, addOnID, client)
+		addon, err := resourceHerokuAddonRetrieveByApp(appID, addOnID, config)
 
 		if err != nil {
 			return nil, "", err

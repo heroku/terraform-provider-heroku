@@ -55,8 +55,8 @@ func testAccCheckHerokuVPNConnectionExists(n string, vpnConnection *heroku.VPNCo
 		}
 		space, id := parseCompositeID(rs.Primary.ID)
 
-		client := testAccProvider.Meta().(*Config)
-		foundVPNConnection, err := client.Api.VPNConnectionInfo(context.TODO(), space, id)
+		config := testAccProvider.Meta().(*Config)
+		foundVPNConnection, err := config.Api.VPNConnectionInfo(context.TODO(), space, id)
 		if err != nil {
 			return err
 		}
@@ -85,7 +85,7 @@ func testAccCheckHerokuVPNConnectionAttributes(vpnConnection *heroku.VPNConnecti
 }
 
 func testAccCheckHerokuVPNConnectionDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config)
+	config := testAccProvider.Meta().(*Config)
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_space_vpn_connection" {
@@ -93,7 +93,7 @@ func testAccCheckHerokuVPNConnectionDestroy(s *terraform.State) error {
 		}
 
 		space, id := parseCompositeID(rs.Primary.ID)
-		_, err := client.Api.VPNConnectionInfo(context.TODO(), space, id)
+		_, err := config.Api.VPNConnectionInfo(context.TODO(), space, id)
 		if err == nil {
 			return fmt.Errorf("VPN connection still exists")
 		}

@@ -45,14 +45,14 @@ func TestAccHerokuAppFeature(t *testing.T) {
 }
 
 func testAccCheckHerokuFeatureDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config)
+	config := testAccProvider.Meta().(*Config)
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_app_feature" {
 			continue
 		}
 
-		_, err := client.Api.AppFeatureInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		_, err := config.Api.AppFeatureInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Feature still exists")
@@ -79,9 +79,9 @@ func testAccCheckHerokuFeatureExists(n string, feature *heroku.AppFeature) resou
 			return fmt.Errorf("Bad app: %s", app)
 		}
 
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
-		foundFeature, err := client.Api.AppFeatureInfo(context.TODO(), app, id)
+		foundFeature, err := config.Api.AppFeatureInfo(context.TODO(), app, id)
 		if err != nil {
 			return err
 		}

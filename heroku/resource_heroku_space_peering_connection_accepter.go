@@ -52,7 +52,7 @@ func resourceHerokuSpacePeeringConnectionAccepter() *schema.Resource {
 }
 
 func resourceHerokuSpacePeeringConnectionAccepterCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	config := meta.(*Config)
 
 	spaceIdentity := d.Get("space").(string)
 	pcxID := d.Get("vpc_peering_connection_id").(string)
@@ -62,7 +62,7 @@ func resourceHerokuSpacePeeringConnectionAccepterCreate(d *schema.ResourceData, 
 	// usually in the 1-3 minute range. We retry for 5 minutes so plan/apply runs that
 	// create the two resources at the same time don't result in an error.
 	retryError := resource.Retry(5*time.Minute, func() *resource.RetryError {
-		_, err := client.Api.PeeringAccept(context.TODO(), spaceIdentity, pcxID)
+		_, err := config.Api.PeeringAccept(context.TODO(), spaceIdentity, pcxID)
 		if err != nil {
 			return resource.RetryableError(err)
 		}
@@ -84,7 +84,7 @@ func resourceHerokuSpacePeeringConnectionAccepterCreate(d *schema.ResourceData, 
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{"initiating-request", "pending", "pending-acceptance", "provisioning"},
 		Target:  []string{"active"},
-		Refresh: SpacePeeringConnAccepterStateRefreshFunc(client, spaceIdentity, d.Id()),
+		Refresh: SpacePeeringConnAccepterStateRefreshFunc(config, spaceIdentity, d.Id()),
 		Timeout: 20 * time.Minute,
 	}
 
@@ -102,11 +102,11 @@ func resourceHerokuSpacePeeringConnectionAccepterCreate(d *schema.ResourceData, 
 }
 
 func resourceHerokuSpacePeeringConnectionAccepterRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	config := meta.(*Config)
 
 	spaceIdentity := d.Get("space").(string)
 
-	peeringConn, err := client.Api.PeeringInfo(context.TODO(), spaceIdentity, d.Id())
+	peeringConn, err := config.Api.PeeringInfo(context.TODO(), spaceIdentity, d.Id())
 	if err != nil {
 		return err
 	}
@@ -120,11 +120,11 @@ func resourceHerokuSpacePeeringConnectionAccepterRead(d *schema.ResourceData, me
 }
 
 func resourceHerokuSpacePeeringConnectionAccepterDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	config := meta.(*Config)
 
 	log.Printf("[INFO] Deleting space peering connection: %s", d.Id())
 
-	_, err := client.Api.PeeringDestroy(context.TODO(), d.Get("space").(string), d.Id())
+	_, err := config.Api.PeeringDestroy(context.TODO(), d.Get("space").(string), d.Id())
 	if err != nil {
 		return err
 	}
@@ -135,9 +135,9 @@ func resourceHerokuSpacePeeringConnectionAccepterDelete(d *schema.ResourceData, 
 
 // SpaceStateRefreshFunc returns a resource.StateRefreshFunc that is used to watch
 // a Space peering connection. Connections go through a provisioning process.
-func SpacePeeringConnAccepterStateRefreshFunc(client *Config, spaceIdentity string, pcxID string) resource.StateRefreshFunc {
+func SpacePeeringConnAccepterStateRefreshFunc(config *Config, spaceIdentity string, pcxID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		peeringConn, err := client.Api.PeeringInfo(context.TODO(), spaceIdentity, pcxID)
+		peeringConn, err := config.Api.PeeringInfo(context.TODO(), spaceIdentity, pcxID)
 		if err != nil {
 			return nil, "", err
 		}

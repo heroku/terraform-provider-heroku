@@ -95,14 +95,14 @@ func TestAccHerokuAddon_Disappears(t *testing.T) {
 }
 
 func testAccCheckHerokuAddonDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config)
+	config := testAccProvider.Meta().(*Config)
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_addon" {
 			continue
 		}
 
-		_, err := client.Api.AddOnInfoByApp(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		_, err := config.Api.AddOnInfoByApp(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Addon still exists")
@@ -135,9 +135,9 @@ func testAccCheckHerokuAddonExists(n string, addon *heroku.AddOn) resource.TestC
 			return fmt.Errorf("No Addon ID is set")
 		}
 
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
-		foundAddon, err := client.Api.AddOnInfoByApp(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundAddon, err := config.Api.AddOnInfoByApp(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -155,9 +155,9 @@ func testAccCheckHerokuAddonExists(n string, addon *heroku.AddOn) resource.TestC
 
 func testAccCheckHerokuAddonDisappears(appName, addonName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config)
+		config := testAccProvider.Meta().(*Config)
 
-		_, err := client.Api.AddOnDelete(context.TODO(), appName, addonName)
+		_, err := config.Api.AddOnDelete(context.TODO(), appName, addonName)
 		return err
 	}
 }
