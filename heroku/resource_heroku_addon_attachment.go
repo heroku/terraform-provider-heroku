@@ -47,7 +47,7 @@ func resourceHerokuAddonAttachment() *schema.Resource {
 }
 
 func resourceHerokuAddonAttachmentCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	opts := heroku.AddOnAttachmentCreateOpts{Addon: d.Get("addon_id").(string), App: d.Get("app_id").(string)}
 
@@ -56,7 +56,7 @@ func resourceHerokuAddonAttachmentCreate(d *schema.ResourceData, meta interface{
 	}
 
 	log.Printf("[DEBUG] Addon Attachment create configuration: %#v", opts)
-	a, err := config.Api.AddOnAttachmentCreate(context.TODO(), opts)
+	a, err := client.Api.AddOnAttachmentCreate(context.TODO(), opts)
 	if err != nil {
 		return err
 	}
@@ -68,14 +68,14 @@ func resourceHerokuAddonAttachmentCreate(d *schema.ResourceData, meta interface{
 }
 
 func resourceHerokuAddonAttachmentRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	match, err := regexp.MatchString(`^[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+$`, d.Id())
 	if !match {
 		return fmt.Errorf("You can only import addon attachments by their unique ID")
 	}
 
-	addonattachment, err := config.Api.AddOnAttachmentInfo(context.TODO(), d.Id())
+	addonattachment, err := client.Api.AddOnAttachmentInfo(context.TODO(), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving addon attachment: %s", err)
 	}
@@ -88,12 +88,12 @@ func resourceHerokuAddonAttachmentRead(d *schema.ResourceData, meta interface{})
 }
 
 func resourceHerokuAddonAttachmentDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	log.Printf("[INFO] Deleting Addon Attachment: %s", d.Id())
 
 	// Destroy the app
-	_, err := config.Api.AddOnAttachmentDelete(context.TODO(), d.Id())
+	_, err := client.Api.AddOnAttachmentDelete(context.TODO(), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting addon attachment: %s", err)
 	}

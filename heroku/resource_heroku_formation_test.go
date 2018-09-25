@@ -79,9 +79,9 @@ func testAccCheckHerokuFormationExists(n string, formation *heroku.Formation) re
 			return fmt.Errorf("No Formation ID set")
 		}
 
-		config := testAccProvider.Meta().(*Config)
+		client := testAccProvider.Meta().(*Config)
 
-		foundFormation, err := config.Api.FormationInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundFormation, err := client.Api.FormationInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
 		if err != nil {
 			return err

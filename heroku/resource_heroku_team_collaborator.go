@@ -75,7 +75,7 @@ func resourceHerokuTeamCollaborator() *schema.Resource {
 }
 
 func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	opts := heroku.TeamAppCollaboratorCreateOpts{}
 
@@ -105,7 +105,7 @@ func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface
 	}
 
 	log.Printf("[DEBUG] Creating Heroku Team Collaborator: [%s]", opts.User)
-	collaborator, err := config.Api.TeamAppCollaboratorCreate(context.TODO(), appName, opts)
+	collaborator, err := client.Api.TeamAppCollaboratorCreate(context.TODO(), appName, opts)
 	if err != nil {
 		return err
 	}
@@ -117,9 +117,9 @@ func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface
 }
 
 func resourceHerokuTeamCollaboratorRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
-	teamCollaborator, err := resourceHerokuTeamCollaboratorRetrieve(d.Id(), d.Get("app").(string), config)
+	teamCollaborator, err := resourceHerokuTeamCollaboratorRetrieve(d.Id(), d.Get("app").(string), client)
 
 	if err != nil {
 		return err
@@ -136,7 +136,7 @@ func resourceHerokuTeamCollaboratorUpdate(d *schema.ResourceData, meta interface
 	// Enable Partial state mode to track what was successfully committed
 	d.Partial(true)
 
-	config := meta.(*Config)
+	client := meta.(*Config)
 	opts := heroku.TeamAppCollaboratorUpdateOpts{}
 
 	if d.HasChange("permissions") {
@@ -155,7 +155,7 @@ func resourceHerokuTeamCollaboratorUpdate(d *schema.ResourceData, meta interface
 	email := getEmail(d)
 
 	log.Printf("[DEBUG] Updating Heroku Team Collaborator: [%s]", email)
-	updatedTeamCollaborator, err := config.Api.TeamAppCollaboratorUpdate(context.TODO(), appName, email, opts)
+	updatedTeamCollaborator, err := client.Api.TeamAppCollaboratorUpdate(context.TODO(), appName, email, opts)
 	if err != nil {
 		return err
 	}
@@ -170,10 +170,10 @@ func resourceHerokuTeamCollaboratorUpdate(d *schema.ResourceData, meta interface
 }
 
 func resourceHerokuTeamCollaboratorDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	log.Printf("[INFO] Deleting Heroku Team Collaborator: [%s]", d.Id())
-	_, err := config.Api.TeamAppCollaboratorDelete(context.TODO(), getAppName(d), getEmail(d))
+	_, err := client.Api.TeamAppCollaboratorDelete(context.TODO(), getAppName(d), getEmail(d))
 
 	if err != nil {
 		return fmt.Errorf("error deleting Team Collaborator: %s", err)
@@ -189,7 +189,7 @@ func resourceHerokuTeamCollaboratorDelete(d *schema.ResourceData, meta interface
 	*/
 	log.Printf("[INFO] Begin checking if [%s] has been deleted", getEmail(d))
 	retryError := resource.Retry(10*time.Second, func() *resource.RetryError {
-		_, err := config.Api.TeamAppCollaboratorInfo(context.TODO(), getAppName(d), d.Id())
+		_, err := client.Api.TeamAppCollaboratorInfo(context.TODO(), getAppName(d), d.Id())
 
 		// Debug log to check
 		log.Printf("[INFO] Is error nil when GET#show team collaborator? %t", err == nil)
@@ -213,8 +213,8 @@ func resourceHerokuTeamCollaboratorDelete(d *schema.ResourceData, meta interface
 	return nil
 }
 
-func resourceHerokuTeamCollaboratorRetrieve(id string, appName string, config *Config) (*teamCollaborator, error) {
-	teamCollaborator := teamCollaborator{Id: id, AppName: appName, Client: config}
+func resourceHerokuTeamCollaboratorRetrieve(id string, appName string, client *Config) (*teamCollaborator, error) {
+	teamCollaborator := teamCollaborator{Id: id, AppName: appName, Client: client}
 
 	err := teamCollaborator.Update()
 
@@ -263,11 +263,11 @@ func (tc *teamCollaborator) Update() error {
 }
 
 func resourceHerokuTeamCollaboratorImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	app, email := parseCompositeID(d.Id())
 
-	collaborator, err := config.Api.CollaboratorInfo(context.Background(), app, email)
+	collaborator, err := client.Api.CollaboratorInfo(context.Background(), app, email)
 	if err != nil {
 		return nil, err
 	}

@@ -51,11 +51,11 @@ func resourceHerokuCert() *schema.Resource {
 }
 
 func resourceHerokuCertImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	app, id := parseCompositeID(d.Id())
 
-	ep, err := config.Api.SSLEndpointInfo(context.Background(), app, id)
+	ep, err := client.Api.SSLEndpointInfo(context.Background(), app, id)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func resourceHerokuCertImport(d *schema.ResourceData, meta interface{}) ([]*sche
 }
 
 func resourceHerokuCertCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	app := d.Get("app").(string)
 	preprocess := true
@@ -77,7 +77,7 @@ func resourceHerokuCertCreate(d *schema.ResourceData, meta interface{}) error {
 		PrivateKey:       d.Get("private_key").(string)}
 
 	log.Printf("[DEBUG] SSL Certificate create configuration: %#v, %#v", app, opts)
-	a, err := config.Api.SSLEndpointCreate(context.TODO(), app, opts)
+	a, err := client.Api.SSLEndpointCreate(context.TODO(), app, opts)
 	if err != nil {
 		return fmt.Errorf("Error creating SSL endpoint: %s", err)
 	}
@@ -89,10 +89,10 @@ func resourceHerokuCertCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuCertRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	cert, err := resourceHerokuSSLCertRetrieve(
-		d.Get("app").(string), d.Id(), config)
+		d.Get("app").(string), d.Id(), client)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func resourceHerokuCertRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuCertUpdate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	app := d.Get("app").(string)
 	preprocess := true
@@ -118,7 +118,7 @@ func resourceHerokuCertUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	if d.HasChange("certificate_chain") || d.HasChange("private_key") {
 		log.Printf("[DEBUG] SSL Certificate update configuration: %#v, %#v", app, opts)
-		_, err := config.Api.SSLEndpointUpdate(context.TODO(), app, d.Id(), opts)
+		_, err := client.Api.SSLEndpointUpdate(context.TODO(), app, d.Id(), opts)
 		if err != nil {
 			return fmt.Errorf("Error updating SSL endpoint: %s", err)
 		}
@@ -128,12 +128,12 @@ func resourceHerokuCertUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuCertDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	log.Printf("[INFO] Deleting SSL Cert: %s", d.Id())
 
 	// Destroy the app
-	_, err := config.Api.SSLEndpointDelete(context.TODO(), d.Get("app").(string), d.Id())
+	_, err := client.Api.SSLEndpointDelete(context.TODO(), d.Get("app").(string), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting SSL Cert: %s", err)
 	}
@@ -142,8 +142,8 @@ func resourceHerokuCertDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceHerokuSSLCertRetrieve(app string, id string, config *Config) (*heroku.SSLEndpoint, error) {
-	addon, err := config.Api.SSLEndpointInfo(context.TODO(), app, id)
+func resourceHerokuSSLCertRetrieve(app string, id string, client *Config) (*heroku.SSLEndpoint, error) {
+	addon, err := client.Api.SSLEndpointInfo(context.TODO(), app, id)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error retrieving SSL Cert: %s", err)

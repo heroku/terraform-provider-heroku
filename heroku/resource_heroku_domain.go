@@ -41,11 +41,11 @@ func resourceHerokuDomain() *schema.Resource {
 }
 
 func resourceHerokuDomainImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	app, id := parseCompositeID(d.Id())
 
-	do, err := config.Api.DomainInfo(context.Background(), app, id)
+	do, err := client.Api.DomainInfo(context.Background(), app, id)
 	if err != nil {
 		return nil, err
 	}
@@ -57,14 +57,14 @@ func resourceHerokuDomainImport(d *schema.ResourceData, meta interface{}) ([]*sc
 }
 
 func resourceHerokuDomainCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	app := d.Get("app").(string)
 	hostname := d.Get("hostname").(string)
 
 	log.Printf("[DEBUG] Domain create configuration: %#v, %#v", app, hostname)
 
-	do, err := config.Api.DomainCreate(context.TODO(), app, heroku.DomainCreateOpts{Hostname: hostname})
+	do, err := client.Api.DomainCreate(context.TODO(), app, heroku.DomainCreateOpts{Hostname: hostname})
 	if err != nil {
 		return err
 	}
@@ -78,12 +78,12 @@ func resourceHerokuDomainCreate(d *schema.ResourceData, meta interface{}) error 
 }
 
 func resourceHerokuDomainDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	log.Printf("[INFO] Deleting Domain: %s", d.Id())
 
 	// Destroy the domain
-	_, err := config.Api.DomainDelete(context.TODO(), d.Get("app").(string), d.Id())
+	_, err := client.Api.DomainDelete(context.TODO(), d.Get("app").(string), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting domain: %s", err)
 	}
@@ -92,10 +92,10 @@ func resourceHerokuDomainDelete(d *schema.ResourceData, meta interface{}) error 
 }
 
 func resourceHerokuDomainRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	app := d.Get("app").(string)
-	do, err := config.Api.DomainInfo(context.TODO(), app, d.Id())
+	do, err := client.Api.DomainInfo(context.TODO(), app, d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving domain: %s", err)
 	}

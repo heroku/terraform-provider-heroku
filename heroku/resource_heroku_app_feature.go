@@ -42,11 +42,11 @@ func resourceHerokuAppFeature() *schema.Resource {
 }
 
 func resourceHerokuAppFeatureRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	app, id := parseCompositeID(d.Id())
 
-	feature, err := config.Api.AppFeatureInfo(context.TODO(), app, id)
+	feature, err := client.Api.AppFeatureInfo(context.TODO(), app, id)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func resourceHerokuAppFeatureRead(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceHerokuAppFeatureCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	app := d.Get("app").(string)
 	featureName := d.Get("name").(string)
@@ -69,7 +69,7 @@ func resourceHerokuAppFeatureCreate(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[DEBUG] Feature set configuration: %#v, %#v", featureName, opts)
 
-	feature, err := config.Api.AppFeatureUpdate(context.TODO(), app, featureName, opts)
+	feature, err := client.Api.AppFeatureUpdate(context.TODO(), app, featureName, opts)
 	if err != nil {
 		return err
 	}
@@ -88,14 +88,14 @@ func resourceHerokuAppFeatureUpdate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceHerokuAppFeatureDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	app, id := parseCompositeID(d.Id())
 	featureName := d.Get("name").(string)
 
 	log.Printf("[INFO] Deleting app feature %s (%s) for app %s", featureName, id, app)
 	opts := heroku.AppFeatureUpdateOpts{Enabled: false}
-	_, err := config.Api.AppFeatureUpdate(context.TODO(), app, id, opts)
+	_, err := client.Api.AppFeatureUpdate(context.TODO(), app, id, opts)
 	if err != nil {
 		return err
 	}

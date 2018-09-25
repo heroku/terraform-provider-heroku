@@ -64,11 +64,11 @@ func resourceHerokuFormation() *schema.Resource {
 }
 
 func resourceHerokuFormationRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	appName := getAppName(d)
 
-	formation, err := resourceHerokuFormationRetrieve(d.Id(), appName, config)
+	formation, err := resourceHerokuFormationRetrieve(d.Id(), appName, client)
 
 	if err != nil {
 		return err
@@ -85,14 +85,14 @@ func resourceHerokuFormationRead(d *schema.ResourceData, meta interface{}) error
 // resourceHerokuFormationCreate method will execute an UPDATE to the formation.
 // There is no CREATE method on the formation endpoint.
 func resourceHerokuFormationCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	opts := heroku.FormationUpdateOpts{}
 
 	appName := getAppName(d)
 
 	// check if appName is valid
-	_, err := doesHerokuAppExist(appName, config)
+	_, err := doesHerokuAppExist(appName, client)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func resourceHerokuFormationCreate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	log.Printf(fmt.Sprintf("[DEBUG] Updating %s formation...", appName))
-	f, err := config.Api.FormationUpdate(context.TODO(), appName, getFormationType(d), opts)
+	f, err := client.Api.FormationUpdate(context.TODO(), appName, getFormationType(d), opts)
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func resourceHerokuFormationUpdate(d *schema.ResourceData, meta interface{}) err
 	// Enable Partial state mode and what we successfully committed
 	d.Partial(true)
 
-	config := meta.(*Config)
+	client := meta.(*Config)
 	opts := heroku.FormationUpdateOpts{}
 
 	if d.HasChange("size") {
@@ -143,13 +143,13 @@ func resourceHerokuFormationUpdate(d *schema.ResourceData, meta interface{}) err
 	appName := getAppName(d)
 
 	// check if appName is valid
-	_, err := doesHerokuAppExist(appName, config)
+	_, err := doesHerokuAppExist(appName, client)
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Updating Heroku formation...")
-	updatedFormation, err := config.Api.FormationUpdate(context.TODO(),
+	updatedFormation, err := client.Api.FormationUpdate(context.TODO(),
 		appName, getFormationType(d), opts)
 
 	if err != nil {
@@ -179,8 +179,8 @@ func getFormationType(d *schema.ResourceData) string {
 	return formationType
 }
 
-func resourceHerokuFormationRetrieve(id string, appName string, config *Config) (*formation, error) {
-	formation := formation{Id: id, Client: config}
+func resourceHerokuFormationRetrieve(id string, appName string, client *Config) (*formation, error) {
+	formation := formation{Id: id, Client: client}
 
 	err := formation.GetInfo(appName)
 
@@ -214,11 +214,11 @@ func (f *formation) GetInfo(appName string) error {
 }
 
 func resourceHerokuFormationImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	app, formationType := parseCompositeID(d.Id())
 
-	formation, err := config.Api.FormationInfo(context.Background(), app, formationType)
+	formation, err := client.Api.FormationInfo(context.Background(), app, formationType)
 	if err != nil {
 		return nil, err
 	}

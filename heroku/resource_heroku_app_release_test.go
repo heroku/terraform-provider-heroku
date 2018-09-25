@@ -77,9 +77,9 @@ func testAccCheckHerokuAppReleaseExists(n string, appRelease *heroku.Release) re
 			return fmt.Errorf("[ERROR] No App Release Id Set")
 		}
 
-		config := testAccProvider.Meta().(*Config)
+		client := testAccProvider.Meta().(*Config)
 
-		foundAppRelease, err := config.Api.ReleaseInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundAppRelease, err := client.Api.ReleaseInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
 		if err != nil {
 			return err

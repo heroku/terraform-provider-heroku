@@ -21,7 +21,7 @@ func resourceHerokuAddonMigrate(v int, is *terraform.InstanceState, meta interfa
 	}
 }
 
-func migrateAddonIdsStateV0toV1(is *terraform.InstanceState, config *Config) (*terraform.InstanceState, error) {
+func migrateAddonIdsStateV0toV1(is *terraform.InstanceState, client *Config) (*terraform.InstanceState, error) {
 	if is.Empty() || is.Attributes == nil {
 		log.Println("[DEBUG] Empty Heroku Addon State; nothing to migrate.")
 		return is, nil
@@ -33,7 +33,7 @@ func migrateAddonIdsStateV0toV1(is *terraform.InstanceState, config *Config) (*t
 	currentAddonId := is.ID
 	addonAppId := is.Attributes["app"]
 
-	addon, err := config.Api.AddOnInfoByApp(context.TODO(), addonAppId, currentAddonId)
+	addon, err := client.Api.AddOnInfoByApp(context.TODO(), addonAppId, currentAddonId)
 	if err != nil {
 		return nil, fmt.Errorf("Error retrieving addon: %s", err)
 	}

@@ -55,10 +55,10 @@ func dataSourceHerokuSpace() *schema.Resource {
 }
 
 func dataSourceHerokuSpaceRead(d *schema.ResourceData, m interface{}) error {
-	config := m.(*Config)
+	client := m.(*Config)
 
 	name := d.Get("name").(string)
-	spaceRaw, _, err := SpaceStateRefreshFunc(config, name)()
+	spaceRaw, _, err := SpaceStateRefreshFunc(client, name)()
 	if err != nil {
 		return err
 	}

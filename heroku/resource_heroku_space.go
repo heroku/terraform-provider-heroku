@@ -76,7 +76,7 @@ func resourceHerokuSpace() *schema.Resource {
 }
 
 func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	opts := heroku.SpaceCreateOpts{}
 	opts.Name = d.Get("name").(string)
@@ -95,7 +95,7 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 		opts.Shield = &vs
 	}
 
-	space, err := config.Api.SpaceCreate(context.TODO(), opts)
+	space, err := client.Api.SpaceCreate(context.TODO(), opts)
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{"allocating"},
 		Target:  []string{"allocated"},
-		Refresh: SpaceStateRefreshFunc(config, d.Id()),
+		Refresh: SpaceStateRefreshFunc(client, d.Id()),
 		Timeout: 20 * time.Minute,
 	}
 
@@ -135,7 +135,7 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		opts := heroku.InboundRulesetCreateOpts{Rules: rules}
-		_, err := config.Api.InboundRulesetCreate(context.TODO(), space.ID, opts)
+		_, err := client.Api.InboundRulesetCreate(context.TODO(), space.ID, opts)
 		if err != nil {
 			return fmt.Errorf("Error creating Trusted IP Ranges for Space (%s): %s", space.ID, err)
 		}
@@ -146,9 +146,9 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
-	spaceRaw, _, err := SpaceStateRefreshFunc(config, d.Id())()
+	spaceRaw, _, err := SpaceStateRefreshFunc(client, d.Id())()
 	if err != nil {
 		return err
 	}
@@ -168,13 +168,13 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuSpaceUpdate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	if d.HasChange("name") {
 		name := d.Get("name").(string)
 		opts := heroku.SpaceUpdateOpts{Name: &name}
 
-		_, err := config.Api.SpaceUpdate(context.TODO(), d.Id(), opts)
+		_, err := client.Api.SpaceUpdate(context.TODO(), d.Id(), opts)
 		if err != nil {
 			return err
 		}
@@ -197,7 +197,7 @@ func resourceHerokuSpaceUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		opts := heroku.InboundRulesetCreateOpts{Rules: rules}
-		_, err := config.Api.InboundRulesetCreate(context.TODO(), d.Id(), opts)
+		_, err := client.Api.InboundRulesetCreate(context.TODO(), d.Id(), opts)
 		if err != nil {
 			return fmt.Errorf("Error creating Trusted IP Ranges for Space (%s): %s", d.Id(), err)
 		}
@@ -209,10 +209,10 @@ func resourceHerokuSpaceUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuSpaceDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
+	client := meta.(*Config)
 
 	log.Printf("[INFO] Deleting space: %s", d.Id())
-	_, err := config.Api.SpaceDelete(context.TODO(), d.Id())
+	_, err := client.Api.SpaceDelete(context.TODO(), d.Id())
 	if err != nil {
 		return err
 	}
@@ -223,9 +223,9 @@ func resourceHerokuSpaceDelete(d *schema.ResourceData, meta interface{}) error {
 
 // SpaceStateRefreshFunc returns a resource.StateRefreshFunc that is used to watch
 // a Space.
-func SpaceStateRefreshFunc(config *Config, id string) resource.StateRefreshFunc {
+func SpaceStateRefreshFunc(client *Config, id string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		space, err := config.Api.SpaceInfo(context.TODO(), id)
+		space, err := client.Api.SpaceInfo(context.TODO(), id)
 		if err != nil {
 			log.Printf("[DEBUG] %s (%s)", err, id)
 			return nil, "", err
@@ -240,7 +240,7 @@ func SpaceStateRefreshFunc(config *Config, id string) resource.StateRefreshFunc 
 			return &s, space.State, nil
 		}
 
-		ruleset, err := config.Api.InboundRulesetCurrent(context.TODO(), id)
+		ruleset, err := client.Api.InboundRulesetCurrent(context.TODO(), id)
 		if err != nil {
 			log.Printf("[DEBUG] %s (%s)", err, id)
 			return nil, "", err
@@ -251,7 +251,7 @@ func SpaceStateRefreshFunc(config *Config, id string) resource.StateRefreshFunc 
 			s.TrustedIPRanges[i] = r.Source
 		}
 
-		nat, err := config.Api.SpaceNATInfo(context.TODO(), id)
+		nat, err := client.Api.SpaceNATInfo(context.TODO(), id)
 		if err != nil {
 			return nil, "", err
 		}

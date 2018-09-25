@@ -46,7 +46,7 @@ func testAccCheckHerokuTeamMemberExists(n string) resource.TestCheckFunc {
 		}
 
 		team, email := parseCompositeID(rs.Primary.ID)
-		config := testAccProvider.Meta().(*heroku.Service)
+		client := testAccProvider.Meta().(*heroku.Service)
 
 		members, err := client.TeamMemberList(context.TODO(), team, &heroku.ListRange{Field: "email"})
 		if err != nil {
