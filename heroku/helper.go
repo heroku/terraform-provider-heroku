@@ -32,8 +32,8 @@ func getEmail(d *schema.ResourceData) string {
 	return email
 }
 
-func doesHerokuAppExist(appName string, client *Config) (*heroku.App, error) {
-	app, err := client.Api.AppInfo(context.TODO(), appName)
+func doesHerokuAppExist(appName string, client *heroku.Service) (*heroku.App, error) {
+	app, err := client.AppInfo(context.TODO(), appName)
 
 	if err != nil {
 		log.Println(err)

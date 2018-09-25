@@ -45,7 +45,7 @@ func resourceHerokuAppRelease() *schema.Resource {
 }
 
 func resourceHerokuAppReleaseCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	opts := heroku.ReleaseCreateOpts{}
 
@@ -64,7 +64,7 @@ func resourceHerokuAppReleaseCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	log.Printf("[DEBUG] Creating a new release on app: [%s]", appName)
-	newRelease, err := client.Api.ReleaseCreate(context.TODO(), appName, opts)
+	newRelease, err := client.ReleaseCreate(context.TODO(), appName, opts)
 
 	if err != nil {
 		return err
@@ -91,11 +91,11 @@ func resourceHerokuAppReleaseCreate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceHerokuAppReleaseRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	appName := getAppName(d)
 
-	appRelease, err := client.Api.ReleaseInfo(context.TODO(), appName, d.Id())
+	appRelease, err := client.ReleaseInfo(context.TODO(), appName, d.Id())
 
 	if err != nil {
 		return fmt.Errorf("[ERROR] error retrieving app release: %s", err)
@@ -131,13 +131,13 @@ func resourceHerokuAppReleaseDelete(d *schema.ResourceData, meta interface{}) er
 func resourceHerokuAppReleaseImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	// The import function will import the current release for an app.
 	// There doesn't seem to be a compelling reason for someone to import a legacy release on an application.
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	appName := d.Id()
 
 	log.Printf("[INFO] Importing Release for App [%s]", appName)
 
-	appReleases, err := client.Api.ReleaseList(context.Background(), appName, &heroku.ListRange{Descending: true, Field: "version", Max: 1})
+	appReleases, err := client.ReleaseList(context.Background(), appName, &heroku.ListRange{Descending: true, Field: "version", Max: 1})
 	appRelease := appReleases[0]
 
 	if err != nil {

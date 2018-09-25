@@ -36,14 +36,14 @@ func TestAccHerokuDrain_Basic(t *testing.T) {
 }
 
 func testAccCheckHerokuDrainDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config)
+	client := testAccProvider.Meta().(*Config).Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_drain" {
 			continue
 		}
 
-		_, err := client.Api.LogDrainInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		_, err := client.LogDrainInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Drain still exists")
@@ -80,9 +80,9 @@ func testAccCheckHerokuDrainExists(n string, Drain *heroku.LogDrain) resource.Te
 			return fmt.Errorf("No Drain ID is set")
 		}
 
-		client := testAccProvider.Meta().(*Config)
+		client := testAccProvider.Meta().(*Config).Api
 
-		foundDrain, err := client.Api.LogDrainInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundDrain, err := client.LogDrainInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
 		if err != nil {
 			return err

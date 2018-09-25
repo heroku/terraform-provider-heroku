@@ -115,7 +115,7 @@ func resourceHerokuSlug() *schema.Resource {
 }
 
 func resourceHerokuSlugImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app, slugID := parseCompositeID(d.Id())
 
@@ -132,7 +132,7 @@ func resourceHerokuSlugImport(d *schema.ResourceData, meta interface{}) ([]*sche
 }
 
 func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app := getAppName(d)
 
@@ -204,7 +204,7 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuSlugRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app := getAppName(d)
 	slug, err := client.SlugInfo(context.TODO(), app, d.Id())

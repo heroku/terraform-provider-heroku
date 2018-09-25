@@ -33,7 +33,7 @@ type teamCollaborator struct {
 
 	AppName          string // the app the collaborator belongs to
 	TeamCollaborator *herokuTeamCollaborator
-	Client           *Config
+	Client           *heroku.Service
 	Permissions      []string // can be a combo or all of ["view", "deploy", "operate", "manage"]
 }
 
@@ -75,7 +75,7 @@ func resourceHerokuTeamCollaborator() *schema.Resource {
 }
 
 func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	opts := heroku.TeamAppCollaboratorCreateOpts{}
 
@@ -105,7 +105,7 @@ func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface
 	}
 
 	log.Printf("[DEBUG] Creating Heroku Team Collaborator: [%s]", opts.User)
-	collaborator, err := client.Api.TeamAppCollaboratorCreate(context.TODO(), appName, opts)
+	collaborator, err := client.TeamAppCollaboratorCreate(context.TODO(), appName, opts)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface
 }
 
 func resourceHerokuTeamCollaboratorRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	teamCollaborator, err := resourceHerokuTeamCollaboratorRetrieve(d.Id(), d.Get("app").(string), client)
 
@@ -136,7 +136,7 @@ func resourceHerokuTeamCollaboratorUpdate(d *schema.ResourceData, meta interface
 	// Enable Partial state mode to track what was successfully committed
 	d.Partial(true)
 
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 	opts := heroku.TeamAppCollaboratorUpdateOpts{}
 
 	if d.HasChange("permissions") {
@@ -155,7 +155,7 @@ func resourceHerokuTeamCollaboratorUpdate(d *schema.ResourceData, meta interface
 	email := getEmail(d)
 
 	log.Printf("[DEBUG] Updating Heroku Team Collaborator: [%s]", email)
-	updatedTeamCollaborator, err := client.Api.TeamAppCollaboratorUpdate(context.TODO(), appName, email, opts)
+	updatedTeamCollaborator, err := client.TeamAppCollaboratorUpdate(context.TODO(), appName, email, opts)
 	if err != nil {
 		return err
 	}
@@ -170,10 +170,10 @@ func resourceHerokuTeamCollaboratorUpdate(d *schema.ResourceData, meta interface
 }
 
 func resourceHerokuTeamCollaboratorDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting Heroku Team Collaborator: [%s]", d.Id())
-	_, err := client.Api.TeamAppCollaboratorDelete(context.TODO(), getAppName(d), getEmail(d))
+	_, err := client.TeamAppCollaboratorDelete(context.TODO(), getAppName(d), getEmail(d))
 
 	if err != nil {
 		return fmt.Errorf("error deleting Team Collaborator: %s", err)
@@ -189,7 +189,7 @@ func resourceHerokuTeamCollaboratorDelete(d *schema.ResourceData, meta interface
 	*/
 	log.Printf("[INFO] Begin checking if [%s] has been deleted", getEmail(d))
 	retryError := resource.Retry(10*time.Second, func() *resource.RetryError {
-		_, err := client.Api.TeamAppCollaboratorInfo(context.TODO(), getAppName(d), d.Id())
+		_, err := client.TeamAppCollaboratorInfo(context.TODO(), getAppName(d), d.Id())
 
 		// Debug log to check
 		log.Printf("[INFO] Is error nil when GET#show team collaborator? %t", err == nil)
@@ -213,7 +213,7 @@ func resourceHerokuTeamCollaboratorDelete(d *schema.ResourceData, meta interface
 	return nil
 }
 
-func resourceHerokuTeamCollaboratorRetrieve(id string, appName string, client *Config) (*teamCollaborator, error) {
+func resourceHerokuTeamCollaboratorRetrieve(id string, appName string, client *heroku.Service) (*teamCollaborator, error) {
 	teamCollaborator := teamCollaborator{Id: id, AppName: appName, Client: client}
 
 	err := teamCollaborator.Update()
@@ -230,7 +230,7 @@ func (tc *teamCollaborator) Update() error {
 
 	log.Printf("[INFO] tc.Id is %s", tc.Id)
 
-	teamCollaborator, err := tc.Client.Api.TeamAppCollaboratorInfo(context.TODO(), tc.AppName, tc.Id)
+	teamCollaborator, err := tc.Client.TeamAppCollaboratorInfo(context.TODO(), tc.AppName, tc.Id)
 
 	if err != nil {
 		errs = append(errs, err)
@@ -242,7 +242,7 @@ func (tc *teamCollaborator) Update() error {
 
 	// The underlying go client does not return permission info on the collaborator when calling
 	// 'TeamAppCollaboratorInfo'. Instead that is returned via calling 'CollaboratorInfo'
-	collaborator, collaboratorErr := tc.Client.Api.CollaboratorInfo(context.TODO(), tc.AppName, tc.Id)
+	collaborator, collaboratorErr := tc.Client.CollaboratorInfo(context.TODO(), tc.AppName, tc.Id)
 	if collaboratorErr != nil {
 		errs = append(errs, collaboratorErr)
 	} else {
@@ -263,11 +263,11 @@ func (tc *teamCollaborator) Update() error {
 }
 
 func resourceHerokuTeamCollaboratorImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	app, email := parseCompositeID(d.Id())
 
-	collaborator, err := client.Api.CollaboratorInfo(context.Background(), app, email)
+	collaborator, err := client.CollaboratorInfo(context.Background(), app, email)
 	if err != nil {
 		return nil, err
 	}

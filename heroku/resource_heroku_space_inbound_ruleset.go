@@ -69,12 +69,12 @@ func getRulesetFromSchema(d *schema.ResourceData) heroku.InboundRulesetCreateOpt
 }
 
 func resourceHerokuSpaceInboundRulesetSet(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	spaceIdentity := d.Get("space").(string)
 	ruleset := getRulesetFromSchema(d)
 
-	_, err := client.Api.InboundRulesetCreate(context.TODO(), spaceIdentity, ruleset)
+	_, err := client.InboundRulesetCreate(context.TODO(), spaceIdentity, ruleset)
 	if err != nil {
 		return fmt.Errorf("Error creating inbound ruleset for space (%s): %s", spaceIdentity, err)
 	}
@@ -83,10 +83,10 @@ func resourceHerokuSpaceInboundRulesetSet(d *schema.ResourceData, meta interface
 }
 
 func resourceHerokuSpaceInboundRulesetRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	spaceIdentity := d.Get("space").(string)
-	ruleset, err := client.Api.InboundRulesetCurrent(context.TODO(), spaceIdentity)
+	ruleset, err := client.InboundRulesetCurrent(context.TODO(), spaceIdentity)
 	if err != nil {
 		return fmt.Errorf("Error creating inbound ruleset for space (%s): %s", spaceIdentity, err)
 	}
@@ -107,7 +107,7 @@ func resourceHerokuSpaceInboundRulesetRead(d *schema.ResourceData, meta interfac
 }
 
 func resourceHerokuSpaceInboundRulesetDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	spaceIdentity := d.Get("space").(string)
 
@@ -128,7 +128,7 @@ func resourceHerokuSpaceInboundRulesetDelete(d *schema.ResourceData, meta interf
 		Source: "0.0.0.0/0",
 	})
 
-	_, err := client.Api.InboundRulesetCreate(context.TODO(), spaceIdentity, heroku.InboundRulesetCreateOpts{Rules: rules})
+	_, err := client.InboundRulesetCreate(context.TODO(), spaceIdentity, heroku.InboundRulesetCreateOpts{Rules: rules})
 	if err != nil {
 		return fmt.Errorf("Error resetting inbound ruleset for space (%s): %s", spaceIdentity, err)
 	}

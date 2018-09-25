@@ -4,25 +4,26 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/heroku/heroku-go/v3"
 	"log"
 )
 
 func resourceHerokuAddonAttachmentMigrateState(v int, is *terraform.InstanceState, meta interface{}) (*terraform.InstanceState, error) {
-	conn := meta.(*Config)
+	client := meta.(*Config).Api
 
 	log.Printf("[DEBUG] Current version of state file is: v%v", v)
 
 	switch v {
 	case 0:
 		log.Println("[INFO] Found Heroku Addon Attachment state v0; migrating to v1")
-		return migrateAddonAttachmentStateV0toV1(is, conn)
+		return migrateAddonAttachmentStateV0toV1(is, client)
 	default:
 		return is, fmt.Errorf("Unexpected schema version: %d", v)
 	}
 }
 
 // Migrate attachment addons in state file to use the UUID for addon_id instead of the NAME for addon_id
-func migrateAddonAttachmentStateV0toV1(is *terraform.InstanceState, client *Config) (*terraform.InstanceState, error) {
+func migrateAddonAttachmentStateV0toV1(is *terraform.InstanceState, client *heroku.Service) (*terraform.InstanceState, error) {
 	if is.Empty() || is.Attributes == nil {
 		log.Println("[DEBUG] Empty Heroku Addon Attachment State; nothing to migrate.")
 		return is, nil
@@ -33,7 +34,7 @@ func migrateAddonAttachmentStateV0toV1(is *terraform.InstanceState, client *Conf
 	attachmentAppId := is.Attributes["app_id"]
 	attachmentAddOnId := is.Attributes["id"]
 
-	addon, err := client.Api.AddOnInfoByApp(context.TODO(), attachmentAppId, attachmentAddOnId)
+	addon, err := client.AddOnInfoByApp(context.TODO(), attachmentAppId, attachmentAddOnId)
 	if err != nil {
 		return nil, fmt.Errorf("Error retrieving addon: %s", err)
 	}

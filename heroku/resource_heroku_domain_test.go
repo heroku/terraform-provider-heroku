@@ -40,14 +40,14 @@ func TestAccHerokuDomain_Basic(t *testing.T) {
 }
 
 func testAccCheckHerokuDomainDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config)
+	client := testAccProvider.Meta().(*Config).Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_domain" {
 			continue
 		}
 
-		_, err := client.Api.DomainInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		_, err := client.DomainInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Domain still exists")
@@ -79,9 +79,9 @@ func testAccCheckHerokuDomainExists(n string, Domain *heroku.Domain) resource.Te
 			return fmt.Errorf("No Domain ID is set")
 		}
 
-		client := testAccProvider.Meta().(*Config)
+		client := testAccProvider.Meta().(*Config).Api
 
-		foundDomain, err := client.Api.DomainInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundDomain, err := client.DomainInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
 		if err != nil {
 			return err

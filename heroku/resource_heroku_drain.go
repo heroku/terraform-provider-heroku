@@ -46,11 +46,11 @@ func resourceHerokuDrain() *schema.Resource {
 const retryableError = `App hasn't yet been assigned a log channel. Please try again momentarily.`
 
 func resourceHerokuDrainImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	app, id := parseCompositeID(d.Id())
 
-	dr, err := client.Api.LogDrainInfo(context.Background(), app, id)
+	dr, err := client.LogDrainInfo(context.Background(), app, id)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func resourceHerokuDrainImport(d *schema.ResourceData, meta interface{}) ([]*sch
 }
 
 func resourceHerokuDrainCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	app := d.Get("app").(string)
 	url := d.Get("url").(string)
@@ -71,7 +71,7 @@ func resourceHerokuDrainCreate(d *schema.ResourceData, meta interface{}) error {
 
 	var dr *heroku.LogDrain
 	err := resource.Retry(2*time.Minute, func() *resource.RetryError {
-		d, err := client.Api.LogDrainCreate(context.TODO(), app, heroku.LogDrainCreateOpts{URL: url})
+		d, err := client.LogDrainCreate(context.TODO(), app, heroku.LogDrainCreateOpts{URL: url})
 		if err != nil {
 			if strings.Contains(err.Error(), retryableError) {
 				return resource.RetryableError(err)
@@ -94,12 +94,12 @@ func resourceHerokuDrainCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuDrainDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting drain: %s", d.Id())
 
 	// Destroy the drain
-	_, err := client.Api.LogDrainDelete(context.TODO(), d.Get("app").(string), d.Id())
+	_, err := client.LogDrainDelete(context.TODO(), d.Get("app").(string), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting drain: %s", err)
 	}
@@ -108,9 +108,9 @@ func resourceHerokuDrainDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuDrainRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
-	dr, err := client.Api.LogDrainInfo(context.TODO(), d.Get("app").(string), d.Id())
+	dr, err := client.LogDrainInfo(context.TODO(), d.Get("app").(string), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving drain: %s", err)
 	}

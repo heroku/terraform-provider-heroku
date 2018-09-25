@@ -50,7 +50,7 @@ func resourceHerokuPipelineCoupling() *schema.Resource {
 }
 
 func resourceHerokuPipelineCouplingCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	opts := heroku.PipelineCouplingCreateOpts{
 		App:      d.Get("app").(string),
@@ -60,7 +60,7 @@ func resourceHerokuPipelineCouplingCreate(d *schema.ResourceData, meta interface
 
 	log.Printf("[DEBUG] PipelineCoupling create configuration: %#v", opts)
 
-	p, err := client.Api.PipelineCouplingCreate(context.TODO(), opts)
+	p, err := client.PipelineCouplingCreate(context.TODO(), opts)
 	if err != nil {
 		return fmt.Errorf("Error creating pipeline: %s", err)
 	}
@@ -73,11 +73,11 @@ func resourceHerokuPipelineCouplingCreate(d *schema.ResourceData, meta interface
 }
 
 func resourceHerokuPipelineCouplingDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting pipeline: %s", d.Id())
 
-	_, err := client.Api.PipelineCouplingDelete(context.TODO(), d.Id())
+	_, err := client.PipelineCouplingDelete(context.TODO(), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting pipeline: %s", err)
 	}
@@ -86,15 +86,15 @@ func resourceHerokuPipelineCouplingDelete(d *schema.ResourceData, meta interface
 }
 
 func resourceHerokuPipelineCouplingRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config)
+	client := meta.(*Config).Api
 
-	p, err := client.Api.PipelineCouplingInfo(context.TODO(), d.Id())
+	p, err := client.PipelineCouplingInfo(context.TODO(), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving pipeline: %s", err)
 	}
 
 	// grab App info
-	app, err := client.Api.AppInfo(context.TODO(), p.App.ID)
+	app, err := client.AppInfo(context.TODO(), p.App.ID)
 	if err != nil {
 		log.Printf("[WARN] Error looking up addional App info for pipeline coupling (%s): %s", d.Id(), err)
 	} else {

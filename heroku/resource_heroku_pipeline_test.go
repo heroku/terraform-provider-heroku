@@ -60,9 +60,9 @@ func testAccCheckHerokuPipelineExists(n string, pipeline *heroku.Pipeline) resou
 			return fmt.Errorf("No pipeline name set")
 		}
 
-		client := testAccProvider.Meta().(*Config)
+		client := testAccProvider.Meta().(*Config).Api
 
-		foundPipeline, err := client.Api.PipelineInfo(context.TODO(), rs.Primary.ID)
+		foundPipeline, err := client.PipelineInfo(context.TODO(), rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -78,14 +78,14 @@ func testAccCheckHerokuPipelineExists(n string, pipeline *heroku.Pipeline) resou
 }
 
 func testAccCheckHerokuPipelineDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config)
+	client := testAccProvider.Meta().(*Config).Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_pipeline" {
 			continue
 		}
 
-		_, err := client.Api.PipelineInfo(context.TODO(), rs.Primary.ID)
+		_, err := client.PipelineInfo(context.TODO(), rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Pipeline still exists")

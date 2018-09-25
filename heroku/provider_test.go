@@ -55,10 +55,10 @@ func TestProviderConfigureUsesHeadersForClient(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := client.(*Config)
-	c.Api.URL = srv.URL
+	c := client.(*Config).Api
+	c.URL = srv.URL
 
-	_, err = c.Api.AppInfo(context.Background(), "does-not-matter")
+	_, err = c.AppInfo(context.Background(), "does-not-matter")
 	if err != nil {
 		t.Fatal(err)
 	}

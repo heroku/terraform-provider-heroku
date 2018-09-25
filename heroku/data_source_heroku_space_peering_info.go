@@ -55,12 +55,12 @@ func dataSourceHerokuSpacePeeringInfo() *schema.Resource {
 }
 
 func dataSourceHerokuSpacePeeringInfoRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Config)
+	client := m.(*Config).Api
 
 	name := d.Get("name").(string)
 	d.SetId(name)
 
-	peeringInfo, err := client.Api.PeeringInfoInfo(context.TODO(), name)
+	peeringInfo, err := client.PeeringInfoInfo(context.TODO(), name)
 	if err != nil {
 		return err
 	}
