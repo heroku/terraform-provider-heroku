@@ -28,6 +28,8 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 					testAccCheckHerokuAppAttributes(&app, appName, "heroku-16"),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "name", appName),
+					resource.TestCheckResourceAttrSet(
+						"heroku_app.foobar", "uuid"),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "config_vars.0.FOO", "bar"),
 					resource.TestCheckResourceAttr(

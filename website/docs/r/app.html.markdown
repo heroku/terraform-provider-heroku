@@ -82,6 +82,7 @@ The following attributes are exported:
 * `all_config_vars` - A map of all of the configuration variables that
     exist for the app, containing both those set by Terraform and those
     set externally.
+* `uuid` - The unique UUID of the Heroku app. **NOTE:** Use this for `null_resource` triggers.
 
 ## Import
 
