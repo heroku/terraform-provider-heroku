@@ -28,6 +28,7 @@ type herokuApplication struct {
 	OrganizationName string
 	Locked           bool
 	Acm              bool
+	ID               string
 }
 
 // type application is used to store all the details of a heroku app
@@ -57,12 +58,16 @@ func (a *application) Update() error {
 		a.App.GitURL = app.GitURL
 		a.App.WebURL = app.WebURL
 		a.App.Acm = app.Acm
+		a.App.ID = app.ID
+
 		if app.InternalRouting != nil {
 			a.App.InternalRouting = *app.InternalRouting
 		}
+
 		if app.Space != nil {
 			a.App.Space = app.Space.Name
 		}
+
 		if app.Organization != nil {
 			a.App.OrganizationName = app.Organization.Name
 		} else {
@@ -126,6 +131,12 @@ func resourceHerokuApp() *schema.Resource {
 			},
 
 			"stack": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
+			"uuid": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -377,6 +388,7 @@ func setAppDetails(d *schema.ResourceData, app *application) (err error) {
 	d.Set("git_url", app.App.GitURL)
 	d.Set("web_url", app.App.WebURL)
 	d.Set("acm", app.App.Acm)
+	d.Set("uuid", app.App.ID)
 	d.Set("heroku_hostname", fmt.Sprintf("%s.herokuapp.com", app.App.Name))
 	return err
 }
