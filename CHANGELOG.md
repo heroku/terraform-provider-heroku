@@ -1,4 +1,8 @@
 ## 1.5.0 (Unreleased)
+
+IMPROVEMENTS:
+* `heroku_app` - Now exports the UUID Heroku assigns the app as `uuid` [#127](https://github.com/terraform-providers/terraform-provider-heroku/pull/127)
+
 ## 1.4.0 (September 11, 2018)
 
 FEATURES:
