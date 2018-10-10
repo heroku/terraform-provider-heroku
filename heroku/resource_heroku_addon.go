@@ -80,7 +80,7 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	addonLock.Lock()
 	defer addonLock.Unlock()
 
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app := d.Get("app").(string)
 	opts := heroku.AddOnCreateOpts{
@@ -126,7 +126,7 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	addon, err := resourceHerokuAddonRetrieve(d.Id(), client)
 	if err != nil {
@@ -158,7 +158,7 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuAddonUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app := d.Get("app").(string)
 
@@ -177,7 +177,7 @@ func resourceHerokuAddonUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuAddonDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting Addon: %s", d.Id())
 
@@ -192,7 +192,7 @@ func resourceHerokuAddonDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuAddonExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	_, err := client.AddOnInfo(context.TODO(), d.Id())
 	if err != nil {

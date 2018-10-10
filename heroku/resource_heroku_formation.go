@@ -64,7 +64,7 @@ func resourceHerokuFormation() *schema.Resource {
 }
 
 func resourceHerokuFormationRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	appName := getAppName(d)
 
@@ -85,7 +85,7 @@ func resourceHerokuFormationRead(d *schema.ResourceData, meta interface{}) error
 // resourceHerokuFormationCreate method will execute an UPDATE to the formation.
 // There is no CREATE method on the formation endpoint.
 func resourceHerokuFormationCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	opts := heroku.FormationUpdateOpts{}
 
@@ -125,7 +125,7 @@ func resourceHerokuFormationUpdate(d *schema.ResourceData, meta interface{}) err
 	// Enable Partial state mode and what we successfully committed
 	d.Partial(true)
 
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 	opts := heroku.FormationUpdateOpts{}
 
 	if d.HasChange("size") {
@@ -214,7 +214,7 @@ func (f *formation) GetInfo(appName string) error {
 }
 
 func resourceHerokuFormationImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app, formationType := parseCompositeID(d.Id())
 

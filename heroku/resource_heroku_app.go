@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	multierror "github.com/hashicorp/go-multierror"
+	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heroku/heroku-go/v3"
@@ -224,7 +224,7 @@ func isOrganizationApp(d *schema.ResourceData) bool {
 }
 
 func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*heroku.Service)
+	client := m.(*Config).Api
 
 	app, err := client.AppInfo(context.TODO(), d.Id())
 	if err != nil {
@@ -260,7 +260,7 @@ func switchHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	// Build up our creation options
 	opts := heroku.AppCreateOpts{}
@@ -298,7 +298,7 @@ func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 	// Build up our creation options
 	opts := heroku.TeamAppCreateOpts{}
 
@@ -394,7 +394,7 @@ func setAppDetails(d *schema.ResourceData, app *application) (err error) {
 }
 
 func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	care := make(map[string]struct{})
 	configVars := make(map[string]string)
@@ -455,7 +455,7 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 	opts := heroku.AppUpdateOpts{}
 
 	if d.HasChange("name") {
@@ -531,7 +531,7 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuAppDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting App: %s", d.Id())
 	_, err := client.AppDelete(context.TODO(), d.Id())
@@ -545,7 +545,7 @@ func resourceHerokuAppDelete(d *schema.ResourceData, meta interface{}) error {
 
 func resourceHerokuAppExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	var err error
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	if isOrganizationApp(d) {
 		_, err = client.TeamAppInfo(context.TODO(), d.Id())

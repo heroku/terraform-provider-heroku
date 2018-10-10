@@ -41,7 +41,7 @@ func resourceHerokuDomain() *schema.Resource {
 }
 
 func resourceHerokuDomainImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app, id := parseCompositeID(d.Id())
 
@@ -57,7 +57,7 @@ func resourceHerokuDomainImport(d *schema.ResourceData, meta interface{}) ([]*sc
 }
 
 func resourceHerokuDomainCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app := d.Get("app").(string)
 	hostname := d.Get("hostname").(string)
@@ -78,7 +78,7 @@ func resourceHerokuDomainCreate(d *schema.ResourceData, meta interface{}) error 
 }
 
 func resourceHerokuDomainDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting Domain: %s", d.Id())
 
@@ -92,7 +92,7 @@ func resourceHerokuDomainDelete(d *schema.ResourceData, meta interface{}) error 
 }
 
 func resourceHerokuDomainRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app := d.Get("app").(string)
 	do, err := client.DomainInfo(context.TODO(), app, d.Id())

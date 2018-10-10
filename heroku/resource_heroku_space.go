@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 type spaceWithRanges struct {
@@ -76,7 +76,7 @@ func resourceHerokuSpace() *schema.Resource {
 }
 
 func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	opts := heroku.SpaceCreateOpts{}
 	opts.Name = d.Get("name").(string)
@@ -146,7 +146,7 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	spaceRaw, _, err := SpaceStateRefreshFunc(client, d.Id())()
 	if err != nil {
@@ -168,7 +168,7 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuSpaceUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	if d.HasChange("name") {
 		name := d.Get("name").(string)
@@ -209,7 +209,7 @@ func resourceHerokuSpaceUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuSpaceDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting space: %s", d.Id())
 	_, err := client.SpaceDelete(context.TODO(), d.Id())

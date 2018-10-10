@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuSpace_Basic(t *testing.T) {
@@ -154,7 +154,7 @@ func testAccCheckHerokuSpaceExists(n string, space *heroku.Space) resource.TestC
 			return fmt.Errorf("No space name set")
 		}
 
-		client := testAccProvider.Meta().(*heroku.Service)
+		client := testAccProvider.Meta().(*Config).Api
 
 		foundSpace, err := client.SpaceInfo(context.TODO(), rs.Primary.ID)
 		if err != nil {
@@ -182,7 +182,7 @@ func testAccCheckHerokuSpaceAttributes(space *heroku.Space, spaceName string) re
 }
 
 func testAccCheckHerokuSpaceDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*heroku.Service)
+	client := testAccProvider.Meta().(*Config).Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_space" {

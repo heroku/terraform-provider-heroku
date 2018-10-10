@@ -30,7 +30,7 @@ func resourceHerokuPipeline() *schema.Resource {
 }
 
 func resourceHerokuPipelineImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	p, err := client.PipelineInfo(context.TODO(), d.Id())
 	if err != nil {
@@ -43,7 +43,7 @@ func resourceHerokuPipelineImport(d *schema.ResourceData, meta interface{}) ([]*
 }
 
 func resourceHerokuPipelineCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	opts := heroku.PipelineCreateOpts{
 		Name: d.Get("name").(string),
@@ -65,7 +65,7 @@ func resourceHerokuPipelineCreate(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceHerokuPipelineUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	if d.HasChange("name") {
 		name := d.Get("name").(string)
@@ -83,7 +83,7 @@ func resourceHerokuPipelineUpdate(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceHerokuPipelineDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting pipeline: %s", d.Id())
 
@@ -96,7 +96,7 @@ func resourceHerokuPipelineDelete(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceHerokuPipelineRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	p, err := client.PipelineInfo(context.TODO(), d.Id())
 	if err != nil {

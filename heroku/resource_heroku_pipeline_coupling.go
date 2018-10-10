@@ -50,7 +50,7 @@ func resourceHerokuPipelineCoupling() *schema.Resource {
 }
 
 func resourceHerokuPipelineCouplingCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	opts := heroku.PipelineCouplingCreateOpts{
 		App:      d.Get("app").(string),
@@ -73,7 +73,7 @@ func resourceHerokuPipelineCouplingCreate(d *schema.ResourceData, meta interface
 }
 
 func resourceHerokuPipelineCouplingDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting pipeline: %s", d.Id())
 
@@ -86,7 +86,7 @@ func resourceHerokuPipelineCouplingDelete(d *schema.ResourceData, meta interface
 }
 
 func resourceHerokuPipelineCouplingRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	p, err := client.PipelineCouplingInfo(context.TODO(), d.Id())
 	if err != nil {

@@ -6,10 +6,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
-	heroku "github.com/heroku/heroku-go/v3"
 	helper "github.com/terraform-providers/terraform-provider-heroku/helper/test"
+	"io/ioutil"
+	"os"
 )
 
 var testAccProviders map[string]terraform.ResourceProvider
@@ -53,7 +55,7 @@ func TestProviderConfigureUsesHeadersForClient(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := client.(*heroku.Service)
+	c := client.(*Config).Api
 	c.URL = srv.URL
 
 	_, err = c.AppInfo(context.Background(), "does-not-matter")
@@ -62,6 +64,49 @@ func TestProviderConfigureUsesHeadersForClient(t *testing.T) {
 	}
 }
 
+// TODO: uncomment when a better to test netrc isolated from env
+//func TestProviderConfigureUseNetrc(t *testing.T) {
+//	// Create a dummy netrc file
+//	tmpfileNetrc, err := createTempConfigFile(`machine api.heroku.com login email_login password api_key`, ".netrc")
+//	if err != nil {
+//		t.Fatal(err.Error())
+//	}
+//	defer os.Remove(tmpfileNetrc.Name())
+//	os.Setenv("NETRC_PATH", tmpfileNetrc.Name())
+//	defer os.Unsetenv("NETRC_PATH")
+//	raw := make(map[string]interface{})
+//	rawConfig, err := config.NewRawConfig(raw)
+//	if err != nil {
+//		t.Fatalf("Error creating mock config: %s", err.Error())
+//	}
+//
+//	rp := Provider()
+//	err = rp.Configure(terraform.NewResourceConfig(rawConfig))
+//	meta := rp.(*schema.Provider).Meta()
+//	if meta == nil {
+//		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
+//	}
+//	configuration := meta.(*Config)
+//
+//	assert.Equal(t, "email_login", configuration.Email)
+//	assert.Equal(t, "api_key", configuration.APIKey)
+//}
+
 func testAccPreCheck(t *testing.T) {
 	testAccConfig.GetOrAbort(t, helper.TestConfigAPIKey)
+}
+
+func createTempConfigFile(content string, name string) (*os.File, error) {
+	tmpfile, err := ioutil.TempFile(os.TempDir(), name)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating temporary test file. err: %s", err.Error())
+	}
+
+	_, err = tmpfile.WriteString(content)
+	if err != nil {
+		os.Remove(tmpfile.Name())
+		return nil, fmt.Errorf("Error writing to temporary test file. err: %s", err.Error())
+	}
+
+	return tmpfile, nil
 }

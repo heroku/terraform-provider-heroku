@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func resourceHerokuSpaceVPNConnection() *schema.Resource {
@@ -83,7 +83,7 @@ func resourceHerokuSpaceVPNConnection() *schema.Resource {
 }
 
 func resourceHerokuSpaceVPNConnectionRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 	space, id := parseCompositeID(d.Id())
 
 	conn, err := client.VPNConnectionInfo(context.TODO(), space, id)
@@ -111,7 +111,7 @@ func resourceHerokuSpaceVPNConnectionRead(d *schema.ResourceData, meta interface
 }
 
 func resourceHerokuSpaceVPNConnectionCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 	space := d.Get("space").(string)
 
 	routableCIDRs := []string{}
@@ -155,7 +155,7 @@ func resourceHerokuSpaceVPNConnectionCreate(d *schema.ResourceData, meta interfa
 }
 
 func resourceHerokuSpaceVPNConnectionDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 	space, id := parseCompositeID(d.Id())
 
 	_, err := client.VPNConnectionDestroy(context.TODO(), space, id)

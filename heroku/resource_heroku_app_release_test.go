@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuAppRelease_Basic(t *testing.T) {
@@ -77,7 +77,7 @@ func testAccCheckHerokuAppReleaseExists(n string, appRelease *heroku.Release) re
 			return fmt.Errorf("[ERROR] No App Release Id Set")
 		}
 
-		client := testAccProvider.Meta().(*heroku.Service)
+		client := testAccProvider.Meta().(*Config).Api
 
 		foundAppRelease, err := client.ReleaseInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 

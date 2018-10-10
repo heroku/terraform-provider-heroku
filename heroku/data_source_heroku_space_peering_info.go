@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/heroku/heroku-go/v3"
 )
 
 func dataSourceHerokuSpacePeeringInfo() *schema.Resource {
@@ -56,7 +55,7 @@ func dataSourceHerokuSpacePeeringInfo() *schema.Resource {
 }
 
 func dataSourceHerokuSpacePeeringInfoRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*heroku.Service)
+	client := m.(*Config).Api
 
 	name := d.Get("name").(string)
 	d.SetId(name)

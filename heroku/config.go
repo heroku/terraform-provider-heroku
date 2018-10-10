@@ -1,26 +1,27 @@
 package heroku
 
 import (
-	"log"
-	"net/http"
-
 	"github.com/hashicorp/terraform/helper/logging"
 	heroku "github.com/heroku/heroku-go/v3"
+	"log"
+	"net/http"
 )
 
 type Config struct {
 	Email   string
 	APIKey  string
 	Headers http.Header
+
+	Api *heroku.Service
 }
 
-// Client returns a new Service for accessing Heroku.
-func (c *Config) Client() (*heroku.Service, error) {
+// Client returns a new Config for accessing Heroku.
+func (c *Config) loadAndInitialize() error {
 	var debugHTTP = false
 	if logging.IsDebugOrHigher() {
 		debugHTTP = true
 	}
-	service := heroku.NewService(&http.Client{
+	c.Api = heroku.NewService(&http.Client{
 		Transport: &heroku.Transport{
 			Username:          c.Email,
 			Password:          c.APIKey,
@@ -32,5 +33,5 @@ func (c *Config) Client() (*heroku.Service, error) {
 
 	log.Printf("[INFO] Heroku Client configured for user: %s", c.Email)
 
-	return service, nil
+	return nil
 }

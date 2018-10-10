@@ -46,7 +46,7 @@ func resourceHerokuDrain() *schema.Resource {
 const retryableError = `App hasn't yet been assigned a log channel. Please try again momentarily.`
 
 func resourceHerokuDrainImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app, id := parseCompositeID(d.Id())
 
@@ -62,7 +62,7 @@ func resourceHerokuDrainImport(d *schema.ResourceData, meta interface{}) ([]*sch
 }
 
 func resourceHerokuDrainCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app := d.Get("app").(string)
 	url := d.Get("url").(string)
@@ -94,7 +94,7 @@ func resourceHerokuDrainCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuDrainDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting drain: %s", d.Id())
 
@@ -108,7 +108,7 @@ func resourceHerokuDrainDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuDrainRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	dr, err := client.LogDrainInfo(context.TODO(), d.Get("app").(string), d.Id())
 	if err != nil {

@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuPipeline_Basic(t *testing.T) {
@@ -60,7 +60,7 @@ func testAccCheckHerokuPipelineExists(n string, pipeline *heroku.Pipeline) resou
 			return fmt.Errorf("No pipeline name set")
 		}
 
-		client := testAccProvider.Meta().(*heroku.Service)
+		client := testAccProvider.Meta().(*Config).Api
 
 		foundPipeline, err := client.PipelineInfo(context.TODO(), rs.Primary.ID)
 		if err != nil {
@@ -78,7 +78,7 @@ func testAccCheckHerokuPipelineExists(n string, pipeline *heroku.Pipeline) resou
 }
 
 func testAccCheckHerokuPipelineDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*heroku.Service)
+	client := testAccProvider.Meta().(*Config).Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_pipeline" {

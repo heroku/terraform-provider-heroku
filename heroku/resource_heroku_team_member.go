@@ -57,7 +57,7 @@ func resourceHerokuTeamMemberImport(d *schema.ResourceData, meta interface{}) ([
 
 // Callback for schema Resource.Create and schema Resource.Update
 func resourceHerokuTeamMemberSet(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	email := d.Get("email").(string)
 	federated := d.Get("federated").(bool)
@@ -81,7 +81,7 @@ func resourceHerokuTeamMemberSet(d *schema.ResourceData, meta interface{}) error
 
 // Callback for schema Resource.Read
 func resourceHerokuTeamMemberRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 	team, email := parseCompositeID(d.Id())
 
 	members, err := client.TeamMemberList(context.TODO(), team, &heroku.ListRange{Field: "email"})
@@ -111,7 +111,7 @@ func resourceHerokuTeamMemberRead(d *schema.ResourceData, meta interface{}) erro
 
 // Callback for schema Resource.Delete
 func resourceHerokuTeamMemberDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 	team, email := parseCompositeID(d.Id())
 
 	_, err := client.TeamMemberDelete(context.TODO(), team, email)

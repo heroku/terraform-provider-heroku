@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuPipelineCoupling_Basic(t *testing.T) {
@@ -69,7 +69,7 @@ func testAccCheckHerokuPipelineCouplingExists(n string, pipeline *heroku.Pipelin
 			return fmt.Errorf("No coupling ID set")
 		}
 
-		client := testAccProvider.Meta().(*heroku.Service)
+		client := testAccProvider.Meta().(*Config).Api
 
 		foundPipelineCoupling, err := client.PipelineCouplingInfo(context.TODO(), rs.Primary.ID)
 		if err != nil {
@@ -105,7 +105,7 @@ func testAccCheckHerokuPipelineCouplingAttributes(coupling *heroku.PipelineCoupl
 }
 
 func testAccCheckHerokuPipelineCouplingDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*heroku.Service)
+	client := testAccProvider.Meta().(*Config).Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_pipeline_coupling" {

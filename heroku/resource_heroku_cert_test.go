@@ -165,7 +165,7 @@ func sleep(t *testing.T, amount time.Duration) func() {
 }
 
 func testAccCheckHerokuCertDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*heroku.Service)
+	client := testAccProvider.Meta().(*Config).Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_cert" {
@@ -205,7 +205,7 @@ func testAccCheckHerokuCertExists(n string, endpoint *heroku.SSLEndpoint) resour
 			return fmt.Errorf("No SSL endpoint ID is set")
 		}
 
-		client := testAccProvider.Meta().(*heroku.Service)
+		client := testAccProvider.Meta().(*Config).Api
 
 		foundEndpoint, err := client.SSLEndpointInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 

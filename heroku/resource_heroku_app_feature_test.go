@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuAppFeature(t *testing.T) {
@@ -45,7 +45,7 @@ func TestAccHerokuAppFeature(t *testing.T) {
 }
 
 func testAccCheckHerokuFeatureDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*heroku.Service)
+	client := testAccProvider.Meta().(*Config).Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_app_feature" {
@@ -79,7 +79,7 @@ func testAccCheckHerokuFeatureExists(n string, feature *heroku.AppFeature) resou
 			return fmt.Errorf("Bad app: %s", app)
 		}
 
-		client := testAccProvider.Meta().(*heroku.Service)
+		client := testAccProvider.Meta().(*Config).Api
 
 		foundFeature, err := client.AppFeatureInfo(context.TODO(), app, id)
 		if err != nil {

@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func resourceHerokuAppFeature() *schema.Resource {
@@ -42,7 +42,7 @@ func resourceHerokuAppFeature() *schema.Resource {
 }
 
 func resourceHerokuAppFeatureRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app, id := parseCompositeID(d.Id())
 
@@ -59,7 +59,7 @@ func resourceHerokuAppFeatureRead(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceHerokuAppFeatureCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app := d.Get("app").(string)
 	featureName := d.Get("name").(string)
@@ -88,7 +88,7 @@ func resourceHerokuAppFeatureUpdate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceHerokuAppFeatureDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app, id := parseCompositeID(d.Id())
 	featureName := d.Get("name").(string)

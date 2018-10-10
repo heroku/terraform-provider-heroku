@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func resourceHerokuSpaceAppAccess() *schema.Resource {
@@ -62,7 +62,7 @@ func resourceHerokuSpaceAppAccessSet(d *schema.ResourceData, meta interface{}) e
 
 //callback for schema Resource.Read
 func resourceHerokuSpaceAppAccessRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 	space := d.Get("space").(string)
 	email := d.Get("email").(string)
 	spaceAppAccess, err := client.SpaceAppAccessInfo(context.TODO(), space, email)
@@ -93,7 +93,7 @@ func updateSpaceAppAccess(permissions *schema.Set, d *schema.ResourceData, meta 
 	email := d.Get("email").(string)
 	space := d.Get("space").(string)
 	opts := createSpaceAppAccessUpdateOpts(permissions)
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 	spaceAppAccess, err := client.SpaceAppAccessUpdate(context.TODO(), space, email, opts)
 	if err != nil {
 		return nil, err

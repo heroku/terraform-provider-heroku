@@ -75,7 +75,7 @@ func resourceHerokuTeamCollaborator() *schema.Resource {
 }
 
 func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	opts := heroku.TeamAppCollaboratorCreateOpts{}
 
@@ -117,7 +117,7 @@ func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface
 }
 
 func resourceHerokuTeamCollaboratorRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	teamCollaborator, err := resourceHerokuTeamCollaboratorRetrieve(d.Id(), d.Get("app").(string), client)
 
@@ -136,7 +136,7 @@ func resourceHerokuTeamCollaboratorUpdate(d *schema.ResourceData, meta interface
 	// Enable Partial state mode to track what was successfully committed
 	d.Partial(true)
 
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 	opts := heroku.TeamAppCollaboratorUpdateOpts{}
 
 	if d.HasChange("permissions") {
@@ -170,7 +170,7 @@ func resourceHerokuTeamCollaboratorUpdate(d *schema.ResourceData, meta interface
 }
 
 func resourceHerokuTeamCollaboratorDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting Heroku Team Collaborator: [%s]", d.Id())
 	_, err := client.TeamAppCollaboratorDelete(context.TODO(), getAppName(d), getEmail(d))
@@ -263,7 +263,7 @@ func (tc *teamCollaborator) Update() error {
 }
 
 func resourceHerokuTeamCollaboratorImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app, email := parseCompositeID(d.Id())
 

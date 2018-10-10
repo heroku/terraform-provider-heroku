@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func resourceHerokuSpaceInboundRuleset() *schema.Resource {
@@ -69,7 +69,7 @@ func getRulesetFromSchema(d *schema.ResourceData) heroku.InboundRulesetCreateOpt
 }
 
 func resourceHerokuSpaceInboundRulesetSet(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	spaceIdentity := d.Get("space").(string)
 	ruleset := getRulesetFromSchema(d)
@@ -83,7 +83,7 @@ func resourceHerokuSpaceInboundRulesetSet(d *schema.ResourceData, meta interface
 }
 
 func resourceHerokuSpaceInboundRulesetRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	spaceIdentity := d.Get("space").(string)
 	ruleset, err := client.InboundRulesetCurrent(context.TODO(), spaceIdentity)
@@ -107,7 +107,7 @@ func resourceHerokuSpaceInboundRulesetRead(d *schema.ResourceData, meta interfac
 }
 
 func resourceHerokuSpaceInboundRulesetDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	spaceIdentity := d.Get("space").(string)
 

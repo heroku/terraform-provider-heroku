@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuVPNConnection_basic(t *testing.T) {
@@ -55,7 +55,7 @@ func testAccCheckHerokuVPNConnectionExists(n string, vpnConnection *heroku.VPNCo
 		}
 		space, id := parseCompositeID(rs.Primary.ID)
 
-		client := testAccProvider.Meta().(*heroku.Service)
+		client := testAccProvider.Meta().(*Config).Api
 		foundVPNConnection, err := client.VPNConnectionInfo(context.TODO(), space, id)
 		if err != nil {
 			return err
@@ -85,7 +85,7 @@ func testAccCheckHerokuVPNConnectionAttributes(vpnConnection *heroku.VPNConnecti
 }
 
 func testAccCheckHerokuVPNConnectionDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*heroku.Service)
+	client := testAccProvider.Meta().(*Config).Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_space_vpn_connection" {

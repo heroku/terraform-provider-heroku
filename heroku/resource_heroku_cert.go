@@ -51,7 +51,7 @@ func resourceHerokuCert() *schema.Resource {
 }
 
 func resourceHerokuCertImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app, id := parseCompositeID(d.Id())
 
@@ -67,7 +67,7 @@ func resourceHerokuCertImport(d *schema.ResourceData, meta interface{}) ([]*sche
 }
 
 func resourceHerokuCertCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app := d.Get("app").(string)
 	preprocess := true
@@ -89,7 +89,7 @@ func resourceHerokuCertCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuCertRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	cert, err := resourceHerokuSSLCertRetrieve(
 		d.Get("app").(string), d.Id(), client)
@@ -105,7 +105,7 @@ func resourceHerokuCertRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuCertUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	app := d.Get("app").(string)
 	preprocess := true
@@ -128,7 +128,7 @@ func resourceHerokuCertUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuCertDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting SSL Cert: %s", d.Id())
 

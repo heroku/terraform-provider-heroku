@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuTeamCollaborator_Org(t *testing.T) {
@@ -77,7 +77,7 @@ func testAccCheckHerokuTeamCollaboratorExists(n string, teamCollaborator *heroku
 			return fmt.Errorf("[ERROR] No Team Collaborator Set")
 		}
 
-		client := testAccProvider.Meta().(*heroku.Service)
+		client := testAccProvider.Meta().(*Config).Api
 
 		foundTeamCollaborator, err := client.TeamAppCollaboratorInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 

@@ -9,14 +9,14 @@ import (
 )
 
 func resourceHerokuAddonAttachmentMigrateState(v int, is *terraform.InstanceState, meta interface{}) (*terraform.InstanceState, error) {
-	conn := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	log.Printf("[DEBUG] Current version of state file is: v%v", v)
 
 	switch v {
 	case 0:
 		log.Println("[INFO] Found Heroku Addon Attachment state v0; migrating to v1")
-		return migrateAddonAttachmentStateV0toV1(is, conn)
+		return migrateAddonAttachmentStateV0toV1(is, client)
 	default:
 		return is, fmt.Errorf("Unexpected schema version: %d", v)
 	}

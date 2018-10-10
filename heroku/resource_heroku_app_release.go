@@ -45,7 +45,7 @@ func resourceHerokuAppRelease() *schema.Resource {
 }
 
 func resourceHerokuAppReleaseCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	opts := heroku.ReleaseCreateOpts{}
 
@@ -91,7 +91,7 @@ func resourceHerokuAppReleaseCreate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceHerokuAppReleaseRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	appName := getAppName(d)
 
@@ -131,7 +131,7 @@ func resourceHerokuAppReleaseDelete(d *schema.ResourceData, meta interface{}) er
 func resourceHerokuAppReleaseImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	// The import function will import the current release for an app.
 	// There doesn't seem to be a compelling reason for someone to import a legacy release on an application.
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	appName := d.Id()
 

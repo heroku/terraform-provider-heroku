@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 type spacePeerInfo struct {
@@ -52,7 +52,7 @@ func resourceHerokuSpacePeeringConnectionAccepter() *schema.Resource {
 }
 
 func resourceHerokuSpacePeeringConnectionAccepterCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	spaceIdentity := d.Get("space").(string)
 	pcxID := d.Get("vpc_peering_connection_id").(string)
@@ -102,7 +102,7 @@ func resourceHerokuSpacePeeringConnectionAccepterCreate(d *schema.ResourceData, 
 }
 
 func resourceHerokuSpacePeeringConnectionAccepterRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	spaceIdentity := d.Get("space").(string)
 
@@ -120,7 +120,7 @@ func resourceHerokuSpacePeeringConnectionAccepterRead(d *schema.ResourceData, me
 }
 
 func resourceHerokuSpacePeeringConnectionAccepterDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting space peering connection: %s", d.Id())
 

@@ -47,7 +47,7 @@ func resourceHerokuAddonAttachment() *schema.Resource {
 }
 
 func resourceHerokuAddonAttachmentCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	opts := heroku.AddOnAttachmentCreateOpts{Addon: d.Get("addon_id").(string), App: d.Get("app_id").(string)}
 
@@ -68,7 +68,7 @@ func resourceHerokuAddonAttachmentCreate(d *schema.ResourceData, meta interface{
 }
 
 func resourceHerokuAddonAttachmentRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	match, err := regexp.MatchString(`^[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+$`, d.Id())
 	if !match {
@@ -88,7 +88,7 @@ func resourceHerokuAddonAttachmentRead(d *schema.ResourceData, meta interface{})
 }
 
 func resourceHerokuAddonAttachmentDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting Addon Attachment: %s", d.Id())
 

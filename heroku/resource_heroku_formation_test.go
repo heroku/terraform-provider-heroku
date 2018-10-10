@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuFormationSingleUpdate_WithOrg(t *testing.T) {
@@ -79,7 +79,7 @@ func testAccCheckHerokuFormationExists(n string, formation *heroku.Formation) re
 			return fmt.Errorf("No Formation ID set")
 		}
 
-		client := testAccProvider.Meta().(*heroku.Service)
+		client := testAccProvider.Meta().(*Config).Api
 
 		foundFormation, err := client.FormationInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 

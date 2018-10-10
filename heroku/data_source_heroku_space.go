@@ -2,7 +2,6 @@ package heroku
 
 import (
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/heroku/heroku-go/v3"
 )
 
 func dataSourceHerokuSpace() *schema.Resource {
@@ -56,7 +55,7 @@ func dataSourceHerokuSpace() *schema.Resource {
 }
 
 func dataSourceHerokuSpaceRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*heroku.Service)
+	client := m.(*Config).Api
 
 	name := d.Get("name").(string)
 	spaceRaw, _, err := SpaceStateRefreshFunc(client, name)()
