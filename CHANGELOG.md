@@ -1,7 +1,12 @@
-## 1.5.0 (Unreleased)
+## 1.4.1 (Unreleased)
+
+FEATURES:
+* Support for ~/.netrc authentication [#113](https://github.com/terraform-providers/terraform-provider-heroku/pull/113)
 
 IMPROVEMENTS:
 * `heroku_app` - Now exports the UUID Heroku assigns the app as `uuid` [#127](https://github.com/terraform-providers/terraform-provider-heroku/pull/127)
+* `heroku_slug` - Slug doc corrections & formatting [#125](https://github.com/terraform-providers/terraform-provider-heroku/pull/125)
+* Fixes code snippet in the README.md [#129](https://github.com/terraform-providers/terraform-provider-heroku/pull/129)
 
 ## 1.4.0 (September 11, 2018)
 
