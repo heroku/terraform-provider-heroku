@@ -96,7 +96,7 @@ func testAccCheckHerokuSlugExists(n string, Slug *heroku.Slug) resource.TestChec
 			return fmt.Errorf("No Slug ID is set")
 		}
 
-		client := testAccProvider.Meta().(*heroku.Service)
+		client := testAccProvider.Meta().(*Config).Api
 
 		foundSlug, err := client.SlugInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
