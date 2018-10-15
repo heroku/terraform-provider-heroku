@@ -1,4 +1,4 @@
-## 1.5.0 (Unreleased)
+## 1.5.0 (October 15, 2018)
 
 FEATURES:
 * Support for ~/.netrc authentication [#113](https://github.com/terraform-providers/terraform-provider-heroku/pull/113)
