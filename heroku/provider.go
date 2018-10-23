@@ -38,6 +38,7 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
+			"heroku_account_feature":                   resourceHerokuAccountFeature(),
 			"heroku_addon":                             resourceHerokuAddon(),
 			"heroku_addon_attachment":                  resourceHerokuAddonAttachment(),
 			"heroku_app":                               resourceHerokuApp(),
