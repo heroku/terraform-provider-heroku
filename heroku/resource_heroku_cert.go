@@ -33,8 +33,9 @@ func resourceHerokuCert() *schema.Resource {
 			},
 
 			"private_key": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:      schema.TypeString,
+				Required:  true,
+				Sensitive: true,
 			},
 
 			"cname": {
