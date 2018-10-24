@@ -16,7 +16,7 @@ func resourceHerokuAccountFeature() *schema.Resource {
 		Delete: resourceHerokuAccountFeatureDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourceHerokuAccountFeatureImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -44,6 +44,16 @@ func resourceHerokuAccountFeature() *schema.Resource {
 	}
 }
 
+func resourceHerokuAccountFeatureImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	_, accountFeatureName := parseCompositeID(d.Id())
+	d.SetId(d.Id())
+	d.Set("name", accountFeatureName)
+
+	resourceHerokuAccountFeatureRead(d, meta)
+
+	return []*schema.ResourceData{d}, nil
+}
+
 // Account Feature endpoint has no CREATE endpoint
 // so UPDATE will serve both create/update functionality for this resource.
 func resourceHerokuAccountFeatureUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -57,7 +67,14 @@ func resourceHerokuAccountFeatureUpdate(d *schema.ResourceData, meta interface{}
 		return err
 	}
 
-	d.SetId(accountFeature.ID)
+	// Get Account email. We will use a combo of account email + feature UUID as the resource id
+	account, err := getAccount(meta)
+	if err != nil {
+		return err
+	}
+	accountEmail := account.Email
+
+	d.SetId(buildCompositeID(accountEmail, accountFeature.Name))
 
 	return resourceHerokuAccountFeatureRead(d, meta)
 }
@@ -72,8 +89,10 @@ func resourceHerokuAccountFeatureRead(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 
+	d.Set("name", accountFeature.Name)
 	d.Set("description", accountFeature.Description)
 	d.Set("state", accountFeature.State)
+	d.Set("enabled", accountFeature.Enabled)
 
 	return nil
 }
@@ -105,6 +124,17 @@ func updateAccountFeature(enabled bool, d *schema.ResourceData, meta interface{}
 	}
 
 	return accountFeature, nil
+}
+
+func getAccount(meta interface{}) (account *heroku.Account, err error) {
+	client := meta.(*Config).Api
+
+	account, err = client.AccountInfo(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
 }
 
 func getAccountFeatureName(d *schema.ResourceData) (name string) {
