@@ -28,6 +28,7 @@ func (c *Config) loadAndInitialize() error {
 			UserAgent:         heroku.DefaultUserAgent,
 			AdditionalHeaders: c.Headers,
 			Debug:             debugHTTP,
+			Transport:         heroku.RoundTripWithRetryBackoff{},
 		},
 	})
 
