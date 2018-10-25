@@ -28,15 +28,15 @@ resource "heroku_account_feature" "foobar" {
 The following arguments are supported:
 
 * `name` - (Required) Name of the account feature
-* `enabled` - (Required) whether or not account feature has been enabled
+* `enabled` - (Required) Enable or disable the account feature
 
 ## Attributes Reference
 
 The following attributes are exported:
 
 * `id` - Comprised of acount email & feature name
-* `description` - description of account feature
-* `state` - state of account feature
+* `description` - Description of account feature
+* `state` - State of account feature
 
 ## Import
 

@@ -105,7 +105,6 @@ func resourceHerokuAccountFeatureDelete(d *schema.ResourceData, meta interface{}
 		return err
 	}
 
-	d.SetId("")
 	return nil
 }
 
@@ -114,8 +113,9 @@ func updateAccountFeature(enabled bool, d *schema.ResourceData, meta interface{}
 	client := meta.(*Config).Api
 
 	featureName := getAccountFeatureName(d)
-	opts := heroku.AccountFeatureUpdateOpts{}
-	opts.Enabled = enabled
+	opts := heroku.AccountFeatureUpdateOpts{
+		Enabled: enabled,
+	}
 
 	log.Printf("[DEBUG] Updating Heroku Account Feature...")
 	accountFeature, err := client.AccountFeatureUpdate(context.TODO(), featureName, opts)
