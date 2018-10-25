@@ -2,7 +2,7 @@ package heroku
 
 import (
 	"github.com/hashicorp/terraform/helper/logging"
-	heroku "github.com/heroku/heroku-go/v3"
+	heroku "github.com/mars/heroku-go/v3"
 	"log"
 	"net/http"
 )

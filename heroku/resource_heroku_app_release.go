@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/heroku/heroku-go/v3"
+	"github.com/mars/heroku-go/v3"
 	"log"
 	"time"
 )

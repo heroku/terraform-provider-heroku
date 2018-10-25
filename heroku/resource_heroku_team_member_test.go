@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	heroku "github.com/heroku/heroku-go/v3"
+	heroku "github.com/mars/heroku-go/v3"
 )
 
 func TestAccHerokuTeamMember_Org(t *testing.T) {

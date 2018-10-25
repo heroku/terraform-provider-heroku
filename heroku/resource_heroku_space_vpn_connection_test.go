@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/heroku/heroku-go/v3"
+	"github.com/mars/heroku-go/v3"
 )
 
 func TestAccHerokuVPNConnection_basic(t *testing.T) {

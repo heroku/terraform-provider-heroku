@@ -7,7 +7,7 @@ import (
 	"regexp"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/heroku/heroku-go/v3"
+	"github.com/mars/heroku-go/v3"
 )
 
 func resourceHerokuAddonAttachment() *schema.Resource {
