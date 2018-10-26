@@ -28,7 +28,14 @@ func (c *Config) loadAndInitialize() error {
 			UserAgent:         heroku.DefaultUserAgent,
 			AdditionalHeaders: c.Headers,
 			Debug:             debugHTTP,
-			Transport:         heroku.RoundTripWithRetryBackoff{},
+			Transport: heroku.RoundTripWithRetryBackoff{
+				// Configuration fields for ExponentialBackOff
+				// InitialIntervalSeconds: 30,
+				// RandomizationFactor:    0.25,
+				// Multiplier:             2,
+				// MaxIntervalSeconds:     900,
+				// MaxElapsedTimeSeconds:  0,
+			},
 		},
 	})
 
