@@ -11,9 +11,18 @@ import (
 
 // net/http RoundTripper interface, a.k.a. Transport
 // https://godoc.org/net/http#RoundTripper
-type RoundTripWithRetryBackoff struct{}
+type RoundTripWithRetryBackoff struct {
+	// Configuration fields for backoff.ExponentialBackOff
+	InitialIntervalSeconds int64
+	RandomizationFactor    float64
+	Multiplier             float64
+	MaxIntervalSeconds     int64
+	// After MaxElapsedTime the ExponentialBackOff stops.
+	// It never stops if MaxElapsedTime == 0.
+	MaxElapsedTimeSeconds int64
+}
 
-func (_ RoundTripWithRetryBackoff) RoundTrip(req *http.Request) (*http.Response, error) {
+func (r RoundTripWithRetryBackoff) RoundTrip(req *http.Request) (*http.Response, error) {
 	var lastResponse *http.Response
 	var lastError error
 
@@ -29,13 +38,11 @@ func (_ RoundTripWithRetryBackoff) RoundTrip(req *http.Request) (*http.Response,
 
 	rateLimitRetryConfig := &backoff.ExponentialBackOff{
 		Clock:               backoff.SystemClock,
-		InitialInterval:     30 * time.Second,
-		RandomizationFactor: 0.25,
-		Multiplier:          2,
-		MaxInterval:         15 * time.Minute,
-		// After MaxElapsedTime the ExponentialBackOff stops.
-		// It never stops if MaxElapsedTime == 0.
-		MaxElapsedTime: 0,
+		InitialInterval:     time.Duration(int64WithDefault(r.InitialIntervalSeconds, int64(30))) * time.Second,
+		RandomizationFactor: float64WithDefault(r.RandomizationFactor, float64(0.25)),
+		Multiplier:          float64WithDefault(r.Multiplier, float64(2)),
+		MaxInterval:         time.Duration(int64WithDefault(r.MaxIntervalSeconds, int64(900))) * time.Second,
+		MaxElapsedTime:      time.Duration(int64WithDefault(r.MaxElapsedTimeSeconds, int64(0))) * time.Second,
 	}
 	rateLimitRetryConfig.Reset()
 
@@ -56,6 +63,22 @@ func (_ RoundTripWithRetryBackoff) RoundTrip(req *http.Request) (*http.Response,
 	}
 
 	return lastResponse, nil
+}
+
+func int64WithDefault(v int64, defaultV int64) int64 {
+	if v == int64(0) {
+		return defaultV
+	} else {
+		return v
+	}
+}
+
+func float64WithDefault(v float64, defaultV float64) float64 {
+	if v == float64(0) {
+		return defaultV
+	} else {
+		return v
+	}
 }
 
 func notifyLog(err error, waitDuration time.Duration) {

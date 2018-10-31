@@ -334,11 +334,11 @@
 
 [[projects]]
   branch = "retry-with-backoff"
-  digest = "1:8534c517f768450a4f9b5696dcc91b8fde4c8a79e3d7f759994d9b4e97531f95"
+  digest = "1:7c79c523059440ed7901f5f815b5d359dd5e080d05d92ae31433273aead21ee6"
   name = "github.com/mars/heroku-go"
   packages = ["v3"]
   pruneopts = "UT"
-  revision = "8db66c16f18b6f39af79b4ed99b78324881ed9ac"
+  revision = "4a8c8947d1892510af97e9763483f2afc10d2d41"
 
 [[projects]]
   digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
