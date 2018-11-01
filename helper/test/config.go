@@ -18,6 +18,7 @@ const (
 	TestConfigOrganizationKey
 	TestConfigSpaceOrganizationKey
 	TestConfigSlugIDKey
+	TestConfigEmail
 )
 
 var testConfigKeyToEnvName = map[TestConfigKey]string{
@@ -27,6 +28,7 @@ var testConfigKeyToEnvName = map[TestConfigKey]string{
 	TestConfigOrganizationKey:      "HEROKU_ORGANIZATION",
 	TestConfigSpaceOrganizationKey: "HEROKU_SPACES_ORGANIZATION",
 	TestConfigSlugIDKey:            "HEROKU_SLUG_ID",
+	TestConfigEmail:                "HEROKU_EMAIL",
 	TestConfigAcceptanceTestKey:    resource.TestEnvVar,
 }
 
@@ -112,4 +114,8 @@ func (t *TestConfig) GetUserOrAbort(testing *testing.T) (val string) {
 
 func (t *TestConfig) GetUserOrSkip(testing *testing.T) (val string) {
 	return t.GetOrSkip(testing, TestConfigUserKey)
+}
+
+func (t *TestConfig) GetEmailOrSkip(testing *testing.T) (val string) {
+	return t.GetOrSkip(testing, TestConfigEmail)
 }
