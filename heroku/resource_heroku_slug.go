@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	uuid "github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heroku/heroku-go/v3"
 )
@@ -35,6 +36,13 @@ func resourceHerokuSlug() *schema.Resource {
 
 			// Local tarball to be uploaded after slug creation
 			"file_path": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
+			// https:// URL of tarball to upload into slug
+			"file_url": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
@@ -153,13 +161,43 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 	if v, ok := d.GetOk("buildpack_provided_description"); ok {
 		opts.BuildpackProvidedDescription = heroku.String(v.(string))
 	}
+
+	// Optionally, download the archive from an HTTP server
+	var downloadFilePath string
+	var userFilePath string
+	var filePath string
+	if v, ok := d.GetOk("file_path"); ok {
+		userFilePath = v.(string)
+	}
+	if v, ok := d.GetOk("file_url"); ok {
+		fileUrl := v.(string)
+
+		newUuid, err := uuid.GenerateUUID()
+		if err != nil {
+			return err
+		}
+		downloadFilePath = fmt.Sprintf("slug-%s.tgz", newUuid)
+
+		err = downloadSlug(fileUrl, downloadFilePath)
+		if err != nil {
+			return err
+		}
+		defer cleanupFile(downloadFilePath)
+	}
+
+	// Prefer the downloaded file
+	if downloadFilePath != "" {
+		filePath = downloadFilePath
+	} else if userFilePath != "" {
+		filePath = userFilePath
+	}
+
 	if v, ok := d.GetOk("checksum"); ok {
 		// Use specified checksum when its set
 		opts.Checksum = heroku.String(v.(string))
 	} else {
 		// Optionally capture the checksum (really sha256 hash) of the slug file.
-		if v, ok := d.GetOk("file_path"); ok {
-			filePath := v.(string)
+		if filePath != "" {
 			checksum, err := checksumSlug(filePath)
 			if err != nil {
 				return err
@@ -186,14 +224,11 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 
 	// Optionally upload slug before setting ID, so that an upload failure
 	// causes a resource creation error, is not saved in state.
-	if v, ok := d.GetOk("file_path"); ok {
-		filePath := v.(string)
+	if filePath != "" {
 		err := uploadSlug(filePath, slug.Blob.Method, slug.Blob.URL)
 		if err != nil {
 			return err
 		}
-		// file_path being set indicates a successful upload.
-		d.Set("file_path", filePath)
 	}
 
 	d.SetId(slug.ID)
@@ -241,6 +276,41 @@ func resourceHerokuSlugCustomizeDiff(diff *schema.ResourceDiff, v interface{}) e
 			}
 		}
 	}
+
+	return nil
+}
+
+func downloadSlug(httpUrl, destinationFilePath string) error {
+	log.Printf("[DEBUG] Downloading slug from %s", httpUrl)
+
+	httpClient := &http.Client{}
+	req, err := http.NewRequest("GET", httpUrl, nil)
+	if err != nil {
+		return fmt.Errorf("Error creating slug download request: %s (%s)", err, httpUrl)
+	}
+	log.Printf("[DEBUG] Download slug request: %+v", req)
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("Error downloading slug: %s (%s)", err, httpUrl)
+	}
+
+	b, err := httputil.DumpResponse(res, true)
+	if err == nil {
+		// generate debug output if it's available
+		log.Printf("[DEBUG] Slug download response: %s", b)
+	}
+
+	defer res.Body.Close()
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		return fmt.Errorf("Unsuccessful HTTP response from slug download: %s (%s)", res.Status, httpUrl)
+	}
+
+	slugFile, err := os.Create(destinationFilePath)
+	if err != nil {
+		return fmt.Errorf("Error creating slug file: %s (%s)", err, destinationFilePath)
+	}
+	defer slugFile.Close()
+	io.Copy(slugFile, res.Body)
 
 	return nil
 }
@@ -321,4 +391,13 @@ func setState(d *schema.ResourceData, slug *heroku.Slug) error {
 	d.Set("stack_id", slug.Stack.ID)
 	d.Set("stack", slug.Stack.Name)
 	return nil
+}
+
+func cleanupFile(filePath string) {
+	if filePath != "" {
+		err := os.Remove(filePath)
+		if err != nil {
+			log.Printf("[WARN] Error cleaning-up downloaded slug: %s (%s)", err, filePath)
+		}
+	}
 }

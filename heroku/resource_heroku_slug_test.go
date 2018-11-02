@@ -84,6 +84,29 @@ func TestAccHerokuSlug_WithFile(t *testing.T) {
 	})
 }
 
+func TestAccHerokuSlug_WithRemoteFile(t *testing.T) {
+	var slug heroku.Slug
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-%s", randString)
+	// Manually generated using `shasum --algorithm 256 slug.tgz`
+	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
+	slugChecksum := "SHA256:6731cb5caea2cda97c6177216373360a0733aa8e7a21801de879fa8d22f740cf"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuSlugConfig_withRemoteFile(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuSlugExists("heroku_slug.foobar", &slug),
+					resource.TestCheckResourceAttr("heroku_slug.foobar", "checksum", slugChecksum),
+				),
+			},
+		},
+	})
+}
+
 func TestAccHerokuSlug_WithFile_InPrivateSpace(t *testing.T) {
 	var slug heroku.Slug
 	randString := acctest.RandString(10)
@@ -185,7 +208,23 @@ resource "heroku_slug" "foobar" {
     buildpack_provided_description = "Ruby"
     file_path = "test-fixtures/slug.tgz"
     process_types = {
-    	web = "ruby server.rb"
+      web = "ruby server.rb"
+    }
+}`, appName)
+}
+
+func testAccCheckHerokuSlugConfig_withRemoteFile(appName string) string {
+	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_slug" "foobar" {
+    app = "${heroku_app.foobar.name}"
+    buildpack_provided_description = "Ruby"
+    file_url = "https://marsikai.s3.amazonaws.com/slugs/ruby-hello-world.tgz"
+    process_types = {
+      web = "ruby server.rb"
     }
 }`, appName)
 }

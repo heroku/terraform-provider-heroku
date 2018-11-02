@@ -17,10 +17,10 @@ This resource supports uploading a pre-generated archive file of executable code
 
 Create a ready-to-release slug:
 
-* When `file_path` is specified, the file it references must contain a slug archive of executable code and must follow the prescribed layout from [Create slug archive](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#create-slug-archive) in the Heroku Dev Center (nested within an `./app` directory)
-* When `file_path` is not specified, then the [slug archive must be uploaded](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#publish-to-the-platform) to the resulting computed `blob.method` + `blob.url` by some other means, otherwise app release will fail with _Compiled slug couldn't be found_
+* When `file_url` or `file_path` is specified, the referenced file must contain a slug archive of executable code and must follow the prescribed layout from [Create slug archive](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#create-slug-archive) in the Heroku Dev Center (nested within an `./app` directory)
+* When neither `file_url` nor `file_path` is specified, then the [slug archive must be uploaded](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#publish-to-the-platform) to the resulting computed `blob.method` + `blob.url` by some other means, otherwise app release will fail with _Compiled slug couldn't be found_
 * The archive may be created by an external build system, downloaded from another Heroku app, or otherwise provided outside of the context of this Terraform resource
-* If the contents (SHA256) of the file at `file_path` change, then a new resource will be forced on the next plan/apply; if the file does not exist, the difference is ignored.
+* If the contents (SHA256) of the file change, then a new resource will be forced on the next plan/apply; if the file does not exist, the difference is ignored.
 
 ```hcl
 resource "heroku_slug" "foobar" {
@@ -81,7 +81,8 @@ The following arguments are supported:
 * `checksum` - Hash of the slug for verifying its integrity, auto-generated when `file_path` is set to upload a slug archive, `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 * `commit` - Identification of the code with your version control system (eg: SHA of the git HEAD), `"60883d9e8947a57e04dc9124f25df004866a2051"`
 * `commit_description` - Description of the provided commit
-* `file_path` - Local path to a slug archive, see [Minimal Example](#minimal-example), `"slugs/current.tgz"`
+* `file_path` - Local path to a slug archive, may be overridden by `file_url`, `"slugs/current.tgz"`
+* `file_url` - https:// URL to a slug archive, overrides `file_path`, `"https://example.com/slugs/app-v1.tgz"`
 * `process_types` - (Required) Map of [processes to launch on Heroku Dynos](https://devcenter.heroku.com/articles/process-model)
 * `stack` - Name or ID of the [Heroku stack](https://devcenter.heroku.com/articles/stack)
 
