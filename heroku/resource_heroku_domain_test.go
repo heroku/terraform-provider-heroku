@@ -31,8 +31,6 @@ func TestAccHerokuDomain_Basic(t *testing.T) {
 						"heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
 					resource.TestCheckResourceAttr(
 						"heroku_domain.foobar", "app", appName),
-					resource.TestCheckResourceAttr(
-						"heroku_domain.foobar", "cname", "terraform-tftest-"+randString+".example.com.herokudns.com"),
 				),
 			},
 		},
@@ -61,6 +59,10 @@ func testAccCheckHerokuDomainAttributes(Domain *heroku.Domain) resource.TestChec
 	return func(s *terraform.State) error {
 		if !strings.HasPrefix(Domain.Hostname, "terraform-") && !strings.HasSuffix(Domain.Hostname, ".example.com") {
 			return fmt.Errorf("Bad hostname: %s", Domain.Hostname)
+		}
+
+		if !strings.Contains(*Domain.CName, ".herokudns.com") {
+			return fmt.Errorf("Expected hostname to be [*.herokudns.com] but got: [%s]", *Domain.CName)
 		}
 
 		return nil
