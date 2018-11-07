@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"regexp"
 	"strings"
 
 	uuid "github.com/hashicorp/go-uuid"
@@ -47,6 +48,7 @@ func resourceHerokuSlug() *schema.Resource {
 				ConflictsWith: []string{"file_path"},
 				Optional:      true,
 				ForceNew:      true,
+				ValidateFunc:  validateFileUrl,
 			},
 
 			"blob": {
@@ -401,4 +403,20 @@ func cleanupFile(filePath string) {
 			log.Printf("[WARN] Error cleaning-up downloaded slug: %s (%s)", err, filePath)
 		}
 	}
+}
+
+func validateFileUrl(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	if value == "" {
+		return
+	}
+
+	pattern := `^https://`
+	if !regexp.MustCompile(pattern).MatchString(value) {
+		errors = append(errors, fmt.Errorf(
+			"%q must be a secure URL, start with `https://`. Value is %q",
+			k, value))
+	}
+
+	return
 }

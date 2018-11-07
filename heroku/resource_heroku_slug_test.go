@@ -124,6 +124,22 @@ func TestAccHerokuSlug_WithRemoteFile(t *testing.T) {
 	})
 }
 
+func TestAccHerokuSlug_WithInsecureRemoteFile(t *testing.T) {
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-%s", randString)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckHerokuSlugConfig_withInsecureRemoteFile(appName),
+				ExpectError: regexp.MustCompile(`must be a secure URL`),
+			},
+		},
+	})
+}
+
 func TestAccHerokuSlug_WithFile_InPrivateSpace(t *testing.T) {
 	var slug heroku.Slug
 	randString := acctest.RandString(10)
@@ -256,6 +272,22 @@ resource "heroku_slug" "foobar" {
     app = "${heroku_app.foobar.name}"
     buildpack_provided_description = "Ruby"
     file_url = "https://github.com/terraform-providers/terraform-provider-heroku/raw/master/heroku/test-fixtures/slug.tgz"
+    process_types = {
+      web = "ruby server.rb"
+    }
+}`, appName)
+}
+
+func testAccCheckHerokuSlugConfig_withInsecureRemoteFile(appName string) string {
+	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_slug" "foobar" {
+    app = "${heroku_app.foobar.name}"
+    buildpack_provided_description = "Ruby"
+    file_url = "http://github.com/terraform-providers/terraform-provider-heroku/raw/master/heroku/test-fixtures/slug.tgz"
     process_types = {
       web = "ruby server.rb"
     }

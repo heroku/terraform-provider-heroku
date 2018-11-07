@@ -81,7 +81,7 @@ The following arguments are supported:
 * `commit` - Identification of the code with your version control system (eg: SHA of the git HEAD), `"60883d9e8947a57e04dc9124f25df004866a2051"`
 * `commit_description` - Description of the provided commit
 * `file_path` - (Required unless `file_url` is set) Local path to a slug archive, `"slugs/current.tgz"`
-* `file_url` - (Required unless `file_path` is set) https:// URL to a slug archive, `"https://example.com/slugs/app-v1.tgz"`
+* `file_url` - (Required unless `file_path` is set) **https** URL to a slug archive, `"https://example.com/slugs/app-v1.tgz"`
 * `process_types` - (Required) Map of [processes to launch on Heroku Dynos](https://devcenter.heroku.com/articles/process-model)
 * `stack` - Name or ID of the [Heroku stack](https://devcenter.heroku.com/articles/stack)
 
