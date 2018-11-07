@@ -43,9 +43,10 @@ func resourceHerokuSlug() *schema.Resource {
 
 			// https:// URL of tarball to upload into slug
 			"file_url": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:          schema.TypeString,
+				ConflictsWith: []string{"file_path"},
+				Optional:      true,
+				ForceNew:      true,
 			},
 
 			"blob": {
@@ -162,13 +163,14 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 		opts.BuildpackProvidedDescription = heroku.String(v.(string))
 	}
 
-	// Optionally, download the archive from an HTTP server
-	var downloadFilePath string
-	var userFilePath string
+	// Only file_path or file_url will be set, because of ConflictsWith.
 	var filePath string
+	// Simply use the configured file path
 	if v, ok := d.GetOk("file_path"); ok {
-		userFilePath = v.(string)
+		filePath = v.(string)
 	}
+	// Download the slug archive to a unique file path and clean it up
+	// after uploading to Heroku platform.
 	if v, ok := d.GetOk("file_url"); ok {
 		fileUrl := v.(string)
 
@@ -176,20 +178,19 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			return err
 		}
-		downloadFilePath = fmt.Sprintf("slug-%s.tgz", newUuid)
+		filePath = fmt.Sprintf("slug-%s.tgz", newUuid)
 
-		err = downloadSlug(fileUrl, downloadFilePath)
+		err = downloadSlug(fileUrl, filePath)
 		if err != nil {
 			return err
 		}
-		defer cleanupFile(downloadFilePath)
+		defer cleanupFile(filePath)
 	}
 
-	// Prefer the downloaded file
-	if downloadFilePath != "" {
-		filePath = downloadFilePath
-	} else if userFilePath != "" {
-		filePath = userFilePath
+	// Require a file path by validating this programmatically.
+	// (ConflictsWith cannot be used with Required)
+	if filePath == "" {
+		return fmt.Errorf("Error creating slug: requires either `file_path` or `file_url` attribute")
 	}
 
 	if v, ok := d.GetOk("checksum"); ok {

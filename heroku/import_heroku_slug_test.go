@@ -24,7 +24,8 @@ func TestAccHerokuSlug_importBasic(t *testing.T) {
 				ImportState:         true,
 				ImportStateVerify:   true,
 				// "blob" ignored because generated uniquely by Heroku for each Slug
-				ImportStateVerifyIgnore: []string{"blob"},
+				// "file_path" ignored because it is an ephemeral create-only attribute
+				ImportStateVerifyIgnore: []string{"blob", "file_path"},
 			},
 		},
 	})
@@ -46,13 +47,14 @@ func TestAccHerokuSlug_importAllOpts(t *testing.T) {
 				ImportState:         true,
 				ImportStateVerify:   true,
 				// "blob" ignored because generated uniquely by Heroku for each Slug
-				ImportStateVerifyIgnore: []string{"blob"},
+				// "file_path" ignored because it is an ephemeral create-only attribute
+				ImportStateVerifyIgnore: []string{"blob", "file_path"},
 			},
 		},
 	})
 }
 
-func TestAccHerokuSlug_importWithFile(t *testing.T) {
+func TestAccHerokuSlug_importWithFileUrl(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
@@ -60,7 +62,7 @@ func TestAccHerokuSlug_importWithFile(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuSlugConfig_withFile(appName),
+				Config: testAccCheckHerokuSlugConfig_withRemoteFile(appName),
 			},
 			{
 				ResourceName:        "heroku_slug.foobar",
@@ -68,8 +70,8 @@ func TestAccHerokuSlug_importWithFile(t *testing.T) {
 				ImportState:         true,
 				ImportStateVerify:   true,
 				// "blob" ignored because generated uniquely by Heroku for each Slug
-				// "file_path" ignored because it is an ephemeral create-only attribute
-				ImportStateVerifyIgnore: []string{"blob", "file_path"},
+				// "file_url" ignored because it is an ephemeral create-only attribute
+				ImportStateVerifyIgnore: []string{"blob", "file_url"},
 			},
 		},
 	})
