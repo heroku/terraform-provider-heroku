@@ -326,19 +326,19 @@
   revision = "3520598351bb3500a49ae9563f5539666ae0a27c"
 
 [[projects]]
+  branch = "master"
+  digest = "1:7c79c523059440ed7901f5f815b5d359dd5e080d05d92ae31433273aead21ee6"
+  name = "github.com/heroku/heroku-go"
+  packages = ["v3"]
+  pruneopts = "UT"
+  revision = "3b96879aa0a537cdfabc258cd8a13bc079d06801"
+
+[[projects]]
   digest = "1:e22af8c7518e1eab6f2eab2b7d7558927f816262586cd6ed9f349c97a6c285c4"
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
   pruneopts = "UT"
   revision = "0b12d6b5"
-
-[[projects]]
-  branch = "retry-with-backoff"
-  digest = "1:7c79c523059440ed7901f5f815b5d359dd5e080d05d92ae31433273aead21ee6"
-  name = "github.com/mars/heroku-go"
-  packages = ["v3"]
-  pruneopts = "UT"
-  revision = "4a8c8947d1892510af97e9763483f2afc10d2d41"
 
 [[projects]]
   digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
@@ -617,6 +617,7 @@
     "github.com/hashicorp/terraform/helper/validation",
     "github.com/hashicorp/terraform/plugin",
     "github.com/hashicorp/terraform/terraform",
+    "github.com/heroku/heroku-go/v3",
     "github.com/mars/heroku-go/v3",
     "github.com/mitchellh/go-homedir",
     "github.com/satori/uuid",

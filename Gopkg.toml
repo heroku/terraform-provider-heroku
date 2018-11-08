@@ -26,8 +26,8 @@
 
 
 [[constraint]]
-  branch = "retry-with-backoff"
-  name = "github.com/mars/heroku-go"
+  branch = "master"
+  name = "github.com/heroku/heroku-go"
 
 [[constraint]]
   branch = "master"

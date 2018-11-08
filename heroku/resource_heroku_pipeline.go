@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/mars/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 func resourceHerokuPipeline() *schema.Resource {

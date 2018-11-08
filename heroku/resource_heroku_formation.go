@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/mars/heroku-go/v3"
+	"github.com/heroku/heroku-go/v3"
 )
 
 // herokuFormation is a value type used to hold the details of a formation
