@@ -2,6 +2,17 @@
 
 FEATURES:
 * **New Resource:** `heroku_account_feature` (for managing account features) [#134](https://github.com/terraform-providers/terraform-provider-heroku/pull/134)
+* **New Data Resource:** `heroku_addon` (Get information on a Heroku Addon) [#130](https://github.com/terraform-providers/terraform-provider-heroku/pull/130)
+
+IMPROVEMENTS:
+* `heroku_cert` - Set private_key parameter to sensitive [#133](https://github.com/terraform-providers/terraform-provider-heroku/pull/133)
+* `heroku_slug` - Add test for heroku slug with a private space app [#138](https://github.com/terraform-providers/terraform-provider-heroku/pull/138)
+* `heroku_slug` - Fetch slug archives via HTTPS & allow users to specify a `file_url` attribute [#139](https://github.com/terraform-providers/terraform-provider-heroku/pull/139)
+
+BUG FIXES:
+* `heroku_formation` - Fix formation.html.markdown [#136](https://github.com/terraform-providers/terraform-provider-heroku/pull/136)
+* `heroku_domain` - Fix heroku domain test after a [recent change](https://devcenter.heroku.com/changelog-items/1488) randomly generates a DNS target [#137](https://github.com/terraform-providers/terraform-provider-heroku/pull/137)
+
 
 ## 1.5.0 (October 15, 2018)
 
