@@ -1,9 +1,10 @@
 ---
 layout: "heroku"
 page_title: "Heroku: heroku_account_feature"
-sidebar_current: "docs-heroku-resource-addon"
+sidebar_current: "docs-heroku-resource-account-feature"
 description: |-
   Provides a Heroku Account Feature resource.
+---
 
 # heroku\_account_feature
 
