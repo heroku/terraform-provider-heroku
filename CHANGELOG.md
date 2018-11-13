@@ -1,4 +1,4 @@
-## 1.6.0 (Unreleased)
+## 1.6.0 (November 13, 2018)
 
 FEATURES:
 * **New Resource:** `heroku_account_feature` (for managing account features) [#134](https://github.com/terraform-providers/terraform-provider-heroku/pull/134)
