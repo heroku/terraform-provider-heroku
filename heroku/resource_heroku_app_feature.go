@@ -16,7 +16,7 @@ func resourceHerokuAppFeature() *schema.Resource {
 		Delete: resourceHerokuAppFeatureDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourceHerokuAppFeatureImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -39,6 +39,12 @@ func resourceHerokuAppFeature() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceHerokuAppFeatureImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceHerokuAppFeatureRead(d, meta)
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceHerokuAppFeatureRead(d *schema.ResourceData, meta interface{}) error {

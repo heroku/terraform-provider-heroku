@@ -26,3 +26,11 @@ The following arguments are supported:
 * `app` - (Required) The Heroku app to link to.
 * `name` - (Required) The name of the App Feature to manage.
 * `enabled` - (Optional) Whether to enable or disable the App Feature. The default value is true.
+
+## Import
+App features can be imported using the combination of the application name, a colon, and the feature's name.
+
+For example:
+```
+$ terraform import heroku_app_feature.runtime_metrics foobar:runtime_metrics
+```
