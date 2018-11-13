@@ -52,3 +52,9 @@ $ $GOPATH/bin/terraform-provider-heroku
 ```
 
 Please see the [TESTING](TESTING.md) guide for detailed instructions on running tests.
+
+### Updating or adding dependencies
+
+This project uses [dep](https://golang.github.io/dep/) for dependency management.
+
+Use the [`dep ensure` command](https://golang.github.io/dep/docs/daily-dep.html) to add, update, & remove dependencies.

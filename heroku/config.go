@@ -28,8 +28,17 @@ func (c *Config) loadAndInitialize() error {
 			UserAgent:         heroku.DefaultUserAgent,
 			AdditionalHeaders: c.Headers,
 			Debug:             debugHTTP,
+			Transport:         heroku.RoundTripWithRetryBackoff{
+				// Configuration fields for ExponentialBackOff
+				// InitialIntervalSeconds: 30,
+				// RandomizationFactor:    0.25,
+				// Multiplier:             2,
+				// MaxIntervalSeconds:     900,
+				// MaxElapsedTimeSeconds:  0,
+			},
 		},
 	})
+	c.Api.URL = "https://api-rate-limiter.herokuapp.com"
 
 	log.Printf("[INFO] Heroku Client configured for user: %s", c.Email)
 
