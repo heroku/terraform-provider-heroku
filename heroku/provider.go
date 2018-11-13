@@ -13,6 +13,7 @@ import (
 
 	"github.com/bgentry/go-netrc/netrc"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/hashicorp/terraform/terraform"
 	heroku "github.com/heroku/heroku-go/v3"
 	"github.com/mitchellh/go-homedir"
@@ -42,6 +43,20 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HEROKU_API_URL", heroku.DefaultURL),
+			},
+			"api": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"post_app_create_delay": {
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Default:      0,
+							ValidateFunc: validation.IntAtLeast(0),
+						},
+					},
+				},
 			},
 		},
 
@@ -114,12 +129,29 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		config.APIKey = apiKey.(string)
 	}
 
+	err = applyAPIConfig(d, &config)
+
 	log.Println("[INFO] Initializing Heroku client")
 	if err := config.loadAndInitialize(); err != nil {
 		return nil, err
 	}
 
 	return &config, nil
+}
+
+func applyAPIConfig(d *schema.ResourceData, config *Config) error {
+	v := d.Get("api").([]interface{})
+	if len(v) > 0 && v[0] != nil {
+		if len(v) > 1 {
+			return fmt.Errorf("Provider configuration error: only 1 api config is permitted")
+		}
+		apiDetails := v[0].(map[string]interface{})
+		if v := apiDetails["post_app_create_delay"]; v != nil {
+			delay := v.(int)
+			log.Printf("[DEBUG] provider post_app_create_delay set to: %d", delay)
+		}
+	}
+	return nil
 }
 
 func buildCompositeID(a, b string) string {

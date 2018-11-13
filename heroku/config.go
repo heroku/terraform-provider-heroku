@@ -1,10 +1,11 @@
 package heroku
 
 import (
-	"github.com/hashicorp/terraform/helper/logging"
-	heroku "github.com/heroku/heroku-go/v3"
 	"log"
 	"net/http"
+
+	"github.com/hashicorp/terraform/helper/logging"
+	heroku "github.com/heroku/heroku-go/v3"
 )
 
 type Config struct {
