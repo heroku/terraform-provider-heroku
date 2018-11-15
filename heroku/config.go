@@ -38,7 +38,6 @@ func (c *Config) loadAndInitialize() error {
 			},
 		},
 	})
-	c.Api.URL = "https://api-rate-limiter.herokuapp.com"
 
 	log.Printf("[INFO] Heroku Client configured for user: %s", c.Email)
 
