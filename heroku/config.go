@@ -8,13 +8,21 @@ import (
 	heroku "github.com/heroku/heroku-go/v3"
 )
 
-type Config struct {
-	Email   string
-	APIKey  string
-	Headers http.Header
-	URL     string
+const (
+	DefaultPostAppCreateDelay    = int64(5)
+	DefaultPostSpaceCreateDelay  = int64(5)
+	DefaultPostDomainCreateDelay = int64(5)
+)
 
-	Api *heroku.Service
+type Config struct {
+	Api                   *heroku.Service
+	APIKey                string
+	Email                 string
+	Headers               http.Header
+	PostAppCreateDelay    int64
+	PostDomainCreateDelay int64
+	PostSpaceCreateDelay  int64
+	URL                   string
 }
 
 // Client returns a new Config for accessing Heroku.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heroku/heroku-go/v3"
@@ -77,6 +78,8 @@ func resourceHerokuDomainCreate(d *schema.ResourceData, meta interface{}) error 
 	d.Set("cname", do.CName)
 
 	log.Printf("[INFO] Domain ID: %s", d.Id())
+	config := meta.(*Config)
+	time.Sleep(time.Duration(config.PostDomainCreateDelay) * time.Second)
 	return nil
 }
 

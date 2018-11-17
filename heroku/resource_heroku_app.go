@@ -251,12 +251,17 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	return []*schema.ResourceData{d}, nil
 }
 
-func switchHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
+func switchHerokuAppCreate(d *schema.ResourceData, meta interface{}) (err error) {
 	if isOrganizationApp(d) {
-		return resourceHerokuOrgAppCreate(d, meta)
+		err = resourceHerokuOrgAppCreate(d, meta)
+	} else {
+		err = resourceHerokuAppCreate(d, meta)
 	}
-
-	return resourceHerokuAppCreate(d, meta)
+	if err == nil {
+		config := meta.(*Config)
+		time.Sleep(time.Duration(config.PostAppCreateDelay) * time.Second)
+	}
+	return
 }
 
 func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {

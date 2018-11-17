@@ -46,13 +46,26 @@ func Provider() terraform.ResourceProvider {
 			},
 			"api": {
 				Type:     schema.TypeList,
+				MaxItems: 1,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"post_app_create_delay": {
 							Type:         schema.TypeInt,
 							Optional:     true,
-							Default:      0,
+							Default:      DefaultPostAppCreateDelay,
+							ValidateFunc: validation.IntAtLeast(0),
+						},
+						"post_space_create_delay": {
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Default:      DefaultPostSpaceCreateDelay,
+							ValidateFunc: validation.IntAtLeast(0),
+						},
+						"post_domain_create_delay": {
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Default:      DefaultPostDomainCreateDelay,
 							ValidateFunc: validation.IntAtLeast(0),
 						},
 					},
@@ -140,15 +153,22 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 }
 
 func applyAPIConfig(d *schema.ResourceData, config *Config) error {
-	v := d.Get("api").([]interface{})
-	if len(v) > 0 && v[0] != nil {
-		if len(v) > 1 {
+	if v, ok := d.GetOk("api"); ok {
+		vL := v.([]interface{})
+		if len(vL) > 1 {
 			return fmt.Errorf("Provider configuration error: only 1 api config is permitted")
 		}
-		apiDetails := v[0].(map[string]interface{})
-		if v := apiDetails["post_app_create_delay"]; v != nil {
-			delay := v.(int)
-			log.Printf("[DEBUG] provider post_app_create_delay set to: %d", delay)
+		for _, v := range vL {
+			apiConfig := v.(map[string]interface{})
+			if v, ok := apiConfig["post_app_create_delay"].(int); ok && v != 0 {
+				config.PostAppCreateDelay = int64(v)
+			}
+			if v, ok := apiConfig["post_space_create_delay"].(int); ok && v != 0 {
+				config.PostSpaceCreateDelay = int64(v)
+			}
+			if v, ok := apiConfig["post_domain_create_delay"].(int); ok && v != 0 {
+				config.PostDomainCreateDelay = int64(v)
+			}
 		}
 	}
 	return nil
