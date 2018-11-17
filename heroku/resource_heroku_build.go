@@ -53,9 +53,10 @@ func resourceHerokuBuild() *schema.Resource {
 			},
 
 			"source": {
-				Type:     schema.TypeMap,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeMap,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validateSecureSourceUrl,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"checksum": {
@@ -249,8 +250,8 @@ func setBuildState(d *schema.ResourceData, build *heroku.Build, appName string) 
 	return nil
 }
 
-func validateUrl(v interface{}, k string) (ws []string, errors []error) {
-	value := v.(string)
+func validateSecureSourceUrl(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(map[string]interface{})["url"].(string)
 	if value == "" {
 		return
 	}

@@ -3,6 +3,7 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/acctest"
@@ -25,6 +26,22 @@ func TestAccHerokuBuild_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
 				),
+			},
+		},
+	})
+}
+
+func TestAccHerokuBuild_InsecureUrl(t *testing.T) {
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-%s", randString)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckHerokuBuildConfig_insecureUrl(appName),
+				ExpectError: regexp.MustCompile(`must be a secure URL`),
 			},
 		},
 	})
@@ -70,6 +87,20 @@ resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
     source = {
     	url = "https://github.com/mars/cra-example-app/archive/v2.1.1.tar.gz"
+    }
+}`, appName)
+}
+
+func testAccCheckHerokuBuildConfig_insecureUrl(appName string) string {
+	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_build" "foobar" {
+    app = "${heroku_app.foobar.name}"
+    source = {
+      url = "http://github.com/mars/cra-example-app/archive/v2.1.1.tar.gz"
     }
 }`, appName)
 }
