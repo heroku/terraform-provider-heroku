@@ -140,7 +140,7 @@ func resourceHerokuSlugImport(d *schema.ResourceData, meta interface{}) ([]*sche
 
 	d.SetId(slug.ID)
 	d.Set("app", app)
-	setState(d, slug)
+	setSlugState(d, slug)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -238,7 +238,7 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(slug.ID)
-	setState(d, slug)
+	setSlugState(d, slug)
 
 	log.Printf("[INFO] Created slug ID: %s", d.Id())
 	return nil
@@ -253,7 +253,7 @@ func resourceHerokuSlugRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error retrieving slug: %s", err)
 	}
 
-	setState(d, slug)
+	setSlugState(d, slug)
 
 	return nil
 }
@@ -377,7 +377,7 @@ func checksumSlug(filePath string) (string, error) {
 	return checksum, nil
 }
 
-func setState(d *schema.ResourceData, slug *heroku.Slug) error {
+func setSlugState(d *schema.ResourceData, slug *heroku.Slug) error {
 	blob := []map[string]string{{
 		"method": slug.Blob.Method,
 		"url":    slug.Blob.URL,
