@@ -54,7 +54,7 @@ The following arguments are supported:
 
 The following attributes are exported:
 
-* `id` - The ID of the build
+* `uuid` - The ID of the build
 * `output_stream_url` - URL that [streams the log output from the build](https://devcenter.heroku.com/articles/build-and-release-using-the-api#streaming-build-output)
 * `release` - The Heroku app release created with a build's slug
   * `id`
