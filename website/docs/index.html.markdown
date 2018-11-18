@@ -41,8 +41,12 @@ precedence, and explained below:
 
 ### Static credentials
 
+<<<<<<< HEAD
 Static credentials can be provided by adding an `email` and `api_key` in-line
 in the Heroku provider block:
+=======
+Static credentials can be provided by adding an `email` and `api_key` in-line in the Heroku provider block:
+>>>>>>> Fix doc formatting
 
 ```hcl
 provider "heroku" {
@@ -52,10 +56,15 @@ provider "heroku" {
 ```
 
 ### Environment variables
+<<<<<<< HEAD
 
 You can provide your credentials via the `HEROKU_EMAIL` and `HEROKU_API_KEY`
 environment variables, representing your Heroku email address and Heroku api
 key, respectively.
+=======
+You can provide your credentials via the `HEROKU_EMAIL` and `HEROKU_API_KEY` environment variables,
+representing your Heroku email address and Heroku api key, respectively.
+>>>>>>> Fix doc formatting
 
 ```hcl
 provider "heroku" {}
@@ -63,13 +72,18 @@ provider "heroku" {}
 
 Usage:
 
+<<<<<<< HEAD
 ```shell
+=======
+```
+>>>>>>> Fix doc formatting
 $ export HEROKU_EMAIL="ops@company.com"
 $ export HEROKU_API_KEY="heroku_api_key"
 $ terraform plan
 ```
 
 ### Netrc
+<<<<<<< HEAD
 
 You can provider your credentials via a `.netrc` file in your home directory.
 This file should be in the following format:
@@ -81,6 +95,17 @@ machine api.heroku.com
 ```
 
 For more information about netrc, please refer to [https://ec.haxx.se/usingcurl-netrc.html](https://ec.haxx.se/usingcurl-netrc.html) 
+=======
+You can provider your credentials via a `.netrc` file in your home directory. This file should be in this format:
+
+ ```
+ machine api.heroku.com
+   login <your_heroku_email>
+   password <your_heroku_api_key>
+ ```
+
+ For more information about netrc, please refer to [https://ec.haxx.se/usingcurl-netrc.html](https://ec.haxx.se/usingcurl-netrc.html)
+>>>>>>> Fix doc formatting
 
 ## Argument Reference
 
@@ -94,6 +119,7 @@ The following arguments are supported:
 
 * `headers` - (Optional) Additional Headers to be sent to Heroku. If not provided,
   it can also be sourced from the `HEROKU_HEADERS` environment variable.
+
 * `delays` - (Optional) A `delays` block (documented below). Only one
   `delays` block may be in the configuration. Delays help mitigate issues with 
   eventual consistency in the Heroku back-end service.
