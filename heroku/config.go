@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	DefaultPostAppCreateDelay    = int64(5)
-	DefaultPostSpaceCreateDelay  = int64(5)
-	DefaultPostDomainCreateDelay = int64(5)
+	DefaultPostAppCreateDelay    = int64(8)
+	DefaultPostSpaceCreateDelay  = int64(8)
+	DefaultPostDomainCreateDelay = int64(8)
 )
 
 type Config struct {

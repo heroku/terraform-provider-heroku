@@ -44,7 +44,7 @@ func Provider() terraform.ResourceProvider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HEROKU_API_URL", heroku.DefaultURL),
 			},
-			"api": {
+			"delays": {
 				Type:     schema.TypeList,
 				MaxItems: 1,
 				Optional: true,
@@ -142,7 +142,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		config.APIKey = apiKey.(string)
 	}
 
-	err = applyAPIConfig(d, &config)
+	err = applyDelayConfig(d, &config)
 
 	log.Println("[INFO] Initializing Heroku client")
 	if err := config.loadAndInitialize(); err != nil {
@@ -152,8 +152,8 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	return &config, nil
 }
 
-func applyAPIConfig(d *schema.ResourceData, config *Config) error {
-	if v, ok := d.GetOk("api"); ok {
+func applyDelayConfig(d *schema.ResourceData, config *Config) error {
+	if v, ok := d.GetOk("delays"); ok {
 		vL := v.([]interface{})
 		if len(vL) > 1 {
 			return fmt.Errorf("Provider configuration error: only 1 api config is permitted")

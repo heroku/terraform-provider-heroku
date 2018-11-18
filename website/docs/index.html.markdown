@@ -94,3 +94,14 @@ The following arguments are supported:
 
 * `headers` - (Optional) Additional Headers to be sent to Heroku. If not provided,
   it can also be sourced from the `HEROKU_HEADERS` environment variable.
+* `delays` - (Optional) A `delays` block (documented below). Only one
+  `delays` block may be in the configuration. Delays help mitigate issues with 
+  eventual consistency in the Heroku back-end service.
+
+The nested `delays` block supports the following:
+
+* `post_app_create_delay` - (Optional) The number of seconds to wait after an app is created. Default is to wait 8 seconds.
+
+* `post_space_create_delay` - (Optional) The number of seconds to wait after a private space is created. Default is to wait 8 seconds.
+
+* `post_domain_create_delay` - (Optional) The number of seconds to wait after a domain is created. Default is to wait 8 seconds.
