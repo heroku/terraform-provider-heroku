@@ -156,7 +156,7 @@ func applyDelayConfig(d *schema.ResourceData, config *Config) error {
 	if v, ok := d.GetOk("delays"); ok {
 		vL := v.([]interface{})
 		if len(vL) > 1 {
-			return fmt.Errorf("Provider configuration error: only 1 api config is permitted")
+			return fmt.Errorf("Provider configuration error: only 1 delays config is permitted")
 		}
 		for _, v := range vL {
 			apiConfig := v.(map[string]interface{})
