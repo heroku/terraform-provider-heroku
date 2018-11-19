@@ -42,3 +42,13 @@ The following arguments are supported:
 * `space` - (Required) The name of the space.
 * `email` - (Required) The email of the team member to set permissions for.
 * `permissions` - (Required) The permissions to grant the team member for the space. Currently `create_apps` is the only supported permission. If not provided the member will have no permissions to the space. Members with admin role will always have `create_apps` permissions, which cannot be removed.
+
+## Importing
+
+Existing slugs can be imported using the combination of the space name, a colon, and the member email.
+
+For example:
+
+```
+$ terraform import heroku_space_app_access.member1 my-space:member1@foobar.com
+```

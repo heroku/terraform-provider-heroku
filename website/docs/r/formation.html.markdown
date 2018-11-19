@@ -48,19 +48,23 @@ resource "heroku_formation" "foobar-web" {
 ```
 
 ## Argument Reference
+
 * `app` - (Required) The name of the application
 * `type` - (Required) type of process such as "web"
 * `quantity` - (Required) number of processes to maintain
 * `size` - (Required) dyno size (Example: “standard-1X”). Capitalization does not matter.
 
 ## Attributes Reference
+
 The following attributes are exported:
+
 * `id` - The ID of the formation
 
 ## Import
 Existing formations can be imported using the combination of the application name, a colon, and the formation's type.
 
 For example:
+
 ```
 $ terraform import heroku_formation.foobar-web foobar:web
 ```

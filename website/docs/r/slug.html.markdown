@@ -107,6 +107,7 @@ The following attributes are exported:
 Existing slugs can be imported using the combination of the application name, a colon, and the slug ID.
 
 For example:
+
 ```
 $ terraform import heroku_slug.foobar bazbux:4f1db8ef-ed5c-4c42-a3d6-3c28262d5abc
 ```

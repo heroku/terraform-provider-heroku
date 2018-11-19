@@ -51,4 +51,8 @@ The following attributes are exported:
 
 ## Importing
 
-When importing a Heroku cert resource, the ID must be built using the app name colon the unique ID from the Heroku API. For an app named `production-api` with a certificate ID of `b85d9224-310b-409b-891e-c903f5a40568`, you would import it as: `$ terraform import heroku_cert.production_api production-api:b85d9224-310b-409b-891e-c903f5a40568`.
+When importing a Heroku cert resource, the ID must be built using the app name colon the unique ID from the Heroku API. For an app named `production-api` with a certificate ID of `b85d9224-310b-409b-891e-c903f5a40568`, you would import it as: 
+
+```
+$ terraform import heroku_cert.production_api production-api:b85d9224-310b-409b-891e-c903f5a40568
+```
