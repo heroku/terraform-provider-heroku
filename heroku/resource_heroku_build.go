@@ -2,9 +2,15 @@ package heroku
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"net/http/httputil"
+	"os"
 	"regexp"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heroku/heroku-go/v3"
@@ -56,18 +62,26 @@ func resourceHerokuBuild() *schema.Resource {
 				Type:         schema.TypeMap,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validateSecureSourceUrl,
+				ValidateFunc: validateSourceUrl,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"checksum": {
 							Type:     schema.TypeString,
+							Computed: true,
 							Optional: true,
 							ForceNew: true,
 						},
 
+						"path": {
+							Type:          schema.TypeString,
+							ConflictsWith: []string{"url"},
+							Optional:      true,
+							ForceNew:      true,
+						},
+
 						"url": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 							ForceNew: true,
 						},
 
@@ -159,15 +173,38 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 		sourceArg := v.(map[string]interface{})
 		if v := sourceArg["checksum"]; v != nil {
 			s := v.(string)
+			if v = sourceArg["path"]; v != nil {
+				return fmt.Errorf("source.checksum should be empty when source.path is set (checksum is auto-generated)")
+			}
 			opts.SourceBlob.Checksum = &s
-		}
-		if v = sourceArg["url"]; v != nil {
-			s := v.(string)
-			opts.SourceBlob.URL = &s
 		}
 		if v = sourceArg["version"]; v != nil {
 			s := v.(string)
 			opts.SourceBlob.Version = &s
+		}
+		if v = sourceArg["path"]; v != nil {
+			// Checksum, create, & upload source archive, setting
+			// this source.url using the new source's GET URL.
+			path := v.(string)
+			checksum, err := checksumSource(path)
+			if err != nil {
+				return fmt.Errorf("Error calculating checksum for build source %s: %s", path, err)
+			}
+			newSource, err := client.SourceCreate(context.TODO())
+			if err != nil {
+				return fmt.Errorf("Error creating source for build: %s", err)
+			}
+			err = uploadSource(path, "PUT", newSource.SourceBlob.PutURL)
+			if err != nil {
+				return fmt.Errorf("Error uploading source for build to %s: %s", newSource.SourceBlob.PutURL, err)
+			}
+			opts.SourceBlob.URL = &newSource.SourceBlob.GetURL
+			opts.SourceBlob.Checksum = &checksum
+		} else if v = sourceArg["url"]; v != nil {
+			s := v.(string)
+			opts.SourceBlob.URL = &s
+		} else {
+			return fmt.Errorf("Build requires either source.path or source.url")
 		}
 	}
 
@@ -203,13 +240,70 @@ func resourceHerokuBuildDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
+func uploadSource(filePath, httpMethod, httpUrl string) error {
+	method := strings.ToUpper(httpMethod)
+	log.Printf("[DEBUG] Uploading source '%s' to %s %s", filePath, method, httpUrl)
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("Error opening source.path: %s", err)
+	}
+	stat, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("Error stating source.path: %s", err)
+	}
+	defer file.Close()
+
+	httpClient := &http.Client{}
+	req, err := http.NewRequest(method, httpUrl, file)
+	if err != nil {
+		return fmt.Errorf("Error creating source upload request: %s", err)
+	}
+	req.ContentLength = stat.Size()
+	log.Printf("[DEBUG] Upload source request: %+v", req)
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("Error uploading source: %s", err)
+	}
+
+	b, err := httputil.DumpResponse(res, true)
+	if err == nil {
+		// generate debug output if it's available
+		log.Printf("[DEBUG] Source upload response: %s", b)
+	}
+
+	defer res.Body.Close()
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		return fmt.Errorf("Unsuccessful HTTP response from source upload: %s", res.Status)
+	}
+
+	return nil
+}
+
+func checksumSource(filePath string) (string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", fmt.Errorf("Error opening source.path: %s", err)
+	}
+	hash := sha256.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return "", fmt.Errorf("Error reading source for checksum: %s", err)
+	}
+	file.Close()
+	checksum := fmt.Sprintf("SHA256:%x", hash.Sum(nil))
+	if err != nil {
+		return "", fmt.Errorf("Error generating source checksum: %s", err)
+	}
+	return checksum, nil
+}
+
 func setBuildState(d *schema.ResourceData, build *heroku.Build, appName string) error {
 	d.Set("app", appName)
 
 	var buildpacks []interface{}
 	for _, buildpack := range build.Buildpacks {
 		url := buildpack.URL
-		buildpacks = append(buildpacks, &url)
+		buildpacks = append(buildpacks, url)
 	}
 	if err := d.Set("buildpacks", buildpacks); err != nil {
 		log.Printf("[WARN] Error setting buildpacks: %s", err)
@@ -225,13 +319,24 @@ func setBuildState(d *schema.ResourceData, build *heroku.Build, appName string) 
 		d.Set("slug_id", build.Slug.ID)
 	}
 
-	source := map[string]interface{}{
-		"checksum": &build.SourceBlob.Checksum,
-		"url":      build.SourceBlob.URL,
-		"version":  &build.SourceBlob.Version,
-	}
-	if err := d.Set("source", source); err != nil {
-		log.Printf("[WARN] Error setting source: %s", err)
+	if v, ok := d.GetOk("source"); ok {
+		source := v.(map[string]interface{})
+		// Checksum & URL are autogenerated when path is set.
+		// Do not set them in that case, so state is consistent.
+		if v := source["path"]; v == "" {
+			if v := build.SourceBlob.Checksum; v != nil {
+				source["checksum"] = *v
+			}
+			if v := build.SourceBlob.URL; v != "" {
+				source["url"] = v
+			}
+		}
+		if v := build.SourceBlob.Version; v != nil {
+			source["version"] = *v
+		}
+		if err := d.Set("source", source); err != nil {
+			log.Printf("[WARN] Error setting source: %s", err)
+		}
 	}
 
 	d.Set("stack", build.Stack)
@@ -250,14 +355,14 @@ func setBuildState(d *schema.ResourceData, build *heroku.Build, appName string) 
 	return nil
 }
 
-func validateSecureSourceUrl(v interface{}, k string) (ws []string, errors []error) {
-	value := v.(map[string]interface{})["url"].(string)
-	if value == "" {
+func validateSourceUrl(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(map[string]interface{})["url"]
+	if value == nil {
 		return
 	}
 
 	pattern := `^https://`
-	if !regexp.MustCompile(pattern).MatchString(value) {
+	if !regexp.MustCompile(pattern).MatchString(value.(string)) {
 		errors = append(errors, fmt.Errorf(
 			"%q must be a secure URL, start with `https://`. Value is %q",
 			k, value))

@@ -3,7 +3,7 @@ layout: "heroku"
 page_title: "Heroku: heroku_build"
 sidebar_current: "docs-heroku-resource-build"
 description: |-
-  Provides the ability to build & release code located at an HTTPS URL, making it possible to launch apps directly from a Terraform config
+  Provides the ability to build & release code from a local or remote source archive, making it possible to launch apps directly from a Terraform config
 ---
 
 # heroku\_build
@@ -11,7 +11,7 @@ description: |-
 Provides a [Heroku Build](https://devcenter.heroku.com/articles/platform-api-reference#build)
 resource.
 
-## Example Usage
+## Example Usage with Remote Source
 
 ```hcl
 resource "heroku_app" "foobar" {
@@ -34,7 +34,34 @@ resource "heroku_formation" "foobar" {
   type       = "web"
   quantity   = 1
   size       = "Standard-1x"
-  depends_on = ["heroku_build.foobar"]
+  depends_on = ["heroku_build.foobar.release"]
+}
+```
+
+## Example Usage with Local Source
+
+```hcl
+resource "heroku_app" "foobar" {
+    name = "foobar"
+    region = "us"
+}
+
+resource "heroku_build" "foobar" {
+  app = "${heroku_app.foobar.id}"
+  buildpacks = ["heroku/ruby"]
+  
+  source = {
+    path    = "sources/app-v1.tgz"
+    version = "v1"
+  }
+}
+
+resource "heroku_formation" "foobar" {
+  app        = "${heroku_app.foobar.id}"
+  type       = "web"
+  quantity   = 1
+  size       = "Standard-1x"
+  depends_on = ["heroku_build.foobar.release"]
 }
 ```
 
@@ -45,9 +72,11 @@ The following arguments are supported:
 * `app` - (Required) The ID of the Heroku app
 * `buildpacks` - List of buildpack registry names and/or GitHub URLs
 * `source` - (Required) A block that specifies the source code to build & release:
-  * `checksum` - Hash of the source archive for verifying its integrity, `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
-  * `url` (Required) - Location of the buildpack for the app. Either a GitHub URL or a [buildpack registry name/namespace](https://devcenter.heroku.com/articles/buildpack-registry)
-  * `version` - Use to track what version of your source originated this build. If you are creating builds from git-versioned source code, for example, the commit hash or release tag would be a good value to use for the version parameter.
+  * `checksum` - Hash of the source archive for verifying its integrity, auto-generated when `source.path` is set, `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+  * `path` - (Required unless `source.url` is set) Local path to the source archive for the app
+  * `url` - (Required unless `source.path` is set) `https` location of the source archive for the app
+  * `version` - Use to track what version of your source originated this build. If you are creating builds from git-versioned source code, for example, the commit hash, or release tag would be a good value to use for the version parameter.
+* `source_path` - (Required unless `source` is set)
 
 
 ## Attributes Reference

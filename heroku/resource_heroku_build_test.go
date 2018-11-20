@@ -47,6 +47,22 @@ func TestAccHerokuBuild_InsecureUrl(t *testing.T) {
 	})
 }
 
+func TestAccHerokuBuild_NoSource(t *testing.T) {
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-%s", randString)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckHerokuBuildConfig_noSource(appName),
+				ExpectError: regexp.MustCompile(`Build requires either`),
+			},
+		},
+	})
+}
+
 func TestAccHerokuBuild_AllOpts(t *testing.T) {
 	var build heroku.Build
 	randString := acctest.RandString(10)
@@ -58,6 +74,60 @@ func TestAccHerokuBuild_AllOpts(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuBuildConfig_allOpts(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
+				),
+			},
+		},
+	})
+}
+
+func TestAccHerokuBuild_LocalSource(t *testing.T) {
+	var build heroku.Build
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-%s", randString)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuBuildConfig_localSource(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
+				),
+			},
+		},
+	})
+}
+
+func TestAccHerokuBuild_LocalSource_SetChecksum(t *testing.T) {
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-%s", randString)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckHerokuBuildConfig_localSource_setChecksum(appName),
+				ExpectError: regexp.MustCompile(`checksum should be empty`),
+			},
+		},
+	})
+}
+
+func TestAccHerokuBuild_LocalSource_AllOpts(t *testing.T) {
+	var build heroku.Build
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-%s", randString)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuBuildConfig_localSource_allOpts(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
 				),
@@ -124,6 +194,20 @@ resource "heroku_build" "foobar" {
 }`, appName)
 }
 
+func testAccCheckHerokuBuildConfig_noSource(appName string) string {
+	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_build" "foobar" {
+    app = "${heroku_app.foobar.name}"
+    source = {
+      version = "v0"
+    }
+}`, appName)
+}
+
 func testAccCheckHerokuBuildConfig_allOpts(appName string) string {
 	// Manually generated `checksum` using `shasum --algorithm 256 v2.1.1.tar.gz`
 	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
@@ -140,6 +224,51 @@ resource "heroku_build" "foobar" {
       checksum = "SHA256:b7dfb201c9fa6541b64fd450c5e00641c80d7d1e39134b7c12ce601efbb8642b"
       url = "https://github.com/mars/cra-example-app/archive/v2.1.1.tar.gz"
       version = "v2.1.1"
+    }
+}`, appName)
+}
+
+func testAccCheckHerokuBuildConfig_localSource(appName string) string {
+	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_build" "foobar" {
+    app = "${heroku_app.foobar.name}"
+    source = {
+      path = "test-fixtures/app.tgz"
+    }
+}`, appName)
+}
+
+func testAccCheckHerokuBuildConfig_localSource_setChecksum(appName string) string {
+	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_build" "foobar" {
+    app = "${heroku_app.foobar.name}"
+    source = {
+      checksum = "SHA256:0000000000000000000000000000000000000000000000000000000000000000"
+      path = "test-fixtures/app.tgz"
+    }
+}`, appName)
+}
+
+func testAccCheckHerokuBuildConfig_localSource_allOpts(appName string) string {
+	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_build" "foobar" {
+    app = "${heroku_app.foobar.name}"
+    buildpacks = ["heroku/ruby"]
+    source = {
+      path = "test-fixtures/app.tgz"
+      version = "v0"
     }
 }`, appName)
 }
