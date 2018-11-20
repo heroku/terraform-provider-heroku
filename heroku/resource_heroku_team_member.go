@@ -48,7 +48,10 @@ func resourceHerokuTeamMember() *schema.Resource {
 
 // Callback for schema.ResourceImporter
 func resourceHerokuTeamMemberImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	team, email := parseCompositeID(d.Id())
+	team, email, err := parseCompositeID(d.Id())
+	if err != nil {
+		return nil, err
+	}
 	d.Set("team", team)
 	d.Set("email", email)
 	resourceHerokuTeamMemberRead(d, meta)
@@ -82,7 +85,10 @@ func resourceHerokuTeamMemberSet(d *schema.ResourceData, meta interface{}) error
 // Callback for schema Resource.Read
 func resourceHerokuTeamMemberRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
-	team, email := parseCompositeID(d.Id())
+	team, email, err := parseCompositeID(d.Id())
+	if err != nil {
+		return err
+	}
 
 	members, err := client.TeamMemberList(context.TODO(), team, &heroku.ListRange{Field: "email"})
 	if err != nil {
@@ -112,9 +118,12 @@ func resourceHerokuTeamMemberRead(d *schema.ResourceData, meta interface{}) erro
 // Callback for schema Resource.Delete
 func resourceHerokuTeamMemberDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
-	team, email := parseCompositeID(d.Id())
+	team, email, err := parseCompositeID(d.Id())
+	if err != nil {
+		return err
+	}
 
-	_, err := client.TeamMemberDelete(context.TODO(), team, email)
+	_, err = client.TeamMemberDelete(context.TODO(), team, email)
 	if err != nil {
 		return err
 	}

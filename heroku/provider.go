@@ -7,12 +7,13 @@ import (
 	"net/http"
 	"strings"
 
+	"os"
+	"runtime"
+
 	"github.com/bgentry/go-netrc/netrc"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/mitchellh/go-homedir"
-	"os"
-	"runtime"
 )
 
 // Provider returns a terraform.ResourceProvider.
@@ -113,9 +114,15 @@ func buildCompositeID(a, b string) string {
 	return fmt.Sprintf("%s:%s", a, b)
 }
 
-func parseCompositeID(id string) (string, string) {
+func parseCompositeID(id string) (p1 string, p2 string, err error) {
 	parts := strings.SplitN(id, ":", 2)
-	return parts[0], parts[1]
+	if len(parts) == 2 {
+		p1 = parts[0]
+		p2 = parts[1]
+	} else {
+		err = fmt.Errorf("error: Import composite ID requires two parts separated by colon, eg x:y")
+	}
+	return
 }
 
 // Credit of this method is from https://github.com/Yelp/terraform-provider-signalform

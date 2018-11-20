@@ -3,12 +3,13 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heroku/heroku-go/v3"
-	"log"
-	"time"
 )
 
 /**
@@ -265,7 +266,10 @@ func (tc *teamCollaborator) Update() error {
 func resourceHerokuTeamCollaboratorImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client := meta.(*Config).Api
 
-	app, email := parseCompositeID(d.Id())
+	app, email, err := parseCompositeID(d.Id())
+	if err != nil {
+		return nil, err
+	}
 
 	collaborator, err := client.CollaboratorInfo(context.Background(), app, email)
 	if err != nil {

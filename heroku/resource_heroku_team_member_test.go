@@ -45,7 +45,7 @@ func testAccCheckHerokuTeamMemberExists(n string) resource.TestCheckFunc {
 			return fmt.Errorf("[ERROR] No Team Member Set")
 		}
 
-		team, email := parseCompositeID(rs.Primary.ID)
+		team, email, _ := parseCompositeID(rs.Primary.ID)
 		client := testAccProvider.Meta().(*Config).Api
 
 		members, err := client.TeamMemberList(context.TODO(), team, &heroku.ListRange{Field: "email"})

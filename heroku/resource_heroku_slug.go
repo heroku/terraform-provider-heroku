@@ -128,7 +128,10 @@ func resourceHerokuSlug() *schema.Resource {
 func resourceHerokuSlugImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client := meta.(*Config).Api
 
-	app, slugID := parseCompositeID(d.Id())
+	app, slugID, err := parseCompositeID(d.Id())
+	if err != nil {
+		return nil, err
+	}
 
 	slug, err := client.SlugInfo(context.Background(), app, slugID)
 	if err != nil {

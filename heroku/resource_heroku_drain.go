@@ -48,7 +48,10 @@ const retryableError = `App hasn't yet been assigned a log channel. Please try a
 func resourceHerokuDrainImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client := meta.(*Config).Api
 
-	app, id := parseCompositeID(d.Id())
+	app, id, err := parseCompositeID(d.Id())
+	if err != nil {
+		return nil, err
+	}
 
 	dr, err := client.LogDrainInfo(context.Background(), app, id)
 	if err != nil {
