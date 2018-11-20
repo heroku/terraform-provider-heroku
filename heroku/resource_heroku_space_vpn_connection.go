@@ -84,7 +84,10 @@ func resourceHerokuSpaceVPNConnection() *schema.Resource {
 
 func resourceHerokuSpaceVPNConnectionRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
-	space, id := parseCompositeID(d.Id())
+	space, id, err := parseCompositeID(d.Id())
+	if err != nil {
+		return err
+	}
 
 	conn, err := client.VPNConnectionInfo(context.TODO(), space, id)
 	if err != nil {
@@ -156,9 +159,12 @@ func resourceHerokuSpaceVPNConnectionCreate(d *schema.ResourceData, meta interfa
 
 func resourceHerokuSpaceVPNConnectionDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
-	space, id := parseCompositeID(d.Id())
+	space, id, err := parseCompositeID(d.Id())
+	if err != nil {
+		return err
+	}
 
-	_, err := client.VPNConnectionDestroy(context.TODO(), space, id)
+	_, err = client.VPNConnectionDestroy(context.TODO(), space, id)
 	if err != nil {
 		return fmt.Errorf("Error deleting VPN: %v", err)
 	}

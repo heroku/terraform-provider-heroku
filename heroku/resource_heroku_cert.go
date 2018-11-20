@@ -54,7 +54,10 @@ func resourceHerokuCert() *schema.Resource {
 func resourceHerokuCertImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client := meta.(*Config).Api
 
-	app, id := parseCompositeID(d.Id())
+	app, id, err := parseCompositeID(d.Id())
+	if err != nil {
+		return nil, err
+	}
 
 	ep, err := client.SSLEndpointInfo(context.Background(), app, id)
 	if err != nil {

@@ -216,7 +216,10 @@ func (f *formation) GetInfo(appName string) error {
 func resourceHerokuFormationImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client := meta.(*Config).Api
 
-	app, formationType := parseCompositeID(d.Id())
+	app, formationType, err := parseCompositeID(d.Id())
+	if err != nil {
+		return nil, err
+	}
 
 	formation, err := client.FormationInfo(context.Background(), app, formationType)
 	if err != nil {

@@ -3,10 +3,11 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/heroku/heroku-go/v3"
-	"testing"
 )
 
 func TestAccHerokuAccountFeature_Basic(t *testing.T) {
@@ -74,7 +75,7 @@ func testAccCheckHerokuAccountFeatureStatus(n string, accountFeature *heroku.Acc
 		}
 
 		client := testAccProvider.Meta().(*Config).Api
-		accountEmail, accountFeatureName := parseCompositeID(rs.Primary.ID)
+		accountEmail, accountFeatureName, _ := parseCompositeID(rs.Primary.ID)
 
 		// Check to make sure accountEmail matches what was set as the resource Id
 		account, err := client.AccountInfo(context.TODO())

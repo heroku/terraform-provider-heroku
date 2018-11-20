@@ -50,7 +50,10 @@ func resourceHerokuAppFeatureImport(d *schema.ResourceData, meta interface{}) ([
 func resourceHerokuAppFeatureRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	app, id := parseCompositeID(d.Id())
+	app, id, err := parseCompositeID(d.Id())
+	if err != nil {
+		return err
+	}
 
 	feature, err := client.AppFeatureInfo(context.TODO(), app, id)
 	if err != nil {
@@ -96,12 +99,15 @@ func resourceHerokuAppFeatureUpdate(d *schema.ResourceData, meta interface{}) er
 func resourceHerokuAppFeatureDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	app, id := parseCompositeID(d.Id())
+	app, id, err := parseCompositeID(d.Id())
+	if err != nil {
+		return err
+	}
 	featureName := d.Get("name").(string)
 
 	log.Printf("[INFO] Deleting app feature %s (%s) for app %s", featureName, id, app)
 	opts := heroku.AppFeatureUpdateOpts{Enabled: false}
-	_, err := client.AppFeatureUpdate(context.TODO(), app, id, opts)
+	_, err = client.AppFeatureUpdate(context.TODO(), app, id, opts)
 	if err != nil {
 		return err
 	}

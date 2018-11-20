@@ -74,7 +74,7 @@ func testAccCheckHerokuFeatureExists(n string, feature *heroku.AppFeature) resou
 			return fmt.Errorf("No feature ID is set")
 		}
 
-		app, id := parseCompositeID(rs.Primary.ID)
+		app, id, _ := parseCompositeID(rs.Primary.ID)
 		if app != rs.Primary.Attributes["app"] {
 			return fmt.Errorf("Bad app: %s", app)
 		}

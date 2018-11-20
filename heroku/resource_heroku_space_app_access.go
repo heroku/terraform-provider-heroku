@@ -44,7 +44,10 @@ func resourceHerokuSpaceAppAccess() *schema.Resource {
 
 //callback for schema.ResourceImporter
 func resourceHerokuSpaceAppAccessImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	space, email := parseCompositeID(d.Id())
+	space, email, err := parseCompositeID(d.Id())
+	if err != nil {
+		return nil, err
+	}
 	d.Set("space", space)
 	d.Set("email", email)
 	resourceHerokuSpaceAppAccessRead(d, meta)

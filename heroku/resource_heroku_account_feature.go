@@ -3,9 +3,10 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heroku/heroku-go/v3"
-	"log"
 )
 
 func resourceHerokuAccountFeature() *schema.Resource {
@@ -45,7 +46,10 @@ func resourceHerokuAccountFeature() *schema.Resource {
 }
 
 func resourceHerokuAccountFeatureImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	_, accountFeatureName := parseCompositeID(d.Id())
+	_, accountFeatureName, err := parseCompositeID(d.Id())
+	if err != nil {
+		return nil, err
+	}
 	d.SetId(d.Id())
 	d.Set("name", accountFeatureName)
 
