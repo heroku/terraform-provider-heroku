@@ -8,7 +8,7 @@ description: |-
 
 # heroku\_build
 
-*`git push heroku master` for Terraform*
+***Deploy to Heroku** for Terraform*
 
 Provides a [Heroku Build](https://devcenter.heroku.com/articles/platform-api-reference#build)
 resource, to deploy source code to Heroku.
