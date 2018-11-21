@@ -22,11 +22,9 @@ When build succeeds, Heroku creates a new app release. [Release phase](https://d
 When build fails, the error will contain a URL to view the build log. `curl "https://the-long-log-url-in-the-error"`.
 
 ## Source URLs
-
 A `source.url` may point to any `https://` URL that responds to a `GET` with a tarball source code. When running `terraform apply`, the source code will only be fetched once for a successful build. Change the URL to force a new resource.
 
 ### GitHub URLs
-
 GitHub provides [release](https://help.github.com/articles/creating-releases/) tarballs through URLs. Create a release and then use the tag as a `source.url`, such as:
 
 ```
@@ -35,8 +33,7 @@ https://github.com/username/example/archive/v1.0.0.tar.gz
 
 Using a branch or master `source.url` is strongly discouraged, because tracking down exactly what was deployed for a given `terraform apply` is difficult.
 
-## Local source file
-
+## Local source files
 A `source.path` may point to a tarball of source code using relative or root paths. When running `terraform apply`, if the contents (SHA256) of the source path changed since the last `apply`, then a new build will start.
 
 ## Example Usage with Remote Source
