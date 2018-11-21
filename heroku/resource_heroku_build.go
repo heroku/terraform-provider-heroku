@@ -246,11 +246,6 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error creating build: %s opts %+v", err, opts)
 	}
 
-	d.SetId(build.ID)
-	setBuildState(d, build, app)
-
-	log.Printf("[INFO] Created build ID: %s", d.Id())
-
 	// Wait for the Build to be complete
 	log.Printf("[DEBUG] Waiting for Build (%s:%s) to complete", app, build.ID)
 	stateConf := &resource.StateChangeConf{
@@ -265,6 +260,11 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 	if _, err := stateConf.WaitForState(); err != nil {
 		return err
 	}
+
+	d.SetId(build.ID)
+	setBuildState(d, build, app)
+
+	log.Printf("[INFO] Created build ID: %s", d.Id())
 
 	return nil
 }
