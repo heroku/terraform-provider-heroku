@@ -30,12 +30,14 @@ A `source.url` may point to any `https://` URL that responds to a `GET` with a t
 GitHub provides tarballs through URLs:
 
 * **release tag** `https://github.com/username/example/archive/v1.0.0.tar.gz`
-* **branch name** `https://github.com/username/example/archive/branchname.zip`
-* **master** `https://github.com/username/example/archive/master.zip`
+* **branch name** `https://github.com/username/example/archive/branchname.tar.gz`
+* **master** `https://github.com/username/example/archive/master.tar.gz`
+
+If a branch or master is used, ensure `source.version` is set to a meaningful value. Otherwise, it will be challenging to trace what source code was deployed for any given `terraform apply`.
 
 ## Local source file
 
-A `source.path` may point to a tarball of source code using relative or root paths. When running `terraform apply`, the source path will build if the contents (SHA256) of the file changes since the last `apply`.
+A `source.path` may point to a tarball of source code using relative or root paths. When running `terraform apply`, if the contents (SHA256) of the source path changed since the last `apply`, then a new build will start.
 
 ## Example Usage with Remote Source
 
@@ -50,7 +52,7 @@ resource "heroku_build" "foobar" {
   buildpacks = ["https://github.com/mars/create-react-app-buildpack"]
 
   source = {
-    // This app requires a community buildpack, set it in `buildpacks` above.
+    // This app uses a community buildpack, set it in `buildpacks` above.
     url     = "https://github.com/mars/cra-example-app/archive/v2.1.1.tar.gz"
     version = "v2.1.1"
   }
@@ -77,8 +79,8 @@ resource "heroku_build" "foobar" {
   app = "${heroku_app.foobar.id}"
 
   source = {
-    // Apps that use an official Heroku buildpack will be
-    // auto-detected. No buildpacks setting required.
+    // Apps that use an official Heroku buildpack, like heroku/ruby,
+    // will be auto-detected. No buildpacks setting required.
     path    = "sources/app-v1.tgz"
     version = "v1"
   }
