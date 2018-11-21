@@ -232,7 +232,9 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 		Pending: []string{"pending"},
 		Target:  []string{"succeeded"},
 		Refresh: BuildStateRefreshFunc(client, app, build.ID),
-		Timeout: 20 * time.Minute,
+		// Builds are allowed to take a very long time,
+		// basically until the build dyno cycles (22-26 hours).
+		Timeout: 26 * time.Hour,
 	}
 
 	if _, err := stateConf.WaitForState(); err != nil {
