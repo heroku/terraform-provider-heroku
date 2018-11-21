@@ -202,13 +202,7 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 
 			if fileInfo.IsDir() {
 				// Generate tarball from the directory
-				sourcePaths := []string{path}
-				newUuid, err := uuid.GenerateUUID()
-				if err != nil {
-					return err
-				}
-				tarballPath = fmt.Sprintf("source-%s.tar.gz", newUuid)
-				err = tarinator.Tarinate(sourcePaths, tarballPath)
+				tarballPath, err = generateSourceTarball(path)
 				if err != nil {
 					return fmt.Errorf("Error generating build source tarball %s: %s", path, err)
 				}
@@ -294,8 +288,26 @@ func resourceHerokuBuildCustomizeDiff(diff *schema.ResourceDiff, v interface{}) 
 	if v, ok := diff.GetOk("source"); ok {
 		source := v.(map[string]interface{})
 		if vv := source["path"]; vv != nil {
-			filePath := vv.(string)
-			realChecksum, err := checksumSource(filePath)
+			path := vv.(string)
+			var tarballPath string
+			fileInfo, err := os.Stat(path)
+			if err != nil {
+				return fmt.Errorf("Error stating build source path %s: %s", path, err)
+			}
+
+			if fileInfo.IsDir() {
+				// Generate tarball from the directory
+				tarballPath, err = generateSourceTarball(path)
+				if err != nil {
+					return fmt.Errorf("Error generating build source tarball %s: %s", path, err)
+				}
+				defer cleanupSourceFile(tarballPath)
+			} else {
+				// or simply use the path to the file
+				tarballPath = path
+			}
+
+			realChecksum, err := checksumSource(tarballPath)
 			if err == nil {
 				oldChecksum, newChecksum := diff.GetChange("local_checksum")
 				log.Printf("[DEBUG] Diffing source: old '%s', new '%s', real '%s'", oldChecksum, newChecksum, realChecksum)
@@ -454,6 +466,20 @@ func validateSourceUrl(v interface{}, k string) (ws []string, errors []error) {
 	}
 
 	return
+}
+
+func generateSourceTarball(path string) (filePath string, err error) {
+	sourcePaths := []string{path}
+	newUuid, err := uuid.GenerateUUID()
+	if err != nil {
+		return "", err
+	}
+	tarballPath := fmt.Sprintf("source-%s.tar.gz", newUuid)
+	err = tarinator.Tarinate(sourcePaths, tarballPath)
+	if err != nil {
+		return "", fmt.Errorf("Error generating build source tarball %s: %s", path, err)
+	}
+	return tarballPath, nil
 }
 
 // Returns a resource.StateRefreshFunc that is used to watch a Build.

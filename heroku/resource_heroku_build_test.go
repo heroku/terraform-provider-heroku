@@ -159,7 +159,7 @@ func TestAccHerokuBuild_LocalSourceDirectory(t *testing.T) {
 	// Manually generated using `shasum --algorithm 256 slug.tgz`
 	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
 	sourceChecksum := "SHA256:d088d16c01834739733d3dd28d70fdf22e1dc93c605632e6732ad2bfada463c3"
-	sourceChecksum2 := "SHA256:d088d16c01834739733d3dd28d70fdf22e1dc93c605632e6732ad2bfada463c3"
+	sourceChecksum2 := "SHA256:5ea4b00c1b92c91de9cc921bc5eaecd1c7c31de6b1668f5607df863e2e142612"
 
 	defer resetSourceDirectories()
 
