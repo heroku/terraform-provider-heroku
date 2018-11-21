@@ -472,6 +472,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:cc1452c86faa994969862a5b72d4c4361bc0e832816f0d912c87b1ed65741dc0"
+  name = "github.com/verybluebot/tarinator-go"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bd5444528f086b8f35e29a42c900bbc87e0e957b"
+
+[[projects]]
+  branch = "master"
   digest = "1:34c512c2e2033bc473dd486f162e1e9ae36522d86a45d53702e60b448f10ba57"
   name = "github.com/zclconf/go-cty"
   packages = [
@@ -610,6 +618,7 @@
   input-imports = [
     "github.com/bgentry/go-netrc/netrc",
     "github.com/hashicorp/go-multierror",
+    "github.com/hashicorp/go-uuid",
     "github.com/hashicorp/terraform/helper/acctest",
     "github.com/hashicorp/terraform/helper/logging",
     "github.com/hashicorp/terraform/helper/resource",
@@ -618,9 +627,9 @@
     "github.com/hashicorp/terraform/plugin",
     "github.com/hashicorp/terraform/terraform",
     "github.com/heroku/heroku-go/v3",
-    "github.com/mars/heroku-go/v3",
     "github.com/mitchellh/go-homedir",
     "github.com/satori/uuid",
+    "github.com/verybluebot/tarinator-go",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

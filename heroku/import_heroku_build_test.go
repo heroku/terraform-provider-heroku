@@ -58,7 +58,7 @@ func TestAccHerokuBuild_importWithFileUrl(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuBuildConfig_localSource(appName),
+				Config: testAccCheckHerokuBuildConfig_localSourceTarball(appName),
 			},
 			{
 				ResourceName:            "heroku_build.foobar",

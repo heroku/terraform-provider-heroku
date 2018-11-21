@@ -13,9 +13,11 @@ import (
 	"strings"
 	"time"
 
+	uuid "github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heroku/heroku-go/v3"
+	tarinator "github.com/verybluebot/tarinator-go"
 )
 
 func resourceHerokuBuild() *schema.Resource {
@@ -191,18 +193,41 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 			opts.SourceBlob.Version = &s
 		}
 		if v = sourceArg["path"]; v != nil {
-			// Checksum, create, & upload source archive, setting
-			// this source.url using the new source's GET URL.
 			path := v.(string)
-			checksum, err := checksumSource(path)
+			var tarballPath string
+			fileInfo, err := os.Stat(path)
 			if err != nil {
-				return fmt.Errorf("Error calculating checksum for build source %s: %s", path, err)
+				return fmt.Errorf("Error stating build source path %s: %s", path, err)
+			}
+
+			if fileInfo.IsDir() {
+				// Generate tarball from the directory
+				sourcePaths := []string{path}
+				newUuid, err := uuid.GenerateUUID()
+				if err != nil {
+					return err
+				}
+				tarballPath = fmt.Sprintf("source-%s.tar.gz", newUuid)
+				err = tarinator.Tarinate(sourcePaths, tarballPath)
+				if err != nil {
+					return fmt.Errorf("Error generating build source tarball %s: %s", path, err)
+				}
+				defer cleanupSourceFile(tarballPath)
+			} else {
+				// or simply use the path to the file
+				tarballPath = path
+			}
+
+			// Checksum, create, & upload source archive
+			checksum, err := checksumSource(tarballPath)
+			if err != nil {
+				return fmt.Errorf("Error calculating checksum for build source %s: %s", tarballPath, err)
 			}
 			newSource, err := client.SourceCreate(context.TODO())
 			if err != nil {
 				return fmt.Errorf("Error creating source for build: %s", err)
 			}
-			err = uploadSource(path, "PUT", newSource.SourceBlob.PutURL)
+			err = uploadSource(tarballPath, "PUT", newSource.SourceBlob.PutURL)
 			if err != nil {
 				return fmt.Errorf("Error uploading source for build to %s: %s", newSource.SourceBlob.PutURL, err)
 			}
@@ -404,6 +429,15 @@ func setBuildState(d *schema.ResourceData, build *heroku.Build, appName string) 
 	d.Set("uuid", build.ID)
 
 	return nil
+}
+
+func cleanupSourceFile(filePath string) {
+	if filePath != "" {
+		err := os.Remove(filePath)
+		if err != nil {
+			log.Printf("[WARN] Error cleaning-up build source tarball: %s (%s)", err, filePath)
+		}
+	}
 }
 
 func validateSourceUrl(v interface{}, k string) (ws []string, errors []error) {

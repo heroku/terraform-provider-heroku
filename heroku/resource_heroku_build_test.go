@@ -83,7 +83,7 @@ func TestAccHerokuBuild_AllOpts(t *testing.T) {
 	})
 }
 
-func TestAccHerokuBuild_LocalSource(t *testing.T) {
+func TestAccHerokuBuild_LocalSourceTarball(t *testing.T) {
 	var build, build2 heroku.Build
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
@@ -99,7 +99,7 @@ func TestAccHerokuBuild_LocalSource(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuBuildConfig_localSource(appName),
+				Config: testAccCheckHerokuBuildConfig_localSourceTarball(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
 					resource.TestCheckResourceAttr("heroku_build.foobar", "local_checksum", sourceChecksum),
@@ -107,7 +107,7 @@ func TestAccHerokuBuild_LocalSource(t *testing.T) {
 			},
 			{
 				SkipFunc: switchSourceFiles,
-				Config:   testAccCheckHerokuBuildConfig_localSource(appName),
+				Config:   testAccCheckHerokuBuildConfig_localSourceTarball(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build2),
 					resource.TestCheckResourceAttr("heroku_build.foobar", "local_checksum", sourceChecksum2),
@@ -117,7 +117,7 @@ func TestAccHerokuBuild_LocalSource(t *testing.T) {
 	})
 }
 
-func TestAccHerokuBuild_LocalSource_SetChecksum(t *testing.T) {
+func TestAccHerokuBuild_LocalSourceTarball_SetChecksum(t *testing.T) {
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
 
@@ -126,14 +126,14 @@ func TestAccHerokuBuild_LocalSource_SetChecksum(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckHerokuBuildConfig_localSource_setChecksum(appName),
+				Config:      testAccCheckHerokuBuildConfig_localSourceTarball_setChecksum(appName),
 				ExpectError: regexp.MustCompile(`checksum should be empty`),
 			},
 		},
 	})
 }
 
-func TestAccHerokuBuild_LocalSource_AllOpts(t *testing.T) {
+func TestAccHerokuBuild_LocalSourceTarball_AllOpts(t *testing.T) {
 	var build heroku.Build
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
@@ -143,9 +143,43 @@ func TestAccHerokuBuild_LocalSource_AllOpts(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuBuildConfig_localSource_allOpts(appName),
+				Config: testAccCheckHerokuBuildConfig_localSourceTarball_allOpts(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
+				),
+			},
+		},
+	})
+}
+
+func TestAccHerokuBuild_LocalSourceDirectory(t *testing.T) {
+	var build, build2 heroku.Build
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-%s", randString)
+	// Manually generated using `shasum --algorithm 256 slug.tgz`
+	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
+	sourceChecksum := "SHA256:d088d16c01834739733d3dd28d70fdf22e1dc93c605632e6732ad2bfada463c3"
+	sourceChecksum2 := "SHA256:d088d16c01834739733d3dd28d70fdf22e1dc93c605632e6732ad2bfada463c3"
+
+	defer resetSourceDirectories()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuBuildConfig_localSourceDirectory(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
+					resource.TestCheckResourceAttr("heroku_build.foobar", "local_checksum", sourceChecksum),
+				),
+			},
+			{
+				SkipFunc: switchSourceDirectories,
+				Config:   testAccCheckHerokuBuildConfig_localSourceDirectory(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuBuildExists("heroku_build.foobar", &build2),
+					resource.TestCheckResourceAttr("heroku_build.foobar", "local_checksum", sourceChecksum2),
 				),
 			},
 		},
@@ -244,7 +278,21 @@ resource "heroku_build" "foobar" {
 }`, appName)
 }
 
-func testAccCheckHerokuBuildConfig_localSource(appName string) string {
+func testAccCheckHerokuBuildConfig_localSourceDirectory(appName string) string {
+	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_build" "foobar" {
+    app = "${heroku_app.foobar.name}"
+    source = {
+      path = "test-fixtures/app/"
+    }
+}`, appName)
+}
+
+func testAccCheckHerokuBuildConfig_localSourceTarball(appName string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
@@ -258,7 +306,7 @@ resource "heroku_build" "foobar" {
 }`, appName)
 }
 
-func testAccCheckHerokuBuildConfig_localSource_setChecksum(appName string) string {
+func testAccCheckHerokuBuildConfig_localSourceTarball_setChecksum(appName string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
@@ -273,7 +321,7 @@ resource "heroku_build" "foobar" {
 }`, appName)
 }
 
-func testAccCheckHerokuBuildConfig_localSource_allOpts(appName string) string {
+func testAccCheckHerokuBuildConfig_localSourceTarball_allOpts(appName string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
@@ -287,6 +335,20 @@ resource "heroku_build" "foobar" {
       version = "v0"
     }
 }`, appName)
+}
+
+func switchSourceDirectories() (bool, error) {
+	os.Rename("test-fixtures/app", "test-fixtures/app-orig")
+	os.Rename("test-fixtures/app-2", "test-fixtures/app")
+	return false, nil
+}
+
+func resetSourceDirectories() error {
+	if _, err := os.Stat("test-fixtures/app-orig"); err == nil {
+		os.Rename("test-fixtures/app", "test-fixtures/app-2")
+		os.Rename("test-fixtures/app-orig", "test-fixtures/app")
+	}
+	return nil
 }
 
 func switchSourceFiles() (bool, error) {

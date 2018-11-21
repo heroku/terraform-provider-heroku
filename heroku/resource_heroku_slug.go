@@ -189,7 +189,7 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			return err
 		}
-		defer cleanupFile(filePath)
+		defer cleanupSlugFile(filePath)
 	}
 
 	// Require a file path by validating this programmatically.
@@ -399,7 +399,7 @@ func setSlugState(d *schema.ResourceData, slug *heroku.Slug) error {
 	return nil
 }
 
-func cleanupFile(filePath string) {
+func cleanupSlugFile(filePath string) {
 	if filePath != "" {
 		err := os.Remove(filePath)
 		if err != nil {
