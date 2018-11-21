@@ -3,6 +3,7 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -83,9 +84,15 @@ func TestAccHerokuBuild_AllOpts(t *testing.T) {
 }
 
 func TestAccHerokuBuild_LocalSource(t *testing.T) {
-	var build heroku.Build
+	var build, build2 heroku.Build
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	// Manually generated using `shasum --algorithm 256 slug.tgz`
+	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
+	sourceChecksum := "SHA256:14671a3dcf1ba3f4976438bfd4654da5d2b18ccefa59d10187ecc1286f08ee29"
+	sourceChecksum2 := "SHA256:a60dabd2ab4253e85a1a13734dcc444e830f61995247cd307655219c2504738a"
+
+	defer resetSourceFiles()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -95,6 +102,15 @@ func TestAccHerokuBuild_LocalSource(t *testing.T) {
 				Config: testAccCheckHerokuBuildConfig_localSource(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
+					resource.TestCheckResourceAttr("heroku_build.foobar", "local_checksum", sourceChecksum),
+				),
+			},
+			{
+				SkipFunc: switchSourceFiles,
+				Config:   testAccCheckHerokuBuildConfig_localSource(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuBuildExists("heroku_build.foobar", &build2),
+					resource.TestCheckResourceAttr("heroku_build.foobar", "local_checksum", sourceChecksum2),
 				),
 			},
 		},
@@ -271,4 +287,18 @@ resource "heroku_build" "foobar" {
       version = "v0"
     }
 }`, appName)
+}
+
+func switchSourceFiles() (bool, error) {
+	os.Rename("test-fixtures/app.tgz", "test-fixtures/app-orig.tgz")
+	os.Rename("test-fixtures/app-2.tgz", "test-fixtures/app.tgz")
+	return false, nil
+}
+
+func resetSourceFiles() error {
+	if _, err := os.Stat("test-fixtures/app-orig.tgz"); err == nil {
+		os.Rename("test-fixtures/app.tgz", "test-fixtures/app-2.tgz")
+		os.Rename("test-fixtures/app-orig.tgz", "test-fixtures/app.tgz")
+	}
+	return nil
 }

@@ -13,6 +13,8 @@ resource.
 
 ## Example Usage with Remote Source
 
+* The `source.url` is only fetched during resource creation. To trigger another fetch the `source.url` should be changed, then a new resource will be forced on the next plan/apply.
+
 ```hcl
 resource "heroku_app" "foobar" {
     name = "foobar"
@@ -39,6 +41,8 @@ resource "heroku_formation" "foobar" {
 ```
 
 ## Example Usage with Local Source
+
+* If the content (SHA256) of `source.path` changes, then a new resource will be forced on the next plan/apply; if the file does not exist, the difference is ignored.
 
 ```hcl
 resource "heroku_app" "foobar" {
@@ -73,7 +77,7 @@ The following arguments are supported:
 * `buildpacks` - List of buildpack registry names and/or GitHub URLs
 * `source` - (Required) A block that specifies the source code to build & release:
   * `checksum` - Hash of the source archive for verifying its integrity, auto-generated when `source.path` is set, `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
-  * `path` - (Required unless `source.url` is set) Local path to the source archive for the app
+  * `path` - (Required unless `source.url` is set) Local path to the source archive for the app. If the contents (SHA) change
   * `url` - (Required unless `source.path` is set) `https` location of the source archive for the app
   * `version` - Use to track what version of your source originated this build. If you are creating builds from git-versioned source code, for example, the commit hash, or release tag would be a good value to use for the version parameter.
 * `source_path` - (Required unless `source` is set)

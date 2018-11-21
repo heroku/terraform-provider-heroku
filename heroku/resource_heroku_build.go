@@ -18,9 +18,10 @@ import (
 
 func resourceHerokuBuild() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceHerokuBuildCreate,
-		Read:   resourceHerokuBuildRead,
-		Delete: resourceHerokuBuildDelete,
+		Create:        resourceHerokuBuildCreate,
+		Read:          resourceHerokuBuildRead,
+		Delete:        resourceHerokuBuildDelete,
+		CustomizeDiff: resourceHerokuBuildCustomizeDiff,
 
 		Importer: &schema.ResourceImporter{
 			State: resourceHerokuBuildImport,
@@ -122,6 +123,11 @@ func resourceHerokuBuild() *schema.Resource {
 			},
 
 			"uuid": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"local_checksum": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -240,6 +246,31 @@ func resourceHerokuBuildDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
+func resourceHerokuBuildCustomizeDiff(diff *schema.ResourceDiff, v interface{}) error {
+	// Detect changes to the content of local source archive.
+	if v, ok := diff.GetOk("source"); ok {
+		source := v.(map[string]interface{})
+		if vv := source["path"]; vv != nil {
+			filePath := vv.(string)
+			realChecksum, err := checksumSource(filePath)
+			if err == nil {
+				oldChecksum, newChecksum := diff.GetChange("local_checksum")
+				log.Printf("[DEBUG] Diffing source: old '%s', new '%s', real '%s'", oldChecksum, newChecksum, realChecksum)
+				if newChecksum != realChecksum {
+					if err := diff.SetNew("local_checksum", realChecksum); err != nil {
+						return fmt.Errorf("Error updating source archive checksum: %s", err)
+					}
+					if err := diff.ForceNew("local_checksum"); err != nil {
+						return fmt.Errorf("Error forcing new source resource: %s", err)
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func uploadSource(filePath, httpMethod, httpUrl string) error {
 	method := strings.ToUpper(httpMethod)
 	log.Printf("[DEBUG] Uploading source '%s' to %s %s", filePath, method, httpUrl)
@@ -330,6 +361,8 @@ func setBuildState(d *schema.ResourceData, build *heroku.Build, appName string) 
 			if v := build.SourceBlob.URL; v != "" {
 				source["url"] = v
 			}
+		} else {
+			d.Set("local_checksum", build.SourceBlob.Checksum)
 		}
 		if v := build.SourceBlob.Version; v != nil {
 			source["version"] = *v
