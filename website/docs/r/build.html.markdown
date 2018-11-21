@@ -23,7 +23,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_build" "foobar" {
   app = "${heroku_app.foobar.id}"
-  buildpacks = ["mars/create-react-app"]
+  buildpacks = ["https://github.com/mars/create-react-app-buildpack"]
   
   source = {
     url     = "https://github.com/mars/cra-example-app/archive/v2.1.1.tar.gz"
@@ -52,7 +52,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_build" "foobar" {
   app = "${heroku_app.foobar.id}"
-  buildpacks = ["heroku/ruby"]
+  buildpacks = ["https://github.com/heroku/heroku-buildpack-ruby"]
   
   source = {
     path    = "sources/app-v1.tgz"
