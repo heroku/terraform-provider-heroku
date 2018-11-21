@@ -235,7 +235,7 @@ func testAccCheckHerokuBuildConfig_allOpts(appName string) string {
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    buildpacks = ["mars/create-react-app"]
+    buildpacks = ["https://github.com/mars/create-react-app-buildpack"]
     source = {
       checksum = "SHA256:b7dfb201c9fa6541b64fd450c5e00641c80d7d1e39134b7c12ce601efbb8642b"
       url = "https://github.com/mars/cra-example-app/archive/v2.1.1.tar.gz"
@@ -281,7 +281,7 @@ func testAccCheckHerokuBuildConfig_localSource_allOpts(appName string) string {
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    buildpacks = ["heroku/ruby"]
+    buildpacks = ["https://github.com/heroku/heroku-buildpack-ruby"]
     source = {
       path = "test-fixtures/app.tgz"
       version = "v0"

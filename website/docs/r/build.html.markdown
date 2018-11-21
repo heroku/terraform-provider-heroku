@@ -36,7 +36,7 @@ resource "heroku_formation" "foobar" {
   type       = "web"
   quantity   = 1
   size       = "Standard-1x"
-  depends_on = ["heroku_build.foobar.release"]
+  depends_on = ["heroku_build.foobar"]
 }
 ```
 
@@ -65,7 +65,7 @@ resource "heroku_formation" "foobar" {
   type       = "web"
   quantity   = 1
   size       = "Standard-1x"
-  depends_on = ["heroku_build.foobar.release"]
+  depends_on = ["heroku_build.foobar"]
 }
 ```
 

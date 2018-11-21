@@ -11,7 +11,9 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heroku/heroku-go/v3"
 )
@@ -223,6 +225,20 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 	setBuildState(d, build, app)
 
 	log.Printf("[INFO] Created build ID: %s", d.Id())
+
+	// Wait for the Build to be complete
+	log.Printf("[DEBUG] Waiting for Build (%s:%s) to complete", app, build.ID)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{"pending"},
+		Target:  []string{"succeeded"},
+		Refresh: BuildStateRefreshFunc(client, app, build.ID),
+		Timeout: 20 * time.Minute,
+	}
+
+	if _, err := stateConf.WaitForState(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -402,4 +418,26 @@ func validateSourceUrl(v interface{}, k string) (ws []string, errors []error) {
 	}
 
 	return
+}
+
+// Returns a resource.StateRefreshFunc that is used to watch a Build.
+func BuildStateRefreshFunc(client *heroku.Service, app, id string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		build, err := client.BuildInfo(context.TODO(), app, id)
+		if err != nil {
+			log.Printf("[DEBUG] Failed to get Build status: %s (%s)", err, id)
+			return nil, "", err
+		}
+
+		if build.Status == "pending" {
+			log.Printf("[DEBUG] Build pending (%s:%s)", app, id)
+			return &build, build.Status, nil
+		}
+
+		if build.Status == "failed" {
+			return nil, "", fmt.Errorf("Build failed (%s:%s) see logs: %s", app, id, build.OutputStreamURL)
+		}
+
+		return &build, build.Status, nil
+	}
 }

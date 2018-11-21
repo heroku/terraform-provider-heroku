@@ -42,6 +42,8 @@ Developing the Provider
 
 If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.8+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
 
+### Build the Provider
+
 To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
 
 ```sh
@@ -50,6 +52,28 @@ $ make build
 $ $GOPATH/bin/terraform-provider-heroku
 ...
 ```
+
+### Using the Provider
+
+To use the dev provider with local Terraform, copy the freshly built plugin into Terraform's local plugins directory:
+
+```sh
+cp $GOPATH/bin/terraform-provider-heroku ~/.terraform.d/plugins/
+```
+
+Set the Heroku provider without a version constrain:
+
+```hcl
+provider "heroku" {}
+```
+
+Then, initialize Terraform:
+
+```sh
+terraform init
+```
+
+### Testing
 
 Please see the [TESTING](TESTING.md) guide for detailed instructions on running tests.
 
