@@ -13,7 +13,9 @@ description: |-
 Provides a [Heroku Build](https://devcenter.heroku.com/articles/platform-api-reference#build)
 resource, to deploy source code to Heroku.
 
-Either a URL or local file path, pointing to a [tarball](https://en.wikipedia.org/wiki/Tar_(computing)) of the source code, may be pushed for a build.
+Either a URL or local file path, pointing to a [tarball](https://en.wikipedia.org/wiki/Tar_(computing)) of the source code, may be deployed.
+
+The local file path may instead point to a directory of source code, which will be tarballed automatically and then deployed.
 
 This resource waits until the [build](https://devcenter.heroku.com/articles/build-and-release-using-the-api) & release completes, either succeeds or fails.
 
@@ -33,8 +35,13 @@ https://github.com/username/example/archive/v1.0.0.tar.gz
 
 Using a branch or master `source.url` is strongly discouraged, because tracking down exactly what was deployed for a given `terraform apply` is difficult.
 
-## Local source files
-A `source.path` may point to a tarball of source code using relative or root paths. When running `terraform apply`, if the contents (SHA256) of the source path changed since the last `apply`, then a new build will start.
+## Local source
+A `source.path` may point to either:
+
+* a directory of source code
+* a tarball of source code
+
+When running `terraform apply`, if the contents (SHA256) of the source path changed since the last `apply`, then a new build will start.
 
 ## Example Usage with Remote Source
 
@@ -100,7 +107,7 @@ The following arguments are supported:
 * `buildpacks` - List of buildpack registry names and/or GitHub URLs
 * `source` - (Required) A block that specifies the source code to build & release:
   * `checksum` - Hash of the source archive for verifying its integrity, auto-generated when `source.path` is set, `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
-  * `path` - (Required unless `source.url` is set) Local path to the source archive for the app. If the contents (SHA) change
+  * `path` - (Required unless `source.url` is set) Local path to the source directory or tarball archive for the app
   * `url` - (Required unless `source.path` is set) `https` location of the source archive for the app
   * `version` - Use to track what version of your source originated this build. If you are creating builds from git-versioned source code, for example, the commit hash, or release tag would be a good value to use for the version parameter.
 
