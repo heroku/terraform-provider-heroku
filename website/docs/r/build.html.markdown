@@ -17,7 +17,7 @@ Either a URL or local file path, pointing to a [tarball](https://en.wikipedia.or
 
 This resource waits until the [build](https://devcenter.heroku.com/articles/build-and-release-using-the-api) & release completes, either succeeds or fails.
 
-When build succeeds, Heroku creates a new app release. [Release phase](https://devcenter.heroku.com/articles/release-phase) will run, if declared for the app. Once release succeeds, the app's dynos will start or restart with the new release.
+When build succeeds, Heroku creates a new app release. [Release phase](https://devcenter.heroku.com/articles/release-phase) will run, if declared for the app. Once release succeeds, the app's dynos will restart with the new release. A [`heroku_formation`](formation.html) resource is required to setup the dyno size, type, & scale.
 
 When build fails, the error will contain a URL to view the build log. `curl "https://the-long-log-url-in-the-error"`.
 
