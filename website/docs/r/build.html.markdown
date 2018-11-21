@@ -27,13 +27,13 @@ A `source.url` may point to any `https://` URL that responds to a `GET` with a t
 
 ### GitHub URLs
 
-GitHub provides tarballs through URLs:
+GitHub provides [release](https://help.github.com/articles/creating-releases/) tarballs through URLs. Create a release and then use the tag as a `source.url`, such as:
 
-* **release tag** `https://github.com/username/example/archive/v1.0.0.tar.gz`
-* **branch name** `https://github.com/username/example/archive/branchname.tar.gz`
-* **master** `https://github.com/username/example/archive/master.tar.gz`
+```
+https://github.com/username/example/archive/v1.0.0.tar.gz
+```
 
-If a branch or master is used, ensure `source.version` is set to a meaningful value. Otherwise, it will be challenging to trace what source code was deployed for any given `terraform apply`.
+Using a branch or master `source.url` is strongly discouraged, because tracking down exactly what was deployed for a given `terraform apply` is difficult.
 
 ## Local source file
 
