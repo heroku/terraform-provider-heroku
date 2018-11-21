@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/heroku/heroku-go/v3"
 	"log"
 )
 
@@ -51,21 +50,32 @@ func resourceHerokuAppConfigVarCreate(d *schema.ResourceData, meta interface{}) 
 	appName := getAppName(d)
 
 	// Define the Public & Private vars
-	var publicVars, privateVars map[string]interface{}
+	var publicVars, privateVars *schema.Set
 	if v, ok := d.GetOk("public"); ok {
-		publicVars = v.(map[string]interface{})
+		publicVars = v.(*schema.Set)
 	}
 	if v, ok := d.GetOk("private"); ok {
-		privateVars = v.(map[string]interface{})
+		privateVars = v.(*schema.Set)
 	}
 
 	// Combine `public` & `private` config vars together and remove duplicates
-	configVars := mergeMaps(publicVars, privateVars)
+	allConfigVars := publicVars.Union(privateVars)
 
-	// Create Config Vars for App
-	log.Printf("[INFO] Creating %s's config vars: *%#v", appName, configVars)
+	// TODO: remove these before going live
+	log.Printf("[INFO] this is publicVars: *%#v", publicVars)
+	log.Printf("[INFO] this is privateVars: *%#v", privateVars)
+	log.Printf("[INFO] this is allConfigVars: *%#v", allConfigVars)
 
-	if _, err := client.ConfigVarUpdate(context.TODO(), appName, configVars); err != nil {
+	allConfigVarsMap := make(map[string]*string)
+	for _, vars := range allConfigVars.List() {
+		for k, v := range vars.(map[string]interface{}) {
+			value := v.(string)
+			allConfigVarsMap[k] = &value
+		}
+	}
+
+	log.Printf("[INFO] Creating %s's config vars: *%#v", appName, allConfigVarsMap) //TODO: need to output the actual value not address
+	if _, err := client.ConfigVarUpdate(context.TODO(), appName, allConfigVarsMap); err != nil {
 		return fmt.Errorf("[ERROR] Error creating %s's config vars: %s", appName, err)
 	}
 
@@ -73,7 +83,7 @@ func resourceHerokuAppConfigVarCreate(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourceHerokuAppConfigVarRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	// Get App Name
 	appName := getAppName(d)
@@ -85,16 +95,42 @@ func resourceHerokuAppConfigVarRead(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	d.SetId(appName)
-	if err := d.Set("config_vars", configVars); err != nil {
-		log.Printf("[WARN] Error setting config vars: %s", err)
+	d.SetId(appName) // TODO: is just using the appName too generic?
+
+	// Iterate through each public/private vars and get the updated value from remote
+	if v, ok := d.GetOk("public"); ok {
+		publicVarsSet := v.(*schema.Set)
+		for _, valueMap := range publicVarsSet.List() {
+			valueMapFormatted := valueMap.(map[string]interface{})
+			for k, _ := range valueMapFormatted {
+				if _, ok := valueMapFormatted[k]; !ok {
+					publicVarsSet.Add(map[string]*string{k: configVars[k]})
+				}
+			}
+		}
+
+		d.Set("public", publicVarsSet)
+	}
+
+	if v, ok := d.GetOk("private"); ok {
+		privateVarsSet := v.(*schema.Set)
+		for _, valueMap := range privateVarsSet.List() {
+			valueMapFormatted := valueMap.(map[string]interface{})
+			for k, _ := range valueMapFormatted {
+				if _, ok := valueMapFormatted[k]; !ok {
+					privateVarsSet.Add(map[string]*string{k: configVars[k]})
+				}
+			}
+		}
+
+		d.Set("private", privateVarsSet)
 	}
 
 	return nil
 }
 
 func resourceHerokuAppConfigVarUpdate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*heroku.Service)
+	client := meta.(*Config).Api
 
 	// Determine if public vars have changed
 	var oldPublicVars, newPublicVars interface{}
@@ -122,7 +158,7 @@ func resourceHerokuAppConfigVarUpdate(d *schema.ResourceData, meta interface{}) 
 		}
 	}
 
-	// Merge old and public vars together
+	// Merge old public and private vars together
 	oldVars := []interface{}{}
 	o := append(oldVars, oldPrivateVars)
 	o = append(oldVars, oldPublicVars)

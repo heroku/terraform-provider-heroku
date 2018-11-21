@@ -3,10 +3,10 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"github.com/cyberdelia/heroku-go/v3"
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/heroku/heroku-go/v3"
 	"testing"
 )
 
@@ -25,6 +25,10 @@ func TestAccHerokuAppConfigVars_basic(t *testing.T) {
 				Config: testAccCheckHerokuAppConfigVar_Basic(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppConfigVarExists("heroku_app_config_var.foobar-configs", &appConfigVars),
+					resource.TestCheckResourceAttr(
+						"heroku_app_config_var.foobar-configs", "public.#", "1"),
+					resource.TestCheckResourceAttr(
+						"heroku_app_config_var.foobar-configs", "private.#", "1"),
 				),
 			},
 		},
@@ -43,7 +47,7 @@ func testAccCheckHerokuAppConfigVarExists(n string, appConfigVar *heroku.ConfigV
 			return fmt.Errorf("No App Config Var ID set")
 		}
 
-		client := testAccProvider.Meta().(*heroku.Service)
+		client := testAccProvider.Meta().(*Config).Api
 
 		appName := rs.Primary.Attributes["app"]
 		foundAppConfigVar, err := client.ConfigVarInfoForApp(context.TODO(), appName)
