@@ -26,9 +26,11 @@ func TestAccHerokuAppConfigVars_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppConfigVarExists("heroku_app_config_var.foobar-configs", &appConfigVars),
 					resource.TestCheckResourceAttr(
-						"heroku_app_config_var.foobar-configs", "public.#", "1"),
+						"heroku_app_config_var.foobar-configs", "public.0.ENVIRONMENT", "production"),
 					resource.TestCheckResourceAttr(
-						"heroku_app_config_var.foobar-configs", "private.#", "1"),
+						"heroku_app_config_var.foobar-configs", "private.0.PRIVATE_KEY", "some private key chain"),
+					resource.TestCheckResourceAttr(
+						"heroku_app_config_var.foobar-configs", "all_config_vars.%", "4"),
 				),
 			},
 		},
@@ -70,12 +72,13 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_app_config_var" "foobar-configs" {
     app = "${heroku_app.foobar.name}"
-    public = {
+
+    public {
 		ENVIRONMENT = "production"
 		USER = "foobar-user"
 	}
 
-	private = {
+	private {
 		DATABASE_URL = "some.secret.url"
 		PRIVATE_KEY = "some private key chain"
 	}
