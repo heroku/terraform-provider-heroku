@@ -112,10 +112,8 @@ The following attributes are exported:
 
 * `uuid` - The ID of the build
 * `output_stream_url` - URL that [streams the log output from the build](https://devcenter.heroku.com/articles/build-and-release-using-the-api#streaming-build-output)
-* `release` - The Heroku app release created with a build's slug
-  * `id`
-* `slug` - The Heroku slug created by a build
-  * `id`
+* `release_id` - The Heroku app release created with a build's slug
+* `slug_id` - The Heroku slug created by a build
 * `stack` - Name or ID of the [Heroku stack](https://devcenter.heroku.com/articles/stack)
 * `status` - The status of a build. Possible values are `pending`, `successful` and `failed`
 * `user` - Heroku account that created a build
