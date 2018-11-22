@@ -102,11 +102,6 @@ resource "heroku_app_config_var" "foobar-configs" {
 		USER = "foobar-user"
 		PRIVATE_KEY = "some private key chain"
 	}
-
-	private {
-		DATABASE_URL = "some.secret.url"
-		PRIVATE_KEY = "some private key chain"
-	}
 }
 
 `, appName)

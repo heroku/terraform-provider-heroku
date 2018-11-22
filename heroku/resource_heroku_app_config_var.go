@@ -67,6 +67,8 @@ func resourceHerokuAppConfigVarImport(d *schema.ResourceData, meta interface{}) 
 		app = parts[0]
 		configType = parts[1]
 		variable = parts[2]
+
+		log.Printf("[INFO] Information extracted for import - App: %s, ConfigType: %s, Variable: %s", app, configType, variable)
 	} else {
 		return nil, fmt.Errorf("error: Importing app config var requires three parts separated by a colon - <app_id>:public:var1,var2")
 	}
@@ -74,7 +76,7 @@ func resourceHerokuAppConfigVarImport(d *schema.ResourceData, meta interface{}) 
 	// Validate configType to make sure that only public/private is passed in
 	validTypes := []string{"public", "private"}
 	if !SliceExists(validTypes, configType) {
-		return nil, fmt.Errorf("nly public & private config variable type allowed. You passed in %s", configType)
+		return nil, fmt.Errorf("only public & private config variable type allowed. You passed in %s", configType)
 	}
 
 	// Get remote config variables and add them to state
@@ -86,14 +88,18 @@ func resourceHerokuAppConfigVarImport(d *schema.ResourceData, meta interface{}) 
 	}
 
 	vars := map[string]*string{}
-
 	for _, k := range variables {
 		if v, ok := configVars[k]; !ok {
 			vars[k] = v
 		}
 	}
 
+	d.SetId(app)
+	d.Set("app", app)
+	d.Set("all_config_vars", configVars)
 	d.Set(configType, vars)
+
+	fmt.Println("yolol123")
 
 	return []*schema.ResourceData{d}, nil
 }
