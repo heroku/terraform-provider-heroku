@@ -478,7 +478,7 @@ func generateSourceTarball(path string) (filePath string, err error) {
 	tarballPath := fmt.Sprintf("source-%s.tar.gz", newUuid)
 	err = tarinator.Tarinate(sourcePaths, tarballPath)
 	if err != nil {
-		return "", fmt.Errorf("Error generating build source tarball %s: %s", path, err)
+		return "", fmt.Errorf("Error generating build source tarball %s of %s: %s", tarballPath, path, err)
 	}
 	return tarballPath, nil
 }
