@@ -75,7 +75,7 @@ resource "heroku_formation" "foobar" {
 
 ## Example Usage with Local Source Directory
 
-Ideal for quickly iterating local development, or creating a monorepo of multiple apps combined with a single Terraform config.
+Ideal for quickly iterating local development.
 
 ```hcl
 resource "heroku_app" "foobar" {
