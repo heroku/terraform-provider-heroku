@@ -8,16 +8,20 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heroku/heroku-go/v3"
 	"log"
+	"strings"
 	"time"
 )
 
 func resourceHerokuAppConfigVar() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceHerokuAppConfigVarCreate, // There is no CREATE endpoint for config-vars
+		Create: resourceHerokuAppConfigVarCreate,
 		Read:   resourceHerokuAppConfigVarRead,
 		Update: resourceHerokuAppConfigVarUpdate,
 		Delete: resourceHerokuAppConfigVarDelete,
-		// TODO: should we handle scenario where a private var is in the public one?
+
+		Importer: &schema.ResourceImporter{
+			State: resourceHerokuAppConfigVarImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"app": {
@@ -53,6 +57,47 @@ func resourceHerokuAppConfigVar() *schema.Resource {
 	}
 }
 
+func resourceHerokuAppConfigVarImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	// Example: terraform import heroku_app_config_var.foobar-config foobar-app:public:var1,var2,var3
+
+	// Extract the necessary parts
+	parts := strings.SplitN(d.Id(), ":", 3)
+	var app, configType, variable string
+	if len(parts) == 3 {
+		app = parts[0]
+		configType = parts[1]
+		variable = parts[2]
+	} else {
+		return nil, fmt.Errorf("error: Importing app config var requires three parts separated by a colon - <app_id>:public:var1,var2")
+	}
+
+	// Validate configType to make sure that only public/private is passed in
+	validTypes := []string{"public", "private"}
+	if !SliceExists(validTypes, configType) {
+		return nil, fmt.Errorf("nly public & private config variable type allowed. You passed in %s", configType)
+	}
+
+	// Get remote config variables and add them to state
+	client := meta.(*Config).Api
+	variables := strings.Split(variable, ",")
+	configVars, err := client.ConfigVarInfoForApp(context.TODO(), app)
+	if err != nil {
+		return nil, err
+	}
+
+	vars := map[string]*string{}
+
+	for _, k := range variables {
+		if v, ok := configVars[k]; !ok {
+			vars[k] = v
+		}
+	}
+
+	d.Set(configType, vars)
+
+	return []*schema.ResourceData{d}, nil
+}
+
 func resourceHerokuAppConfigVarCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
@@ -83,7 +128,6 @@ func resourceHerokuAppConfigVarRead(d *schema.ResourceData, meta interface{}) er
 	appName := getAppName(d)
 
 	//// Get the App Id that we will use as this resource's Id
-	//appUuid := getAppUuid(appName, client)
 	configVars, err := client.ConfigVarInfoForApp(context.TODO(), appName)
 	if err != nil {
 		return err
@@ -229,7 +273,7 @@ func updateVars(d *schema.ResourceData, client *heroku.Service, public, private 
 	// Check if there are any private variables in the public attribute. If there, error out.
 	var privateVarsInPublic []string
 	for k := range public {
-		if _,ok := private[k]; ok {
+		if _, ok := private[k]; ok {
 			privateVarsInPublic = append(privateVarsInPublic, k)
 		}
 	}
