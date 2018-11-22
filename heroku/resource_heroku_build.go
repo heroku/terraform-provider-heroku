@@ -498,7 +498,7 @@ func BuildStateRefreshFunc(client *heroku.Service, app, id string) resource.Stat
 		}
 
 		if build.Status == "failed" {
-			return nil, "", fmt.Errorf("Build failed (%s:%s) see logs: %s", app, id, build.OutputStreamURL)
+			return nil, "", fmt.Errorf("Build failed (%s:%s) see logs: curl \"%s\"", app, id, build.OutputStreamURL)
 		}
 
 		return &build, build.Status, nil
