@@ -225,7 +225,7 @@ func testAccCheckHerokuBuildConfig_basic(appName string) string {
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
     source = {
-    	url = "https://github.com/mars/cra-example-app/archive/v2.1.1.tar.gz"
+    	url = "https://github.com/mars/terraform-provider-heroku/raw/build-resource/heroku/test-fixtures/app.tgz"
     }
 }`, appName)
 }
@@ -239,7 +239,7 @@ func testAccCheckHerokuBuildConfig_insecureUrl(appName string) string {
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
     source = {
-      url = "http://github.com/mars/cra-example-app/archive/v2.1.1.tar.gz"
+      url = "http://github.com/mars/terraform-provider-heroku/raw/build-resource/heroku/test-fixtures/app.tgz"
     }
 }`, appName)
 }
@@ -269,11 +269,14 @@ func testAccCheckHerokuBuildConfig_allOpts(appName string) string {
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    buildpacks = ["https://github.com/mars/create-react-app-buildpack"]
+    buildpacks = [
+      "https://github.com/heroku/heroku-buildpack-jvm-common",
+      "https://github.com/heroku/heroku-buildpack-ruby",
+    ]
     source = {
-      checksum = "SHA256:b7dfb201c9fa6541b64fd450c5e00641c80d7d1e39134b7c12ce601efbb8642b"
-      url = "https://github.com/mars/cra-example-app/archive/v2.1.1.tar.gz"
-      version = "v2.1.1"
+      checksum = "SHA256:14671a3dcf1ba3f4976438bfd4654da5d2b18ccefa59d10187ecc1286f08ee29"
+      url = "https://github.com/mars/terraform-provider-heroku/raw/build-resource/heroku/test-fixtures/app.tgz"
+      version = "v0"
     }
 }`, appName)
 }
