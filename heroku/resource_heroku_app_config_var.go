@@ -53,30 +53,6 @@ func resourceHerokuAppConfigVar() *schema.Resource {
 	}
 }
 
-func getConfigVarsDiff(old []interface{}, new []interface{}) (vars map[string]*string) {
-	vars = make(map[string]*string)
-
-	for _, v := range old {
-		if v != nil {
-			for k := range v.(map[string]interface{}) {
-				vars[k] = nil
-			}
-		}
-	}
-	for _, v := range new {
-		if v != nil {
-			for k, v := range v.(map[string]interface{}) {
-				val := v.(string)
-				vars[k] = &val
-			}
-		}
-	}
-
-	log.Printf("[INFO] Config vars difference: *%#v", vars)
-
-	return vars
-}
-
 func resourceHerokuAppConfigVarCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
@@ -269,7 +245,7 @@ func updateVars(d *schema.ResourceData, client *heroku.Service, public, private 
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{"pending"},
 		Target:  []string{"succeeded"},
-		Refresh: releaseStateRefreshFunc(client, d.Id(), releases[0].ID),
+		Refresh: releaseStateRefreshFunc(client, appName, releases[0].ID),
 		Timeout: 20 * time.Minute,
 	}
 
@@ -288,4 +264,28 @@ func mergeMaps(maps ...map[string]*string) map[string]*string {
 		}
 	}
 	return result
+}
+
+func getConfigVarsDiff(old []interface{}, new []interface{}) (vars map[string]*string) {
+	vars = make(map[string]*string)
+
+	for _, v := range old {
+		if v != nil {
+			for k := range v.(map[string]interface{}) {
+				vars[k] = nil
+			}
+		}
+	}
+	for _, v := range new {
+		if v != nil {
+			for k, v := range v.(map[string]interface{}) {
+				val := v.(string)
+				vars[k] = &val
+			}
+		}
+	}
+
+	log.Printf("[INFO] Config vars difference: *%#v", vars)
+
+	return vars
 }
