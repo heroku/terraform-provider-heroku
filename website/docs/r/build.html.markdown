@@ -43,7 +43,9 @@ A `source.path` may point to either:
 
 When running `terraform apply`, if the contents (SHA256) of the source path changed since the last `apply`, then a new build will start.
 
-## Example Usage with Remote Source
+## Example Usage with Source URL
+
+Ideal for production-quality, collaborative Terraform configuration, when stability & repeatability is favored.
 
 ```hcl
 resource "heroku_app" "foobar" {
@@ -71,7 +73,9 @@ resource "heroku_formation" "foobar" {
 }
 ```
 
-## Example Usage with Local Source
+## Example Usage with Local Source Directory
+
+Ideal for quickly iterating local development, or creating a monorepo of multiple apps combined with a single Terraform config.
 
 ```hcl
 resource "heroku_app" "foobar" {
@@ -83,10 +87,9 @@ resource "heroku_build" "foobar" {
   app = "${heroku_app.foobar.id}"
 
   source = {
-    // Apps that use an official Heroku buildpack, like heroku/ruby,
-    // will be auto-detected. No buildpacks setting required.
-    path    = "sources/app-v1.tgz"
-    version = "v1"
+    // A local directory, changing its contents will
+    // force a new build during `terraform apply`
+    path    = "../example-app"
   }
 }
 
