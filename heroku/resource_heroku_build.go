@@ -296,7 +296,7 @@ func resourceHerokuBuildCustomizeDiff(diff *schema.ResourceDiff, v interface{}) 
 			}
 
 			if fileInfo.IsDir() {
-				// Generate tarball from the directory
+				// To diff this generates a tarball of the source directory for calculating the current "local_checksum", same function call as in resourceHerokuBuildCreate
 				tarballPath, err = generateSourceTarball(path)
 				if err != nil {
 					return fmt.Errorf("Error generating build source tarball %s: %s", path, err)
@@ -307,6 +307,7 @@ func resourceHerokuBuildCustomizeDiff(diff *schema.ResourceDiff, v interface{}) 
 				tarballPath = path
 			}
 
+			// Calculate & diff the "local_checksum" SHA256
 			realChecksum, err := checksumSource(tarballPath)
 			if err == nil {
 				oldChecksum, newChecksum := diff.GetChange("local_checksum")
