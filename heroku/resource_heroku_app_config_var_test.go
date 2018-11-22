@@ -86,3 +86,28 @@ resource "heroku_app_config_var" "foobar-configs" {
 
 `, appName)
 }
+
+func testAccCheckHerokuAppConfigVar_Duplicates(appName string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_app_config_var" "foobar-configs" {
+    app = "${heroku_app.foobar.name}"
+
+    public {
+		ENVIRONMENT = "production"
+		USER = "foobar-user"
+		PRIVATE_KEY = "some private key chain"
+	}
+
+	private {
+		DATABASE_URL = "some.secret.url"
+		PRIVATE_KEY = "some private key chain"
+	}
+}
+
+`, appName)
+}

@@ -67,10 +67,11 @@ func resourceHerokuAppConfigVarCreate(d *schema.ResourceData, meta interface{}) 
 		log.Printf("[INFO] List of privateVars: *%#v", privateVars)
 	}
 
-	// TODO: go through both vars and check to make sure that there aren't any overlapping ones
-
 	// Update Vars
-	updateVars(d, client, publicVars, privateVars)
+	err := updateVars(d, client, publicVars, privateVars)
+	if err != nil {
+		return err
+	}
 
 	return resourceHerokuAppConfigVarRead(d, meta)
 }
@@ -167,7 +168,10 @@ func resourceHerokuAppConfigVarUpdate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	// Merge the vars
-	updateVars(d, client, newPublicVars, newPrivateVars)
+	err := updateVars(d, client, newPublicVars, newPrivateVars)
+	if err != nil {
+		return err
+	}
 
 	return resourceHerokuAppConfigVarRead(d, meta)
 }
@@ -208,7 +212,10 @@ func resourceHerokuAppConfigVarDelete(d *schema.ResourceData, meta interface{}) 
 		}
 	}
 
-	updateVars(d, client, publicVars, privateVars)
+	err := updateVars(d, client, publicVars, privateVars)
+	if err != nil {
+		return err
+	}
 
 	d.SetId("")
 
@@ -218,6 +225,18 @@ func resourceHerokuAppConfigVarDelete(d *schema.ResourceData, meta interface{}) 
 func updateVars(d *schema.ResourceData, client *heroku.Service, public, private map[string]*string) error {
 	// Get App Name
 	appName := getAppName(d)
+
+	// Check if there are any private variables in the public attribute. If there, error out.
+	var privateVarsInPublic []string
+	for k := range public {
+		if _,ok := private[k]; ok {
+			privateVarsInPublic = append(privateVarsInPublic, k)
+		}
+	}
+
+	if len(privateVarsInPublic) > 0 {
+		return fmt.Errorf("Error: ollowing private variables are in your public attribute: %q", privateVarsInPublic)
+	}
 
 	// Add privateVars to publicVars as Heroku API does not have 'types' of config vars
 	configVars := mergeMaps(public, private)
@@ -232,7 +251,7 @@ func updateVars(d *schema.ResourceData, client *heroku.Service, public, private 
 	// Wait for new release
 	releases, err := client.ReleaseList(
 		context.TODO(),
-		d.Id(),
+		appName,
 		&heroku.ListRange{Descending: true, Field: "version", Max: 1},
 	)
 	if err != nil {
