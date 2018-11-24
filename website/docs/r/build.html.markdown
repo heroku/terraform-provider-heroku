@@ -3,7 +3,7 @@ layout: "heroku"
 page_title: "Heroku: heroku_build"
 sidebar_current: "docs-heroku-resource-build"
 description: |-
-  `git push heroku master` for Terraform. Provides the ability to build & release code from a local or remote source archive, making it possible to launch apps directly from a Terraform config
+  "Deploy to Heroku" for Terraform. Provides the ability to build & release code from a local or remote source, making it possible to launch apps directly from a Terraform config
 ---
 
 # heroku\_build
@@ -13,15 +13,11 @@ description: |-
 Provides a [Heroku Build](https://devcenter.heroku.com/articles/platform-api-reference#build)
 resource, to deploy source code to Heroku.
 
-Either a URL or local file path, pointing to a [tarball](https://en.wikipedia.org/wiki/Tar_(computing)) of the source code, may be deployed.
+Either a URL or local path, pointing to a [tarball](https://en.wikipedia.org/wiki/Tar_(computing)) of the source code, may be deployed. If a local path is used, it may instead point to a directory of source code, which will be tarballed automatically and then deployed.
 
-The local file path may instead point to a directory of source code, which will be tarballed automatically and then deployed.
+This resource waits until the [build](https://devcenter.heroku.com/articles/build-and-release-using-the-api) & [release](https://devcenter.heroku.com/articles/release-phase) completes.
 
-This resource waits until the [build](https://devcenter.heroku.com/articles/build-and-release-using-the-api) & release completes, either succeeds or fails.
-
-When build succeeds, Heroku creates a new app release. [Release phase](https://devcenter.heroku.com/articles/release-phase) will run, if declared for the app. Once release succeeds, the app's dynos will restart with the new release. A [`heroku_formation`](formation.html) resource is required to setup the dyno size, type, & scale.
-
-When build fails, the error will contain a URL to view the build log. `curl "https://the-long-log-url-in-the-error"`.
+If build fails, the error will contain a URL to view the build log. `curl "https://the-long-log-url-in-the-error"`.
 
 ## Source URLs
 A `source.url` may point to any `https://` URL that responds to a `GET` with a tarball source code. When running `terraform apply`, the source code will only be fetched once for a successful build. Change the URL to force a new resource.
@@ -33,7 +29,7 @@ GitHub provides [release](https://help.github.com/articles/creating-releases/) t
 https://github.com/username/example/archive/v1.0.0.tar.gz
 ```
 
-Using a branch or master `source.url` is strongly discouraged, because tracking down exactly what was deployed for a given `terraform apply` is difficult.
+Using a branch or master `source.url` is possible, but be aware that tracking down exactly what commit was deployed for a given `terraform apply` may be difficult. On the other hand, using stable release tags ensures repeatability of the Terraform configuration.
 
 ## Local source
 A `source.path` may point to either:
@@ -49,12 +45,12 @@ Ideal for production-quality, collaborative Terraform configuration, when stabil
 
 ```hcl
 resource "heroku_app" "foobar" {
-    name = "foobar"
+    name   = "foobar"
     region = "us"
 }
 
 resource "heroku_build" "foobar" {
-  app = "${heroku_app.foobar.id}"
+  app        = "${heroku_app.foobar.id}"
   buildpacks = ["https://github.com/mars/create-react-app-buildpack"]
 
   source = {
@@ -79,7 +75,7 @@ Ideal for quickly iterating local development.
 
 ```hcl
 resource "heroku_app" "foobar" {
-    name = "foobar"
+    name   = "foobar"
     region = "us"
 }
 
@@ -89,7 +85,7 @@ resource "heroku_build" "foobar" {
   source = {
     // A local directory, changing its contents will
     // force a new build during `terraform apply`
-    path    = "../example-app"
+    path = "../example-app"
   }
 }
 
