@@ -19,6 +19,16 @@ This resource waits until the [build](https://devcenter.heroku.com/articles/buil
 
 If build fails, the error will contain a URL to view the build log. `curl "https://the-long-log-url-in-the-error"`.
 
+To start the app from a successful build, use a [Formation resource](formation.html) to specify the process, dyno size, and dyno quantity.
+
+## Source code layout
+
+The code contained in the source directory or tarball must follow the layout required by the [buildpack](https://devcenter.heroku.com/articles/buildpacks).
+
+For apps that do not have a buildpack set, the [official Heroku buildpacks](https://devcenter.heroku.com/articles/buildpacks#officially-supported-buildpacks) will be searched until a match is detected and used to compile the app.
+
+A [`Procfile`](https://devcenter.heroku.com/articles/procfile) may be required to successfully launch the app. Some buildpacks provide a default web process, such as [`npm start` for Node.js](https://devcenter.heroku.com/articles/nodejs-support#default-web-process-type). Other buildpacks may require a `Procfile`, like for a [pure Ruby app](https://devcenter.heroku.com/articles/ruby-support#ruby-applications-process-types).
+
 ## Source URLs
 A `source.url` may point to any `https://` URL that responds to a `GET` with a tarball source code. When running `terraform apply`, the source code will only be fetched once for a successful build. Change the URL to force a new resource.
 
