@@ -27,21 +27,10 @@ func (r RoundTripWithRetryBackoff) RoundTrip(req *http.Request) (*http.Response,
 	var lastError error
 
 	retryableRoundTrip := func() error {
-		lastResponse = nil
-		lastError = nil
-
-		// Fresh copy of the body for each retry.
-		if req.Body != nil {
-			originalBody, _ := req.GetBody()
-			if originalBody != nil {
-				req.Body = originalBody
-			}
-		}
-
 		lastResponse, lastError = http.DefaultTransport.RoundTrip(req)
 		// Detect Heroku API rate limiting
 		// https://devcenter.heroku.com/articles/platform-api-reference#client-error-responses
-		if lastResponse != nil && lastResponse.StatusCode == 429 {
+		if lastResponse.StatusCode == 429 {
 			return fmt.Errorf("Heroku API rate limited: 429 Too Many Requests")
 		}
 		return nil
