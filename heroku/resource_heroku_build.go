@@ -142,7 +142,10 @@ func resourceHerokuBuild() *schema.Resource {
 func resourceHerokuBuildImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client := meta.(*Config).Api
 
-	app, buildID := parseCompositeID(d.Id())
+	app, buildID, err := parseCompositeID(d.Id())
+	if err != nil {
+		return nil, err
+	}
 
 	build, err := client.BuildInfo(context.Background(), app, buildID)
 	if err != nil {
