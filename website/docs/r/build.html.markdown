@@ -113,7 +113,7 @@ resource "heroku_formation" "foobar" {
 The following arguments are supported:
 
 * `app` - (Required) The ID of the Heroku app
-* `buildpacks` - List of buildpack registry names and/or GitHub URLs
+* `buildpacks` - List of buildpack GitHub URLs
 * `source` - (Required) A block that specifies the source code to build & release:
   * `checksum` - Hash of the source archive for verifying its integrity, auto-generated when `source.path` is set, `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
   * `path` - (Required unless `source.url` is set) Local path to the source directory or tarball archive for the app
