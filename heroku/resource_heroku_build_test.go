@@ -158,8 +158,8 @@ func TestAccHerokuBuild_LocalSourceDirectory(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 	// Manually generated using `shasum --algorithm 256 slug.tgz`
 	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
-	sourceChecksum := "SHA256:d088d16c01834739733d3dd28d70fdf22e1dc93c605632e6732ad2bfada463c3"
-	sourceChecksum2 := "SHA256:5ea4b00c1b92c91de9cc921bc5eaecd1c7c31de6b1668f5607df863e2e142612"
+	sourceChecksum := "SHA256:2962c248919d5b26dae2582a14ea1e518120453291756c98e28519da78d0880c"
+	sourceChecksum2 := "SHA256:2a9b017879665eafaa764e6d2f07dc42ce5c0e1499541d166d8669afbe9f6954"
 
 	defer resetSourceDirectories()
 
