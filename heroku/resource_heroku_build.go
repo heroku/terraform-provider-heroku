@@ -259,6 +259,11 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(build.ID)
+
+	build, err = client.BuildInfo(context.TODO(), app, build.ID)
+	if err != nil {
+		return fmt.Errorf("Error refreshing the completed build: %s", err)
+	}
 	setBuildState(d, build, app)
 
 	log.Printf("[INFO] Created build ID: %s", d.Id())

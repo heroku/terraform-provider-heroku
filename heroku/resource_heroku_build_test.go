@@ -26,6 +26,7 @@ func TestAccHerokuBuild_Basic(t *testing.T) {
 				Config: testAccCheckHerokuBuildConfig_basic(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
+					resource.TestCheckResourceAttr("heroku_build.foobar", "status", "succeeded"),
 				),
 			},
 		},
