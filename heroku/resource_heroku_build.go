@@ -478,12 +478,12 @@ func generateSourceTarball(path string) (filePath string, err error) {
 	if err != nil {
 		return "", err
 	}
-	tarballPath := fmt.Sprintf("source-%s.tar.gz", newUuid)
-	err = tarinator.Tarinate(sourcePaths, tarballPath)
+	filePath = fmt.Sprintf("source-%s.tar.gz", newUuid)
+	err = tarinator.Tarinate(sourcePaths, filePath)
 	if err != nil {
-		return "", fmt.Errorf("Error generating build source tarball %s of %s: %s", tarballPath, path, err)
+		return "", fmt.Errorf("Error generating build source tarball %s of %s: %s", filePath, path, err)
 	}
-	return tarballPath, nil
+	return
 }
 
 // Returns a resource.StateRefreshFunc that is used to watch a Build.
