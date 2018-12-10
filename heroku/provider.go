@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/bgentry/go-netrc/netrc"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
+	heroku "github.com/heroku/heroku-go/v3"
 	"github.com/mitchellh/go-homedir"
 )
 
@@ -35,6 +37,11 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HEROKU_HEADERS", nil),
+			},
+			"url": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("HEROKU_API_URL", heroku.DefaultURL),
 			},
 		},
 
@@ -88,6 +95,10 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	config.Headers = h
+
+	if url, ok := d.GetOk("url"); ok {
+		config.URL = url.(string)
+	}
 
 	err := readNetrcFile(&config)
 	if err != nil {
@@ -163,7 +174,12 @@ func readNetrcFile(config *Config) error {
 		return fmt.Errorf("error parsing netrc file at %q: %s", path, err)
 	}
 
-	machine := net.FindMachine("api.heroku.com")
+	u, err := url.Parse(config.URL)
+	if err != nil {
+		return err
+	}
+
+	machine := net.FindMachine(u.Host)
 	if machine == nil {
 		// Machine not found, no problem
 		return nil

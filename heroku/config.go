@@ -11,6 +11,7 @@ type Config struct {
 	Email   string
 	APIKey  string
 	Headers http.Header
+	URL     string
 
 	Api *heroku.Service
 }
@@ -38,6 +39,8 @@ func (c *Config) loadAndInitialize() error {
 			},
 		},
 	})
+
+	c.Api.URL = c.URL
 
 	log.Printf("[INFO] Heroku Client configured for user: %s", c.Email)
 
