@@ -1,4 +1,17 @@
-## 1.6.1 (Unreleased)
+## 1.7.0 (Unreleased)
+
+FEATURES:
+* **New Resource:** `heroku_build` (for deploying source code to Heroku) [#149](https://github.com/terraform-providers/terraform-provider-heroku/pull/149)
+
+IMPROVEMENTS:
+* Retry with backoff when rate-limited [#135](https://github.com/terraform-providers/terraform-provider-heroku/pull/135)
+
+BUG FIXES:
+* `heroku_app_feature` - Typos in Documentation & Test Fixes [#143](https://github.com/terraform-providers/terraform-provider-heroku/pull/143)
+* Fix bad formatting in docs [#147](https://github.com/terraform-providers/terraform-provider-heroku/pull/147)
+* Fix panic condition in parseCompositeID [#148](https://github.com/terraform-providers/terraform-provider-heroku/pull/148)
+
+
 ## 1.6.0 (November 13, 2018)
 
 FEATURES:
