@@ -101,8 +101,8 @@ The following arguments are supported:
 
 The nested `delays` block supports the following:
 
-* `post_app_create_delay` - (Optional) The number of seconds to wait after an app is created. Default is to wait 10 seconds.
+* `post_app_create_delay` - (Optional) The number of seconds to wait after an app is created. Default is to wait 5 seconds.
 
-* `post_space_create_delay` - (Optional) The number of seconds to wait after a private space is created. Default is to wait 10 seconds.
+* `post_space_create_delay` - (Optional) The number of seconds to wait after a private space is created. Default is to wait 5 seconds.
 
-* `post_domain_create_delay` - (Optional) The number of seconds to wait after a domain is created. Default is to wait 10 seconds.
+* `post_domain_create_delay` - (Optional) The number of seconds to wait after a domain is created. Default is to wait 5 seconds.
