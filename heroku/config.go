@@ -101,13 +101,13 @@ func (c *Config) applySchema(d *schema.ResourceData) (err error) {
 		}
 		for _, v := range vL {
 			delaysConfig := v.(map[string]interface{})
-			if v, ok := delaysConfig["post_app_create_delay"].(int); ok && v != 0 {
+			if v, ok := delaysConfig["post_app_create_delay"].(int); ok {
 				c.PostAppCreateDelay = int64(v)
 			}
-			if v, ok := delaysConfig["post_space_create_delay"].(int); ok && v != 0 {
+			if v, ok := delaysConfig["post_space_create_delay"].(int); ok {
 				c.PostSpaceCreateDelay = int64(v)
 			}
-			if v, ok := delaysConfig["post_domain_create_delay"].(int); ok && v != 0 {
+			if v, ok := delaysConfig["post_domain_create_delay"].(int); ok {
 				c.PostDomainCreateDelay = int64(v)
 			}
 		}
