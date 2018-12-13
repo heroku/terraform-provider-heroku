@@ -1,9 +1,7 @@
 package heroku
 
 import (
-	"fmt"
 	"log"
-	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -128,19 +126,4 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	log.Printf("[DEBUG] Heroku provider initialized: %s\n", config)
 
 	return config, nil
-}
-
-func buildCompositeID(a, b string) string {
-	return fmt.Sprintf("%s:%s", a, b)
-}
-
-func parseCompositeID(id string) (p1 string, p2 string, err error) {
-	parts := strings.SplitN(id, ":", 2)
-	if len(parts) == 2 {
-		p1 = parts[0]
-		p2 = parts[1]
-	} else {
-		err = fmt.Errorf("error: Import composite ID requires two parts separated by colon, eg x:y")
-	}
-	return
 }
