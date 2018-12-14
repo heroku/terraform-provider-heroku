@@ -1,4 +1,4 @@
-## 1.7.0 (Unreleased)
+## 1.7.0 (December 14, 2018)
 
 FEATURES:
 * **New Resource:** `heroku_build` (for deploying source code to Heroku) [#149](https://github.com/terraform-providers/terraform-provider-heroku/pull/149)
