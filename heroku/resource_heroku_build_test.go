@@ -155,12 +155,9 @@ func TestAccHerokuBuild_LocalSourceTarball_AllOpts(t *testing.T) {
 
 func TestAccHerokuBuild_LocalSourceDirectory(t *testing.T) {
 	var build, build2 heroku.Build
+	var originalSourceChecksum string
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
-	// Manually generated using `shasum --algorithm 256 slug.tgz`
-	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
-	sourceChecksum := "SHA256:c9dd0100fae29364ef3085d8de2896878001f598457097415b3a2ab1882adb14"
-	sourceChecksum2 := "SHA256:531698435674ac3bb5bf08bb414f689daf2c8d64d56cec9084ab69a300806f5c"
 
 	defer resetSourceDirectories()
 
@@ -172,7 +169,7 @@ func TestAccHerokuBuild_LocalSourceDirectory(t *testing.T) {
 				Config: testAccCheckHerokuBuildConfig_localSourceDirectory(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
-					resource.TestCheckResourceAttr("heroku_build.foobar", "local_checksum", sourceChecksum),
+					testAccCheckCaptureSourceChecksum("heroku_build.foobar", &originalSourceChecksum),
 				),
 			},
 			{
@@ -180,7 +177,7 @@ func TestAccHerokuBuild_LocalSourceDirectory(t *testing.T) {
 				Config:   testAccCheckHerokuBuildConfig_localSourceDirectory(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build2),
-					resource.TestCheckResourceAttr("heroku_build.foobar", "local_checksum", sourceChecksum2),
+					testAccCheckSourceChecksumIsDifferent("heroku_build.foobar", &originalSourceChecksum),
 				),
 			},
 		},
@@ -339,6 +336,30 @@ resource "heroku_build" "foobar" {
       version = "v0"
     }
 }`, appName)
+}
+
+func testAccCheckCaptureSourceChecksum(buildName string, originalSourceChecksum *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[buildName]
+		if !ok {
+			return fmt.Errorf("Not found: %s", buildName)
+		}
+		*originalSourceChecksum = rs.Primary.Attributes["local_checksum"]
+		return nil
+	}
+}
+
+func testAccCheckSourceChecksumIsDifferent(buildName string, originalSourceChecksum *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[buildName]
+		if !ok {
+			return fmt.Errorf("Not found: %s", buildName)
+		}
+		if rs.Primary.Attributes["local_checksum"] == *originalSourceChecksum {
+			return fmt.Errorf("Checksum should be different")
+		}
+		return nil
+	}
 }
 
 func switchSourceDirectories() (bool, error) {
