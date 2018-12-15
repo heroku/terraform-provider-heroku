@@ -15,7 +15,7 @@ Either a URL or local path, pointing to a [tarball](https://en.wikipedia.org/wik
 
 This resource waits until the [build](https://devcenter.heroku.com/articles/build-and-release-using-the-api) & [release](https://devcenter.heroku.com/articles/release-phase) completes.
 
-If build fails, the error will contain a URL to view the build log. `curl "https://the-long-log-url-in-the-error"`.
+If the build fails, the error will contain a URL to view the build log. `curl "https://the-long-log-url-in-the-error"`.
 
 To start the app from a successful build, use a [Formation resource](formation.html) to specify the process, dyno size, and dyno quantity.
 
