@@ -8,10 +8,8 @@ description: |-
 
 # heroku\_build
 
-***Deploy to Heroku** for Terraform*
-
 Provides a [Heroku Build](https://devcenter.heroku.com/articles/platform-api-reference#build)
-resource, to deploy source code to Heroku.
+resource, to deploy source code to a Heroku app.
 
 Either a URL or local path, pointing to a [tarball](https://en.wikipedia.org/wiki/Tar_(computing)) of the source code, may be deployed. If a local path is used, it may instead point to a directory of source code, which will be tarballed automatically and then deployed.
 
@@ -23,11 +21,21 @@ To start the app from a successful build, use a [Formation resource](formation.h
 
 ## Source code layout
 
-The code contained in the source directory or tarball must follow the layout required by the [buildpack](https://devcenter.heroku.com/articles/buildpacks).
+The code contained in the source directory or tarball must follow the layout required by the [buildpack](https://devcenter.heroku.com/articles/buildpacks) or the `Dockerfile` for [container builds](https://devcenter.heroku.com/articles/build-docker-images-heroku-yml).
+
+### Building with Buildpacks
+
+This is the default build process.
 
 For apps that do not have a buildpack set, the [official Heroku buildpacks](https://devcenter.heroku.com/articles/buildpacks#officially-supported-buildpacks) will be searched until a match is detected and used to compile the app.
 
 A [`Procfile`](https://devcenter.heroku.com/articles/procfile) may be required to successfully launch the app. Some buildpacks provide a default web process, such as [`npm start` for Node.js](https://devcenter.heroku.com/articles/nodejs-support#default-web-process-type). Other buildpacks may require a `Procfile`, like for a [pure Ruby app](https://devcenter.heroku.com/articles/ruby-support#ruby-applications-process-types).
+
+### Building with Docker
+
+To use container builds, set the parent `heroku_app` resource's `stack = "container"`
+
+A [`heroku.yml` manifest](https://devcenter.heroku.com/articles/build-docker-images-heroku-yml#heroku-yml-overview) file is required to declare which `Dockerfile` to build for each process. Be careful not to create conflicting configuration between `heroku.yml` and Terraform, such as addons or config vars.
 
 ## Source URLs
 A `source.url` may point to any `https://` URL that responds to a `GET` with a tarball source code. When running `terraform apply`, the source code will only be fetched once for a successful build. Change the URL to force a new resource.
@@ -64,7 +72,7 @@ resource "heroku_build" "foobar" {
   buildpacks = ["https://github.com/mars/create-react-app-buildpack"]
 
   source = {
-    // This app uses a community buildpack, set it in `buildpacks` above.
+    # This app uses a community buildpack, set it in `buildpacks` above.
     url     = "https://github.com/mars/cra-example-app/archive/v2.1.1.tar.gz"
     version = "v2.1.1"
   }
@@ -93,8 +101,8 @@ resource "heroku_build" "foobar" {
   app = "${heroku_app.foobar.id}"
 
   source = {
-    // A local directory, changing its contents will
-    // force a new build during `terraform apply`
+    # A local directory, changing its contents will
+    # force a new build during `terraform apply`
     path = "../example-app"
   }
 }
