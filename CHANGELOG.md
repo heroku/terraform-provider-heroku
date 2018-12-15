@@ -6,12 +6,15 @@ FEATURES:
 
 IMPROVEMENTS:
 * Retry with backoff when rate-limited [#135](https://github.com/terraform-providers/terraform-provider-heroku/pull/135)
+* Configurable delays to provider to help alleviate issues with Heroku backend eventual consistency with regards to app, spaces, and domain creation [#142](https://github.com/terraform-providers/terraform-provider-heroku/pull/142)
 
 BUG FIXES:
 * `heroku_app_feature` - Typos in Documentation & Test Fixes [#143](https://github.com/terraform-providers/terraform-provider-heroku/pull/143)
 * Fix bad formatting in docs [#147](https://github.com/terraform-providers/terraform-provider-heroku/pull/147)
 * Fix panic condition in parseCompositeID [#148](https://github.com/terraform-providers/terraform-provider-heroku/pull/148)
-
+* Terraform sometimes creates a Heroku Cert, then gets a conflict error [#37](https://github.com/terraform-providers/terraform-provider-heroku/issues/37)
+* Add Exponential Backoff When adding Heroku Domain [#71](https://github.com/terraform-providers/terraform-provider-heroku/issues/71)
+* heroku_space_inbound ruleset can't be applied because heroku_space isn't actually ready [#116](https://github.com/terraform-providers/terraform-provider-heroku/issues/116)
 
 ## 1.6.0 (November 13, 2018)
 
