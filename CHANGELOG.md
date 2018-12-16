@@ -1,4 +1,12 @@
 ## 1.7.1 (Unreleased)
+
+FEATURES:
+
+IMPROVEMENTS:
+* Add configurable delay for post app deletion [#158](https://github.com/terraform-providers/terraform-provider-heroku/pull/158)
+
+BUG FIXES:
+
 ## 1.7.0 (December 14, 2018)
 
 FEATURES:

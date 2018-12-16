@@ -46,6 +46,12 @@ func Provider() terraform.ResourceProvider {
 							Default:      DefaultPostAppCreateDelay,
 							ValidateFunc: validation.IntAtLeast(0),
 						},
+						"post_app_delete_delay": {
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Default:      DefaultPostAppDeleteDelay,
+							ValidateFunc: validation.IntAtLeast(0),
+						},
 						"post_space_create_delay": {
 							Type:         schema.TypeInt,
 							Optional:     true,

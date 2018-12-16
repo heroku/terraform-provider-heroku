@@ -18,6 +18,7 @@ import (
 
 const (
 	DefaultPostAppCreateDelay    = int64(5)
+	DefaultPostAppDeleteDelay    = int64(5)
 	DefaultPostSpaceCreateDelay  = int64(5)
 	DefaultPostDomainCreateDelay = int64(5)
 )
@@ -29,6 +30,7 @@ type Config struct {
 	Email                 string
 	Headers               http.Header
 	PostAppCreateDelay    int64
+	PostAppDeleteDelay    int64
 	PostDomainCreateDelay int64
 	PostSpaceCreateDelay  int64
 	URL                   string
@@ -43,6 +45,7 @@ func NewConfig() *Config {
 	config := &Config{
 		Headers:               make(http.Header),
 		PostAppCreateDelay:    DefaultPostAppCreateDelay,
+		PostAppDeleteDelay:    DefaultPostAppDeleteDelay,
 		PostDomainCreateDelay: DefaultPostDomainCreateDelay,
 		PostSpaceCreateDelay:  DefaultPostSpaceCreateDelay,
 	}
@@ -103,6 +106,9 @@ func (c *Config) applySchema(d *schema.ResourceData) (err error) {
 			delaysConfig := v.(map[string]interface{})
 			if v, ok := delaysConfig["post_app_create_delay"].(int); ok {
 				c.PostAppCreateDelay = int64(v)
+			}
+			if v, ok := delaysConfig["post_app_delete_delay"].(int); ok {
+				c.PostAppDeleteDelay = int64(v)
 			}
 			if v, ok := delaysConfig["post_space_create_delay"].(int); ok {
 				c.PostSpaceCreateDelay = int64(v)

@@ -142,9 +142,6 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[DEBUG] Set Trusted IP Ranges to %s for Space %s", ips.List(), d.Id())
 	}
 
-	config := meta.(*Config)
-	time.Sleep(time.Duration(config.PostSpaceCreateDelay) * time.Second)
-
 	return resourceHerokuSpaceRead(d, meta)
 }
 

@@ -545,6 +545,10 @@ func resourceHerokuAppDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId("")
+
+	config := meta.(*Config)
+	time.Sleep(time.Duration(config.PostAppDeleteDelay) * time.Second)
+
 	return nil
 }
 
