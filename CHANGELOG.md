@@ -1,4 +1,4 @@
-## 1.7.1 (Unreleased)
+## 1.7.1 (December 18, 2018)
 
 BUG FIXES:
 * Add missing features/fixes to changelog [#157](https://github.com/terraform-providers/terraform-provider-heroku/pull/157)
