@@ -55,9 +55,10 @@ func NewConfig() *Config {
 func (c *Config) initializeAPI() (err error) {
 	c.Api = heroku.NewService(&http.Client{
 		Transport: &heroku.Transport{
-			Username:          c.Email,
-			Password:          c.APIKey,
-			UserAgent:         heroku.DefaultUserAgent,
+			Username: c.Email,
+			Password: c.APIKey,
+			UserAgent: fmt.Sprintf("terraform-provider-heroku (%s)",
+				heroku.DefaultUserAgent),
 			AdditionalHeaders: c.Headers,
 			Debug:             c.DebugHTTP,
 			Transport:         heroku.RoundTripWithRetryBackoff{
