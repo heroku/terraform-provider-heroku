@@ -57,7 +57,7 @@ func (c *Config) initializeAPI() (err error) {
 		Transport: &heroku.Transport{
 			Username: c.Email,
 			Password: c.APIKey,
-			UserAgent: fmt.Sprintf("terraform-provider-heroku (%s)",
+			UserAgent: fmt.Sprintf("terraform-provider-heroku %s",
 				heroku.DefaultUserAgent),
 			AdditionalHeaders: c.Headers,
 			Debug:             c.DebugHTTP,
