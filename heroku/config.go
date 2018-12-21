@@ -37,8 +37,8 @@ type Config struct {
 }
 
 func (c Config) String() string {
-	return fmt.Sprintf("{APIKey:xxx Email:%s URL:%s Headers:xxx DebugHTTP:%t PostAppCreateDelay:%d PostDomainCreateDelay:%d PostSpaceCreateDelay:%d}",
-		c.Email, c.URL, c.DebugHTTP, c.PostAppCreateDelay, c.PostDomainCreateDelay, c.PostSpaceCreateDelay)
+	return fmt.Sprintf("{APIKey:xxx Email:%s URL:%s Headers:xxx DebugHTTP:%t PostAppCreateDelay:%d PostAppDeleteDelay:%d PostDomainCreateDelay:%d PostSpaceCreateDelay:%d}",
+		c.Email, c.URL, c.DebugHTTP, c.PostAppCreateDelay, c.PostAppDeleteDelay, c.PostDomainCreateDelay, c.PostSpaceCreateDelay)
 }
 
 func NewConfig() *Config {
