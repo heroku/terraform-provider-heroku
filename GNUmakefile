@@ -14,7 +14,7 @@ test: fmtcheck
 		xargs -t -n4 go test -v $(TESTARGS) -timeout=30s -parallel=4
 
 testacc: fmtcheck
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m -ldflags="-X=github.com/terraform-providers/terraform-provider-heroku/version.ProviderVersion=acc"
 
 vet:
 	@echo "go vet ."
