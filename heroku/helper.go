@@ -7,7 +7,8 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/heroku/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go/v3"
+	"github.com/terraform-providers/terraform-provider-heroku/version"
 )
 
 // getAppName extracts the app attribute generically from a Heroku resource.
@@ -57,4 +58,8 @@ func parseCompositeID(id string) (p1 string, p2 string, err error) {
 		err = fmt.Errorf("error: Import composite ID requires two parts separated by colon, eg x:y")
 	}
 	return
+}
+
+func providerVersion() string {
+	return version.ProviderVersion
 }
