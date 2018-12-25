@@ -342,6 +342,30 @@ func TestAccHerokuApp_EmptyConfigVars(t *testing.T) {
 	})
 }
 
+func TestAccHerokuApp_SensitiveConfigVars(t *testing.T) {
+	var app heroku.App
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAppDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAppConfig_Sensitive(appName, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "config_vars.0.FOO", "bar"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "sensitive_config_vars.0.PRIVATE_KEY", "it is a secret"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckHerokuAppDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*Config).Api
 
@@ -793,6 +817,26 @@ resource "heroku_app" "foobar" {
 
   config_vars = {
     FOO = "bar"
+  }
+}`, appName, org)
+}
+
+func testAccCheckHerokuAppConfig_Sensitive(appName, org string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+  name   = "%s"
+  region = "us"
+  acm = false
+  organization = {
+    name = "%s"
+  }
+
+  config_vars = {
+    FOO = "bar"
+  }
+
+  sensitive_config_vars = {
+    PRIVATE_KEY = "it is a secret"
   }
 }`, appName, org)
 }

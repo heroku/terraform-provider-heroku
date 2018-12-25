@@ -166,6 +166,16 @@ func resourceHerokuApp() *schema.Resource {
 				},
 			},
 
+			"sensitive_config_vars": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type:      schema.TypeMap,
+					Sensitive: true,
+				},
+			},
+
 			"all_config_vars": {
 				Type:     schema.TypeMap,
 				Computed: true,
@@ -404,6 +414,9 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	care := make(map[string]struct{})
 	configVars := make(map[string]string)
 
+	careSensitive := make(map[string]struct{})
+	sensitiveConfigVars := make(map[string]string)
+
 	// Only track buildpacks when set in the configuration.
 	_, buildpacksConfigured := d.GetOk("buildpacks")
 
@@ -433,9 +446,31 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	for _, v := range d.Get("sensitive_config_vars").([]interface{}) {
+		// Protect against panic on type cast for a nil-length array or map
+		n, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		for k := range n {
+			careSensitive[k] = struct{}{}
+		}
+	}
+
+	for k, v := range app.Vars {
+		if _, ok := careSensitive[k]; ok {
+			sensitiveConfigVars[k] = v
+		}
+	}
+
 	var configVarsValue []map[string]string
 	if len(configVars) > 0 {
 		configVarsValue = []map[string]string{configVars}
+	}
+
+	var sensitiveConfigVarsValue []map[string]string
+	if len(sensitiveConfigVars) > 0 {
+		sensitiveConfigVarsValue = []map[string]string{sensitiveConfigVars}
 	}
 
 	if buildpacksConfigured {
@@ -444,6 +479,10 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 
 	if err := d.Set("config_vars", configVarsValue); err != nil {
 		log.Printf("[WARN] Error setting config vars: %s", err)
+	}
+
+	if err := d.Set("sensitive_config_vars", sensitiveConfigVarsValue); err != nil {
+		log.Printf("[WARN] Error setting sensitive config vars: %s", err)
 	}
 
 	if err := d.Set("all_config_vars", app.Vars); err != nil {
@@ -488,6 +527,46 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	// If the config vars changed, then recalculate those
 	if d.HasChange("config_vars") {
 		o, n := d.GetChange("config_vars")
+		if o == nil {
+			o = []interface{}{}
+		}
+		if n == nil {
+			n = []interface{}{}
+		}
+
+		err := updateConfigVars(
+			d.Id(), client, o.([]interface{}), n.([]interface{}))
+		if err != nil {
+			return err
+		}
+
+		releases, err := client.ReleaseList(
+			context.TODO(),
+			d.Id(),
+			&heroku.ListRange{Descending: true, Field: "version", Max: 1},
+		)
+		if err != nil {
+			return err
+		}
+		if len(releases) == 0 {
+			return errors.New("no release found")
+		}
+
+		stateConf := &resource.StateChangeConf{
+			Pending: []string{"pending"},
+			Target:  []string{"succeeded"},
+			Refresh: releaseStateRefreshFunc(client, d.Id(), releases[0].ID),
+			Timeout: 20 * time.Minute,
+		}
+
+		if _, err := stateConf.WaitForState(); err != nil {
+			return fmt.Errorf("Error waiting for new release (%s) to succeed: %s", releases[0].ID, err)
+		}
+	}
+
+	// If the config vars changed, then recalculate those
+	if d.HasChange("sensitive_config_vars") {
+		o, n := d.GetChange("sensitive_config_vars")
 		if o == nil {
 			o = []interface{}{}
 		}
@@ -697,10 +776,21 @@ func updateAcm(id string, client *heroku.Service, enabled bool) error {
 
 // performAppPostCreateTasks performs post-create tasks common to both org and non-org apps.
 func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) error {
+	var configVars, sensitiveConfigVars []interface{}
 	if v, ok := d.GetOk("config_vars"); ok {
-		if err := updateConfigVars(d.Id(), client, nil, v.([]interface{})); err != nil {
-			return err
-		}
+		configVars = v.([]interface{})
+	}
+
+	if err := updateConfigVars(d.Id(), client, nil, configVars); err != nil {
+		return err
+	}
+
+	if v, ok := d.GetOk("sensitive_config_vars"); ok {
+		sensitiveConfigVars = v.([]interface{})
+	}
+
+	if err := updateConfigVars(d.Id(), client, nil, sensitiveConfigVars); err != nil {
+		return err
 	}
 
 	if v, ok := d.GetOk("buildpacks"); ok {
