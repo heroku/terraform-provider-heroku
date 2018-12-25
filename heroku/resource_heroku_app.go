@@ -2,7 +2,6 @@ package heroku
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -525,6 +524,7 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// If the config vars changed, then recalculate those
+	var newConfigVars, newSensitiveConfigVars, newAllConfigVars []interface{}
 	if d.HasChange("config_vars") {
 		o, n := d.GetChange("config_vars")
 		if o == nil {
@@ -534,37 +534,9 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 			n = []interface{}{}
 		}
 
-		err := updateConfigVars(
-			d.Id(), client, o.([]interface{}), n.([]interface{}))
-		if err != nil {
-			return err
-		}
-
-		releases, err := client.ReleaseList(
-			context.TODO(),
-			d.Id(),
-			&heroku.ListRange{Descending: true, Field: "version", Max: 1},
-		)
-		if err != nil {
-			return err
-		}
-		if len(releases) == 0 {
-			return errors.New("no release found")
-		}
-
-		stateConf := &resource.StateChangeConf{
-			Pending: []string{"pending"},
-			Target:  []string{"succeeded"},
-			Refresh: releaseStateRefreshFunc(client, d.Id(), releases[0].ID),
-			Timeout: 20 * time.Minute,
-		}
-
-		if _, err := stateConf.WaitForState(); err != nil {
-			return fmt.Errorf("Error waiting for new release (%s) to succeed: %s", releases[0].ID, err)
-		}
+		newConfigVars = getConfigVarsDiff(o.([]interface{}), n.([]interface{}))
 	}
 
-	// If the config vars changed, then recalculate those
 	if d.HasChange("sensitive_config_vars") {
 		o, n := d.GetChange("sensitive_config_vars")
 		if o == nil {
@@ -574,34 +546,13 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 			n = []interface{}{}
 		}
 
-		err := updateConfigVars(
-			d.Id(), client, o.([]interface{}), n.([]interface{}))
-		if err != nil {
-			return err
-		}
+		newSensitiveConfigVars = getConfigVarsDiff(o.([]interface{}), n.([]interface{}))
+	}
 
-		releases, err := client.ReleaseList(
-			context.TODO(),
-			d.Id(),
-			&heroku.ListRange{Descending: true, Field: "version", Max: 1},
-		)
-		if err != nil {
-			return err
-		}
-		if len(releases) == 0 {
-			return errors.New("no release found")
-		}
-
-		stateConf := &resource.StateChangeConf{
-			Pending: []string{"pending"},
-			Target:  []string{"succeeded"},
-			Refresh: releaseStateRefreshFunc(client, d.Id(), releases[0].ID),
-			Timeout: 20 * time.Minute,
-		}
-
-		if _, err := stateConf.WaitForState(); err != nil {
-			return fmt.Errorf("Error waiting for new release (%s) to succeed: %s", releases[0].ID, err)
-		}
+	// Merge the vars
+	newAllConfigVars = combineVars(newConfigVars, newSensitiveConfigVars)
+	if err := updateConfigVars(d.Id(), client, nil, newAllConfigVars); err != nil {
+		return err
 	}
 
 	if d.HasChange("acm") {
@@ -774,22 +725,45 @@ func updateAcm(id string, client *heroku.Service, enabled bool) error {
 	return nil
 }
 
-// performAppPostCreateTasks performs post-create tasks common to both org and non-org apps.
-func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) error {
-	var configVars, sensitiveConfigVars []interface{}
-	if v, ok := d.GetOk("config_vars"); ok {
-		configVars = v.([]interface{})
+func combineVars(configVars, sensitiveConfigVars []interface{}) (combinedVars []interface{}) {
+	vars := make(map[string]interface{})
+
+	for _, v := range configVars {
+		if v != nil {
+			for k, v := range v.(map[string]interface{}) {
+				vars[k] = v
+			}
+		}
 	}
 
-	if err := updateConfigVars(d.Id(), client, nil, configVars); err != nil {
-		return err
+	for _, v := range sensitiveConfigVars {
+		if v != nil {
+			for k, v := range v.(map[string]interface{}) {
+				vars[k] = v
+			}
+		}
+	}
+
+	combinedVars = make([]interface{}, 1)
+	combinedVars[0] = vars
+
+	return combinedVars
+}
+
+// performAppPostCreateTasks performs post-create tasks common to both org and non-org apps.
+func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) error {
+	var configVars, sensitiveConfigVars, allConfigVars []interface{}
+	if v, ok := d.GetOk("config_vars"); ok {
+		configVars = v.([]interface{})
 	}
 
 	if v, ok := d.GetOk("sensitive_config_vars"); ok {
 		sensitiveConfigVars = v.([]interface{})
 	}
 
-	if err := updateConfigVars(d.Id(), client, nil, sensitiveConfigVars); err != nil {
+	allConfigVars = combineVars(configVars, sensitiveConfigVars)
+
+	if err := updateConfigVars(d.Id(), client, nil, allConfigVars); err != nil {
 		return err
 	}
 
@@ -823,4 +797,30 @@ func releaseStateRefreshFunc(client *heroku.Service, appID, releaseID string) re
 		// heroku-go is updated.
 		return (*heroku.Release)(release), release.Status, nil
 	}
+}
+
+func getConfigVarsDiff(old []interface{}, new []interface{}) (diff []interface{}) {
+	vars := make(map[string]interface{})
+
+	for _, v := range old {
+		if v != nil {
+			for k := range v.(map[string]interface{}) {
+				vars[k] = nil
+			}
+		}
+	}
+	for _, v := range new {
+		if v != nil {
+			for k, v := range v.(map[string]interface{}) {
+				vars[k] = v
+			}
+		}
+	}
+
+	log.Printf("[INFO] Config vars difference: *%#v", vars)
+
+	diff = make([]interface{}, 1)
+	diff[0] = vars
+
+	return diff
 }

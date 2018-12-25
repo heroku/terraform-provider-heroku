@@ -362,6 +362,27 @@ func TestAccHerokuApp_SensitiveConfigVars(t *testing.T) {
 						"heroku_app.foobar", "sensitive_config_vars.0.PRIVATE_KEY", "it is a secret"),
 				),
 			},
+			{
+				Config: testAccCheckHerokuAppConfig_SensitiveUpdate(appName, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "config_vars.0.FOO", "bar1"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "sensitive_config_vars.0.PRIVATE_KEY", "it is a secret1"),
+				),
+			},
+
+			{
+				Config: testAccCheckHerokuAppConfig_SensitiveUpdate_Swap(appName, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "sensitive_config_vars.0.PRIVATE_KEY", "it is a secret1"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "sensitive_config_vars.0.FOO", "bar1"),
+				),
+			},
 		},
 	})
 }
@@ -837,6 +858,43 @@ resource "heroku_app" "foobar" {
 
   sensitive_config_vars = {
     PRIVATE_KEY = "it is a secret"
+  }
+}`, appName, org)
+}
+
+func testAccCheckHerokuAppConfig_SensitiveUpdate(appName, org string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+  name   = "%s"
+  region = "us"
+  acm = false
+  organization = {
+    name = "%s"
+  }
+
+  config_vars = {
+    FOO = "bar1"
+  }
+
+  sensitive_config_vars = {
+    PRIVATE_KEY = "it is a secret1"
+  }
+}`, appName, org)
+}
+
+func testAccCheckHerokuAppConfig_SensitiveUpdate_Swap(appName, org string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+  name   = "%s"
+  region = "us"
+  acm = false
+  organization = {
+    name = "%s"
+  }
+
+  sensitive_config_vars = {
+    FOO = "bar1"
+    PRIVATE_KEY = "it is a secret1"
   }
 }`, appName, org)
 }
