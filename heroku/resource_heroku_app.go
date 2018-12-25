@@ -2,6 +2,7 @@ package heroku
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -686,6 +687,30 @@ func updateConfigVars(
 	log.Printf("[INFO] Updating config vars: *%#v", vars)
 	if _, err := client.ConfigVarUpdate(context.TODO(), id, vars); err != nil {
 		return fmt.Errorf("Error updating config vars: %s", err)
+	}
+
+	releases, err := client.ReleaseList(
+		context.TODO(),
+		id,
+		&heroku.ListRange{Descending: true, Field: "version", Max: 1},
+	)
+	if err != nil {
+		return err
+	}
+
+	if len(releases) == 0 {
+		return errors.New("no release found")
+	}
+
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{"pending"},
+		Target:  []string{"succeeded"},
+		Refresh: releaseStateRefreshFunc(client, id, releases[0].ID),
+		Timeout: 20 * time.Minute,
+	}
+
+	if _, err := stateConf.WaitForState(); err != nil {
+		return fmt.Errorf("Error waiting for new release (%s) to succeed: %s", releases[0].ID, err)
 	}
 
 	return nil
