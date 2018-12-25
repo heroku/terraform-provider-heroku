@@ -45,6 +45,11 @@ The following arguments are supported:
      variables, but rather variables you want present. That is, other
      configuration variables set externally won't be removed by Terraform
      if they aren't present in this list.
+* `sensitive_config_vars` - (Optional) This argument is the same as `config_vars`.
+     The main difference between the two is when `sensitive_config_vars` outputs
+     are displayed on-screen following a terraform apply or terraform refresh,
+     they are redacted, with <sensitive> displayed in place of their value.
+     It is recommended to put private keys, passwords, etc in this argument.
 * `space` - (Optional) The name of a private space to create the app in.
 * `internal_routing` - (Optional) If true, the application will be routable
   only internally in a private space. This option is only available for apps
