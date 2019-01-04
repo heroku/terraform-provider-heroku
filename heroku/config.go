@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 	heroku "github.com/heroku/heroku-go/v3"
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/terraform-providers/terraform-provider-heroku/version"
 )
 
 const (
@@ -57,8 +58,8 @@ func (c *Config) initializeAPI() (err error) {
 		Transport: &heroku.Transport{
 			Username: c.Email,
 			Password: c.APIKey,
-			UserAgent: fmt.Sprintf("%s terraform-provider-heroku",
-				heroku.DefaultUserAgent),
+			UserAgent: fmt.Sprintf("%s terraform-provider-heroku/%s",
+				heroku.DefaultUserAgent, version.ProviderVersion),
 			AdditionalHeaders: c.Headers,
 			Debug:             c.DebugHTTP,
 			Transport:         heroku.RoundTripWithRetryBackoff{
