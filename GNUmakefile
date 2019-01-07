@@ -14,7 +14,7 @@ test: fmtcheck
 		xargs -t -n4 go test -v $(TESTARGS) -timeout=30s -parallel=4
 
 testacc: fmtcheck
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m -ldflags="-X=github.com/terraform-providers/terraform-provider-heroku/version.ProviderVersion=acc"
+	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m -ldflags="-X=github.com/terraform-providers/terraform-provider-heroku/version.ProviderVersion=test"
 
 vet:
 	@echo "go vet ."
@@ -60,4 +60,3 @@ endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
 .PHONY: build test testacc vet fmt fmtcheck errcheck vendor-status test-compile website website-test
-
