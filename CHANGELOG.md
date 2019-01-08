@@ -1,4 +1,4 @@
-## 1.7.2 (Unreleased)
+## 1.7.2 (January 08, 2019)
 
 IMPROVEMENTS:
 * Identify Terraform API requests via User-Agent header [#161](https://github.com/terraform-providers/terraform-provider-heroku/pull/161)
