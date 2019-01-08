@@ -1,4 +1,4 @@
-## 1.8.0 (Unreleased)
+## 1.7.2 (Unreleased)
 
 IMPROVEMENTS:
 * Identify Terraform API requests via User-Agent header [#161](https://github.com/terraform-providers/terraform-provider-heroku/pull/161)
