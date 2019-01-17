@@ -477,10 +477,12 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("buildpacks", app.Buildpacks)
 	}
 
+	log.Printf("[LOG] Setting config vars: %s", configVarsValue)
 	if err := d.Set("config_vars", configVarsValue); err != nil {
 		log.Printf("[WARN] Error setting config vars: %s", err)
 	}
 
+	log.Printf("[LOG] Setting sensitive config vars: %s", sensitiveConfigVarsValue)
 	if err := d.Set("sensitive_config_vars", sensitiveConfigVarsValue); err != nil {
 		log.Printf("[WARN] Error setting sensitive config vars: %s", err)
 	}
@@ -525,7 +527,10 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// If the config vars changed, then recalculate those
-	var newConfigVars, newSensitiveConfigVars, newAllConfigVars []interface{}
+	var oldConfigVars, newConfigVars, oldSensitiveConfigVars, allOldVars, allNewVars,
+		newSensitiveConfigVars []interface{}
+
+	log.Printf("[INFO] Does config_vars have change: *%#v", d.HasChange("config_vars"))
 	if d.HasChange("config_vars") {
 		o, n := d.GetChange("config_vars")
 		if o == nil {
@@ -535,9 +540,11 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 			n = []interface{}{}
 		}
 
-		newConfigVars = getConfigVarsDiff(o.([]interface{}), n.([]interface{}))
+		oldConfigVars = o.([]interface{})
+		newConfigVars = n.([]interface{})
 	}
 
+	log.Printf("[INFO] Does sensitive_config_vars have change: *%#v", d.HasChange("sensitive_config_vars"))
 	if d.HasChange("sensitive_config_vars") {
 		o, n := d.GetChange("sensitive_config_vars")
 		if o == nil {
@@ -547,12 +554,14 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 			n = []interface{}{}
 		}
 
-		newSensitiveConfigVars = getConfigVarsDiff(o.([]interface{}), n.([]interface{}))
+		oldSensitiveConfigVars = o.([]interface{})
+		newSensitiveConfigVars = n.([]interface{})
 	}
 
 	// Merge the vars
-	newAllConfigVars = combineVars(newConfigVars, newSensitiveConfigVars)
-	if err := updateConfigVars(d.Id(), client, nil, newAllConfigVars); err != nil {
+	allOldVars = combineVars(oldConfigVars, oldSensitiveConfigVars)
+	allNewVars = combineVars(newConfigVars, newSensitiveConfigVars)
+	if err := updateConfigVars(d.Id(), client, allOldVars, allNewVars); err != nil {
 		return err
 	}
 
@@ -825,6 +834,9 @@ func releaseStateRefreshFunc(client *heroku.Service, appID, releaseID string) re
 }
 
 func getConfigVarsDiff(old []interface{}, new []interface{}) (diff []interface{}) {
+	log.Printf("[INFO] Old vars: *%#v", old)
+	log.Printf("[INFO] New vars: *%#v", new)
+
 	vars := make(map[string]interface{})
 
 	for _, v := range old {
@@ -846,6 +858,8 @@ func getConfigVarsDiff(old []interface{}, new []interface{}) (diff []interface{}
 
 	diff = make([]interface{}, 1)
 	diff[0] = vars
+
+	log.Printf("[INFO] diff variable is : *%#v", diff)
 
 	return diff
 }
