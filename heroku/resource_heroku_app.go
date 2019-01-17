@@ -526,6 +526,12 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	// Check if there are overlapping config vars and error out as precaution
+	dupeErr := checkIfDupeConfigVars(d)
+	if dupeErr != nil {
+		return dupeErr
+	}
+
 	// If the config vars changed, then recalculate those
 	var oldConfigVars, newConfigVars, oldSensitiveConfigVars, allOldVars, allNewVars,
 		newSensitiveConfigVars []interface{}
@@ -786,6 +792,13 @@ func combineVars(configVars, sensitiveConfigVars []interface{}) (combinedVars []
 
 // performAppPostCreateTasks performs post-create tasks common to both org and non-org apps.
 func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) error {
+	// Check if there are overlapping config vars and error out as precaution
+	dupeErr := checkIfDupeConfigVars(d)
+	if dupeErr != nil {
+		return dupeErr
+	}
+
+	// Create/Update/Delete Config Vars
 	var configVars, sensitiveConfigVars, allConfigVars []interface{}
 	if v, ok := d.GetOk("config_vars"); ok {
 		configVars = v.([]interface{})
@@ -833,33 +846,42 @@ func releaseStateRefreshFunc(client *heroku.Service, appID, releaseID string) re
 	}
 }
 
-func getConfigVarsDiff(old []interface{}, new []interface{}) (diff []interface{}) {
-	log.Printf("[INFO] Old vars: *%#v", old)
-	log.Printf("[INFO] New vars: *%#v", new)
+func checkIfDupeConfigVars(d *schema.ResourceData) error {
+	log.Printf("[INFO] Checking for duplicate config vars")
 
-	vars := make(map[string]interface{})
+	var dupes []string
+	var configVars, sensitiveConfigVars []interface{}
+	if v, ok := d.GetOk("config_vars"); ok {
+		configVars = v.([]interface{})
+	}
 
-	for _, v := range old {
-		if v != nil {
-			for k := range v.(map[string]interface{}) {
-				vars[k] = nil
+	if v, ok := d.GetOk("sensitive_config_vars"); ok {
+		sensitiveConfigVars = v.([]interface{})
+	}
+
+	if configVars != nil && sensitiveConfigVars != nil {
+		for _, vConfigVar := range configVars {
+			if vConfigVar != nil {
+				for configVarKey := range vConfigVar.(map[string]interface{}) {
+					for _, vSenConfigVar := range sensitiveConfigVars {
+						if vSenConfigVar != nil {
+							for senConfigVarKey := range vSenConfigVar.(map[string]interface{}) {
+								if configVarKey == senConfigVarKey {
+									dupes = append(dupes, configVarKey)
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
-	for _, v := range new {
-		if v != nil {
-			for k, v := range v.(map[string]interface{}) {
-				vars[k] = v
-			}
-		}
+
+	log.Printf("[INFO] List of Duplicate config vars %s", dupes)
+
+	if len(dupes) > 0 {
+		return fmt.Errorf("[ERROR] Detected duplicate config vars: %s", dupes)
 	}
 
-	log.Printf("[INFO] Config vars difference: *%#v", vars)
-
-	diff = make([]interface{}, 1)
-	diff[0] = vars
-
-	log.Printf("[INFO] diff variable is : *%#v", diff)
-
-	return diff
+	return nil
 }

@@ -378,6 +378,8 @@ func TestAccHerokuApp_SensitiveConfigVars(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "config_vars.0.WIDGETS", "fake"),
+					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "sensitive_config_vars.0.PRIVATE_KEY", "it is a secret1"),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "sensitive_config_vars.0.FOO", "bar1"),
@@ -890,6 +892,10 @@ resource "heroku_app" "foobar" {
   acm = false
   organization = {
     name = "%s"
+  }
+
+  config_vars = {
+    WIDGETS = "fake"
   }
 
   sensitive_config_vars = {
