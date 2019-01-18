@@ -65,6 +65,11 @@ The `organization` block supports:
 * `locked` (boolean)
 * `personal` (boolean)
 
+~> **NOTE:** Removing an entire `config_vars` or `sensitive_config_vars` block from a
+configuration will not actually remove the vars on the remote resource.
+This is especially important if you are migrating all `config_vars` to `sensitive_config_vars`.
+Leave the empty `config_vars` or `sensitive_config_vars` block in place to remove previously defined vars.
+
 ## Attributes Reference
 
 The following attributes are exported:
