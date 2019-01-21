@@ -166,6 +166,16 @@ func resourceHerokuApp() *schema.Resource {
 				},
 			},
 
+			"sensitive_config_vars": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type:      schema.TypeMap,
+					Sensitive: true,
+				},
+			},
+
 			"all_config_vars": {
 				Type:     schema.TypeMap,
 				Computed: true,
@@ -404,6 +414,9 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	care := make(map[string]struct{})
 	configVars := make(map[string]string)
 
+	careSensitive := make(map[string]struct{})
+	sensitiveConfigVars := make(map[string]string)
+
 	// Only track buildpacks when set in the configuration.
 	_, buildpacksConfigured := d.GetOk("buildpacks")
 
@@ -433,17 +446,45 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	for _, v := range d.Get("sensitive_config_vars").([]interface{}) {
+		// Protect against panic on type cast for a nil-length array or map
+		n, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		for k := range n {
+			careSensitive[k] = struct{}{}
+		}
+	}
+
+	for k, v := range app.Vars {
+		if _, ok := careSensitive[k]; ok {
+			sensitiveConfigVars[k] = v
+		}
+	}
+
 	var configVarsValue []map[string]string
 	if len(configVars) > 0 {
 		configVarsValue = []map[string]string{configVars}
+	}
+
+	var sensitiveConfigVarsValue []map[string]string
+	if len(sensitiveConfigVars) > 0 {
+		sensitiveConfigVarsValue = []map[string]string{sensitiveConfigVars}
 	}
 
 	if buildpacksConfigured {
 		d.Set("buildpacks", app.Buildpacks)
 	}
 
+	log.Printf("[LOG] Setting config vars: %s", configVarsValue)
 	if err := d.Set("config_vars", configVarsValue); err != nil {
 		log.Printf("[WARN] Error setting config vars: %s", err)
+	}
+
+	log.Printf("[LOG] Setting sensitive config vars: %s", sensitiveConfigVarsValue)
+	if err := d.Set("sensitive_config_vars", sensitiveConfigVarsValue); err != nil {
+		log.Printf("[WARN] Error setting sensitive config vars: %s", err)
 	}
 
 	if err := d.Set("all_config_vars", app.Vars); err != nil {
@@ -485,7 +526,17 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	// Check if there are overlapping config vars and error out as precaution
+	dupeErr := checkIfDupeConfigVars(d)
+	if dupeErr != nil {
+		return dupeErr
+	}
+
 	// If the config vars changed, then recalculate those
+	var oldConfigVars, newConfigVars, oldSensitiveConfigVars, allOldVars, allNewVars,
+		newSensitiveConfigVars []interface{}
+
+	log.Printf("[INFO] Does config_vars have change: *%#v", d.HasChange("config_vars"))
 	if d.HasChange("config_vars") {
 		o, n := d.GetChange("config_vars")
 		if o == nil {
@@ -495,34 +546,29 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 			n = []interface{}{}
 		}
 
-		err := updateConfigVars(
-			d.Id(), client, o.([]interface{}), n.([]interface{}))
-		if err != nil {
-			return err
+		oldConfigVars = o.([]interface{})
+		newConfigVars = n.([]interface{})
+	}
+
+	log.Printf("[INFO] Does sensitive_config_vars have change: *%#v", d.HasChange("sensitive_config_vars"))
+	if d.HasChange("sensitive_config_vars") {
+		o, n := d.GetChange("sensitive_config_vars")
+		if o == nil {
+			o = []interface{}{}
+		}
+		if n == nil {
+			n = []interface{}{}
 		}
 
-		releases, err := client.ReleaseList(
-			context.TODO(),
-			d.Id(),
-			&heroku.ListRange{Descending: true, Field: "version", Max: 1},
-		)
-		if err != nil {
-			return err
-		}
-		if len(releases) == 0 {
-			return errors.New("no release found")
-		}
+		oldSensitiveConfigVars = o.([]interface{})
+		newSensitiveConfigVars = n.([]interface{})
+	}
 
-		stateConf := &resource.StateChangeConf{
-			Pending: []string{"pending"},
-			Target:  []string{"succeeded"},
-			Refresh: releaseStateRefreshFunc(client, d.Id(), releases[0].ID),
-			Timeout: 20 * time.Minute,
-		}
-
-		if _, err := stateConf.WaitForState(); err != nil {
-			return fmt.Errorf("Error waiting for new release (%s) to succeed: %s", releases[0].ID, err)
-		}
+	// Merge the vars
+	allOldVars = combineVars(oldConfigVars, oldSensitiveConfigVars)
+	allNewVars = combineVars(newConfigVars, newSensitiveConfigVars)
+	if err := updateConfigVars(d.Id(), client, allOldVars, allNewVars); err != nil {
+		return err
 	}
 
 	if d.HasChange("acm") {
@@ -658,6 +704,30 @@ func updateConfigVars(
 		return fmt.Errorf("Error updating config vars: %s", err)
 	}
 
+	releases, err := client.ReleaseList(
+		context.TODO(),
+		id,
+		&heroku.ListRange{Descending: true, Field: "version", Max: 1},
+	)
+	if err != nil {
+		return err
+	}
+
+	if len(releases) == 0 {
+		return errors.New("no release found")
+	}
+
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{"pending"},
+		Target:  []string{"succeeded"},
+		Refresh: releaseStateRefreshFunc(client, id, releases[0].ID),
+		Timeout: 20 * time.Minute,
+	}
+
+	if _, err := stateConf.WaitForState(); err != nil {
+		return fmt.Errorf("Error waiting for new release (%s) to succeed: %s", releases[0].ID, err)
+	}
+
 	return nil
 }
 
@@ -695,12 +765,53 @@ func updateAcm(id string, client *heroku.Service, enabled bool) error {
 	return nil
 }
 
+func combineVars(configVars, sensitiveConfigVars []interface{}) (combinedVars []interface{}) {
+	vars := make(map[string]interface{})
+
+	for _, v := range configVars {
+		if v != nil {
+			for k, v := range v.(map[string]interface{}) {
+				vars[k] = v
+			}
+		}
+	}
+
+	for _, v := range sensitiveConfigVars {
+		if v != nil {
+			for k, v := range v.(map[string]interface{}) {
+				vars[k] = v
+			}
+		}
+	}
+
+	combinedVars = make([]interface{}, 1)
+	combinedVars[0] = vars
+
+	return combinedVars
+}
+
 // performAppPostCreateTasks performs post-create tasks common to both org and non-org apps.
 func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) error {
+	// Check if there are overlapping config vars and error out as precaution
+	dupeErr := checkIfDupeConfigVars(d)
+	if dupeErr != nil {
+		return dupeErr
+	}
+
+	// Create/Update/Delete Config Vars
+	var configVars, sensitiveConfigVars, allConfigVars []interface{}
 	if v, ok := d.GetOk("config_vars"); ok {
-		if err := updateConfigVars(d.Id(), client, nil, v.([]interface{})); err != nil {
-			return err
-		}
+		configVars = v.([]interface{})
+	}
+
+	if v, ok := d.GetOk("sensitive_config_vars"); ok {
+		sensitiveConfigVars = v.([]interface{})
+	}
+
+	allConfigVars = combineVars(configVars, sensitiveConfigVars)
+
+	if err := updateConfigVars(d.Id(), client, nil, allConfigVars); err != nil {
+		return err
 	}
 
 	if v, ok := d.GetOk("buildpacks"); ok {
@@ -733,4 +844,44 @@ func releaseStateRefreshFunc(client *heroku.Service, appID, releaseID string) re
 		// heroku-go is updated.
 		return (*heroku.Release)(release), release.Status, nil
 	}
+}
+
+func checkIfDupeConfigVars(d *schema.ResourceData) error {
+	log.Printf("[INFO] Checking for duplicate config vars")
+
+	var dupes []string
+	var configVars, sensitiveConfigVars []interface{}
+	if v, ok := d.GetOk("config_vars"); ok {
+		configVars = v.([]interface{})
+	}
+
+	if v, ok := d.GetOk("sensitive_config_vars"); ok {
+		sensitiveConfigVars = v.([]interface{})
+	}
+
+	if configVars != nil && sensitiveConfigVars != nil {
+		for _, vConfigVar := range configVars {
+			if vConfigVar != nil {
+				for configVarKey := range vConfigVar.(map[string]interface{}) {
+					for _, vSenConfigVar := range sensitiveConfigVars {
+						if vSenConfigVar != nil {
+							for senConfigVarKey := range vSenConfigVar.(map[string]interface{}) {
+								if configVarKey == senConfigVarKey {
+									dupes = append(dupes, configVarKey)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	log.Printf("[INFO] List of Duplicate config vars %s", dupes)
+
+	if len(dupes) > 0 {
+		return fmt.Errorf("[ERROR] Detected duplicate config vars: %s", dupes)
+	}
+
+	return nil
 }

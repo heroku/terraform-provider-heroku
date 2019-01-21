@@ -342,6 +342,53 @@ func TestAccHerokuApp_EmptyConfigVars(t *testing.T) {
 	})
 }
 
+func TestAccHerokuApp_SensitiveConfigVars(t *testing.T) {
+	var app heroku.App
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAppDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAppConfig_Sensitive(appName, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "config_vars.0.FOO", "bar"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "sensitive_config_vars.0.PRIVATE_KEY", "it is a secret"),
+				),
+			},
+			{
+				Config: testAccCheckHerokuAppConfig_SensitiveUpdate(appName, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "config_vars.0.FOO", "bar1"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "sensitive_config_vars.0.PRIVATE_KEY", "it is a secret1"),
+				),
+			},
+
+			{
+				Config: testAccCheckHerokuAppConfig_SensitiveUpdate_Swap(appName, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "config_vars.0.WIDGETS", "fake"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "sensitive_config_vars.0.PRIVATE_KEY", "it is a secret1"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "sensitive_config_vars.0.FOO", "bar1"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckHerokuAppDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*Config).Api
 
@@ -793,6 +840,67 @@ resource "heroku_app" "foobar" {
 
   config_vars = {
     FOO = "bar"
+  }
+}`, appName, org)
+}
+
+func testAccCheckHerokuAppConfig_Sensitive(appName, org string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+  name   = "%s"
+  region = "us"
+  acm = false
+  organization = {
+    name = "%s"
+  }
+
+  config_vars = {
+    FOO = "bar"
+  }
+
+  sensitive_config_vars = {
+    PRIVATE_KEY = "it is a secret"
+  }
+}`, appName, org)
+}
+
+func testAccCheckHerokuAppConfig_SensitiveUpdate(appName, org string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+  name   = "%s"
+  region = "us"
+  acm = false
+  organization = {
+    name = "%s"
+  }
+
+  config_vars = {
+    FOO = "bar1"
+  }
+
+  sensitive_config_vars = {
+    PRIVATE_KEY = "it is a secret1"
+  }
+}`, appName, org)
+}
+
+func testAccCheckHerokuAppConfig_SensitiveUpdate_Swap(appName, org string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+  name   = "%s"
+  region = "us"
+  acm = false
+  organization = {
+    name = "%s"
+  }
+
+  config_vars = {
+    WIDGETS = "fake"
+  }
+
+  sensitive_config_vars = {
+    FOO = "bar1"
+    PRIVATE_KEY = "it is a secret1"
   }
 }`, appName, org)
 }
