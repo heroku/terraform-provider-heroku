@@ -1,4 +1,8 @@
 ## 1.7.3 (Unreleased)
+
+IMPROVEMENTS:
+* `heroku_app` - New attribute `sensitive_config_vars` to help with sensitive heroku app config vars [#163](https://github.com/terraform-providers/terraform-provider-heroku/pull/163)
+
 ## 1.7.2 (January 08, 2019)
 
 IMPROVEMENTS:
