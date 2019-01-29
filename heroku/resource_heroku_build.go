@@ -168,13 +168,15 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 
 	if v, ok := d.GetOk("buildpacks"); ok {
 		var buildpacks []*struct {
-			URL *string `json:"url,omitempty" url:"url,omitempty,key"`
+			Name *string `json:"name,omitempty" url:"name,omitempty,key"`
+			URL  *string `json:"url,omitempty" url:"url,omitempty,key"`
 		}
 		buildpacksArg := v.([]interface{})
 		for _, buildpack := range buildpacksArg {
 			b := buildpack.(string)
 			buildpacks = append(buildpacks, &struct {
-				URL *string `json:"url,omitempty" url:"url,omitempty,key"`
+				Name *string `json:"name,omitempty" url:"name,omitempty,key"`
+				URL  *string `json:"url,omitempty" url:"url,omitempty,key"`
 			}{
 				URL: &b,
 			})

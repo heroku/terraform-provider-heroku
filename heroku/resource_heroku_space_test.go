@@ -105,16 +105,48 @@ func TestAccHerokuSpace_IPRange(t *testing.T) {
 	})
 }
 
+func TestAccHerokuSpace_CIDRs(t *testing.T) {
+	var space heroku.Space
+	spaceName := fmt.Sprintf("tfcidrtest-%s", acctest.RandString(10))
+	org := testAccConfig.GetAnyOrganizationOrSkip(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+		},
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuSpaceDestroy,
+		Steps: []resource.TestStep{
+			{
+				ResourceName: "heroku_space.foobar",
+				Config:       testAccCheckHerokuSpaceConfig_cidr(spaceName, org, "10.0.0.0/16"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
+					resource.TestCheckResourceAttr("heroku_space.foobar", "cidr", "10.0.0.0/16"),
+				),
+			},
+			{
+				ResourceName: "heroku_space.foobar",
+				Config:       testAccCheckHerokuSpaceConfig_data_cidr(spaceName, org, "10.1.0.0/20"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
+					resource.TestCheckResourceAttr("heroku_space.foobar", "data_cidr", "10.1.0.0/20"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckHerokuSpaceConfig_basic(spaceName, orgName string) string {
 	return fmt.Sprintf(`
 resource "heroku_space" "foobar" {
   name = "%s"
-	organization = "%s"
-	region = "virginia"
-	trusted_ip_ranges = [
-		"8.8.8.8/32",
-		"8.8.8.0/24",
-	]
+  organization = "%s"
+  region = "virginia"
+  trusted_ip_ranges = [
+    "8.8.8.8/32",
+    "8.8.8.0/24",
+  ]
 }
 `, spaceName, orgName)
 }
@@ -140,6 +172,28 @@ resource "heroku_space" "foobar" {
   trusted_ip_ranges = [%s]
 }
 `, spaceName, orgName, ipsStr)
+}
+
+func testAccCheckHerokuSpaceConfig_cidr(spaceName, orgName string, cidr string) string {
+	return fmt.Sprintf(`
+resource "heroku_space" "foobar" {
+  name         = "%s"
+  organization = "%s"
+  cidr         = "%s"
+  region       = "virginia"
+}
+`, spaceName, orgName, cidr)
+}
+
+func testAccCheckHerokuSpaceConfig_data_cidr(spaceName, orgName string, dataCidr string) string {
+	return fmt.Sprintf(`
+resource "heroku_space" "foobar" {
+  name         = "%s"
+  organization = "%s"
+  data_cidr    = "%s"
+  region       = "virginia"
+}
+`, spaceName, orgName, dataCidr)
 }
 
 func testAccCheckHerokuSpaceExists(n string, space *heroku.Space) resource.TestCheckFunc {
