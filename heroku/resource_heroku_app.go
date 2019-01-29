@@ -8,10 +8,10 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
+	multierror "github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/heroku/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go/v3"
 )
 
 // herokuApplication is a value type used to hold the details of an
@@ -158,20 +158,17 @@ func resourceHerokuApp() *schema.Resource {
 			},
 
 			"config_vars": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeMap,
-				},
 			},
 
 			"sensitive_config_vars": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeMap,
 				Optional: true,
 				Computed: true,
 				Elem: &schema.Schema{
-					Type:      schema.TypeMap,
+					Type:      schema.TypeString,
 					Sensitive: true,
 				},
 			},
@@ -442,13 +439,8 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	for _, v := range d.Get("config_vars").([]interface{}) {
-		// Protect against panic on type cast for a nil-length array or map
-		n, ok := v.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		for k := range n {
+	if c, ok := d.GetOk("config_vars"); ok {
+		for k := range c.(map[string]interface{}) {
 			care[k] = struct{}{}
 		}
 	}
@@ -459,13 +451,8 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	for _, v := range d.Get("sensitive_config_vars").([]interface{}) {
-		// Protect against panic on type cast for a nil-length array or map
-		n, ok := v.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		for k := range n {
+	if s, ok := d.GetOk("sensitive_config_vars"); ok {
+		for k := range s.(map[string]interface{}) {
 			careSensitive[k] = struct{}{}
 		}
 	}
@@ -476,16 +463,6 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	var configVarsValue []map[string]string
-	if len(configVars) > 0 {
-		configVarsValue = []map[string]string{configVars}
-	}
-
-	var sensitiveConfigVarsValue []map[string]string
-	if len(sensitiveConfigVars) > 0 {
-		sensitiveConfigVarsValue = []map[string]string{sensitiveConfigVars}
-	}
-
 	if buildpacksConfigured {
 		buildpacksErr := d.Set("buildpacks", app.Buildpacks)
 		if buildpacksErr != nil {
@@ -493,13 +470,13 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	log.Printf("[LOG] Setting config vars: %s", configVarsValue)
-	if err := d.Set("config_vars", configVarsValue); err != nil {
+	log.Printf("[LOG] Setting config vars: %s", configVars)
+	if err := d.Set("config_vars", configVars); err != nil {
 		log.Printf("[WARN] Error setting config vars: %s", err)
 	}
 
-	log.Printf("[LOG] Setting sensitive config vars: %s", sensitiveConfigVarsValue)
-	if err := d.Set("sensitive_config_vars", sensitiveConfigVarsValue); err != nil {
+	log.Printf("[LOG] Setting sensitive config vars: %s", sensitiveConfigVars)
+	if err := d.Set("sensitive_config_vars", sensitiveConfigVars); err != nil {
 		log.Printf("[WARN] Error setting sensitive config vars: %s", err)
 	}
 
@@ -556,34 +533,34 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	// If the config vars changed, then recalculate those
 	var oldConfigVars, newConfigVars, oldSensitiveConfigVars, allOldVars, allNewVars,
-		newSensitiveConfigVars []interface{}
+		newSensitiveConfigVars map[string]interface{}
 
 	log.Printf("[INFO] Does config_vars have change: *%#v", d.HasChange("config_vars"))
 	if d.HasChange("config_vars") {
 		o, n := d.GetChange("config_vars")
 		if o == nil {
-			o = []interface{}{}
+			o = make(map[string]interface{})
 		}
 		if n == nil {
-			n = []interface{}{}
+			n = make(map[string]interface{})
 		}
 
-		oldConfigVars = o.([]interface{})
-		newConfigVars = n.([]interface{})
+		oldConfigVars = o.(map[string]interface{})
+		newConfigVars = n.(map[string]interface{})
 	}
 
 	log.Printf("[INFO] Does sensitive_config_vars have change: *%#v", d.HasChange("sensitive_config_vars"))
 	if d.HasChange("sensitive_config_vars") {
 		o, n := d.GetChange("sensitive_config_vars")
 		if o == nil {
-			o = []interface{}{}
+			o = make(map[string]interface{})
 		}
 		if n == nil {
-			n = []interface{}{}
+			n = make(map[string]interface{})
 		}
 
-		oldSensitiveConfigVars = o.([]interface{})
-		newSensitiveConfigVars = n.([]interface{})
+		oldSensitiveConfigVars = o.(map[string]interface{})
+		newSensitiveConfigVars = n.(map[string]interface{})
 	}
 
 	// Merge the vars
@@ -698,27 +675,16 @@ func retrieveConfigVars(id string, client *heroku.Service) (map[string]string, e
 }
 
 // Updates the config vars for from an expanded configuration.
-func updateConfigVars(
-	id string,
-	client *heroku.Service,
-	o []interface{},
-	n []interface{}) error {
+func updateConfigVars(id string, client *heroku.Service, o, n map[string]interface{}) error {
 	vars := make(map[string]*string)
 
-	for _, v := range o {
-		if v != nil {
-			for k := range v.(map[string]interface{}) {
-				vars[k] = nil
-			}
-		}
+	for k := range o {
+		vars[k] = nil
 	}
-	for _, v := range n {
-		if v != nil {
-			for k, v := range v.(map[string]interface{}) {
-				val := v.(string)
-				vars[k] = &val
-			}
-		}
+
+	for k, v := range n {
+		val := v.(string)
+		vars[k] = &val
 	}
 
 	log.Printf("[INFO] Updating config vars: *%#v", vars)
@@ -787,29 +753,18 @@ func updateAcm(id string, client *heroku.Service, enabled bool) error {
 	return nil
 }
 
-func combineVars(configVars, sensitiveConfigVars []interface{}) (combinedVars []interface{}) {
+func combineVars(configVars, sensitiveConfigVars map[string]interface{}) map[string]interface{} {
 	vars := make(map[string]interface{})
 
-	for _, v := range configVars {
-		if v != nil {
-			for k, v := range v.(map[string]interface{}) {
-				vars[k] = v
-			}
-		}
+	for k, v := range configVars {
+		vars[k] = v
 	}
 
-	for _, v := range sensitiveConfigVars {
-		if v != nil {
-			for k, v := range v.(map[string]interface{}) {
-				vars[k] = v
-			}
-		}
+	for k, v := range sensitiveConfigVars {
+		vars[k] = v
 	}
 
-	combinedVars = make([]interface{}, 1)
-	combinedVars[0] = vars
-
-	return combinedVars
+	return vars
 }
 
 // performAppPostCreateTasks performs post-create tasks common to both org and non-org apps.
@@ -821,13 +776,13 @@ func performAppPostCreateTasks(d *schema.ResourceData, client *heroku.Service) e
 	}
 
 	// Create/Update/Delete Config Vars
-	var configVars, sensitiveConfigVars, allConfigVars []interface{}
+	var configVars, sensitiveConfigVars, allConfigVars map[string]interface{}
 	if v, ok := d.GetOk("config_vars"); ok {
-		configVars = v.([]interface{})
+		configVars = v.(map[string]interface{})
 	}
 
 	if v, ok := d.GetOk("sensitive_config_vars"); ok {
-		sensitiveConfigVars = v.([]interface{})
+		sensitiveConfigVars = v.(map[string]interface{})
 	}
 
 	allConfigVars = combineVars(configVars, sensitiveConfigVars)
@@ -872,29 +827,19 @@ func checkIfDupeConfigVars(d *schema.ResourceData) error {
 	log.Printf("[INFO] Checking for duplicate config vars")
 
 	var dupes []string
-	var configVars, sensitiveConfigVars []interface{}
-	if v, ok := d.GetOk("config_vars"); ok {
-		configVars = v.([]interface{})
+	var configVars, sensitiveConfigVars map[string]interface{}
+	if c, ok := d.GetOk("config_vars"); ok {
+		configVars = c.(map[string]interface{})
 	}
 
-	if v, ok := d.GetOk("sensitive_config_vars"); ok {
-		sensitiveConfigVars = v.([]interface{})
+	if s, ok := d.GetOk("sensitive_config_vars"); ok {
+		sensitiveConfigVars = s.(map[string]interface{})
 	}
 
 	if configVars != nil && sensitiveConfigVars != nil {
-		for _, vConfigVar := range configVars {
-			if vConfigVar != nil {
-				for configVarKey := range vConfigVar.(map[string]interface{}) {
-					for _, vSenConfigVar := range sensitiveConfigVars {
-						if vSenConfigVar != nil {
-							for senConfigVarKey := range vSenConfigVar.(map[string]interface{}) {
-								if configVarKey == senConfigVarKey {
-									dupes = append(dupes, configVarKey)
-								}
-							}
-						}
-					}
-				}
+		for k := range configVars {
+			if _, ok := sensitiveConfigVars[k]; ok {
+				dupes = append(dupes, k)
 			}
 		}
 	}

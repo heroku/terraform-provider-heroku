@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/heroku/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuApp_Basic(t *testing.T) {
@@ -31,7 +31,7 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet(
 						"heroku_app.foobar", "uuid"),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "config_vars.0.FOO", "bar"),
+						"heroku_app.foobar", "config_vars.FOO", "bar"),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "internal_routing", "false"),
 				),
@@ -84,7 +84,7 @@ func TestAccHerokuApp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "stack", appStack),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "config_vars.0.FOO", "bar"),
+						"heroku_app.foobar", "config_vars.FOO", "bar"),
 				),
 			},
 			{
@@ -97,9 +97,9 @@ func TestAccHerokuApp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "stack", appStack2),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "config_vars.0.FOO", "bing"),
+						"heroku_app.foobar", "config_vars.FOO", "bing"),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "config_vars.0.BAZ", "bar"),
+						"heroku_app.foobar", "config_vars.BAZ", "bar"),
 				),
 			},
 		},
@@ -124,7 +124,7 @@ func TestAccHerokuApp_NukeVars(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "name", appName),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "config_vars.0.FOO", "bar"),
+						"heroku_app.foobar", "config_vars.FOO", "bar"),
 				),
 			},
 			{
@@ -135,7 +135,7 @@ func TestAccHerokuApp_NukeVars(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "name", appName),
 					resource.TestCheckNoResourceAttr(
-						"heroku_app.foobar", "config_vars.0.FOO"),
+						"heroku_app.foobar", "config_vars.FOO"),
 				),
 			},
 		},
@@ -357,9 +357,9 @@ func TestAccHerokuApp_SensitiveConfigVars(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "config_vars.0.FOO", "bar"),
+						"heroku_app.foobar", "config_vars.FOO", "bar"),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "sensitive_config_vars.0.PRIVATE_KEY", "it is a secret"),
+						"heroku_app.foobar", "sensitive_config_vars.PRIVATE_KEY", "it is a secret"),
 				),
 			},
 			{
@@ -367,9 +367,9 @@ func TestAccHerokuApp_SensitiveConfigVars(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "config_vars.0.FOO", "bar1"),
+						"heroku_app.foobar", "config_vars.FOO", "bar1"),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "sensitive_config_vars.0.PRIVATE_KEY", "it is a secret1"),
+						"heroku_app.foobar", "sensitive_config_vars.PRIVATE_KEY", "it is a secret1"),
 				),
 			},
 
@@ -378,11 +378,11 @@ func TestAccHerokuApp_SensitiveConfigVars(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "config_vars.0.WIDGETS", "fake"),
+						"heroku_app.foobar", "config_vars.WIDGETS", "fake"),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "sensitive_config_vars.0.PRIVATE_KEY", "it is a secret1"),
+						"heroku_app.foobar", "sensitive_config_vars.PRIVATE_KEY", "it is a secret1"),
 					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "sensitive_config_vars.0.FOO", "bar1"),
+						"heroku_app.foobar", "sensitive_config_vars.FOO", "bar1"),
 				),
 			},
 		},
@@ -687,7 +687,7 @@ resource "heroku_app" "foobar" {
   stack = "%s"
   region = "us"
 
-  config_vars {
+  config_vars = {
     FOO = "bar"
   }
 }`, appName, appStack)
@@ -723,7 +723,7 @@ resource "heroku_app" "foobar" {
 	stack  = "%s"
   region = "us"
 
-  config_vars {
+  config_vars = {
     FOO = "bing"
     BAZ = "bar"
   }
@@ -736,7 +736,7 @@ resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
 
-  config_vars = []
+  config_vars = {}
 }`, appName)
 }
 
@@ -750,7 +750,7 @@ resource "heroku_app" "foobar" {
     name = "%s"
   }
 
-  config_vars {
+  config_vars = {
     FOO = "bar"
   }
 }`, appName, org)
@@ -772,7 +772,7 @@ resource "heroku_app" "foobar" {
     name = "%s"
   }
 
-  config_vars {
+  config_vars = {
     FOO = "bar"
   }
 }`, spaceName, org, appName, org)
@@ -795,7 +795,7 @@ resource "heroku_app" "foobar" {
     name = "%s"
   }
 
-  config_vars {
+  config_vars = {
     FOO = "bar"
   }
 }`, spaceName, org, appName, org)
@@ -806,9 +806,6 @@ func testAccCheckHerokuAppConfig_EmptyConfigVars(appName string) string {
 resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
-
-  config_vars = [
-  ]
 }`, appName)
 }
 
@@ -834,7 +831,7 @@ resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
   acm = false
-  organization = {
+  organization {
     name = "%s"
   }
 
@@ -850,7 +847,7 @@ resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
   acm = false
-  organization = {
+  organization {
     name = "%s"
   }
 
@@ -870,7 +867,7 @@ resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
   acm = false
-  organization = {
+  organization {
     name = "%s"
   }
 
@@ -890,7 +887,7 @@ resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
   acm = false
-  organization = {
+  organization {
     name = "%s"
   }
 

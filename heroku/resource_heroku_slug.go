@@ -14,7 +14,7 @@ import (
 
 	uuid "github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/heroku/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go/v3"
 )
 
 func resourceHerokuSlug() *schema.Resource {
@@ -95,12 +95,9 @@ func resourceHerokuSlug() *schema.Resource {
 			},
 
 			"process_types": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeMap,
 				Required: true,
 				ForceNew: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeMap,
-				},
 			},
 
 			"size": {
@@ -154,13 +151,10 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 	opts := heroku.SlugCreateOpts{}
 
 	if pt, ok := d.GetOk("process_types"); ok {
-		ptSet := pt.(*schema.Set)
 		opts.ProcessTypes = make(map[string]string)
 
-		for _, v := range ptSet.List() {
-			for kk, vv := range v.(map[string]interface{}) {
-				opts.ProcessTypes[kk] = vv.(string)
-			}
+		for k, v := range pt.(map[string]interface{}) {
+			opts.ProcessTypes[k] = v.(string)
 		}
 	}
 
@@ -389,8 +383,7 @@ func setSlugState(d *schema.ResourceData, slug *heroku.Slug) error {
 	d.Set("checksum", slug.Checksum)
 	d.Set("commit", slug.Commit)
 	d.Set("commit_description", slug.CommitDescription)
-	processTypes := []map[string]string{slug.ProcessTypes}
-	if err := d.Set("process_types", processTypes); err != nil {
+	if err := d.Set("process_types", slug.ProcessTypes); err != nil {
 		log.Printf("[WARN] Error setting process_types: %s", err)
 	}
 	d.Set("size", slug.Size)
