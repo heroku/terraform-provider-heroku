@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/heroku/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go/v3"
 )
 
 func TestAccHerokuAddon_Basic(t *testing.T) {
@@ -26,7 +26,7 @@ func TestAccHerokuAddon_Basic(t *testing.T) {
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
 					testAccCheckHerokuAddonAttributes(&addon, "deployhooks:http"),
 					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "config.0.url", "http://google.com"),
+						"heroku_addon.foobar", "config.url", "http://google.com"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "app", appName),
 					resource.TestCheckResourceAttr(
@@ -172,9 +172,9 @@ resource "heroku_app" "foobar" {
 resource "heroku_addon" "foobar" {
     app = "${heroku_app.foobar.name}"
     plan = "deployhooks:http"
-    config {
+    config = {
         url = "http://google.com"
-    }
+	}
 }`, appName)
 }
 

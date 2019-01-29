@@ -93,9 +93,9 @@ resource "heroku_app" "foobar" {
     "heroku/go"
   ]
 
-  config_vars {
+	config_vars = {
     FOO = "bar"
-  }
+	}
 }
 `, appName, stack)
 }
@@ -112,9 +112,9 @@ resource "heroku_app" "foobar" {
     "heroku/go"
 	]
 	
-  config_vars {
+	config_vars = {
     FOO = "bar"
-  }
+	}
 }
 
 data "heroku_app" "foobar" {
