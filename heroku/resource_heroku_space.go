@@ -43,14 +43,14 @@ func resourceHerokuSpace() *schema.Resource {
 			"cidr": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
+				Default:  "10.0.0.0/16",
 				ForceNew: true,
 			},
 
 			"data_cidr": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  nil,
+				Default:  "10.1.0.0/16",
 				ForceNew: true,
 			},
 
