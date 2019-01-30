@@ -8,16 +8,6 @@ func dataSourceHerokuSpace() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceHerokuSpaceRead,
 		Schema: map[string]*schema.Schema{
-			"cidr": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-
-			"data_cidr": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -26,6 +16,20 @@ func dataSourceHerokuSpace() *schema.Resource {
 			"organization": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+
+			"cidr": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Default:  nil,
+				Optional: true,
+			},
+
+			"data_cidr": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Default:  nil,
+				Optional: true,
 			},
 
 			"outbound_ips": {

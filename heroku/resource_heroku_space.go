@@ -29,20 +29,6 @@ func resourceHerokuSpace() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"cidr": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "10.0.0.0/16",
-				ForceNew: true,
-			},
-
-			"data_cidr": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "10.1.0.0/16",
-				ForceNew: true,
-			},
-
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -51,6 +37,20 @@ func resourceHerokuSpace() *schema.Resource {
 			"organization": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
+			},
+
+			"cidr": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  nil,
+				ForceNew: true,
+			},
+
+			"data_cidr": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  nil,
 				ForceNew: true,
 			},
 
