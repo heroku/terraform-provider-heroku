@@ -35,11 +35,11 @@ The following parameters are available for running the test. The absence of some
 
 * **HEROKU_API_KEY**(`string`) **Required** The api key of the user running the test.
 * **HEROKU_EMAIL**(`string`) **Required** The email of the user running the test.
-* **HEROKU_ORGANIZATION**(`string`) **Required** The Enterprise Team in which tests will be run.
+* **HEROKU_ORGANIZATION**(`string`) **Required** The Heroku Team in which tests will be run.
 * **HEROKU_TEST_USER**(`string`) The name of an existing user belonging to the organization, that will be used for various test cases.
 * **HEROKU_NON_ADMIN_TEST_USER**(`string`) The name of an existing non-admin user belonging to the organization, that will be used for various test cases.
 * **HEROKU_SLUG_ID**(`string`) The ID of an existing slug built in the Common Runtime (otherwise "Slug not compatible with space" errors will be thrown)
-* **HEROKU_SPACES_ORGANIZATION**(`string`) The organization for which Heroku Private Space tests will be run under.
+* **HEROKU_SPACES_ORGANIZATION**(`string`) The Heroku Enterprise Team for which Heroku Private Space tests will be run under.
 * **TF_LOG**(`DEBUG|TRACE`) Enables more detailed logging of tests, including http request/responses. 
 
 For example:
