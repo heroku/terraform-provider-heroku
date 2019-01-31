@@ -79,6 +79,10 @@ Please see the [TESTING](TESTING.md) guide for detailed instructions on running 
 
 ### Updating or adding dependencies
 
-This project uses [dep](https://golang.github.io/dep/) for dependency management.
+This project uses [go modules](https://github.com/golang/go/wiki/Modules) for dependency management. For the time being dependencies should still be vendored using `go mod vendor`.
+
+Use `go get` in module mode to fetch new and update dependencies.
+Use `go mod tidy` after any installation or update to keep the dependency tree as clean as possible.
+Use `go mod vendor` to place a local copy of the dependencies into the `vendor/` folder. This is because CI and building will still use the "legacy" GOPATH and vendor folders.
 
 Use the [`dep ensure` command](https://golang.github.io/dep/docs/daily-dep.html) to add, update, & remove dependencies.
