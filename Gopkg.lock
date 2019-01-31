@@ -327,11 +327,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7c79c523059440ed7901f5f815b5d359dd5e080d05d92ae31433273aead21ee6"
+  digest = "1:507e57ad266c0e496705e5bad4dc8665327dfda899e12b96d836d128f1a09544"
   name = "github.com/heroku/heroku-go"
   packages = ["v3"]
   pruneopts = "UT"
-  revision = "3b96879aa0a537cdfabc258cd8a13bc079d06801"
+  revision = "ad17585a922f269c393cbccf2e0cf81eb8d2e431"
 
 [[projects]]
   digest = "1:e22af8c7518e1eab6f2eab2b7d7558927f816262586cd6ed9f349c97a6c285c4"

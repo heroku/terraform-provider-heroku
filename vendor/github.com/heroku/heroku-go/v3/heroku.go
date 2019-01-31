@@ -226,6 +226,11 @@ type Account struct {
 		Organization struct {
 			Name string `json:"name" url:"name,key"` // unique name of organization
 		} `json:"organization" url:"organization,key"`
+		Owner struct {
+			ID   string `json:"id" url:"id,key"`     // unique identifier of the owner
+			Name string `json:"name" url:"name,key"` // name of the owner
+			Type string `json:"type" url:"type,key"` // type of the owner
+		} `json:"owner" url:"owner,key"` // entity that owns this identity provider
 	} `json:"identity_provider" url:"identity_provider,key"` // Identity Provider details for federated users.
 	LastLogin               *time.Time `json:"last_login" url:"last_login,key"`                               // when account last authorized with Heroku
 	Name                    *string    `json:"name" url:"name,key"`                                           // full name of the account owner
@@ -340,6 +345,11 @@ type AddOn struct {
 		Contract bool   `json:"contract" url:"contract,key"` // price is negotiated in a contract outside of monthly add-on billing
 		Unit     string `json:"unit" url:"unit,key"`         // unit of price for plan
 	} `json:"billed_price" url:"billed_price,key"` // billed price
+	BillingEntity struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of the billing entity
+		Name string `json:"name" url:"name,key"` // name of the billing entity
+		Type string `json:"type" url:"type,key"` // type of Object of the billing entity; new types allowed at any time.
+	} `json:"billing_entity" url:"billing_entity,key"` // billing entity associated with this add-on
 	ConfigVars []string  `json:"config_vars" url:"config_vars,key"` // config vars exposed to the owning app by this add-on
 	CreatedAt  time.Time `json:"created_at" url:"created_at,key"`   // when add-on was created
 	ID         string    `json:"id" url:"id,key"`                   // unique identifier of add-on
@@ -368,10 +378,13 @@ func (s *Service) AddOnInfo(ctx context.Context, addOnIdentity string) (*AddOn, 
 }
 
 type AddOnCreateOpts struct {
-	Attachment *struct{}         `json:"attachment,omitempty" url:"attachment,omitempty,key"` // name for add-on's initial attachment
-	Config     map[string]string `json:"config,omitempty" url:"config,omitempty,key"`         // custom add-on provisioning options
-	Confirm    *string           `json:"confirm,omitempty" url:"confirm,omitempty,key"`       // name of owning app for confirmation
-	Plan       string            `json:"plan" url:"plan,key"`                                 // unique identifier of this plan
+	Attachment *struct {
+		Name *string `json:"name,omitempty" url:"name,omitempty,key"` // unique name for this add-on attachment to this app
+	} `json:"attachment,omitempty" url:"attachment,omitempty,key"` // name for add-on's initial attachment
+	Config  map[string]string `json:"config,omitempty" url:"config,omitempty,key"`   // custom add-on provisioning options
+	Confirm *string           `json:"confirm,omitempty" url:"confirm,omitempty,key"` // name of billing entity for confirmation
+	Name    *string           `json:"name,omitempty" url:"name,omitempty,key"`       // globally unique name of the add-on
+	Plan    string            `json:"plan" url:"plan,key"`                           // unique identifier of this plan
 }
 
 // Create a new add-on.
@@ -427,6 +440,21 @@ func (s *Service) AddOnListByTeam(ctx context.Context, teamIdentity string, lr *
 	return addOn, s.Get(ctx, &addOn, fmt.Sprintf("/teams/%v/addons", teamIdentity), nil, lr)
 }
 
+type AddOnResolutionOpts struct {
+	Addon        string  `json:"addon" url:"addon,key"`                                     // globally unique name of the add-on
+	AddonService *string `json:"addon_service,omitempty" url:"addon_service,omitempty,key"` // unique name of this add-on-service
+	App          *string `json:"app,omitempty" url:"app,omitempty,key"`                     // unique name of app
+}
+type AddOnResolutionResult []AddOn
+
+// Resolve an add-on from a name, optionally passing an app name. If
+// there are matches it returns at least one add-on (exact match) or
+// many.
+func (s *Service) AddOnResolution(ctx context.Context, o AddOnResolutionOpts) (AddOnResolutionResult, error) {
+	var addOn AddOnResolutionResult
+	return addOn, s.Post(ctx, &addOn, fmt.Sprintf("/actions/addons/resolve"), o)
+}
+
 // Add-on Actions are lifecycle operations for add-on provisioning and
 // deprovisioning. They allow whitelisted add-on providers to
 // (de)provision add-ons in the background and then report back when
@@ -447,6 +475,11 @@ type AddOnActionProvisionResult struct {
 		Contract bool   `json:"contract" url:"contract,key"` // price is negotiated in a contract outside of monthly add-on billing
 		Unit     string `json:"unit" url:"unit,key"`         // unit of price for plan
 	} `json:"billed_price" url:"billed_price,key"` // billed price
+	BillingEntity struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of the billing entity
+		Name string `json:"name" url:"name,key"` // name of the billing entity
+		Type string `json:"type" url:"type,key"` // type of Object of the billing entity; new types allowed at any time.
+	} `json:"billing_entity" url:"billing_entity,key"` // billing entity associated with this add-on
 	ConfigVars []string  `json:"config_vars" url:"config_vars,key"` // config vars exposed to the owning app by this add-on
 	CreatedAt  time.Time `json:"created_at" url:"created_at,key"`   // when add-on was created
 	ID         string    `json:"id" url:"id,key"`                   // unique identifier of add-on
@@ -482,6 +515,11 @@ type AddOnActionDeprovisionResult struct {
 		Contract bool   `json:"contract" url:"contract,key"` // price is negotiated in a contract outside of monthly add-on billing
 		Unit     string `json:"unit" url:"unit,key"`         // unit of price for plan
 	} `json:"billed_price" url:"billed_price,key"` // billed price
+	BillingEntity struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of the billing entity
+		Name string `json:"name" url:"name,key"` // name of the billing entity
+		Type string `json:"type" url:"type,key"` // type of Object of the billing entity; new types allowed at any time.
+	} `json:"billing_entity" url:"billing_entity,key"` // billing entity associated with this add-on
 	ConfigVars []string  `json:"config_vars" url:"config_vars,key"` // config vars exposed to the owning app by this add-on
 	CreatedAt  time.Time `json:"created_at" url:"created_at,key"`   // when add-on was created
 	ID         string    `json:"id" url:"id,key"`                   // unique identifier of add-on
@@ -517,12 +555,13 @@ type AddOnAttachment struct {
 		ID   string `json:"id" url:"id,key"`     // unique identifier of app
 		Name string `json:"name" url:"name,key"` // unique name of app
 	} `json:"app" url:"app,key"` // application that is attached to add-on
-	CreatedAt time.Time `json:"created_at" url:"created_at,key"` // when add-on attachment was created
-	ID        string    `json:"id" url:"id,key"`                 // unique identifier of this add-on attachment
-	Name      string    `json:"name" url:"name,key"`             // unique name for this add-on attachment to this app
-	Namespace *string   `json:"namespace" url:"namespace,key"`   // attachment namespace
-	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when add-on attachment was updated
-	WebURL    *string   `json:"web_url" url:"web_url,key"`       // URL for logging into web interface of add-on in attached app context
+	CreatedAt   time.Time `json:"created_at" url:"created_at,key"`       // when add-on attachment was created
+	ID          string    `json:"id" url:"id,key"`                       // unique identifier of this add-on attachment
+	LogInputURL *string   `json:"log_input_url" url:"log_input_url,key"` // URL for add-on partners to write to an add-on's logs
+	Name        string    `json:"name" url:"name,key"`                   // unique name for this add-on attachment to this app
+	Namespace   *string   `json:"namespace" url:"namespace,key"`         // attachment namespace
+	UpdatedAt   time.Time `json:"updated_at" url:"updated_at,key"`       // when add-on attachment was updated
+	WebURL      *string   `json:"web_url" url:"web_url,key"`             // URL for logging into web interface of add-on in attached app context
 }
 type AddOnAttachmentCreateOpts struct {
 	Addon     string  `json:"addon" url:"addon,key"`                             // unique identifier of add-on
@@ -578,6 +617,21 @@ func (s *Service) AddOnAttachmentListByApp(ctx context.Context, appIdentity stri
 func (s *Service) AddOnAttachmentInfoByApp(ctx context.Context, appIdentity string, addOnAttachmentScopedIdentity string) (*AddOnAttachment, error) {
 	var addOnAttachment AddOnAttachment
 	return &addOnAttachment, s.Get(ctx, &addOnAttachment, fmt.Sprintf("/apps/%v/addon-attachments/%v", appIdentity, addOnAttachmentScopedIdentity), nil, nil)
+}
+
+type AddOnAttachmentResolutionOpts struct {
+	AddonAttachment string  `json:"addon_attachment" url:"addon_attachment,key"`               // unique name for this add-on attachment to this app
+	AddonService    *string `json:"addon_service,omitempty" url:"addon_service,omitempty,key"` // unique name of this add-on-service
+	App             *string `json:"app,omitempty" url:"app,omitempty,key"`                     // unique name of app
+}
+type AddOnAttachmentResolutionResult []AddOnAttachment
+
+// Resolve an add-on attachment from a name, optionally passing an app
+// name. If there are matches it returns at least one add-on attachment
+// (exact match) or many.
+func (s *Service) AddOnAttachmentResolution(ctx context.Context, o AddOnAttachmentResolutionOpts) (AddOnAttachmentResolutionResult, error) {
+	var addOnAttachment AddOnAttachmentResolutionResult
+	return addOnAttachment, s.Post(ctx, &addOnAttachment, fmt.Sprintf("/actions/addon-attachments/resolve"), o)
 }
 
 // Configuration of an Add-on
@@ -1491,8 +1545,8 @@ type Build struct {
 		ID string `json:"id" url:"id,key"` // unique identifier of app
 	} `json:"app" url:"app,key"` // app that the build belongs to
 	Buildpacks []struct {
-		URL string `json:"url" url:"url,key"` // location of the buildpack for the app. Either a url (unofficial
-		// buildpacks) or an internal urn (heroku official buildpacks).
+		Name string `json:"name" url:"name,key"` // Buildpack Registry name of the buildpack for the app
+		URL  string `json:"url" url:"url,key"`   // the URL of the buildpack for the app
 	} `json:"buildpacks" url:"buildpacks,key"` // buildpacks executed for this build, in order
 	CreatedAt       time.Time `json:"created_at" url:"created_at,key"`               // when build was created
 	ID              string    `json:"id" url:"id,key"`                               // unique identifier of build
@@ -1524,8 +1578,8 @@ type Build struct {
 }
 type BuildCreateOpts struct {
 	Buildpacks []*struct {
-		URL *string `json:"url,omitempty" url:"url,omitempty,key"` // location of the buildpack for the app. Either a url (unofficial
-		// buildpacks) or an internal urn (heroku official buildpacks).
+		Name *string `json:"name,omitempty" url:"name,omitempty,key"` // Buildpack Registry name of the buildpack for the app
+		URL  *string `json:"url,omitempty" url:"url,omitempty,key"`   // the URL of the buildpack for the app
 	} `json:"buildpacks,omitempty" url:"buildpacks,omitempty,key"` // buildpacks executed for this build, in order
 	SourceBlob struct {
 		Checksum *string `json:"checksum,omitempty" url:"checksum,omitempty,key"` // an optional checksum of the gzipped tarball for verifying its
@@ -1591,8 +1645,8 @@ func (s *Service) BuildResultInfo(ctx context.Context, appIdentity string, build
 // against an app.
 type BuildpackInstallation struct {
 	Buildpack struct {
-		Name string `json:"name" url:"name,key"` // either the shorthand name (heroku official buildpacks) or url
-		// (unofficial buildpacks) of the buildpack for the app
+		Name string `json:"name" url:"name,key"` // either the Buildpack Registry name or a URL of the buildpack for the
+		// app
 		URL string `json:"url" url:"url,key"` // location of the buildpack for the app. Either a url (unofficial
 		// buildpacks) or an internal urn (heroku official buildpacks).
 	} `json:"buildpack" url:"buildpack,key"` // buildpack
@@ -2021,6 +2075,11 @@ type IdentityProvider struct {
 	Organization *struct {
 		Name string `json:"name" url:"name,key"` // unique name of organization
 	} `json:"organization" url:"organization,key"` // organization associated with this identity provider
+	Owner struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of the owner
+		Name string `json:"name" url:"name,key"` // name of the owner
+		Type string `json:"type" url:"type,key"` // type of the owner
+	} `json:"owner" url:"owner,key"` // entity that owns this identity provider
 	SloTargetURL string    `json:"slo_target_url" url:"slo_target_url,key"` // single log out URL for this identity provider
 	SsoTargetURL string    `json:"sso_target_url" url:"sso_target_url,key"` // single sign on URL for this identity provider
 	UpdatedAt    time.Time `json:"updated_at" url:"updated_at,key"`         // when the identity provider record was updated
@@ -2626,6 +2685,11 @@ type OrganizationAddOnListForOrganizationResult []struct {
 		Contract bool   `json:"contract" url:"contract,key"` // price is negotiated in a contract outside of monthly add-on billing
 		Unit     string `json:"unit" url:"unit,key"`         // unit of price for plan
 	} `json:"billed_price" url:"billed_price,key"` // billed price
+	BillingEntity struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of the billing entity
+		Name string `json:"name" url:"name,key"` // name of the billing entity
+		Type string `json:"type" url:"type,key"` // type of Object of the billing entity; new types allowed at any time.
+	} `json:"billing_entity" url:"billing_entity,key"` // billing entity associated with this add-on
 	ConfigVars []string  `json:"config_vars" url:"config_vars,key"` // config vars exposed to the owning app by this add-on
 	CreatedAt  time.Time `json:"created_at" url:"created_at,key"`   // when add-on was created
 	ID         string    `json:"id" url:"id,key"`                   // unique identifier of add-on
@@ -3204,6 +3268,7 @@ func (s *Service) PasswordResetCompleteResetPassword(ctx context.Context, passwo
 // VPC.
 type Peering struct {
 	AwsAccountID string    `json:"aws_account_id" url:"aws_account_id,key"` // The AWS account ID of your Private Space.
+	AwsRegion    string    `json:"aws_region" url:"aws_region,key"`         // The AWS region of the peer connection.
 	AwsVpcID     string    `json:"aws_vpc_id" url:"aws_vpc_id,key"`         // The AWS VPC ID of the peer.
 	CIDRBlocks   []string  `json:"cidr_blocks" url:"cidr_blocks,key"`       // The CIDR blocks of the peer.
 	Expires      time.Time `json:"expires" url:"expires,key"`               // When a peering connection will expire.
@@ -3245,6 +3310,7 @@ type PeeringInfo struct {
 	AwsAccountID          string   `json:"aws_account_id" url:"aws_account_id,key"`                   // The AWS account ID of your Private Space.
 	AwsRegion             string   `json:"aws_region" url:"aws_region,key"`                           // region name used by provider
 	DynoCIDRBlocks        []string `json:"dyno_cidr_blocks" url:"dyno_cidr_blocks,key"`               // The CIDR ranges that should be routed to the Private Space VPC.
+	SpaceCIDRBlocks       []string `json:"space_cidr_blocks" url:"space_cidr_blocks,key"`             // The CIDR ranges that should be routed to the Private Space VPC.
 	UnavailableCIDRBlocks []string `json:"unavailable_cidr_blocks" url:"unavailable_cidr_blocks,key"` // The CIDR ranges that you must not conflict with.
 	VpcCIDR               string   `json:"vpc_cidr" url:"vpc_cidr,key"`                               // An IP address and the number of significant bits that make up the
 	// routing or networking portion.
@@ -3324,6 +3390,14 @@ type PipelineCouplingListByPipelineResult []PipelineCoupling
 func (s *Service) PipelineCouplingListByPipeline(ctx context.Context, pipelineID string, lr *ListRange) (PipelineCouplingListByPipelineResult, error) {
 	var pipelineCoupling PipelineCouplingListByPipelineResult
 	return pipelineCoupling, s.Get(ctx, &pipelineCoupling, fmt.Sprintf("/pipelines/%v/pipeline-couplings", pipelineID), nil, lr)
+}
+
+type PipelineCouplingListForCurrentUserResult []PipelineCoupling
+
+// List pipeline couplings for the current user.
+func (s *Service) PipelineCouplingListForCurrentUser(ctx context.Context, lr *ListRange) (PipelineCouplingListForCurrentUserResult, error) {
+	var pipelineCoupling PipelineCouplingListForCurrentUserResult
+	return pipelineCoupling, s.Get(ctx, &pipelineCoupling, fmt.Sprintf("/users/~/pipeline-couplings"), nil, lr)
 }
 
 type PipelineCouplingListResult []PipelineCoupling
@@ -3750,9 +3824,14 @@ func (s *Service) SourceCreateDeprecated(ctx context.Context, appIdentity string
 // A space is an isolated, highly available, secure app execution
 // environments, running in the modern VPC substrate.
 type Space struct {
-	CreatedAt    time.Time `json:"created_at" url:"created_at,key"` // when space was created
-	ID           string    `json:"id" url:"id,key"`                 // unique identifier of space
-	Name         string    `json:"name" url:"name,key"`             // unique name of space
+	CIDR string `json:"cidr" url:"cidr,key"` // The RFC-1918 CIDR the Private Space will use. It must be a /16 in
+	// 10.0.0.0/8, 172.16.0.0/12 or 192.168.0.0/16
+	CreatedAt time.Time `json:"created_at" url:"created_at,key"` // when space was created
+	DataCIDR  string    `json:"data_cidr" url:"data_cidr,key"`   // The RFC-1918 CIDR that the Private Space will use for the
+	// Heroku-managed peering connection that's automatically created when
+	// using Heroku Data add-ons. It must be between a /16 and a /20
+	ID           string `json:"id" url:"id,key"`     // unique identifier of space
+	Name         string `json:"name" url:"name,key"` // unique name of space
 	Organization struct {
 		Name string `json:"name" url:"name,key"` // unique name of organization
 	} `json:"organization" url:"organization,key"` // organization that owns this space
@@ -3799,6 +3878,11 @@ func (s *Service) SpaceDelete(ctx context.Context, spaceIdentity string) (*Space
 }
 
 type SpaceCreateOpts struct {
+	CIDR *string `json:"cidr,omitempty" url:"cidr,omitempty,key"` // The RFC-1918 CIDR the Private Space will use. It must be a /16 in
+	// 10.0.0.0/8, 172.16.0.0/12 or 192.168.0.0/16
+	DataCIDR *string `json:"data_cidr,omitempty" url:"data_cidr,omitempty,key"` // The RFC-1918 CIDR that the Private Space will use for the
+	// Heroku-managed peering connection that's automatically created when
+	// using Heroku Data add-ons. It must be between a /16 and a /20
 	Name   string  `json:"name" url:"name,key"`                         // unique name of space
 	Region *string `json:"region,omitempty" url:"region,omitempty,key"` // unique identifier of region
 	Shield *bool   `json:"shield,omitempty" url:"shield,omitempty,key"` // true if this space has shield enabled
@@ -3941,6 +4025,7 @@ func (s *Service) SSLEndpointUpdate(ctx context.Context, appIdentity string, ssl
 // in the Heroku platform.
 type Stack struct {
 	CreatedAt time.Time `json:"created_at" url:"created_at,key"` // when stack was introduced
+	Default   bool      `json:"default" url:"default,key"`       // indicates this stack is the default for new apps
 	ID        string    `json:"id" url:"id,key"`                 // unique identifier of stack
 	Name      string    `json:"name" url:"name,key"`             // unique name of stack
 	State     string    `json:"state" url:"state,key"`           // availability of this stack: beta, deprecated or public
@@ -4007,11 +4092,13 @@ type TeamCreateOpts struct {
 	City            *string `json:"city,omitempty" url:"city,omitempty,key"`                         // city
 	Country         *string `json:"country,omitempty" url:"country,omitempty,key"`                   // country
 	Cvv             *string `json:"cvv,omitempty" url:"cvv,omitempty,key"`                           // card verification value
+	DeviceData      *string `json:"device_data,omitempty" url:"device_data,omitempty,key"`           // Device data string generated by the client
 	ExpirationMonth *string `json:"expiration_month,omitempty" url:"expiration_month,omitempty,key"` // expiration month
 	ExpirationYear  *string `json:"expiration_year,omitempty" url:"expiration_year,omitempty,key"`   // expiration year
 	FirstName       *string `json:"first_name,omitempty" url:"first_name,omitempty,key"`             // the first name for payment method
 	LastName        *string `json:"last_name,omitempty" url:"last_name,omitempty,key"`               // the last name for payment method
 	Name            string  `json:"name" url:"name,key"`                                             // unique name of team
+	Nonce           *string `json:"nonce,omitempty" url:"nonce,omitempty,key"`                       // Nonce generated by Braintree hosted fields form
 	Other           *string `json:"other,omitempty" url:"other,omitempty,key"`                       // metadata
 	PostalCode      *string `json:"postal_code,omitempty" url:"postal_code,omitempty,key"`           // postal code
 	State           *string `json:"state,omitempty" url:"state,omitempty,key"`                       // state
@@ -4141,8 +4228,13 @@ type TeamAppCollaborator struct {
 		ID   string `json:"id" url:"id,key"`     // unique identifier of app
 		Name string `json:"name" url:"name,key"` // unique name of app
 	} `json:"app" url:"app,key"` // app collaborator belongs to
-	CreatedAt time.Time `json:"created_at" url:"created_at,key"` // when collaborator was created
-	ID        string    `json:"id" url:"id,key"`                 // unique identifier of collaborator
+	CreatedAt   time.Time `json:"created_at" url:"created_at,key"` // when collaborator was created
+	ID          string    `json:"id" url:"id,key"`                 // unique identifier of collaborator
+	Permissions []struct {
+		Description string `json:"description" url:"description,key"` // A description of what the app permission allows.
+		Name        string `json:"name" url:"name,key"`               // The name of the app permission.
+	} `json:"permissions" url:"permissions,key"` // array of permissions for the collaborator (only applicable if the app
+	// is on a team)
 	Role      *string   `json:"role" url:"role,key"`             // role in the team
 	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when collaborator was updated
 	User      struct {
@@ -4481,6 +4573,165 @@ type TeamPreferencesUpdateOpts struct {
 func (s *Service) TeamPreferencesUpdate(ctx context.Context, teamPreferencesIdentity string, o TeamPreferencesUpdateOpts) (*TeamPreferences, error) {
 	var teamPreferences TeamPreferences
 	return &teamPreferences, s.Patch(ctx, &teamPreferences, fmt.Sprintf("/teams/%v/preferences", teamPreferencesIdentity), o)
+}
+
+// A single test case belonging to a test run
+type TestCase struct {
+	CreatedAt   time.Time `json:"created_at" url:"created_at,key"`   // when test case was created
+	Description string    `json:"description" url:"description,key"` // description of the test case
+	Diagnostic  string    `json:"diagnostic" url:"diagnostic,key"`   // meta information about the test case
+	Directive   string    `json:"directive" url:"directive,key"`     // special note about the test case e.g. skipped, todo
+	ID          string    `json:"id" url:"id,key"`                   // unique identifier of a test case
+	Number      int       `json:"number" url:"number,key"`           // the test number
+	Passed      bool      `json:"passed" url:"passed,key"`           // whether the test case was successful
+	TestNode    struct {
+		ID string `json:"id" url:"id,key"` // unique identifier of a test node
+	} `json:"test_node" url:"test_node,key"` // the test node which executed this test case
+	TestRun struct {
+		ID string `json:"id" url:"id,key"` // unique identifier of a test run
+	} `json:"test_run" url:"test_run,key"` // the test run which owns this test case
+	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when test case was updated
+}
+type TestCaseListResult []TestCase
+
+// List test cases
+func (s *Service) TestCaseList(ctx context.Context, testRunID string, lr *ListRange) error {
+	return s.Get(ctx, nil, fmt.Sprintf("/test-runs/%v/test-cases", testRunID), nil, lr)
+}
+
+// A single test node belonging to a test run
+type TestNode struct {
+	CreatedAt time.Time `json:"created_at" url:"created_at,key"` // when test node was created
+	Dyno      *struct {
+		AttachURL *string `json:"attach_url" url:"attach_url,key"` // a URL to stream output from for debug runs or null for non-debug runs
+		ID        string  `json:"id" url:"id,key"`                 // unique identifier of this dyno
+	} `json:"dyno" url:"dyno,key"` // the dyno which belongs to this test node
+	ErrorStatus     *string `json:"error_status" url:"error_status,key"`           // the status of the test run when the error occured
+	ExitCode        *int    `json:"exit_code" url:"exit_code,key"`                 // the exit code of the test script
+	ID              string  `json:"id" url:"id,key"`                               // unique identifier of a test node
+	Index           int     `json:"index" url:"index,key"`                         // The index of the test node
+	Message         *string `json:"message" url:"message,key"`                     // human friendly message indicating reason for an error
+	OutputStreamURL string  `json:"output_stream_url" url:"output_stream_url,key"` // the streaming output for the test node
+	Pipeline        struct {
+		ID string `json:"id" url:"id,key"` // unique identifier of pipeline
+	} `json:"pipeline" url:"pipeline,key"` // the pipeline which owns this test node
+	SetupStreamURL string `json:"setup_stream_url" url:"setup_stream_url,key"` // the streaming test setup output for the test node
+	Status         string `json:"status" url:"status,key"`                     // current state of the test run
+	TestRun        struct {
+		ID string `json:"id" url:"id,key"` // unique identifier of a test run
+	} `json:"test_run" url:"test_run,key"` // the test run which owns this test node
+	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when test node was updated
+}
+type TestNodeListResult []TestNode
+
+// List test nodes
+func (s *Service) TestNodeList(ctx context.Context, testRunIdentity string, lr *ListRange) error {
+	return s.Get(ctx, nil, fmt.Sprintf("/test-runs/%v/test-nodes", testRunIdentity), nil, lr)
+}
+
+// An execution or trial of one or more tests
+type TestRun struct {
+	ActorEmail    string    `json:"actor_email" url:"actor_email,key"`       // the email of the actor triggering the test run
+	AppSetup      *struct{} `json:"app_setup" url:"app_setup,key"`           // the app setup for the test run
+	ClearCache    *bool     `json:"clear_cache" url:"clear_cache,key"`       // whether the test was run with an empty cache
+	CommitBranch  string    `json:"commit_branch" url:"commit_branch,key"`   // the branch of the repository that the test run concerns
+	CommitMessage string    `json:"commit_message" url:"commit_message,key"` // the message for the commit under test
+	CommitSha     string    `json:"commit_sha" url:"commit_sha,key"`         // the SHA hash of the commit under test
+	CreatedAt     time.Time `json:"created_at" url:"created_at,key"`         // when test run was created
+	Debug         bool      `json:"debug" url:"debug,key"`                   // whether the test run was started for interactive debugging
+	Dyno          *struct {
+		Size string `json:"size" url:"size,key"` // dyno size (default: "standard-1X")
+	} `json:"dyno" url:"dyno,key"` // the type of dynos used for this test-run
+	ID           string  `json:"id" url:"id,key"`           // unique identifier of a test run
+	Message      *string `json:"message" url:"message,key"` // human friendly message indicating reason for an error
+	Number       int     `json:"number" url:"number,key"`   // the auto incrementing test run number
+	Organization *struct {
+		Name string `json:"name" url:"name,key"` // unique name of organization
+	} `json:"organization" url:"organization,key"` // the organization that owns this test-run
+	Pipeline struct {
+		ID string `json:"id" url:"id,key"` // unique identifier of pipeline
+	} `json:"pipeline" url:"pipeline,key"` // the pipeline which owns this test-run
+	SourceBlobURL string    `json:"source_blob_url" url:"source_blob_url,key"` // The download location for the source code to be tested
+	Status        string    `json:"status" url:"status,key"`                   // current state of the test run
+	UpdatedAt     time.Time `json:"updated_at" url:"updated_at,key"`           // when test-run was updated
+	User          struct {
+		AllowTracking       bool      `json:"allow_tracking" url:"allow_tracking,key"` // whether to allow third party web activity tracking
+		Beta                bool      `json:"beta" url:"beta,key"`                     // whether allowed to utilize beta Heroku features
+		CreatedAt           time.Time `json:"created_at" url:"created_at,key"`         // when account was created
+		DefaultOrganization *struct {
+			ID   string `json:"id" url:"id,key"`     // unique identifier of organization
+			Name string `json:"name" url:"name,key"` // unique name of organization
+		} `json:"default_organization" url:"default_organization,key"` // organization selected by default
+		DelinquentAt     *time.Time `json:"delinquent_at" url:"delinquent_at,key"` // when account became delinquent
+		Email            string     `json:"email" url:"email,key"`                 // unique email address of account
+		Federated        bool       `json:"federated" url:"federated,key"`         // whether the user is federated and belongs to an Identity Provider
+		ID               string     `json:"id" url:"id,key"`                       // unique identifier of an account
+		IdentityProvider *struct {
+			ID           string `json:"id" url:"id,key"` // unique identifier of this identity provider
+			Organization struct {
+				Name string `json:"name" url:"name,key"` // unique name of organization
+			} `json:"organization" url:"organization,key"`
+			Owner struct {
+				ID   string `json:"id" url:"id,key"`     // unique identifier of the owner
+				Name string `json:"name" url:"name,key"` // name of the owner
+				Type string `json:"type" url:"type,key"` // type of the owner
+			} `json:"owner" url:"owner,key"` // entity that owns this identity provider
+		} `json:"identity_provider" url:"identity_provider,key"` // Identity Provider details for federated users.
+		LastLogin               *time.Time `json:"last_login" url:"last_login,key"`                               // when account last authorized with Heroku
+		Name                    *string    `json:"name" url:"name,key"`                                           // full name of the account owner
+		SmsNumber               *string    `json:"sms_number" url:"sms_number,key"`                               // SMS number of account
+		SuspendedAt             *time.Time `json:"suspended_at" url:"suspended_at,key"`                           // when account was suspended
+		TwoFactorAuthentication bool       `json:"two_factor_authentication" url:"two_factor_authentication,key"` // whether two-factor auth is enabled on the account
+		UpdatedAt               time.Time  `json:"updated_at" url:"updated_at,key"`                               // when account was updated
+		Verified                bool       `json:"verified" url:"verified,key"`                                   // whether account has been verified with billing information
+	} `json:"user" url:"user,key"` // An account represents an individual signed up to use the Heroku
+	// platform.
+	WarningMessage *string `json:"warning_message" url:"warning_message,key"` // human friently warning emitted during the test run
+}
+type TestRunCreateOpts struct {
+	CommitBranch  string  `json:"commit_branch" url:"commit_branch,key"`                   // the branch of the repository that the test run concerns
+	CommitMessage string  `json:"commit_message" url:"commit_message,key"`                 // the message for the commit under test
+	CommitSha     string  `json:"commit_sha" url:"commit_sha,key"`                         // the SHA hash of the commit under test
+	Debug         *bool   `json:"debug,omitempty" url:"debug,omitempty,key"`               // whether the test run was started for interactive debugging
+	Organization  *string `json:"organization,omitempty" url:"organization,omitempty,key"` // unique name of organization
+	Pipeline      string  `json:"pipeline" url:"pipeline,key"`                             // unique identifier of pipeline
+	SourceBlobURL string  `json:"source_blob_url" url:"source_blob_url,key"`               // The download location for the source code to be tested
+}
+
+// Create a new test-run.
+func (s *Service) TestRunCreate(ctx context.Context, o TestRunCreateOpts) (*TestRun, error) {
+	var testRun TestRun
+	return &testRun, s.Post(ctx, &testRun, fmt.Sprintf("/test-runs"), o)
+}
+
+// Info for existing test-run.
+func (s *Service) TestRunInfo(ctx context.Context, testRunID string) (*TestRun, error) {
+	var testRun TestRun
+	return &testRun, s.Get(ctx, &testRun, fmt.Sprintf("/test-runs/%v", testRunID), nil, nil)
+}
+
+type TestRunListResult []TestRun
+
+// List existing test-runs for a pipeline.
+func (s *Service) TestRunList(ctx context.Context, pipelineID string, lr *ListRange) error {
+	return s.Get(ctx, nil, fmt.Sprintf("/pipelines/%v/test-runs", pipelineID), nil, lr)
+}
+
+// Info for existing test-run by Pipeline
+func (s *Service) TestRunInfoByPipeline(ctx context.Context, pipelineID string, testRunNumber int) (*TestRun, error) {
+	var testRun TestRun
+	return &testRun, s.Get(ctx, &testRun, fmt.Sprintf("/pipelines/%v/test-runs/%v", pipelineID, testRunNumber), nil, nil)
+}
+
+type TestRunUpdateOpts struct {
+	Message *string `json:"message" url:"message,key"` // human friendly message indicating reason for an error
+	Status  string  `json:"status" url:"status,key"`   // current state of the test run
+}
+
+// Update a test-run's status.
+func (s *Service) TestRunUpdate(ctx context.Context, testRunNumber int, o TestRunUpdateOpts) (*TestRun, error) {
+	var testRun TestRun
+	return &testRun, s.Patch(ctx, &testRun, fmt.Sprintf("/test-runs/%v", testRunNumber), o)
 }
 
 // Tracks a user's preferences and message dismissals
