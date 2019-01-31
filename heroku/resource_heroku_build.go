@@ -168,17 +168,17 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 
 	if v, ok := d.GetOk("buildpacks"); ok {
 		var buildpacks []*struct {
-			Name *string `json:"name,omitempty" url:"name,omitempty,key"`
-			URL  *string `json:"url,omitempty" url:"url,omitempty,key"`
+			Name *string `json:"name,omitempty" url:"name,omitempty,key"` // Buildpack Registry name of the buildpack for the app
+			URL  *string `json:"url,omitempty" url:"url,omitempty,key"`   // the URL of the buildpack for the app
 		}
 		buildpacksArg := v.([]interface{})
 		for _, buildpack := range buildpacksArg {
 			b := buildpack.(string)
 			buildpacks = append(buildpacks, &struct {
-				Name *string `json:"name,omitempty" url:"name,omitempty,key"`
-				URL  *string `json:"url,omitempty" url:"url,omitempty,key"`
+				Name *string `json:"name,omitempty" url:"name,omitempty,key"` // Buildpack Registry name of the buildpack for the app
+				URL  *string `json:"url,omitempty" url:"url,omitempty,key"`   // the URL of the buildpack for the app
 			}{
-				URL: &b,
+				URL: &b, // This may cause problems using Buildpack Registry values, may need to expand this.
 			})
 		}
 		opts.Buildpacks = buildpacks
