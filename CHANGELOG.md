@@ -2,6 +2,7 @@
 
 IMPROVEMENTS:
 * Upgrade heroku-go client to support more Heroku Platform API features [#169](https://github.com/terraform-providers/terraform-provider-heroku/pull/169)
+* Add `cidr` & `data_cidr` to `heroku_space` resource & data source [#167](https://github.com/terraform-providers/terraform-provider-heroku/pull/167)
 
 ## 1.7.3 (January 22, 2019)
 
