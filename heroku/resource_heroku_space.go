@@ -40,6 +40,20 @@ func resourceHerokuSpace() *schema.Resource {
 				ForceNew: true,
 			},
 
+			"cidr": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "10.0.0.0/16",
+				ForceNew: true,
+			},
+
+			"data_cidr": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "10.1.0.0/16",
+				ForceNew: true,
+			},
+
 			"outbound_ips": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -93,6 +107,16 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 			log.Printf("[DEBUG] Creating a shield space")
 		}
 		opts.Shield = &vs
+	}
+
+	if v := d.Get("cidr"); v != nil {
+		vs := v.(string)
+		opts.CIDR = &vs
+	}
+
+	if v := d.Get("data_cidr"); v != nil {
+		vs := v.(string)
+		opts.DataCIDR = &vs
 	}
 
 	space, err := client.SpaceCreate(context.TODO(), opts)
@@ -164,6 +188,8 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("trusted_ip_ranges", space.TrustedIPRanges)
 	d.Set("outbound_ips", space.NAT.Sources)
 	d.Set("shield", space.Shield)
+	d.Set("cidr", space.CIDR)
+	d.Set("data_cidr", space.DataCIDR)
 
 	log.Printf("[DEBUG] Set NAT source IPs to %s for %s", space.NAT.Sources, d.Id())
 

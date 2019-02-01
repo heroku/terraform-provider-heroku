@@ -18,6 +18,20 @@ func dataSourceHerokuSpace() *schema.Resource {
 				Computed: true,
 			},
 
+			"cidr": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Default:  nil,
+				Optional: true,
+			},
+
+			"data_cidr": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Default:  nil,
+				Optional: true,
+			},
+
 			"outbound_ips": {
 				Type:     schema.TypeList,
 				Computed: true,
