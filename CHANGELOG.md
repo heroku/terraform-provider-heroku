@@ -1,4 +1,4 @@
-## 1.7.4 (Unreleased)
+## 1.7.4 (February 01, 2019)
 
 IMPROVEMENTS:
 * Upgrade heroku-go client to support more Heroku Platform API features [#169](https://github.com/terraform-providers/terraform-provider-heroku/pull/169)
