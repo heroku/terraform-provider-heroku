@@ -275,7 +275,7 @@ func TestAccHerokuApp_Space(t *testing.T) {
 	var app heroku.TeamApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	spaceName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	org := testAccConfig.GetOrganizationOrSkip(t)
+	org := testAccConfig.GetSpaceOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -298,7 +298,7 @@ func TestAccHerokuApp_Space(t *testing.T) {
 func TestAccHerokuApp_Space_Internal(t *testing.T) {
 	var app heroku.TeamApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	org := testAccConfig.GetOrganizationOrSkip(t)
+	org := testAccConfig.GetSpaceOrganizationOrSkip(t)
 	spaceName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{

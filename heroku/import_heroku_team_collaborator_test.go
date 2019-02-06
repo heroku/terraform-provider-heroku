@@ -11,7 +11,7 @@ import (
 func TestAccHerokuTeamCollaborator_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	org := testAccConfig.GetOrganizationOrAbort(t)
-	testUser := testAccConfig.GetUserOrAbort(t)
+	testUser := testAccConfig.GetNonAdminUserOrAbort(t)
 	perms := "[\"deploy\", \"operate\", \"view\"]"
 
 	resource.Test(t, resource.TestCase{
