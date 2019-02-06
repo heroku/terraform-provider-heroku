@@ -18,7 +18,7 @@ For a list of available features, use the [Heroku CLI](https://devcenter.heroku.
 heroku labs --app foobar
 ```
 
-The output will contain **User Features** and **App Features**. This resource manages App Features. If you need to manage User Features, use the [`heroku_account_feature` resource](/docs/providers/heroku/r/account_feature.html).
+The output will contain **User Features** and **App Features**. This resource manages App Features. If you need to manage User Features, use the [`heroku_account_feature` resource](account_feature.html).
 
 ## Example Usage
 
