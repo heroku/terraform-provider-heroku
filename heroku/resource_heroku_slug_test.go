@@ -144,7 +144,7 @@ func TestAccHerokuSlug_WithFile_InPrivateSpace(t *testing.T) {
 	var slug heroku.Slug
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
-	orgName := testAccConfig.GetOrganizationOrSkip(t)
+	orgName := testAccConfig.GetSpaceOrganizationOrSkip(t)
 	spaceName := fmt.Sprintf("tftest-%s", randString)
 	// Manually generated using `shasum --algorithm 256 slug.tgz`
 	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
