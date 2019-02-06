@@ -3,20 +3,12 @@ layout: "heroku"
 page_title: "Provider: Heroku"
 sidebar_current: "docs-heroku-index"
 description: |-
-  The Heroku provider is used to interact with the resources supported by Heroku.
+  The Heroku provider is used to interact with the resources supported by the Heroku Platform API.
 ---
 
 # Heroku Provider
 
 This provider is used to interact with the resources supported by the Heroku Platform API. The provider needs to be configured with the proper credentials before it can be used.
-
-## Contributing
-
-Development happens in the [GitHub repo](https://github.com/terraform-providers/terraform-provider-heroku):
-
-  * [Releases](https://github.com/terraform-providers/terraform-provider-heroku/releases)
-  * [Changelog](https://github.com/terraform-providers/terraform-provider-heroku/blob/master/CHANGELOG.md)
-  * [Issues](https://github.com/terraform-providers/terraform-provider-heroku/issues)
 
 ## Background
 
@@ -25,6 +17,14 @@ Development happens in the [GitHub repo](https://github.com/terraform-providers/
   * [Using Terraform with Heroku](https://devcenter.heroku.com/articles/using-terraform-with-heroku)
   * [Platform API reference](https://devcenter.heroku.com/articles/platform-api-reference)
   * [Command Line Interface (CLI)](https://devcenter.heroku.com/articles/heroku-cli)
+
+## Contributing
+
+Development happens in the [GitHub repo](https://github.com/terraform-providers/terraform-provider-heroku):
+
+  * [Releases](https://github.com/terraform-providers/terraform-provider-heroku/releases)
+  * [Changelog](https://github.com/terraform-providers/terraform-provider-heroku/blob/master/CHANGELOG.md)
+  * [Issues](https://github.com/terraform-providers/terraform-provider-heroku/issues)
 
 ## Example Usage
 

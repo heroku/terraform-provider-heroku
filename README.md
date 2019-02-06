@@ -1,46 +1,34 @@
 [![Build Status](https://travis-ci.org/terraform-providers/terraform-provider-heroku.svg?branch=master)](https://travis-ci.org/terraform-providers/terraform-provider-heroku)
 
-Terraform Provider
-==================
+Terraform Provider Heroku
+=========================
 
-- Website: https://www.terraform.io
-- [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
-- Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
-- Documentation: https://www.terraform.io/docs/providers/heroku/index.html
+This provider is used to configure resources supported by the [Heroku Platform API](https://devcenter.heroku.com/articles/platform-api-reference).
+
+See the [official documentation](https://www.terraform.io/docs/providers/heroku/index.html) to use this provider in a Terraform configuration.
 
 <img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" width="600px">
 
 Requirements
 ------------
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.10.x
--	[Go](https://golang.org/doc/install) 1.8 (to build the provider plugin)
+-	[Terraform](https://www.terraform.io/downloads.html) 0.11.x
+-	[Go](https://golang.org/doc/install) 1.11 (to build the provider plugin)
 
-Building The Provider
----------------------
+Development
+-----------
 
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-heroku`
+If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.11+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
 
-```sh
-$ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
-$ git clone git@github.com:terraform-providers/terraform-provider-heroku
-```
+### Clone the Provider
 
-Enter the provider directory and build the provider
+With Go language, the repository must be cloned to a specific path in `$GOPATH/src` that matches its module import path.
 
 ```sh
-$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-heroku
-$ make build
+mkdir -p $GOPATH/src/github.com/terraform-providers
+cd $GOPATH/src/github.com/terraform-providers
+git clone git@github.com:terraform-providers/terraform-provider-heroku
 ```
-
-Using the provider
-----------------------
-## Fill in for each provider
-
-Developing the Provider
----------------------------
-
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.8+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
 
 ### Build the Provider
 
@@ -61,7 +49,7 @@ To use the dev provider with local Terraform, copy the freshly built plugin into
 cp $GOPATH/bin/terraform-provider-heroku ~/.terraform.d/plugins/
 ```
 
-Set the Heroku provider without a version constrain:
+Set the Heroku provider without a version constraint:
 
 ```hcl
 provider "heroku" {}
