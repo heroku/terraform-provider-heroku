@@ -16,7 +16,7 @@ func TestAccHerokuTeamCollaborator_Org(t *testing.T) {
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	org := testAccConfig.GetAnyOrganizationOrSkip(t)
-	testUser := testAccConfig.GetUserOrSkip(t)
+	testUser := testAccConfig.GetNonAdminUserOrAbort(t)
 	perms := "[\"deploy\", \"operate\", \"view\"]"
 
 	resource.Test(t, resource.TestCase{
@@ -43,7 +43,7 @@ func TestAccHerokuTeamCollaboratorPermsOutOfOrder_Org(t *testing.T) {
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	org := testAccConfig.GetAnyOrganizationOrSkip(t)
-	testUser := testAccConfig.GetUserOrSkip(t)
+	testUser := testAccConfig.GetNonAdminUserOrAbort(t)
 	perms := "[\"view\", \"operate\", \"deploy\"]"
 
 	resource.Test(t, resource.TestCase{
