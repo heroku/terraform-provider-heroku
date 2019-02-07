@@ -7,7 +7,7 @@ import (
 )
 
 func TestAccHerokuTeamMember_importBasic(t *testing.T) {
-	// Use Enterprise (Private Spaces) Team so that 
+	// Use Enterprise (Private Spaces) Team so that
 	// "requires you to invite members" errors are avoided.
 	team := testAccConfig.GetSpaceOrganizationOrSkip(t)
 	testUser := testAccConfig.GetUserOrAbort(t)
