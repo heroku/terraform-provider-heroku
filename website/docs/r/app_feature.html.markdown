@@ -3,12 +3,22 @@ layout: "heroku"
 page_title: "Heroku: heroku_app_feature"
 sidebar_current: "docs-heroku-resource-app-feature"
 description: |-
-  Provides a Heroku App Feature resource. This can be used to create and manage App Features on Heroku.
+  Provides a resource to create and manage App Features on Heroku.
 ---
 
 # heroku\_app\_feature
 
-Provides a Heroku App Feature resource. This can be used to create and manage App Features on Heroku.
+This resource is used to create and manage [App Features](https://devcenter.heroku.com/articles/heroku-beta-features) on Heroku.
+
+## Available Features
+
+For a list of available features, use the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) to fetch them for one of your existing apps:
+
+```
+heroku labs --app foobar
+```
+
+The output will contain **User Features** and **App Features**. This resource manages App Features. If you need to manage User Features, use the [`heroku_account_feature` resource](account_feature.html).
 
 ## Example Usage
 

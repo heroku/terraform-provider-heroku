@@ -3,23 +3,32 @@ layout: "heroku"
 page_title: "Heroku: heroku_account_feature"
 sidebar_current: "docs-heroku-resource-account-feature"
 description: |-
-  Provides a Heroku Account Feature resource.
+  Provides a resource to create and manage User Features on Heroku.
 ---
 
-# heroku\_account_feature
+# heroku\_account\_feature
 
-Provides a Heroku Account Feature resource. An account feature represents a Heroku labs capability
-that can be enabled or disabled for an account on Heroku.
+This resource is used to create and manage [User Features](https://devcenter.heroku.com/articles/heroku-beta-features) on Heroku.
 
 ~> **NOTE:** If this resource's HCL is removed from a `.tf` file, the behavior is to disable account feature
 and remove resource from state.
+
+## Available Features
+
+For a list of available features, use the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) to fetch them for the current user:
+
+```
+heroku labs
+```
+
+The output will contain **User Features** that may be managed with this resource.
 
 ## Example Usage
 
 ```hcl
 # Create a new Heroku app
-resource "heroku_account_feature" "foobar" {
-  name = "foobar"
+resource "heroku_account_feature" "example_metrics" {
+  name = "metrics-request-volume"
   enabled = true
 }
 ```
@@ -41,10 +50,10 @@ The following attributes are exported:
 
 ## Import
 
-Existing account feature can be imported using a combination of the account email (the email address tied to the Heroku API key)
-and the feature name
+Existing account features can be imported using a combination of the account email (the email address tied to the Heroku API key)
+and the feature name.
 
 For example:
 ```
-$ terraform import heroku_account_formation.foobar email@email.com:foobar-feature
+$ terraform import heroku_account_feature.example_metrics name@example.com:metrics-request-volume
 ```
