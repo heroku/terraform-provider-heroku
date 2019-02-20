@@ -116,6 +116,36 @@ resource "heroku_formation" "foobar" {
 }
 ```
 
+## Self-contained apps
+
+When keeping Terraform config `*.tf` files in the same directory as an app's source code, set **source.path** to `.` (the current directory).
+
+```hcl
+resource "heroku_app" "foobar" {
+    name   = "foobar"
+    region = "us"
+}
+
+resource "heroku_build" "foobar" {
+  app = "${heroku_app.foobar.id}"
+
+  source = {
+    # The current directory, changing its contents, 
+    # including the Terraform config *.tf files, will
+    # force a new build during `terraform apply`
+    path = "."
+  }
+}
+
+resource "heroku_formation" "foobar" {
+  app        = "${heroku_app.foobar.id}"
+  type       = "web"
+  quantity   = 1
+  size       = "Standard-1x"
+  depends_on = ["heroku_build.foobar"]
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:

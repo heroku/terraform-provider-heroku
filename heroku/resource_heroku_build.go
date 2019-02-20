@@ -5,15 +5,16 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"time"
 
-	uuid "github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heroku/heroku-go/v3"
@@ -199,7 +200,7 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 		if v = sourceArg["path"]; v != nil {
 			path := v.(string)
-			var tarballPath string
+			var tarballPath, cleanupPath string
 			fileInfo, err := os.Stat(path)
 			if err != nil {
 				return fmt.Errorf("Error stating build source path %s: %s", path, err)
@@ -207,11 +208,11 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 
 			if fileInfo.IsDir() {
 				// Generate tarball from the directory
-				tarballPath, err = generateSourceTarball(path)
+				tarballPath, cleanupPath, err = generateSourceTarball(path)
 				if err != nil {
 					return fmt.Errorf("Error generating build source tarball %s: %s", path, err)
 				}
-				defer cleanupSourceFile(tarballPath)
+				defer cleanupSourceTarball(cleanupPath)
 			} else {
 				// or simply use the path to the file
 				tarballPath = path
@@ -299,7 +300,7 @@ func resourceHerokuBuildCustomizeDiff(diff *schema.ResourceDiff, v interface{}) 
 		source := v.(map[string]interface{})
 		if vv := source["path"]; vv != nil {
 			path := vv.(string)
-			var tarballPath string
+			var tarballPath, cleanupPath string
 			fileInfo, err := os.Stat(path)
 			if err != nil {
 				return fmt.Errorf("Error stating build source path %s: %s", path, err)
@@ -307,11 +308,11 @@ func resourceHerokuBuildCustomizeDiff(diff *schema.ResourceDiff, v interface{}) 
 
 			if fileInfo.IsDir() {
 				// To diff this generates a tarball of the source directory for calculating the current "local_checksum", same function call as in resourceHerokuBuildCreate
-				tarballPath, err = generateSourceTarball(path)
+				tarballPath, cleanupPath, err = generateSourceTarball(path)
 				if err != nil {
 					return fmt.Errorf("Error generating build source tarball %s: %s", path, err)
 				}
-				defer cleanupSourceFile(tarballPath)
+				defer cleanupSourceTarball(cleanupPath)
 			} else {
 				// or simply use the path to the file
 				tarballPath = path
@@ -454,11 +455,11 @@ func setBuildState(d *schema.ResourceData, build *heroku.Build, appName string) 
 	return nil
 }
 
-func cleanupSourceFile(filePath string) {
-	if filePath != "" {
-		err := os.Remove(filePath)
+func cleanupSourceTarball(removePath string) {
+	if removePath != "" {
+		err := os.RemoveAll(removePath)
 		if err != nil {
-			log.Printf("[WARN] Error cleaning-up build source tarball: %s (%s)", err, filePath)
+			log.Printf("[WARN] Error cleaning-up build source tarball: %s (%s)", err, removePath)
 		}
 	}
 }
@@ -479,16 +480,23 @@ func validateSourceUrl(v interface{}, k string) (ws []string, errors []error) {
 	return
 }
 
-func generateSourceTarball(path string) (filePath string, err error) {
-	sourcePaths := []string{path}
-	newUuid, err := uuid.GenerateUUID()
+func generateSourceTarball(sourceDirectory string) (tarballPath, cleanupPath string, err error) {
+	sourcePaths := []string{sourceDirectory}
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	filePath = fmt.Sprintf("source-%s.tar.gz", newUuid)
-	err = tarinator.Tarinate(sourcePaths, filePath)
+
+	// use a random dir in system's temporary
+	dir, err := ioutil.TempDir("", "resource_heroku_build_")
 	if err != nil {
-		return "", fmt.Errorf("Error generating build source tarball %s of %s: %s", filePath, path, err)
+		log.Fatal(err)
+	}
+
+	cleanupPath = dir
+	tarballPath = path.Join(dir, "source.tar.gz")
+	err = tarinator.Tarinate(sourcePaths, tarballPath)
+	if err != nil {
+		return "", "", fmt.Errorf("Error generating build source tarball %s of %s: %s", tarballPath, sourceDirectory, err)
 	}
 	return
 }

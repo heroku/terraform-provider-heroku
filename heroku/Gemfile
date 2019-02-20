@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+# This Ruby language file is part of the test
+# `TestAccHerokuBuild_LocalSourceDirectorySelfContained`
+# in `resource_heroku_build_test.go` 
+
+source "https://rubygems.org"
+
+git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+
+# gem "rails"

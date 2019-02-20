@@ -184,6 +184,29 @@ func TestAccHerokuBuild_LocalSourceDirectory(t *testing.T) {
 	})
 }
 
+// This test uses test fixtures that are outside the "test-fixtures/" dir,
+// because this is testing .tf config files in the same dir as the source code.
+func TestAccHerokuBuild_LocalSourceDirectorySelfContained(t *testing.T) {
+	var build heroku.Build
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-%s", randString)
+
+	defer resetSourceDirectories()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuBuildConfig_localSourceDirectorySelfContained(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckHerokuBuildExists(n string, Build *heroku.Build) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -289,6 +312,20 @@ resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
     source = {
       path = "test-fixtures/app/"
+    }
+}`, appName)
+}
+
+func testAccCheckHerokuBuildConfig_localSourceDirectorySelfContained(appName string) string {
+	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_build" "foobar" {
+    app = "${heroku_app.foobar.name}"
+    source = {
+      path = "."
     }
 }`, appName)
 }
