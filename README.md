@@ -86,6 +86,6 @@ If a module does not have release tags, then `module@master` can be used instead
 Remove all usage from your codebase and run:
 
 ```bash
-$ GO111MODULE=on go mody tidy
+$ GO111MODULE=on go mod tidy
 $ GO111MODULE=on go mod vendor
 ```
