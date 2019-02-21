@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -13,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	uuid "github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/heroku/heroku-go/v3"
@@ -479,18 +479,19 @@ func validateSourceUrl(v interface{}, k string) (ws []string, errors []error) {
 	return
 }
 
-func generateSourceTarball(path string) (filePath string, err error) {
-	sourcePaths := []string{path}
-	newUuid, err := uuid.GenerateUUID()
+func generateSourceTarball(path string) (string, error) {
+	fi, err := ioutil.TempFile("", "terraform-heroku_build-source-*.tar.gz")
 	if err != nil {
 		return "", err
 	}
-	filePath = fmt.Sprintf("source-%s.tar.gz", newUuid)
-	err = tarinator.Tarinate(sourcePaths, filePath)
-	if err != nil {
-		return "", fmt.Errorf("Error generating build source tarball %s of %s: %s", filePath, path, err)
+	if err := fi.Close(); err != nil {
+		return "", err
 	}
-	return
+	tf := fi.Name()
+	if err = tarinator.Tarinate([]string{path}, tf); err != nil {
+		err = fmt.Errorf("Error generating build source tarball %s of %s: %s", tf, path, err)
+	}
+	return tf, err
 }
 
 // Returns a resource.StateRefreshFunc that is used to watch a Build.
