@@ -67,6 +67,25 @@ Please see the [TESTING](TESTING.md) guide for detailed instructions on running 
 
 ### Updating or adding dependencies
 
-This project uses [dep](https://golang.github.io/dep/) for dependency management.
+This project uses [Go Modules](https://github.com/golang/go/wiki/Modules) for dependency management.
 
-Use the [`dep ensure` command](https://golang.github.io/dep/docs/daily-dep.html) to add, update, & remove dependencies.
+Dependencies can be added or updated as follows:
+
+```bash
+$ GO111MODULE=on go get github.com/some/module@release-tag
+$ GO111MODULE=on go mod tidy
+$ GO111MODULE=on go mod vendor
+```
+
+This example will fetch a module at the release tag and record it in your project's go.mod and go.sum files. It's a good idea to tidy up afterward and then copy the dependencies into vendor/.
+
+If a module does not have release tags, then `module@master` can be used instead.
+
+#### Removing dependencies
+
+Remove all usage from your codebase and run:
+
+```bash
+$ GO111MODULE=on go mody tidy
+$ GO111MODULE=on go mod vendor
+```
