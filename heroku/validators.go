@@ -3,12 +3,17 @@ package heroku
 import (
 	"fmt"
 
-	"github.com/satori/uuid"
+	"github.com/google/uuid"
 )
 
-func validateUUID(v interface{}, k string) (ws []string, errors []error) {
-	if _, err := uuid.FromString(v.(string)); err != nil {
-		errors = append(errors, fmt.Errorf("%q is an invalid UUID: %s", k, err))
+// validateUUID matches type terraform.SchemaValidateFunc
+func validateUUID(v interface{}, k string) ([]string, []error) {
+	s, ok := v.(string)
+	if !ok {
+		return nil, []error{fmt.Errorf("%q is an invalid UUID: unable to assert %q to string", k, v)}
 	}
-	return
+	if _, err := uuid.Parse(s); err != nil {
+		return nil, []error{fmt.Errorf("%q is an invalid UUID: %s", k, err)}
+	}
+	return nil, nil
 }
