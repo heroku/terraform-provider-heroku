@@ -1,4 +1,14 @@
 ## 1.8.0 (Unreleased)
+
+FEATURES:
+* Switch to Go Modules (prep for Terraform 0.12) [#177](https://github.com/terraform-providers/terraform-provider-heroku/pull/177)
+
+IMPROVEMENTS:
+* Clarifying, expanding, and cross-referencing the Provider docs [#175](https://github.com/terraform-providers/terraform-provider-heroku/pull/175)
+
+BUG FIXES:
+* Fix so `heroku_build` source path can be current `.` or a parent `..` directory [#181](https://github.com/terraform-providers/terraform-provider-heroku/pull/181)
+
 ## 1.7.4 (February 01, 2019)
 
 IMPROVEMENTS:
