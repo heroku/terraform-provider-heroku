@@ -1,4 +1,4 @@
-## 1.8.0 (Unreleased)
+## 1.8.0 (February 27, 2019)
 
 FEATURES:
 * Switch to Go Modules (prep for Terraform 0.12) [#177](https://github.com/terraform-providers/terraform-provider-heroku/pull/177)
