@@ -20,7 +20,8 @@ func resourceHerokuConfigAssociation() *schema.Resource {
 			},
 
 			"config_vars": {
-				Type: schema.TypeMap,
+				Type:     schema.TypeMap,
+				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -29,6 +30,7 @@ func resourceHerokuConfigAssociation() *schema.Resource {
 			"sensitive_config_vars": {
 				Type:      schema.TypeMap,
 				Sensitive: true,
+				Optional:  true,
 				Elem: &schema.Schema{
 					Type:      schema.TypeString,
 					Sensitive: true,
@@ -38,18 +40,18 @@ func resourceHerokuConfigAssociation() *schema.Resource {
 	}
 }
 
-func resourceHerokuConfigAssociationCreate(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-
+func resourceHerokuConfigAssociationCreate(d *schema.ResourceData, m interface{}) error {
+	return nil
 }
 
-func resourceHerokuConfigAssociationRead(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-
+func resourceHerokuConfigAssociationRead(d *schema.ResourceData, m interface{}) error {
+	return nil
 }
 
-func resourceHerokuConfigAssociationUpdate(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-
+func resourceHerokuConfigAssociationUpdate(d *schema.ResourceData, m interface{}) error {
+	return nil
 }
 
-func resourceHerokuConfigAssociationDelete(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-
+func resourceHerokuConfigAssociationDelete(d *schema.ResourceData, m interface{}) error {
+	return nil
 }
