@@ -243,9 +243,13 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 
 	// Flag organization apps by setting the organization name
 	if app.Organization != nil {
-		d.Set("organization", []map[string]interface{}{
+		setErr := d.Set("organization", []map[string]interface{}{
 			{"name": app.Organization.Name},
 		})
+
+		if setErr != nil {
+			return nil, setErr
+		}
 	}
 
 	// XXX Heroku's API treats app UUID's and names the same. This can cause
@@ -253,9 +257,16 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	// ID, as a lot of the Heroku API will accept BOTH. App ID's aren't very
 	// easy to get, so it makes more sense to just use the name as much as possible.
 	d.SetId(app.Name)
-	d.Set("acm", app.Acm)
+	setErr := d.Set("acm", app.Acm)
+	if setErr != nil {
+		return nil, setErr
+	}
+
 	if app.InternalRouting != nil {
-		d.Set("internal_routing", *app.InternalRouting)
+		setErr = d.Set("internal_routing", *app.InternalRouting)
+		if setErr != nil {
+			return nil, setErr
+		}
 	}
 
 	return []*schema.ResourceData{d}, nil
@@ -384,7 +395,7 @@ func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error 
 }
 
 func setOrganizationDetails(d *schema.ResourceData, app *application) (err error) {
-	d.Set("space", app.App.Space)
+	err = d.Set("space", app.App.Space)
 
 	orgDetails := map[string]interface{}{
 		"name":     app.App.OrganizationName,
@@ -392,19 +403,21 @@ func setOrganizationDetails(d *schema.ResourceData, app *application) (err error
 		"personal": false,
 	}
 	err = d.Set("organization", []interface{}{orgDetails})
+
 	return err
 }
 
 func setAppDetails(d *schema.ResourceData, app *application) (err error) {
-	d.Set("name", app.App.Name)
-	d.Set("stack", app.App.Stack)
-	d.Set("internal_routing", app.App.InternalRouting)
-	d.Set("region", app.App.Region)
-	d.Set("git_url", app.App.GitURL)
-	d.Set("web_url", app.App.WebURL)
-	d.Set("acm", app.App.Acm)
-	d.Set("uuid", app.App.ID)
-	d.Set("heroku_hostname", fmt.Sprintf("%s.herokuapp.com", app.App.Name))
+	err = d.Set("name", app.App.Name)
+	err = d.Set("stack", app.App.Stack)
+	err = d.Set("internal_routing", app.App.InternalRouting)
+	err = d.Set("region", app.App.Region)
+	err = d.Set("git_url", app.App.GitURL)
+	err = d.Set("web_url", app.App.WebURL)
+	err = d.Set("acm", app.App.Acm)
+	err = d.Set("uuid", app.App.ID)
+	err = d.Set("heroku_hostname", fmt.Sprintf("%s.herokuapp.com", app.App.Name))
+
 	return err
 }
 
@@ -474,7 +487,10 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if buildpacksConfigured {
-		d.Set("buildpacks", app.Buildpacks)
+		buildpacksErr := d.Set("buildpacks", app.Buildpacks)
+		if buildpacksErr != nil {
+			return buildpacksErr
+		}
 	}
 
 	log.Printf("[LOG] Setting config vars: %s", configVarsValue)
@@ -492,10 +508,16 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if organizationApp {
-		setOrganizationDetails(d, app)
+		orgErr := setOrganizationDetails(d, app)
+		if orgErr != nil {
+			return orgErr
+		}
 	}
 
-	setAppDetails(d, app)
+	detailsErr := setAppDetails(d, app)
+	if detailsErr != nil {
+		return detailsErr
+	}
 
 	return nil
 }
