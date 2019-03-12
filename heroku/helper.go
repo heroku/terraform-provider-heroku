@@ -23,6 +23,18 @@ func getAppName(d *schema.ResourceData) string {
 	return appName
 }
 
+// getAppId extracts the app attribute generically from a Heroku resource.
+func getAppId(d *schema.ResourceData) string {
+	var appName string
+	if v, ok := d.GetOk("app_id"); ok {
+		vs := v.(string)
+		log.Printf("[DEBUG] App id name: %s", vs)
+		appName = vs
+	}
+
+	return appName
+}
+
 // getEmail extracts the email attribute generically from a Heroku resource.
 func getEmail(d *schema.ResourceData) string {
 	var email string
