@@ -132,13 +132,19 @@ func resourceHerokuConfigAssociationUpdate(d *schema.ResourceData, m interface{}
 }
 
 func resourceHerokuConfigAssociationDelete(d *schema.ResourceData, m interface{}) error {
-	// Essentially do an update to delete all the vars listed in the schema
-	// TODO: vet this out
-	updateErr := resourceHerokuConfigAssociationUpdate(d, m)
-	if updateErr != nil {
-		return updateErr
+	client := m.(*Config).Api
+	appId := getAppId(d)
+
+	vars := getVars(d)
+	sensitiveVars := getSensitiveVars(d)
+	allVars := mergeVars(vars, sensitiveVars)
+
+	// Do essentially an update to delete all the vars listed in the schema
+	if err := updateVars(appId, client, allVars, nil); err != nil {
+		return err
 	}
 
+	// Remove resource from state
 	d.SetId("")
 	return nil
 }
