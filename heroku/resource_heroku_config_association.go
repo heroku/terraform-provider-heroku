@@ -18,9 +18,9 @@ func resourceHerokuConfigAssociation() *schema.Resource {
 		Update: resourceHerokuConfigAssociationUpdate,
 		Delete: resourceHerokuConfigAssociationDelete,
 
-		//Importer: &schema.ResourceImporter{
-		//	State: resourceHerokuConfigImport,
-		//},
+		Importer: &schema.ResourceImporter{
+			State: resourceHerokuConfigAssociationImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"app_id": {
@@ -49,6 +49,13 @@ func resourceHerokuConfigAssociation() *schema.Resource {
 	}
 }
 
+// As config var sensitivity is not a built-in Heroku distinction, it will not be possible to import this resource.
+func resourceHerokuConfigAssociationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	noImportErr := fmt.Errorf("it is not possible to import heroku_config_association since there are no remote resources")
+
+	return nil, noImportErr
+}
+
 func resourceHerokuConfigAssociationCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Config).Api
 
@@ -70,7 +77,7 @@ func resourceHerokuConfigAssociationCreate(d *schema.ResourceData, m interface{}
 		return err
 	}
 
-	d.SetId(appId) // TODO: should make this more unique?
+	d.SetId(fmt.Sprintf("config:%s", appId))
 	setErr := d.Set("app_id", appId)
 	if setErr != nil {
 		return setErr
@@ -82,17 +89,19 @@ func resourceHerokuConfigAssociationCreate(d *schema.ResourceData, m interface{}
 func resourceHerokuConfigAssociationRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Config).Api
 
+	appId := getAppId(d)
+
 	vettedVars := make(map[string]string)
 	vettedSensitiveVars := make(map[string]string)
 	vars := getVars(d)
 	sensitiveVars := getSensitiveVars(d)
 
-	remoteAppVars, remoteAppGetErr := retrieveConfigVars(d.Id(), client)
+	remoteAppVars, remoteAppGetErr := retrieveConfigVars(appId, client)
 	if remoteAppGetErr != nil {
 		return remoteAppGetErr
 	}
 
-	// Verify through each vars and sensitiveVars by checking each pair against what was set romotely
+	// Verify through each vars and sensitiveVars by checking each key, value pair against what was set romotely
 	for k := range vars {
 		vettedVars[k] = remoteAppVars[k]
 	}
@@ -139,13 +148,14 @@ func resourceHerokuConfigAssociationDelete(d *schema.ResourceData, m interface{}
 	sensitiveVars := getSensitiveVars(d)
 	allVars := mergeVars(vars, sensitiveVars)
 
-	// Do essentially an update to delete all the vars listed in the schema
+	// Essentially execute an update to delete all the vars listed in the schema only
 	if err := updateVars(appId, client, allVars, nil); err != nil {
 		return err
 	}
 
 	// Remove resource from state
 	d.SetId("")
+
 	return nil
 }
 
