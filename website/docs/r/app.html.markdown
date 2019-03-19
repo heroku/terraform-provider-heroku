@@ -56,7 +56,7 @@ The following arguments are supported:
   that also specify `space`.
 * `organization` - (Optional) A block that can be specified once to define
      organization settings for this app. The fields for this block are
-     documented below.
+     documented below.  This is now referred to as "teams" within Heroku documentation.
 * `acm` - (Optional) The flag representing Automated Certificate Management for the app.
 
 The `organization` block supports:
