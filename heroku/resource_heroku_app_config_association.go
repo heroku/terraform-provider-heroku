@@ -11,15 +11,15 @@ import (
 	"time"
 )
 
-func resourceHerokuConfigAssociation() *schema.Resource {
+func resourceHerokuAppConfigAssociation() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceHerokuConfigAssociationCreate,
-		Read:   resourceHerokuConfigAssociationRead,
-		Update: resourceHerokuConfigAssociationUpdate,
-		Delete: resourceHerokuConfigAssociationDelete,
+		Create: resourceHerokuAppConfigAssociationCreate,
+		Read:   resourceHerokuAppConfigAssociationRead,
+		Update: resourceHerokuAppConfigAssociationUpdate,
+		Delete: resourceHerokuAppConfigAssociationDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: resourceHerokuConfigAssociationImport,
+			State: resourceHerokuAppConfigAssociationImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -50,13 +50,13 @@ func resourceHerokuConfigAssociation() *schema.Resource {
 }
 
 // As config var sensitivity is not a built-in Heroku distinction, it will not be possible to import this resource.
-func resourceHerokuConfigAssociationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	noImportErr := fmt.Errorf("it is not possible to import heroku_config_association since there are no remote resources")
+func resourceHerokuAppConfigAssociationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	noImportErr := fmt.Errorf("it is not possible to import heroku_app_config_association since there are no remote resources")
 
 	return nil, noImportErr
 }
 
-func resourceHerokuConfigAssociationCreate(d *schema.ResourceData, m interface{}) error {
+func resourceHerokuAppConfigAssociationCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Config).Api
 
 	appId := getAppId(d)
@@ -83,10 +83,10 @@ func resourceHerokuConfigAssociationCreate(d *schema.ResourceData, m interface{}
 		return setErr
 	}
 
-	return resourceHerokuConfigAssociationRead(d, m)
+	return resourceHerokuAppConfigAssociationRead(d, m)
 }
 
-func resourceHerokuConfigAssociationRead(d *schema.ResourceData, m interface{}) error {
+func resourceHerokuAppConfigAssociationRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Config).Api
 
 	appId := getAppId(d)
@@ -120,7 +120,7 @@ func resourceHerokuConfigAssociationRead(d *schema.ResourceData, m interface{}) 
 	return nil
 }
 
-func resourceHerokuConfigAssociationUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceHerokuAppConfigAssociationUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Config).Api
 	appId := getAppId(d)
 
@@ -137,10 +137,10 @@ func resourceHerokuConfigAssociationUpdate(d *schema.ResourceData, m interface{}
 		return err
 	}
 
-	return resourceHerokuConfigAssociationRead(d, m)
+	return resourceHerokuAppConfigAssociationRead(d, m)
 }
 
-func resourceHerokuConfigAssociationDelete(d *schema.ResourceData, m interface{}) error {
+func resourceHerokuAppConfigAssociationDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Config).Api
 	appId := getAppId(d)
 

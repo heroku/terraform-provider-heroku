@@ -1,13 +1,13 @@
 ---
 layout: "heroku"
-page_title: "Heroku: heroku_config_association"
-sidebar_current: "docs-heroku-resource-config-association"
+page_title: "Heroku: heroku_app_config_association"
+sidebar_current: "docs-heroku-resource-app-config-association"
 description: |-
-  Provides a Heroku Config Association resource, making it possible set, update, and remove Heroku app config vars 
+  Provides a Heroku App Config Association resource, making it possible set, update, and remove Heroku app config vars 
 ---
 
-# heroku\_config\_association
-Provides a Heroku Config Association resource, making it possible to set/update/remove heroku app config vars independently from
+# heroku\_app\_config\_association
+Provides a Heroku App Config Association resource, making it possible to set/update/remove heroku app config vars independently from
 `heroku_app`. An example usage scenario could be:
 
 - User has separate git repositories for various micro-services. Multiple micro-services use Kafka.
@@ -20,8 +20,8 @@ and let Heroku handle the rolling restarts to pick up the new config vars.
 ~> **NOTE:**
 - Heroku does not have a 'sensitivity' distinction for its config variables.
 This distinction is only made during Terraform plans and applies to avoid leaking sensitive data via plan output.
-- Be careful when having config variables defined in both `heroku_app` and `heroku_config_association` resources. As the latter resource
-has a dependency on the former, any overlapping config variables in `heroku_app` will be overwritten in `heroku_config_association`.
+- Be careful when having config variables defined in both `heroku_app` and `heroku_app_config_association` resources. As the latter resource
+has a dependency on the former, any overlapping config variables in `heroku_app` will be overwritten in `heroku_app_config_association`.
 
 ## Example HCL
 ```hcl
@@ -47,14 +47,14 @@ resource "heroku_app" "foobar2" {
   region = "us"
 }
 
-resource "heroku_config_association" "foobar" {
+resource "heroku_app_config_association" "foobar" {
   app_id = "${heroku_app.foobar.id}"
 
   vars = "${heroku_config.common.vars}"
   sensitive_vars = "${heroku_config.common.sensitive_vars}"
 }
 
-resource "heroku_config_association" "foobar2" {
+resource "heroku_app_config_association" "foobar2" {
   app_id = "${heroku_app.foobar2.id}"
 
   vars = "${heroku_config.common.vars}"
@@ -73,8 +73,8 @@ plan or apply. It is recommended to put private keys, passwords, etc in this arg
 
 ## Attributes Reference
 The following attributes are exported:
-* `id` - The ID of the config association
+* `id` - The ID of the app config association
 
 ## Import
-The `heroku_config_association` resource's primary attributes are managed only within Terraform state.
-It does not exist as a native Heroku resource. Therefore, it is not possible to import an existing `heroku_config_association` resource.
+The `heroku_app_config_association` resource's primary attributes are managed only within Terraform state.
+It does not exist as a native Heroku resource. Therefore, it is not possible to import an existing `heroku_app_config_association` resource.

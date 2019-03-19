@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestAccHerokuConfigAssociation_importBasic(t *testing.T) {
+func TestAccHerokuAppConfigAssociation_importBasic(t *testing.T) {
 	org := testAccConfig.GetOrganizationOrSkip(t)
 	name := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
@@ -17,10 +17,10 @@ func TestAccHerokuConfigAssociation_importBasic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuConfigAssociation_Basic(org, name),
+				Config: testAccCheckHerokuAppConfigAssociation_Basic(org, name),
 			},
 			{
-				ResourceName:      "heroku_config_association.foobar-config",
+				ResourceName:      "heroku_app_config_association.foobar-config",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ExpectError:       regexp.MustCompile(`not possible to import`),

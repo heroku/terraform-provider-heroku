@@ -12,7 +12,7 @@ to be used throughout your Heroku terraform configurations. Combined with `herok
 these two resources enable users to decouple setting config var(s) from the `heroku_app` resource.
 
 ~> **NOTE:** Unlike most Terraform resources, this resource **DOES NOT** by itself create, update or delete anything on Heroku. 
-A [`heroku_config_association`](config_association.html), `heroku_app.config_vars`, or `heroku_app.sensitive_config_vars` is required to actually set these values on Heroku apps.
+A [`heroku_app_config_association`](app_config_association.html), `heroku_app.config_vars`, or `heroku_app.sensitive_config_vars` is required to actually set these values on Heroku apps.
 
 ## Example HCL
 ```hcl

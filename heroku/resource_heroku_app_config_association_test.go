@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestAccHerokuConfigAssociation_Basic(t *testing.T) {
+func TestAccHerokuAppConfigAssociation_Basic(t *testing.T) {
 	org := testAccConfig.GetOrganizationOrSkip(t)
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
@@ -20,20 +20,20 @@ func TestAccHerokuConfigAssociation_Basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuConfigAssociation_Basic(org, appName),
+				Config: testAccCheckHerokuAppConfigAssociation_Basic(org, appName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuConfigAssociationExists("heroku_config_association.foobar-config", "RAILS_ENV", "PRIVATE_KEY"),
+					testAccCheckHerokuAppConfigAssociationExists("heroku_app_config_association.foobar-config", "RAILS_ENV", "PRIVATE_KEY"),
 					resource.TestCheckResourceAttr(
-						"heroku_config_association.foobar-config", "vars.RAILS_ENV", "PROD"),
+						"heroku_app_config_association.foobar-config", "vars.RAILS_ENV", "PROD"),
 					resource.TestCheckResourceAttr(
-						"heroku_config_association.foobar-config", "sensitive_vars.PRIVATE_KEY", "it_is_a_secret"),
+						"heroku_app_config_association.foobar-config", "sensitive_vars.PRIVATE_KEY", "it_is_a_secret"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccHerokuConfigAssociation_Advanced(t *testing.T) {
+func TestAccHerokuAppConfigAssociation_Advanced(t *testing.T) {
 	org := testAccConfig.GetOrganizationOrSkip(t)
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	configName := fmt.Sprintf("config-%s", acctest.RandString(10))
@@ -45,27 +45,27 @@ func TestAccHerokuConfigAssociation_Advanced(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuConfigAssociation_Advanced(org, appName, configName),
+				Config: testAccCheckHerokuAppConfigAssociation_Advanced(org, appName, configName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuConfigAssociationExists("heroku_config_association.foobar-config", "RAILS_ENV", "PRIVATE_KEY"),
+					testAccCheckHerokuAppConfigAssociationExists("heroku_app_config_association.foobar-config", "RAILS_ENV", "PRIVATE_KEY"),
 					resource.TestCheckResourceAttr(
-						"heroku_config_association.foobar-config", "vars.RAILS_ENV", "PROD"),
+						"heroku_app_config_association.foobar-config", "vars.RAILS_ENV", "PROD"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckHerokuConfigAssociationExists(n string, vars ...string) resource.TestCheckFunc {
+func testAccCheckHerokuAppConfigAssociationExists(n string, vars ...string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 
 		if !ok {
-			return fmt.Errorf("config association not found: %s", n)
+			return fmt.Errorf("app config association not found: %s", n)
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no config association ID set")
+			return fmt.Errorf("no app config association ID set")
 		}
 
 		client := testAccProvider.Meta().(*Config).Api
@@ -86,7 +86,7 @@ func testAccCheckHerokuConfigAssociationExists(n string, vars ...string) resourc
 	}
 }
 
-func testAccCheckHerokuConfigAssociation_Basic(org, appName string) string {
+func testAccCheckHerokuAppConfigAssociation_Basic(org, appName string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
@@ -96,7 +96,7 @@ resource "heroku_app" "foobar" {
   }
 }
 
-resource "heroku_config_association" "foobar-config" {
+resource "heroku_app_config_association" "foobar-config" {
     app_id = "${heroku_app.foobar.name}"
 
     vars = {
@@ -111,7 +111,7 @@ resource "heroku_config_association" "foobar-config" {
 }`, appName, org)
 }
 
-func testAccCheckHerokuConfigAssociation_Advanced(org, appName, configName string) string {
+func testAccCheckHerokuAppConfigAssociation_Advanced(org, appName, configName string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
@@ -135,7 +135,7 @@ resource "heroku_config" "config" {
     }
 }
 
-resource "heroku_config_association" "foobar-config" {
+resource "heroku_app_config_association" "foobar-config" {
     app_id = "${heroku_app.foobar.name}"
 
     vars = "${heroku_config.config.vars}"
