@@ -2,6 +2,8 @@
 
 FEATURES:
 * **New Data Source:** `heroku_team` [#188](https://github.com/terraform-providers/terraform-provider-heroku/pull/188)
+* **New Resource:** `heroku_config` (for defining config vars to be used in other resources) [#183](https://github.com/terraform-providers/terraform-provider-heroku/pull/183)
+* **New Resource:** `heroku_app_config_association` (for setting, updating, and deleting config vars on apps) [#183](https://github.com/terraform-providers/terraform-provider-heroku/pull/183)
 
 IMPROVEMENTS:
 * Clarify usage of Heroku Teams in the docs [#187](https://github.com/terraform-providers/terraform-provider-heroku/pull/187)
