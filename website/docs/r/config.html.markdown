@@ -17,8 +17,6 @@ A [`heroku_app_config_association`](app_config_association.html), `heroku_app.co
 ## Example HCL
 ```hcl
 resource "heroku_config" "endpoints" {
-    name = "endpoints"
-
     vars = {
         x = "https://..."
         y = "https://..."
@@ -32,7 +30,6 @@ resource "heroku_config" "endpoints" {
 ```
 
 ## Argument Reference
-* `name` - (Required) Name of the var(s). This could be anything to uniquely identify the var(s).
 * `vars` - Map of vars that are can be outputted in plaintext
 * `sensitive_vars` - This is the same as `vars`. The main difference between the two
 attributes is `sensitive_vars` outputs are redacted on-screen and replaced by a <sensitive> placeholder, following a terraform

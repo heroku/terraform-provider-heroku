@@ -20,11 +20,6 @@ func resourceHerokuConfig() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-
 			"vars": {
 				Type:     schema.TypeMap,
 				Optional: true,
@@ -77,18 +72,16 @@ func resourceHerokuConfigCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	// Set the ID to be name + epoch time for uniqueness
-	name := d.Get("name").(string)
 	epochTime := time.Now().Unix()
 	epochTimeString := strconv.FormatInt(epochTime, 10)
 
 	// Set Resource id
-	d.SetId(fmt.Sprintf("%s-%s", name, epochTimeString))
+	d.SetId(fmt.Sprintf("config-%s", epochTimeString))
 
 	return resourceHerokuConfigRead(d, m)
 }
 
 func resourceHerokuConfigRead(d *schema.ResourceData, m interface{}) (err error) {
-	err = d.Set("name", d.Get("name").(string))
 	err = d.Set("vars", d.Get("vars").(map[string]interface{}))
 	err = d.Set("sensitive_vars", d.Get("sensitive_vars").(map[string]interface{}))
 

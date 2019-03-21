@@ -2,7 +2,6 @@ package heroku
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"regexp"
@@ -10,8 +9,6 @@ import (
 )
 
 func TestAccHerokuConfig_Single(t *testing.T) {
-	name := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
@@ -19,7 +16,7 @@ func TestAccHerokuConfig_Single(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuConfig_Single(name),
+				Config: testAccCheckHerokuConfig_Single(),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuConfigExists("heroku_config.foobar"),
 					resource.TestCheckResourceAttr(
@@ -33,8 +30,6 @@ func TestAccHerokuConfig_Single(t *testing.T) {
 }
 
 func TestAccHerokuConfig_Both(t *testing.T) {
-	name := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
@@ -42,7 +37,7 @@ func TestAccHerokuConfig_Both(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuConfig_Both(name),
+				Config: testAccCheckHerokuConfig_Both(),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuConfigExists("heroku_config.foobar"),
 					resource.TestCheckResourceAttr(
@@ -56,8 +51,6 @@ func TestAccHerokuConfig_Both(t *testing.T) {
 }
 
 func TestAccHerokuConfig_Dupe(t *testing.T) {
-	name := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
@@ -65,7 +58,7 @@ func TestAccHerokuConfig_Dupe(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckHerokuConfig_Dupe(name),
+				Config:      testAccCheckHerokuConfig_Dupe(),
 				ExpectError: regexp.MustCompile(`duplicate config vars`),
 			},
 		},
@@ -88,24 +81,20 @@ func testAccCheckHerokuConfigExists(n string) resource.TestCheckFunc {
 	}
 }
 
-func testAccCheckHerokuConfig_Single(name string) string {
+func testAccCheckHerokuConfig_Single() string {
 	return fmt.Sprintf(`
 resource "heroku_config" "foobar" {
-    name = "%s"
-
     vars = {
        RAILS_ENV = "PROD"
        LOG_LEVEL = "DEBUG"
     }
 }
-`, name)
+`)
 }
 
-func testAccCheckHerokuConfig_Both(name string) string {
+func testAccCheckHerokuConfig_Both() string {
 	return fmt.Sprintf(`
 resource "heroku_config" "foobar" {
-    name = "%s"
-
     vars = {
        RAILS_ENV = "PROD"
        LOG_LEVEL = "DEBUG"
@@ -116,14 +105,12 @@ resource "heroku_config" "foobar" {
         API_TOKEN   = "some_token"
     }
 }
-`, name)
+`)
 }
 
-func testAccCheckHerokuConfig_Dupe(name string) string {
+func testAccCheckHerokuConfig_Dupe() string {
 	return fmt.Sprintf(`
 resource "heroku_config" "foobar" {
-    name = "%s"
-
     vars = {
        RAILS_ENV = "PROD"
        PRIVATE_KEY = "it_is_a_secret"
@@ -134,5 +121,5 @@ resource "heroku_config" "foobar" {
         API_TOKEN   = "some_token"
     }
 }
-`, name)
+`)
 }
