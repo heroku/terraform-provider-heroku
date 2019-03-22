@@ -14,7 +14,6 @@ create and manage applications on Heroku.
 ## Example Usage
 
 ```hcl
-# Create a new Heroku app
 resource "heroku_app" "default" {
   name   = "my-cool-app"
   region = "us"
@@ -26,6 +25,22 @@ resource "heroku_app" "default" {
   buildpacks = [
     "heroku/go"
   ]
+}
+```
+
+## Example Usage for a Team
+
+A Heroku "team" was originally called an "organization", and that is still 
+the identifier used in this resource.
+
+```hcl
+resource "heroku_app" "default" {
+  name   = "my-cool-app"
+  region = "us"
+
+  organization {
+    name = "my-cool-team"
+  }
 }
 ```
 
