@@ -1,4 +1,8 @@
 ## 1.9.0 (Unreleased)
+
+IMPROVEMENTS:
+* Clarify usage of Heroku Teams in the docs [#187](https://github.com/terraform-providers/terraform-provider-heroku/pull/187)
+
 ## 1.8.0 (February 27, 2019)
 
 FEATURES:
