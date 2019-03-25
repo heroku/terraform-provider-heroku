@@ -78,10 +78,6 @@ func resourceHerokuAppConfigAssociationCreate(d *schema.ResourceData, m interfac
 	}
 
 	d.SetId(fmt.Sprintf("config:%s", appId))
-	setErr := d.Set("app_id", appId)
-	if setErr != nil {
-		return setErr
-	}
 
 	return resourceHerokuAppConfigAssociationRead(d, m)
 }
@@ -90,6 +86,10 @@ func resourceHerokuAppConfigAssociationRead(d *schema.ResourceData, m interface{
 	client := m.(*Config).Api
 
 	appId := getAppId(d)
+	setErr := d.Set("app_id", appId)
+	if setErr != nil {
+		return setErr
+	}
 
 	vettedVars := make(map[string]string)
 	vettedSensitiveVars := make(map[string]string)
