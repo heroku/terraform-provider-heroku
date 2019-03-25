@@ -8,12 +8,13 @@ description: |-
 
 # heroku\_team\_collaborator
 
-Provides a [Heroku Team Collaborator](https://devcenter.heroku.com/articles/platform-api-reference#team-app-collaborator)
-resource.
+A [Heroku Team Collaborator](https://devcenter.heroku.com/articles/platform-api-reference#team-app-collaborator) receives access to a specific Team-owned app.
 
-A team collaborator represents an account that has been given access to a team app on Heroku.
+To create a Heroku Team, use the [New Team](https://dashboard.heroku.com/teams/new) feature of Heroku Dashboard. For Heroku Enterprise accounts, new Teams may be created within the account by users with the right permissions.
 
-~> **NOTE:** Please only use this resource if you have team/organization apps
+A Heroku "team" was originally called an "organization", and that is still the identifier used elsewhere in this provider. For [`heroku_app`](app.html) & [`heroku_space`](space.html) resources, set the Heroku Team name as the "organization".
+
+~> **NOTE:** This resource only works for Team-owned apps
 
 ## Example Usage
 

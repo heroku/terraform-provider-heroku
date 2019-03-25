@@ -8,9 +8,11 @@ description: |-
 
 # heroku\_team\_member
 
-Provides a [Heroku Team Collaborator](https://devcenter.heroku.com/articles/platform-api-reference#team-member) resource.
+A [Heroku Team Member](https://devcenter.heroku.com/articles/platform-api-reference#team-member) receives access to everything owned by the Team.
 
-~> **NOTE:** Please only use this resource if you have team/organization apps
+To create a Heroku Team, use the [New Team](https://dashboard.heroku.com/teams/new) feature of Heroku Dashboard. For Heroku Enterprise accounts, new Teams may be created within the account by users with the right permissions.
+
+A Heroku "team" was originally called an "organization", and that is still the identifier used elsewhere in this provider. For [`heroku_app`](app.html) & [`heroku_space`](space.html) resources, set the Heroku Team name as the "organization".
 
 ## Example Usage
 
@@ -25,9 +27,9 @@ resource "heroku_team_member" "foobar-member" {
 
 ## Argument Reference
 
-* `team` - (Required) The name of the Heroku team that the team member will be added to.
-* `email` - (Required) Email address of the team collaborator
-* `role` - (Required) The role to assign the team member. See [the API docs](https://devcenter.heroku.com/articles/platform-api-reference#team-member) for available options.
+* `team` - (Required) The name of the Heroku Team.
+* `email` - (Required) Email address of the member
+* `role` - (Required) The role to assign the member. See [the API docs](https://devcenter.heroku.com/articles/platform-api-reference#team-member) for available options.
 
 ## Import
 
