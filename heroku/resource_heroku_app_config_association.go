@@ -63,7 +63,7 @@ func resourceHerokuAppConfigAssociationCreate(d *schema.ResourceData, m interfac
 	configVars := getVars(d)
 	sensitiveConfigVars := getSensitiveVars(d)
 
-	// Check for duplicates
+	// Check for duplicates between config_vars & sensitive_vars
 	dupeErr := duplicateChecker(configVars, sensitiveConfigVars)
 	if dupeErr != nil {
 		return dupeErr
@@ -71,6 +71,17 @@ func resourceHerokuAppConfigAssociationCreate(d *schema.ResourceData, m interfac
 
 	// Combine Both Variables
 	combinedVars := mergeVars(configVars, sensitiveConfigVars)
+
+	appConfigVars, readErr := client.ConfigVarInfoForApp(context.TODO(), appId)
+	if readErr != nil {
+		return readErr
+	}
+
+	// Check new variables against remote variables already on the app
+	checkErr := checkForExistingVars(appConfigVars, combinedVars)
+	if checkErr != nil {
+		return checkErr
+	}
 
 	// Update vars on the app
 	if err := updateVars(appId, client, nil, combinedVars); err != nil {
@@ -265,4 +276,25 @@ func getSensitiveVars(d *schema.ResourceData) map[string]interface{} {
 	}
 
 	return sensitiveVars
+}
+
+// Check to see if vars defined for this resource are already on the app. This is to avoid a infinite dirty plan
+// if vars were defined on the BOTH the heroku_app & heroku_app_config_association resources
+// as well as avoiding config drift with manually managed config vars.
+func checkForExistingVars(appConfigVars map[string]*string, newVars map[string]interface{}) error {
+	var existingVars []string
+
+	for k := range newVars {
+		if _, ok := appConfigVars[k]; ok {
+			// Add vars that already exist on the app to existingVars
+			existingVars = append(existingVars, k)
+		}
+	}
+
+	if len(existingVars) > 0 {
+		return fmt.Errorf("[ERROR] The following config vars already exist (either added manually or via heroku_app) on the app prior to this resource creating them: %v\n"+
+			"To prevent an infinite dirty plan/config drift, please define these vars in terraform in either heroku_app.config_vars OR heroku_app_config_association", existingVars)
+	}
+
+	return nil
 }

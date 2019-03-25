@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"regexp"
 	"testing"
 )
 
@@ -36,7 +37,6 @@ func TestAccHerokuAppConfigAssociation_Basic(t *testing.T) {
 func TestAccHerokuAppConfigAssociation_Advanced(t *testing.T) {
 	org := testAccConfig.GetOrganizationOrSkip(t)
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	configName := fmt.Sprintf("config-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -45,12 +45,30 @@ func TestAccHerokuAppConfigAssociation_Advanced(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfigAssociation_Advanced(org, appName, configName),
+				Config: testAccCheckHerokuAppConfigAssociation_Advanced(org, appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppConfigAssociationExists("heroku_app_config_association.foobar-config", "RAILS_ENV", "PRIVATE_KEY"),
 					resource.TestCheckResourceAttr(
 						"heroku_app_config_association.foobar-config", "vars.RAILS_ENV", "PROD"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccHerokuAppConfigAssociation_BothSetError(t *testing.T) {
+	org := testAccConfig.GetOrganizationOrSkip(t)
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+		},
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckHerokuAppConfigAssociation_Error(org, appName),
+				ExpectError: regexp.MustCompile(`config vars already exist on the app prior to this resource creating`),
 			},
 		},
 	})
@@ -97,7 +115,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_app_config_association" "foobar-config" {
-    app_id = "${heroku_app.foobar.name}"
+    app_id = "${heroku_app.foobar.id}"
 
     vars = {
        RAILS_ENV = "PROD"
@@ -111,7 +129,7 @@ resource "heroku_app_config_association" "foobar-config" {
 }`, appName, org)
 }
 
-func testAccCheckHerokuAppConfigAssociation_Advanced(org, appName, configName string) string {
+func testAccCheckHerokuAppConfigAssociation_Advanced(org, appName string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
@@ -122,8 +140,6 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_config" "config" {
-    name = "%s"
-
     vars = {
        RAILS_ENV = "PROD"
        LOG_LEVEL = "DEBUG"
@@ -136,9 +152,49 @@ resource "heroku_config" "config" {
 }
 
 resource "heroku_app_config_association" "foobar-config" {
-    app_id = "${heroku_app.foobar.name}"
+    app_id = "${heroku_app.foobar.id}"
 
     vars = "${heroku_config.config.vars}"
     sensitive_vars = "${heroku_config.config.sensitive_vars}"
-}`, appName, org, configName)
+}`, appName, org)
+}
+
+func testAccCheckHerokuAppConfigAssociation_Error(org, appName string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+
+    organization {
+        name = "%s"
+    }
+
+    config_vars {
+       RAILS_ENV = "PROD"
+       RAKE_ENV = "PROD"
+    }
+
+    sensitive_config_vars {
+       PRIVATE_KEY = "it_is_a_secret"
+    }
+}
+
+resource "heroku_config" "config" {
+    vars = {
+       RAILS_ENV = "PROD"
+       LOG_LEVEL = "DEBUG"
+    }
+
+    sensitive_vars = {
+        PRIVATE_KEY = "it_is_a_secret"
+        API_TOKEN   = "some_token"
+    }
+}
+
+resource "heroku_app_config_association" "foobar-config" {
+    app_id = "${heroku_app.foobar.id}"
+
+    vars = "${heroku_config.config.vars}"
+    sensitive_vars = "${heroku_config.config.sensitive_vars}"
+}`, appName, org)
 }

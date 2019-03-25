@@ -55,12 +55,12 @@ The following arguments are supported:
    in.
 * `buildpacks` - (Optional) Buildpack names or URLs for the application.
      Buildpacks configured externally won't be altered if this is not present.
-* `config_vars` - (Optional) Configuration variables for the application.
+* `config_vars`<sup>1</sup> - (Optional) Configuration variables for the application.
      The config variables in this map are not the final set of configuration
      variables, but rather variables you want present. That is, other
      configuration variables set externally won't be removed by Terraform
      if they aren't present in this list.
-* `sensitive_config_vars` - (Optional) This argument is the same as `config_vars`.
+* `sensitive_config_vars`<sup>1</sup> - (Optional) This argument is the same as `config_vars`.
      The main difference between the two is when `sensitive_config_vars` outputs
      are displayed on-screen following a terraform apply or terraform refresh,
      they are redacted, with <sensitive> displayed in place of their value.
@@ -80,10 +80,14 @@ The `organization` block supports:
 * `locked` (boolean)
 * `personal` (boolean)
 
-~> **NOTE:** Removing an entire `config_vars` or `sensitive_config_vars` block from a
-configuration will not actually remove the vars on the remote resource.
-This is especially important if you are migrating all `config_vars` to `sensitive_config_vars`.
-Leave the empty `config_vars` or `sensitive_config_vars` block in place to remove previously defined vars.
+~> **NOTE:**
+1. Deleting an entire `config_vars` or `sensitive_config_vars` map from a `heroku_app`
+configuration will not actually remove the vars on the remote resource. To remove an existing variable,
+leave these attribute maps in-place and delete only its entries from the map. Once these attributes are
+empty, the map itself may be deleted from the configuration. Otherwise if one deletes the map with existing
+entries, the config vars will not be deleted from the remote resource.
+This is especially important if you are migrating all `config_vars` to `sensitive_config_vars` or migrating
+config vars to `heroku_app_config_association` resource.
 
 ## Attributes Reference
 
