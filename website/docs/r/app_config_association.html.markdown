@@ -10,18 +10,20 @@ description: |-
 Provides a Heroku App Config Association resource, making it possible to set/update/remove heroku app config vars independently from
 `heroku_app`. An example usage scenario could be:
 
-- User has separate git repositories for various micro-services. Multiple micro-services use Kafka.
-- User has a separate repository for kafka terraform files with blue/green support.
-- User builds out new clusters.
-- Prior to this resource's introduction, user would need one `terraform apply` to update state and X number of `terraform apply`
+* User has separate git repositories for various micro-services. Multiple micro-services use Kafka.
+* User has a separate repository for kafka terraform files with blue/green support.
+* User builds out new clusters.
+* Prior to this resource's introduction, user would need one `terraform apply` to update state and X number of `terraform apply`
 for each micro-service to pick up the new kafka clusters. However with this resource, user can do one `terraform apply`
 and let Heroku handle the rolling restarts to pick up the new config vars.
 
-~> **NOTE:**
-- Heroku does not have a 'sensitivity' distinction for its config variables.
-This distinction is only made during Terraform plans and applies to avoid leaking sensitive data via plan output.
-- Be careful when having config variables defined in both `heroku_app` and `heroku_app_config_association` resources. As the latter resource
+~> **NOTES:**
+* Heroku does not have a 'sensitivity' distinction for its config variables.
+This distinction is only made during Terraform `plan` and `apply` to avoid leaking sensitive data in the console output.
+* Be careful when having config variables defined in both `heroku_app` and `heroku_app_config_association` resources. As the latter resource
 has a dependency on the former, any overlapping config variables in `heroku_app` will be overwritten in `heroku_app_config_association`.
+Furthermore, this overlap will cause an infinite dirty 'terraform plan' if config variables have different values on both resources
+at the same time. It is recommended to use one or the other resource, not both, to manage your app(s) config vars.
 
 ## Example HCL
 ```hcl

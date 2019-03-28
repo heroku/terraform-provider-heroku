@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"regexp"
 	"testing"
 )
 
@@ -51,24 +50,6 @@ func TestAccHerokuAppConfigAssociation_Advanced(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"heroku_app_config_association.foobar-config", "vars.RAILS_ENV", "PROD"),
 				),
-			},
-		},
-	})
-}
-
-func TestAccHerokuAppConfigAssociation_BothSetError(t *testing.T) {
-	org := testAccConfig.GetOrganizationOrSkip(t)
-	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccCheckHerokuAppConfigAssociation_Error(org, appName),
-				ExpectError: regexp.MustCompile(`config vars already exist on the app prior to this resource creating`),
 			},
 		},
 	})
@@ -137,46 +118,6 @@ resource "heroku_app" "foobar" {
   organization {
     name = "%s"
   }
-}
-
-resource "heroku_config" "config" {
-    vars = {
-       RAILS_ENV = "PROD"
-       LOG_LEVEL = "DEBUG"
-    }
-
-    sensitive_vars = {
-        PRIVATE_KEY = "it_is_a_secret"
-        API_TOKEN   = "some_token"
-    }
-}
-
-resource "heroku_app_config_association" "foobar-config" {
-    app_id = "${heroku_app.foobar.id}"
-
-    vars = "${heroku_config.config.vars}"
-    sensitive_vars = "${heroku_config.config.sensitive_vars}"
-}`, appName, org)
-}
-
-func testAccCheckHerokuAppConfigAssociation_Error(org, appName string) string {
-	return fmt.Sprintf(`
-resource "heroku_app" "foobar" {
-    name = "%s"
-    region = "us"
-
-    organization {
-        name = "%s"
-    }
-
-    config_vars {
-       RAILS_ENV = "PROD"
-       RAKE_ENV = "PROD"
-    }
-
-    sensitive_config_vars {
-       PRIVATE_KEY = "it_is_a_secret"
-    }
 }
 
 resource "heroku_config" "config" {

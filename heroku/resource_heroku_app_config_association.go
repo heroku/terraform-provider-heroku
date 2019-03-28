@@ -60,28 +60,17 @@ func resourceHerokuAppConfigAssociationCreate(d *schema.ResourceData, m interfac
 	client := m.(*Config).Api
 
 	appId := getAppId(d)
-	configVars := getVars(d)
-	sensitiveConfigVars := getSensitiveVars(d)
+	vars := getVars(d)
+	sensitiveVars := getSensitiveVars(d)
 
-	// Check for duplicates between config_vars & sensitive_vars
-	dupeErr := duplicateChecker(configVars, sensitiveConfigVars)
+	// Check for duplicates between vars & sensitive_vars
+	dupeErr := duplicateChecker(vars, sensitiveVars)
 	if dupeErr != nil {
 		return dupeErr
 	}
 
 	// Combine Both Variables
-	combinedVars := mergeVars(configVars, sensitiveConfigVars)
-
-	appConfigVars, readErr := client.ConfigVarInfoForApp(context.TODO(), appId)
-	if readErr != nil {
-		return readErr
-	}
-
-	// Check new variables against remote variables already on the app
-	checkErr := checkForExistingVars(appConfigVars, combinedVars)
-	if checkErr != nil {
-		return checkErr
-	}
+	combinedVars := mergeVars(vars, sensitiveVars)
 
 	// Update vars on the app
 	if err := updateVars(appId, client, nil, combinedVars); err != nil {
@@ -170,10 +159,10 @@ func resourceHerokuAppConfigAssociationDelete(d *schema.ResourceData, m interfac
 	return nil
 }
 
-func mergeVars(configVars, sensitiveVars map[string]interface{}) map[string]interface{} {
+func mergeVars(vars, sensitiveVars map[string]interface{}) map[string]interface{} {
 	combined := make(map[string]interface{})
 
-	for k, v := range configVars {
+	for k, v := range vars {
 		if v != nil {
 			combined[k] = v
 		}
