@@ -53,9 +53,9 @@ func TestAccHerokuCert_EU(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuCertificateChain(&endpoint, certificateChain),
-					resource.TestCheckResourceAttr(
+					resource.TestMatchResourceAttr(
 						"heroku_cert.ssl_certificate",
-						"cname", fmt.Sprintf("%s.herokuapp.com", appName)),
+						"cname", regexp.MustCompile(`^[^\.]+.ssl.herokudns.com$`)),
 				),
 			},
 			{
@@ -64,9 +64,9 @@ func TestAccHerokuCert_EU(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuCertificateChain(&endpoint, certificateChain2),
-					resource.TestCheckResourceAttr(
+					resource.TestMatchResourceAttr(
 						"heroku_cert.ssl_certificate",
-						"cname", fmt.Sprintf("%s.herokuapp.com", appName)),
+						"cname", regexp.MustCompile(`^[^\.]+.ssl.herokudns.com$`)),
 				),
 			},
 		},
@@ -100,7 +100,7 @@ func TestAccHerokuCert_US(t *testing.T) {
 					testAccCheckHerokuCertificateChain(&endpoint, certificateChain2),
 					resource.TestMatchResourceAttr(
 						"heroku_cert.ssl_certificate",
-						"cname", regexp.MustCompile(`herokussl`)),
+						"cname", regexp.MustCompile(`^[^\.]+.ssl.herokudns.com$`)),
 				),
 			},
 			{
@@ -111,7 +111,7 @@ func TestAccHerokuCert_US(t *testing.T) {
 					testAccCheckHerokuCertificateChain(&endpoint, certificateChain),
 					resource.TestMatchResourceAttr(
 						"heroku_cert.ssl_certificate",
-						"cname", regexp.MustCompile(`herokussl`)),
+						"cname", regexp.MustCompile(`^[^\.]+.ssl.herokudns.com$`)),
 				),
 			},
 		},
