@@ -1,7 +1,13 @@
 ## 1.9.0 (Unreleased)
 
+FEATURES:
+* **New Data Source:** `heroku_team` [#188](https://github.com/terraform-providers/terraform-provider-heroku/pull/188)
+
 IMPROVEMENTS:
 * Clarify usage of Heroku Teams in the docs [#187](https://github.com/terraform-providers/terraform-provider-heroku/pull/187)
+
+BUG FIXES:
+* Fix tests using SSL Endpoint DNS target [#191](https://github.com/terraform-providers/terraform-provider-heroku/pull/191)
 
 ## 1.8.0 (February 27, 2019)
 
