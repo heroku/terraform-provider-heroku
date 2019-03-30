@@ -8,7 +8,7 @@ description: |-
 
 # heroku\_app\_config\_association
 Provides a Heroku App Config Association resource, making it possible to set/update/remove heroku app config vars independently from
-`heroku_app`. An example usage scenario could be:
+the `heroku_app` resource. An example usage scenario could be:
 
 * User has separate git repositories for various micro-services. Multiple micro-services use Kafka.
 * User has a separate repository for kafka terraform files with blue/green support.
@@ -17,13 +17,15 @@ Provides a Heroku App Config Association resource, making it possible to set/upd
 for each micro-service to pick up the new kafka clusters. However with this resource, user can do one `terraform apply`
 and let Heroku handle the rolling restarts to pick up the new config vars.
 
-~> **NOTES:**
-* Heroku does not have a 'sensitivity' distinction for its config variables.
-This distinction is only made during Terraform `plan` and `apply` to avoid leaking sensitive data in the console output.
-* Be careful when having config variables defined in both `heroku_app` and `heroku_app_config_association` resources. As the latter resource
-has a dependency on the former, any overlapping config variables in `heroku_app` will be overwritten in `heroku_app_config_association`.
-Furthermore, this overlap will cause an infinite dirty 'terraform plan' if config variables have different values on both resources
-at the same time. It is recommended to use one or the other resource, not both, to manage your app(s) config vars.
+### "Sensitive" is not secret
+Heroku does not have a 'sensitivity' distinction for its config variables.
+This distinction is only made during terraform `plan` and `apply` to avoid leaking sensitive data in the console output.
+
+### Beware of conflicting vars
+Be careful when having config variables defined in both `heroku_app` and `heroku_app_config_association` resources. As the latter resource
+has a dependency on the former, any overlapping config variables in `heroku_app` will be overwritten in `heroku_app_config_association`
+during a `terraform apply`. Furthermore, this overlap will cause an infinite dirty terraform plan if config variables have
+different values on both resources at the same time. It is recommended to use one or the other resource, not both, to manage your app(s) config vars.
 
 ## Example HCL
 ```hcl
@@ -35,7 +37,7 @@ resource "heroku_config" "common" {
     }
 
     sensitive_vars = {
-        PRIVATE_KEY="some_private_key"
+        PRIVATE_KEY = "some_private_key"
     }
 }
 
@@ -67,15 +69,17 @@ resource "heroku_app_config_association" "foobar2" {
 ```
 
 ## Argument Reference
-* `app_id` - (Required) A Heroku app's `UUID`. Can also be the name of the Heroku app but `UUID` is preferred as it is idempotent
-* `vars` - Map of config vars that are can be outputted in plaintext
+
+* `app_id` - (Required) A Heroku app's `UUID`. Can also be the name of the Heroku app but `UUID` is preferred as it is idempotent.
+* `vars` - Map of config vars that are can be outputted in plaintext.
 * `sensitive_vars` - This is the same as `vars`. The main difference between the two
 attributes is `sensitive_vars` outputs are redacted on-screen and replaced by a <sensitive> placeholder, following a terraform
 plan or apply. It is recommended to put private keys, passwords, etc in this argument.
 
 ## Attributes Reference
 The following attributes are exported:
-* `id` - The ID of the app config association
+
+* `id` - The ID of the app config association.
 
 ## Import
 The `heroku_app_config_association` resource's primary attributes are managed only within Terraform state.
