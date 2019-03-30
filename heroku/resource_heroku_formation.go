@@ -63,23 +63,22 @@ func resourceHerokuFormation() *schema.Resource {
 	}
 }
 
-func resourceHerokuFormationRead(d *schema.ResourceData, meta interface{}) error {
+func resourceHerokuFormationRead(d *schema.ResourceData, meta interface{}) (err error) {
 	client := meta.(*Config).Api
 
 	appName := getAppName(d)
 
 	formation, err := resourceHerokuFormationRetrieve(d.Id(), appName, client)
-
 	if err != nil {
 		return err
 	}
 
-	d.Set("app", formation.Formation.AppName)
-	d.Set("type", formation.Formation.Type)
-	d.Set("quantity", formation.Formation.Quantity)
-	d.Set("size", formation.Formation.Size)
+	err = d.Set("app", formation.Formation.AppName)
+	err = d.Set("type", formation.Formation.Type)
+	err = d.Set("quantity", formation.Formation.Quantity)
+	err = d.Set("size", formation.Formation.Size)
 
-	return nil
+	return err
 }
 
 // resourceHerokuFormationCreate method will execute an UPDATE to the formation.
