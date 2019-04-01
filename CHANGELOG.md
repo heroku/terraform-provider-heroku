@@ -1,4 +1,4 @@
-## 1.9.0 (Unreleased)
+## 1.9.0 (April 01, 2019)
 
 FEATURES:
 * **New Data Source:** `heroku_team` [#188](https://github.com/terraform-providers/terraform-provider-heroku/pull/188)
