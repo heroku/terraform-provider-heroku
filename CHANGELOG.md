@@ -1,4 +1,8 @@
-## 1.10.0 (Unreleased)
+## 1.9.1 (Unreleased)
+
+IMPROVEMENTS:
+* Documentation fix-ups [#189](https://github.com/terraform-providers/terraform-provider-heroku/pull/189) & [#192](https://github.com/terraform-providers/terraform-provider-heroku/pull/192)
+
 ## 1.9.0 (April 01, 2019)
 
 FEATURES:
