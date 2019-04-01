@@ -70,13 +70,13 @@ The following arguments are supported:
   only internally in a private space. This option is only available for apps
   that also specify `space`.
 * `organization` - (Optional) A block that can be specified once to define
-     organization settings for this app. The fields for this block are
+     Heroku Team settings for this app. The fields for this block are
      documented below.
 * `acm` - (Optional) The flag representing Automated Certificate Management for the app.
 
 The `organization` block supports:
 
-* `name` (string) - The name of the organization.
+* `name` (string) - The name of the Heroku Team
 * `locked` (boolean)
 * `personal` (boolean)
 
