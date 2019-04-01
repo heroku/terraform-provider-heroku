@@ -12,8 +12,8 @@ See the [official documentation](https://www.terraform.io/docs/providers/heroku/
 Requirements
 ------------
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.11.x
--	[Go](https://golang.org/doc/install) 1.11 (to build the provider plugin)
+- [Terraform](https://www.terraform.io/downloads.html) 0.11.x
+- [Go](https://golang.org/doc/install) 1.11 (to build the provider plugin)
 
 Development
 -----------

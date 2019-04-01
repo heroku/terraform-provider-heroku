@@ -3,8 +3,7 @@ layout: "heroku"
 page_title: "Provider: Heroku"
 sidebar_current: "docs-heroku-index"
 description: |-
-The Heroku provider is used to interact with the resources provided by the
-Heroku Platform API.
+  The Heroku provider is used to interact with the resources provided by the Heroku Platform API.
 ---
 
 # Heroku Provider
@@ -85,13 +84,20 @@ Refreshing Terraform state in-memory prior to plan...
 
 ### Netrc
 
-Credentials can be sourced from the [`.netrc`](https://ec.haxx.se/usingcurl-netrc.html)
-file in your home directory. Example:
+Credentials can instead be sourced from the [`.netrc`](https://ec.haxx.se/usingcurl-netrc.html)
+file in your home directory:
 
-```netrc
+```hcl
+provider "heroku" {}
+```
+
+```shell
+$ cat ~/.netrc
+...
 machine api.heroku.com
   login <your_heroku_email>
   password <your_heroku_api_key>
+...
 ```
 
 ## Argument Reference
