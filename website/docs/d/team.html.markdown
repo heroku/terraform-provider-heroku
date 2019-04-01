@@ -32,11 +32,13 @@ output "heroku_team_data_basic" {
 ## Argument Reference
 
 The following arguments are supported:
+
 * `name` - (Required) The team name
 
 ## Attributes Reference
 
 The following attributes are exported:
+
 * `id` - The ID of the team
 * `default` - Whether to use this team when none is specified
 * `credit_card_collections` - Whether charges incurred by the team are paid by credit card

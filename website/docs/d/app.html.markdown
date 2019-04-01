@@ -45,10 +45,10 @@ The following attributes are exported:
    for pointing DNS records.
 * `config_vars` - (Optional) A map of all of the configuration variables for the app.
 * `acm` - (Required) True if Heroku ACM is enabled for this app, false otherwise.
-* `organization` - (Optional) The organization that owns this app, if the app is owned by an organization. The fields for this block are documented below.
+* `organization` - (Optional) The Heroku Team that owns this app. The fields for this block are documented below.
 
 The `organization` block supports:
 
-* `name` (string) - The name of the organization.
+* `name` (string) - The name of the Heroku Team.
 * `locked` (boolean)
 * `personal` (boolean)
