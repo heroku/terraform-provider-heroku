@@ -47,6 +47,18 @@ func getEmail(d *schema.ResourceData) string {
 	return email
 }
 
+// getTeamId extracts the team id attribute generically from a Heroku resource.
+func getTeamId(d *schema.ResourceData) string {
+	var appName string
+	if v, ok := d.GetOk("team_id"); ok {
+		vs := v.(string)
+		log.Printf("[DEBUG] Team id: %s", vs)
+		appName = vs
+	}
+
+	return appName
+}
+
 func doesHerokuAppExist(appName string, client *heroku.Service) (*heroku.App, error) {
 	app, err := client.AppInfo(context.TODO(), appName)
 
