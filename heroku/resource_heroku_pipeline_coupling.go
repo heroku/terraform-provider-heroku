@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
-	"github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go"
 )
 
 func resourceHerokuPipelineCoupling() *schema.Resource {

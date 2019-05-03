@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go"
 )
 
 func resourceHerokuDomain() *schema.Resource {

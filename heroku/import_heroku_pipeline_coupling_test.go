@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/heroku/heroku-go/v3"
+	"github.com/heroku/heroku-go"
 )
 
 func TestAccHerokuPipelineCoupling_importBasic(t *testing.T) {

@@ -6,7 +6,7 @@ require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
-	github.com/cenkalti/backoff v2.0.0+incompatible // indirect
+	github.com/cenkalti/backoff v2.1.1+incompatible // indirect
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/go-ini/ini v1.38.1 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
@@ -20,7 +20,7 @@ require (
 	github.com/hashicorp/hcl2 v0.0.0-20180714220537-966851f3097f // indirect
 	github.com/hashicorp/terraform v0.11.12-beta1.0.20190214175014-182daa619826
 	github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb // indirect
-	github.com/heroku/heroku-go v0.0.0-20190103224148-ad17585a922f
+	github.com/heroku/heroku-go v4.0.0+incompatible
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.3 // indirect
@@ -29,7 +29,7 @@ require (
 	github.com/mitchellh/go-testing-interface v0.0.0-20171004221916-a61a99592b77 // indirect
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452 // indirect
 	github.com/mitchellh/mapstructure v0.0.0-20180715050151-f15292f7a699 // indirect
-	github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c // indirect
+	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/posener/complete v1.1.1 // indirect
 	github.com/satori/uuid v1.2.0
 	github.com/smartystreets/assertions v0.0.0-20190215210624-980c5ac6f3ac // indirect

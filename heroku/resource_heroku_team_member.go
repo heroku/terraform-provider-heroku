@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	heroku "github.com/heroku/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go"
 )
 
 func resourceHerokuTeamMember() *schema.Resource {
