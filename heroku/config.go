@@ -12,7 +12,7 @@ import (
 	"github.com/bgentry/go-netrc/netrc"
 	"github.com/hashicorp/terraform/helper/logging"
 	"github.com/hashicorp/terraform/helper/schema"
-	heroku "github.com/heroku/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go/v5"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/terraform-providers/terraform-provider-heroku/version"
 )
