@@ -1,4 +1,4 @@
-package heroku
+package v5
 
 import (
 	"fmt"

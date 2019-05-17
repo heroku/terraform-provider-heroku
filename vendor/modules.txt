@@ -55,7 +55,7 @@ github.com/bgentry/go-netrc/netrc
 github.com/bgentry/speakeasy
 # github.com/blang/semver v3.5.1+incompatible
 github.com/blang/semver
-# github.com/cenkalti/backoff v2.0.0+incompatible
+# github.com/cenkalti/backoff v2.1.1+incompatible
 github.com/cenkalti/backoff
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
@@ -75,9 +75,9 @@ github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
-# github.com/googleapis/gax-go/v2 v2.0.3
-github.com/googleapis/gax-go/v2
-# github.com/hashicorp/errwrap v1.0.0
+# github.com/google/uuid v1.0.0
+github.com/google/uuid
+# github.com/hashicorp/errwrap v0.0.0-20180715044906-d6c0cd880357
 github.com/hashicorp/errwrap
 # github.com/hashicorp/go-cleanhttp v0.5.0
 github.com/hashicorp/go-cleanhttp
@@ -178,9 +178,9 @@ github.com/hashicorp/terraform/svchost/auth
 github.com/hashicorp/terraform-config-inspect/tfconfig
 # github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb
 github.com/hashicorp/yamux
-# github.com/heroku/heroku-go v0.0.0-20190103224148-ad17585a922f
-github.com/heroku/heroku-go/v3
-# github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
+# github.com/heroku/heroku-go/v5 v5.0.0-beta.1
+github.com/heroku/heroku-go/v5
+# github.com/jmespath/go-jmespath v0.0.0-20160803190731-bd40a432e4c7
 github.com/jmespath/go-jmespath
 # github.com/mattn/go-colorable v0.1.1
 github.com/mattn/go-colorable
@@ -206,7 +206,7 @@ github.com/mitchellh/mapstructure
 github.com/mitchellh/reflectwalk
 # github.com/oklog/run v1.0.0
 github.com/oklog/run
-# github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c
+# github.com/pborman/uuid v1.2.0
 github.com/pborman/uuid
 # github.com/posener/complete v1.2.1
 github.com/posener/complete

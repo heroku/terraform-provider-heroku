@@ -8,24 +8,25 @@
 // The Service struct has all the methods you need
 // to interact with heroku API.
 //
-package heroku
+package v5
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/go-querystring/query"
 	"io"
 	"net/http"
 	"reflect"
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/google/go-querystring/query"
 )
 
 const (
-	Version          = "v3"
+	Version          = "v5"
 	DefaultUserAgent = "heroku/" + Version + " (" + runtime.GOOS + "; " + runtime.GOARCH + ")"
 	DefaultURL       = "https://api.heroku.com"
 )
