@@ -29,7 +29,7 @@ resource "heroku_cert" "ssl_certificate" {
   app               = "${heroku_app.default.name}"
   certificate_chain = "${file("server.crt")}"
   private_key       = "${file("server.key")}"
-  depends_on        = "heroku_addon.ssl"
+  depends_on        = ["heroku_addon.ssl"]
 }
 ```
 
