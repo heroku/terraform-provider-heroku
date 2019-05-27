@@ -54,7 +54,11 @@ func resourceHerokuTeamMemberImport(d *schema.ResourceData, meta interface{}) ([
 	}
 	d.Set("team", team)
 	d.Set("email", email)
-	resourceHerokuTeamMemberRead(d, meta)
+
+	readErr := resourceHerokuTeamMemberRead(d, meta)
+	if readErr != nil {
+		return nil, readErr
+	}
 	return []*schema.ResourceData{d}, nil
 }
 

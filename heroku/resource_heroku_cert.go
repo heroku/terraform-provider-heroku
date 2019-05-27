@@ -65,7 +65,10 @@ func resourceHerokuCertImport(d *schema.ResourceData, meta interface{}) ([]*sche
 	}
 
 	d.SetId(ep.ID)
-	d.Set("app", app)
+	setErr := d.Set("app", app)
+	if setErr != nil {
+		return nil, setErr
+	}
 
 	return []*schema.ResourceData{d}, nil
 }

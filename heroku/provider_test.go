@@ -51,7 +51,10 @@ func TestProviderConfigureUsesHeadersForClient(t *testing.T) {
 			t.Errorf("got X-Custom-Header: %q, want `yes`", got)
 		}
 
-		w.Write([]byte(`{"name":"some-app"}`))
+		_, writeErr := w.Write([]byte(`{"name":"some-app"}`))
+		if writeErr != nil {
+			t.Fatal(writeErr)
+		}
 	}))
 	defer srv.Close()
 
@@ -104,7 +107,11 @@ func createTempConfigFile(content string, name string) (*os.File, error) {
 
 	_, err = tmpfile.WriteString(content)
 	if err != nil {
-		os.Remove(tmpfile.Name())
+		removeErr := os.Remove(tmpfile.Name())
+		if removeErr != nil {
+			return nil, removeErr
+		}
+
 		return nil, fmt.Errorf("Error writing to temporary test file. err: %s", err.Error())
 	}
 
