@@ -171,6 +171,7 @@ func resourceHerokuApp() *schema.Resource {
 					Type:      schema.TypeString,
 					Sensitive: true,
 				},
+				Sensitive: true,
 			},
 
 			"all_config_vars": {
