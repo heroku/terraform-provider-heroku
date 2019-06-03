@@ -1,4 +1,4 @@
-## 2.0.0 (Unreleased)
+## 2.0.0 (June 03, 2019)
 
 FEATURES:
 * **Terraform 0.12** compatibility [#179](https://github.com/terraform-providers/terraform-provider-heroku/pull/179)
