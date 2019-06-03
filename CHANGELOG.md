@@ -1,4 +1,7 @@
-## 1.9.1 (Unreleased)
+## 2.0.0 (Unreleased)
+
+FEATURES:
+* **Terraform 0.12** compatibility [#179](https://github.com/terraform-providers/terraform-provider-heroku/pull/179)
 
 IMPROVEMENTS:
 * Documentation fix-ups [#189](https://github.com/terraform-providers/terraform-provider-heroku/pull/189) & [#192](https://github.com/terraform-providers/terraform-provider-heroku/pull/192)

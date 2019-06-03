@@ -43,9 +43,9 @@ resource "heroku_app" "foobar" {
 resource "heroku_addon" "foobar" {
     app = "${heroku_app.foobar.name}"
     plan = "deployhooks:http"
-    config {
-        url = "http://google.com"
-    }
+    config = {
+		url = "http://google.com"
+	}
 }
 `, appName)
 }
@@ -60,9 +60,9 @@ resource "heroku_app" "foobar" {
 resource "heroku_addon" "foobar" {
     app = "${heroku_app.foobar.name}"
     plan = "deployhooks:http"
-    config {
-        url = "http://google.com"
-    }
+    config = {
+		url = "http://google.com"
+	}
 }
 
 data "heroku_addon" "test_data" {

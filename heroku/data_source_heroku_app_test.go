@@ -39,7 +39,7 @@ func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "config_vars.FOO", "bar"),
 					resource.TestCheckResourceAttr(
-						"data.heroku_app.foobar", "buildpacks.0", "heroku/go"),
+						"data.heroku_app.foobar", "buildpacks.0", "https://github.com/heroku/heroku-buildpack-multi-procfile"),
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "acm", "false"),
 					resource.TestCheckResourceAttr(
@@ -93,9 +93,9 @@ resource "heroku_app" "foobar" {
     "heroku/go"
   ]
 
-  config_vars {
+	config_vars = {
     FOO = "bar"
-  }
+	}
 }
 `, appName, stack)
 }
@@ -112,9 +112,9 @@ resource "heroku_app" "foobar" {
     "heroku/go"
 	]
 	
-  config_vars {
+	config_vars = {
     FOO = "bar"
-  }
+	}
 }
 
 data "heroku_app" "foobar" {

@@ -11,7 +11,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/heroku/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go/v3"
 )
 
 // Global lock to prevent parallelism for heroku_addon since
@@ -47,12 +47,9 @@ func resourceHerokuAddon() *schema.Resource {
 			},
 
 			"config": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeMap,
-				},
 			},
 
 			"provider_id": {
@@ -88,15 +85,11 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 		Confirm: &app,
 	}
 
-	if v := d.Get("config"); v != nil {
-		config := make(map[string]string)
-		for _, v := range v.([]interface{}) {
-			for k, v := range v.(map[string]interface{}) {
-				config[k] = v.(string)
-			}
+	if c, ok := d.GetOk("config"); ok {
+		opts.Config = make(map[string]string)
+		for k, v := range c.(map[string]interface{}) {
+			opts.Config[k] = v.(string)
 		}
-
-		opts.Config = config
 	}
 
 	log.Printf("[DEBUG] Addon create configuration: %#v, %#v", app, opts)

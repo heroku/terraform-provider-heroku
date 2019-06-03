@@ -12,13 +12,26 @@ See the [official documentation](https://www.terraform.io/docs/providers/heroku/
 Requirements
 ------------
 
-- [Terraform](https://www.terraform.io/downloads.html) 0.11.x
-- [Go](https://golang.org/doc/install) 1.11 (to build the provider plugin)
+- [Terraform](https://www.terraform.io/downloads.html) 0.12.x
+- [Go](https://golang.org/doc/install) 1.12 (to build the provider plugin)
+
+Usage
+-----
+
+For Terraform 0.12+ compatibility, the configuration should specifiy version 2 or higher:
+
+```hcl
+provider "heroku" {
+  version = "~> 2.0"
+}
+```
+
+👓📚 For more usage info, see [Heroku Provider docs](https://www.terraform.io/docs/providers/heroku/index.html).
 
 Development
 -----------
 
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.11+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
+If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.12+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
 
 ### Clone the Provider
 

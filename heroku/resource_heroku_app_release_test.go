@@ -113,7 +113,7 @@ func testAccCheckHerokuAppRelease_OrgBasic(appName, org, slugId, desc string) st
 resource "heroku_app" "foobar" {
 	name = "%s"
 	region = "us"
-	organization = {
+	organization {
 		name = "%s"
 	}
 }
