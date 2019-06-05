@@ -1,4 +1,8 @@
 ## 2.0.1 (Unreleased)
+
+BUG FIXES:
+* Fix unhandled errors [#193](https://github.com/terraform-providers/terraform-provider-heroku/pull/193)
+
 ## 2.0.0 (June 03, 2019)
 
 FEATURES:
