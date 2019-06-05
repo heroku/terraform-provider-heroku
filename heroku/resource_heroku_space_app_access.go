@@ -50,7 +50,10 @@ func resourceHerokuSpaceAppAccessImport(d *schema.ResourceData, meta interface{}
 	}
 	d.Set("space", space)
 	d.Set("email", email)
-	resourceHerokuSpaceAppAccessRead(d, meta)
+	readErr := resourceHerokuSpaceAppAccessRead(d, meta)
+	if readErr != nil {
+		return nil, readErr
+	}
 	return []*schema.ResourceData{d}, nil
 }
 

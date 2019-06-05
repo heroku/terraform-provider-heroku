@@ -137,7 +137,11 @@ func resourceHerokuSlugImport(d *schema.ResourceData, meta interface{}) ([]*sche
 
 	d.SetId(slug.ID)
 	d.Set("app", app)
-	setSlugState(d, slug)
+
+	setErr := setSlugState(d, slug)
+	if setErr != nil {
+		return nil, setErr
+	}
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -232,7 +236,11 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(slug.ID)
-	setSlugState(d, slug)
+
+	setErr := setSlugState(d, slug)
+	if setErr != nil {
+		return setErr
+	}
 
 	log.Printf("[INFO] Created slug ID: %s", d.Id())
 	return nil
@@ -247,7 +255,10 @@ func resourceHerokuSlugRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error retrieving slug: %s", err)
 	}
 
-	setSlugState(d, slug)
+	setErr := setSlugState(d, slug)
+	if setErr != nil {
+		return setErr
+	}
 
 	return nil
 }
@@ -310,7 +321,11 @@ func downloadSlug(httpUrl, destinationFilePath string) error {
 		return fmt.Errorf("Error creating slug file: %s (%s)", err, destinationFilePath)
 	}
 	defer slugFile.Close()
-	io.Copy(slugFile, res.Body)
+
+	_, copyErr := io.Copy(slugFile, res.Body)
+	if copyErr != nil {
+		return copyErr
+	}
 
 	return nil
 }
@@ -355,19 +370,22 @@ func uploadSlug(filePath, httpMethod, httpUrl string) error {
 }
 
 func checksumSlug(filePath string) (string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return "", fmt.Errorf("Error opening slug file_path: %s", err)
+	file, openErr := os.Open(filePath)
+	if openErr != nil {
+		return "", fmt.Errorf("Error opening slug file_path: %s", openErr)
 	}
+
 	hash := sha256.New()
-	if _, err := io.Copy(hash, file); err != nil {
-		return "", fmt.Errorf("Error reading slug for checksum: %s", err)
+	if _, copyErr := io.Copy(hash, file); copyErr != nil {
+		return "", fmt.Errorf("Error reading slug for checksum: %s", copyErr)
 	}
-	file.Close()
+
+	closeErr := file.Close()
+	if closeErr != nil {
+		return "", closeErr
+	}
+
 	checksum := fmt.Sprintf("SHA256:%x", hash.Sum(nil))
-	if err != nil {
-		return "", fmt.Errorf("Error generating slug checksum: %s", err)
-	}
 	return checksum, nil
 }
 

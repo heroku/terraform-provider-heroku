@@ -53,7 +53,10 @@ func resourceHerokuAccountFeatureImport(d *schema.ResourceData, meta interface{}
 	d.SetId(d.Id())
 	d.Set("name", accountFeatureName)
 
-	resourceHerokuAccountFeatureRead(d, meta)
+	readErr := resourceHerokuAccountFeatureRead(d, meta)
+	if readErr != nil {
+		return nil, readErr
+	}
 
 	return []*schema.ResourceData{d}, nil
 }

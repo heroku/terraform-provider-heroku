@@ -153,7 +153,10 @@ func resourceHerokuBuildImport(d *schema.ResourceData, meta interface{}) ([]*sch
 	}
 
 	d.SetId(build.ID)
-	setBuildState(d, build, app)
+	setErr := setBuildState(d, build, app)
+	if setErr != nil {
+		return nil, setErr
+	}
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -266,7 +269,10 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Error refreshing the completed build: %s", err)
 	}
-	setBuildState(d, build, app)
+	setErr := setBuildState(d, build, app)
+	if setErr != nil {
+		return setErr
+	}
 
 	log.Printf("[INFO] Created build ID: %s", d.Id())
 
@@ -282,7 +288,10 @@ func resourceHerokuBuildRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error retrieving build: %s", err)
 	}
 
-	setBuildState(d, build, app)
+	setErr := setBuildState(d, build, app)
+	if setErr != nil {
+		return setErr
+	}
 
 	return nil
 }
@@ -378,19 +387,22 @@ func uploadSource(filePath, httpMethod, httpUrl string) error {
 }
 
 func checksumSource(filePath string) (string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return "", fmt.Errorf("Error opening source.path: %s", err)
+	file, openErr := os.Open(filePath)
+	if openErr != nil {
+		return "", fmt.Errorf("Error opening source.path: %s", openErr)
 	}
+
 	hash := sha256.New()
-	if _, err := io.Copy(hash, file); err != nil {
-		return "", fmt.Errorf("Error reading source for checksum: %s", err)
+	if _, copyErr := io.Copy(hash, file); copyErr != nil {
+		return "", fmt.Errorf("Error reading source for checksum: %s", copyErr)
 	}
-	file.Close()
+
+	closeErr := file.Close()
+	if closeErr != nil {
+		return "", closeErr
+	}
+
 	checksum := fmt.Sprintf("SHA256:%x", hash.Sum(nil))
-	if err != nil {
-		return "", fmt.Errorf("Error generating source checksum: %s", err)
-	}
 	return checksum, nil
 }
 

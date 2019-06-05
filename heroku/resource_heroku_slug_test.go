@@ -323,15 +323,20 @@ resource "heroku_slug" "foobar" {
 }
 
 func switchSlugFiles() (bool, error) {
-	os.Rename("test-fixtures/slug.tgz", "test-fixtures/slug-orig.tgz")
-	os.Rename("test-fixtures/slug-2.tgz", "test-fixtures/slug.tgz")
-	return false, nil
+	var err error
+	err = os.Rename("test-fixtures/slug.tgz", "test-fixtures/slug-orig.tgz")
+	err = os.Rename("test-fixtures/slug-2.tgz", "test-fixtures/slug.tgz")
+	return false, err
 }
 
 func resetSlugFiles() error {
 	if _, err := os.Stat("test-fixtures/slug-orig.tgz"); err == nil {
-		os.Rename("test-fixtures/slug.tgz", "test-fixtures/slug-2.tgz")
-		os.Rename("test-fixtures/slug-orig.tgz", "test-fixtures/slug.tgz")
+		var err error
+		err = os.Rename("test-fixtures/slug.tgz", "test-fixtures/slug-2.tgz")
+		err = os.Rename("test-fixtures/slug-orig.tgz", "test-fixtures/slug.tgz")
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

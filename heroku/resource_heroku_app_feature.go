@@ -42,7 +42,10 @@ func resourceHerokuAppFeature() *schema.Resource {
 }
 
 func resourceHerokuAppFeatureImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceHerokuAppFeatureRead(d, meta)
+	readErr := resourceHerokuAppFeatureRead(d, meta)
+	if readErr != nil {
+		return nil, readErr
+	}
 
 	return []*schema.ResourceData{d}, nil
 }

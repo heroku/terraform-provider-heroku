@@ -397,29 +397,39 @@ func testAccCheckSourceChecksumIsDifferent(buildName string, originalSourceCheck
 }
 
 func switchSourceDirectories() (bool, error) {
-	os.Rename("test-fixtures/app", "test-fixtures/app-orig")
-	os.Rename("test-fixtures/app-2", "test-fixtures/app")
-	return false, nil
+	var renameErr error
+	renameErr = os.Rename("test-fixtures/app", "test-fixtures/app-orig")
+	renameErr = os.Rename("test-fixtures/app-2", "test-fixtures/app")
+	return false, renameErr
 }
 
 func resetSourceDirectories() error {
 	if _, err := os.Stat("test-fixtures/app-orig"); err == nil {
-		os.Rename("test-fixtures/app", "test-fixtures/app-2")
-		os.Rename("test-fixtures/app-orig", "test-fixtures/app")
+		var renameErr error
+		renameErr = os.Rename("test-fixtures/app", "test-fixtures/app-2")
+		renameErr = os.Rename("test-fixtures/app-orig", "test-fixtures/app")
+		if renameErr != nil {
+			return renameErr
+		}
 	}
 	return nil
 }
 
 func switchSourceFiles() (bool, error) {
-	os.Rename("test-fixtures/app.tgz", "test-fixtures/app-orig.tgz")
-	os.Rename("test-fixtures/app-2.tgz", "test-fixtures/app.tgz")
-	return false, nil
+	var renameErr error
+	renameErr = os.Rename("test-fixtures/app.tgz", "test-fixtures/app-orig.tgz")
+	renameErr = os.Rename("test-fixtures/app-2.tgz", "test-fixtures/app.tgz")
+	return false, renameErr
 }
 
 func resetSourceFiles() error {
 	if _, err := os.Stat("test-fixtures/app-orig.tgz"); err == nil {
-		os.Rename("test-fixtures/app.tgz", "test-fixtures/app-2.tgz")
-		os.Rename("test-fixtures/app-orig.tgz", "test-fixtures/app.tgz")
+		var renameErr error
+		renameErr = os.Rename("test-fixtures/app.tgz", "test-fixtures/app-2.tgz")
+		renameErr = os.Rename("test-fixtures/app-orig.tgz", "test-fixtures/app.tgz")
+		if renameErr != nil {
+			return renameErr
+		}
 	}
 	return nil
 }

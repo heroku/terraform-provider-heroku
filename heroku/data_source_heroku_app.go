@@ -115,7 +115,10 @@ func dataSourceHerokuAppRead(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
-	setAppDetails(d, app)
+	setErr := setAppDetails(d, app)
+	if setErr != nil {
+		return setErr
+	}
 
 	d.Set("buildpacks", app.Buildpacks)
 	d.Set("config_vars", app.Vars)
