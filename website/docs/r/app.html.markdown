@@ -18,7 +18,7 @@ resource "heroku_app" "default" {
   name   = "my-cool-app"
   region = "us"
 
-  config_vars {
+  config_vars = {
     FOOBAR = "baz"
   }
 
