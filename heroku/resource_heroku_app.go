@@ -175,8 +175,9 @@ func resourceHerokuApp() *schema.Resource {
 			},
 
 			"all_config_vars": {
-				Type:     schema.TypeMap,
-				Computed: true,
+				Type:      schema.TypeMap,
+				Computed:  true,
+				Sensitive: true,
 			},
 
 			"git_url": {
