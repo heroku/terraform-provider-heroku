@@ -112,7 +112,8 @@ The following attributes are exported:
    for pointing DNS records.
 * `all_config_vars` - A map of all of the configuration variables that
     exist for the app, containing both those set by Terraform and those
-    set externally.
+    set externally. (These are treated as "sensitive" so that
+    their values are redacted in console output.)
 * `uuid` - The unique UUID of the Heroku app. **NOTE:** Use this for `null_resource` triggers.
 
 ## Import

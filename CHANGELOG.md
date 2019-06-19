@@ -2,6 +2,7 @@
 
 BUG FIXES:
 * Fix unhandled errors [#193](https://github.com/terraform-providers/terraform-provider-heroku/pull/193)
+* Prevent leaking `heroku_app` `sensitive_config_vars` through `all_config_vars` [#206](https://github.com/terraform-providers/terraform-provider-heroku/pull/206)
 
 ## 2.0.0 (June 03, 2019)
 
