@@ -105,9 +105,7 @@ func (e *ScopeTraversalExpr) walkChildNodes(w internalWalkFunc) {
 }
 
 func (e *ScopeTraversalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
-	val, diags := e.Traversal.TraverseAbs(ctx)
-	setDiagEvalContext(diags, e, ctx)
-	return val, diags
+	return e.Traversal.TraverseAbs(ctx)
 }
 
 func (e *ScopeTraversalExpr) Range() hcl.Range {
@@ -132,13 +130,12 @@ type RelativeTraversalExpr struct {
 }
 
 func (e *RelativeTraversalExpr) walkChildNodes(w internalWalkFunc) {
-	w(e.Source)
+	// Scope traversals have no child nodes
 }
 
 func (e *RelativeTraversalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	src, diags := e.Source.Value(ctx)
 	ret, travDiags := e.Traversal.TraverseRel(src)
-	setDiagEvalContext(travDiags, e, ctx)
 	diags = append(diags, travDiags...)
 	return ret, diags
 }
@@ -181,8 +178,8 @@ type FunctionCallExpr struct {
 }
 
 func (e *FunctionCallExpr) walkChildNodes(w internalWalkFunc) {
-	for _, arg := range e.Args {
-		w(arg)
+	for i, arg := range e.Args {
+		e.Args[i] = w(arg).(Expression)
 	}
 }
 
@@ -210,12 +207,10 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 		if !hasNonNilMap {
 			return cty.DynamicVal, hcl.Diagnostics{
 				{
-					Severity:    hcl.DiagError,
-					Summary:     "Function calls not allowed",
-					Detail:      "Functions may not be called here.",
-					Subject:     e.Range().Ptr(),
-					Expression:  e,
-					EvalContext: ctx,
+					Severity: hcl.DiagError,
+					Summary:  "Function calls not allowed",
+					Detail:   "Functions may not be called here.",
+					Subject:  e.Range().Ptr(),
 				},
 			}
 		}
@@ -231,13 +226,11 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 
 		return cty.DynamicVal, hcl.Diagnostics{
 			{
-				Severity:    hcl.DiagError,
-				Summary:     "Call to unknown function",
-				Detail:      fmt.Sprintf("There is no function named %q.%s", e.Name, suggestion),
-				Subject:     &e.NameRange,
-				Context:     e.Range().Ptr(),
-				Expression:  e,
-				EvalContext: ctx,
+				Severity: hcl.DiagError,
+				Summary:  "Call to unknown function",
+				Detail:   fmt.Sprintf("There is no function named %q.%s", e.Name, suggestion),
+				Subject:  &e.NameRange,
+				Context:  e.Range().Ptr(),
 			},
 		}
 	}
@@ -262,13 +255,11 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 		case expandVal.Type().IsTupleType() || expandVal.Type().IsListType() || expandVal.Type().IsSetType():
 			if expandVal.IsNull() {
 				diags = append(diags, &hcl.Diagnostic{
-					Severity:    hcl.DiagError,
-					Summary:     "Invalid expanding argument value",
-					Detail:      "The expanding argument (indicated by ...) must not be null.",
-					Subject:     expandExpr.Range().Ptr(),
-					Context:     e.Range().Ptr(),
-					Expression:  expandExpr,
-					EvalContext: ctx,
+					Severity: hcl.DiagError,
+					Summary:  "Invalid expanding argument value",
+					Detail:   "The expanding argument (indicated by ...) must not be null.",
+					Context:  expandExpr.Range().Ptr(),
+					Subject:  e.Range().Ptr(),
 				})
 				return cty.DynamicVal, diags
 			}
@@ -289,13 +280,11 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 			args = newArgs
 		default:
 			diags = append(diags, &hcl.Diagnostic{
-				Severity:    hcl.DiagError,
-				Summary:     "Invalid expanding argument value",
-				Detail:      "The expanding argument (indicated by ...) must be of a tuple, list, or set type.",
-				Subject:     expandExpr.Range().Ptr(),
-				Context:     e.Range().Ptr(),
-				Expression:  expandExpr,
-				EvalContext: ctx,
+				Severity: hcl.DiagError,
+				Summary:  "Invalid expanding argument value",
+				Detail:   "The expanding argument (indicated by ...) must be of a tuple, list, or set type.",
+				Context:  expandExpr.Range().Ptr(),
+				Subject:  e.Range().Ptr(),
 			})
 			return cty.DynamicVal, diags
 		}
@@ -315,10 +304,8 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 					"Function %q expects%s %d argument(s). Missing value for %q.",
 					e.Name, qual, len(params), missing.Name,
 				),
-				Subject:     &e.CloseParenRange,
-				Context:     e.Range().Ptr(),
-				Expression:  e,
-				EvalContext: ctx,
+				Subject: &e.CloseParenRange,
+				Context: e.Range().Ptr(),
 			},
 		}
 	}
@@ -332,10 +319,8 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 					"Function %q expects only %d argument(s).",
 					e.Name, len(params),
 				),
-				Subject:     args[len(params)].StartRange().Ptr(),
-				Context:     e.Range().Ptr(),
-				Expression:  e,
-				EvalContext: ctx,
+				Subject: args[len(params)].StartRange().Ptr(),
+				Context: e.Range().Ptr(),
 			},
 		}
 	}
@@ -365,10 +350,8 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 					"Invalid value for %q parameter: %s.",
 					param.Name, err,
 				),
-				Subject:     argExpr.StartRange().Ptr(),
-				Context:     e.Range().Ptr(),
-				Expression:  argExpr,
-				EvalContext: ctx,
+				Subject: argExpr.StartRange().Ptr(),
+				Context: e.Range().Ptr(),
 			})
 		}
 
@@ -404,10 +387,8 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 					"Invalid value for %q parameter: %s.",
 					param.Name, err,
 				),
-				Subject:     argExpr.StartRange().Ptr(),
-				Context:     e.Range().Ptr(),
-				Expression:  argExpr,
-				EvalContext: ctx,
+				Subject: argExpr.StartRange().Ptr(),
+				Context: e.Range().Ptr(),
 			})
 
 		default:
@@ -418,10 +399,8 @@ func (e *FunctionCallExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnosti
 					"Call to function %q failed: %s.",
 					e.Name, err,
 				),
-				Subject:     e.StartRange().Ptr(),
-				Context:     e.Range().Ptr(),
-				Expression:  e,
-				EvalContext: ctx,
+				Subject: e.StartRange().Ptr(),
+				Context: e.Range().Ptr(),
 			})
 		}
 
@@ -463,9 +442,9 @@ type ConditionalExpr struct {
 }
 
 func (e *ConditionalExpr) walkChildNodes(w internalWalkFunc) {
-	w(e.Condition)
-	w(e.TrueResult)
-	w(e.FalseResult)
+	e.Condition = w(e.Condition).(Expression)
+	e.TrueResult = w(e.TrueResult).(Expression)
+	e.FalseResult = w(e.FalseResult).(Expression)
 }
 
 func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
@@ -486,12 +465,10 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 					// "These expressions are object and object respectively" if the
 					// object types don't exactly match.
 					"The true and false result expressions must have consistent types. The given expressions are %s and %s, respectively.",
-					trueResult.Type().FriendlyName(), falseResult.Type().FriendlyName(),
+					trueResult.Type(), falseResult.Type(),
 				),
-				Subject:     hcl.RangeBetween(e.TrueResult.Range(), e.FalseResult.Range()).Ptr(),
-				Context:     &e.SrcRange,
-				Expression:  e,
-				EvalContext: ctx,
+				Subject: hcl.RangeBetween(e.TrueResult.Range(), e.FalseResult.Range()).Ptr(),
+				Context: &e.SrcRange,
 			},
 		}
 	}
@@ -500,13 +477,11 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 	diags = append(diags, condDiags...)
 	if condResult.IsNull() {
 		diags = append(diags, &hcl.Diagnostic{
-			Severity:    hcl.DiagError,
-			Summary:     "Null condition",
-			Detail:      "The condition value is null. Conditions must either be true or false.",
-			Subject:     e.Condition.Range().Ptr(),
-			Context:     &e.SrcRange,
-			Expression:  e.Condition,
-			EvalContext: ctx,
+			Severity: hcl.DiagError,
+			Summary:  "Null condition",
+			Detail:   "The condition value is null. Conditions must either be true or false.",
+			Subject:  e.Condition.Range().Ptr(),
+			Context:  &e.SrcRange,
 		})
 		return cty.UnknownVal(resultType), diags
 	}
@@ -516,13 +491,11 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 	condResult, err := convert.Convert(condResult, cty.Bool)
 	if err != nil {
 		diags = append(diags, &hcl.Diagnostic{
-			Severity:    hcl.DiagError,
-			Summary:     "Incorrect condition type",
-			Detail:      fmt.Sprintf("The condition expression must be of type bool."),
-			Subject:     e.Condition.Range().Ptr(),
-			Context:     &e.SrcRange,
-			Expression:  e.Condition,
-			EvalContext: ctx,
+			Severity: hcl.DiagError,
+			Summary:  "Incorrect condition type",
+			Detail:   fmt.Sprintf("The condition expression must be of type bool."),
+			Subject:  e.Condition.Range().Ptr(),
+			Context:  &e.SrcRange,
 		})
 		return cty.UnknownVal(resultType), diags
 	}
@@ -541,10 +514,8 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 						"The true result value has the wrong type: %s.",
 						err.Error(),
 					),
-					Subject:     e.TrueResult.Range().Ptr(),
-					Context:     &e.SrcRange,
-					Expression:  e.TrueResult,
-					EvalContext: ctx,
+					Subject: e.TrueResult.Range().Ptr(),
+					Context: &e.SrcRange,
 				})
 				trueResult = cty.UnknownVal(resultType)
 			}
@@ -564,10 +535,8 @@ func (e *ConditionalExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostic
 						"The false result value has the wrong type: %s.",
 						err.Error(),
 					),
-					Subject:     e.FalseResult.Range().Ptr(),
-					Context:     &e.SrcRange,
-					Expression:  e.FalseResult,
-					EvalContext: ctx,
+					Subject: e.TrueResult.Range().Ptr(),
+					Context: &e.SrcRange,
 				})
 				falseResult = cty.UnknownVal(resultType)
 			}
@@ -593,8 +562,8 @@ type IndexExpr struct {
 }
 
 func (e *IndexExpr) walkChildNodes(w internalWalkFunc) {
-	w(e.Collection)
-	w(e.Key)
+	e.Collection = w(e.Collection).(Expression)
+	e.Key = w(e.Key).(Expression)
 }
 
 func (e *IndexExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
@@ -604,10 +573,7 @@ func (e *IndexExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	diags = append(diags, collDiags...)
 	diags = append(diags, keyDiags...)
 
-	val, indexDiags := hcl.Index(coll, key, &e.SrcRange)
-	setDiagEvalContext(indexDiags, e, ctx)
-	diags = append(diags, indexDiags...)
-	return val, diags
+	return hcl.Index(coll, key, &e.SrcRange)
 }
 
 func (e *IndexExpr) Range() hcl.Range {
@@ -626,8 +592,8 @@ type TupleConsExpr struct {
 }
 
 func (e *TupleConsExpr) walkChildNodes(w internalWalkFunc) {
-	for _, expr := range e.Exprs {
-		w(expr)
+	for i, expr := range e.Exprs {
+		e.Exprs[i] = w(expr).(Expression)
 	}
 }
 
@@ -675,9 +641,9 @@ type ObjectConsItem struct {
 }
 
 func (e *ObjectConsExpr) walkChildNodes(w internalWalkFunc) {
-	for _, item := range e.Items {
-		w(item.KeyExpr)
-		w(item.ValueExpr)
+	for i, item := range e.Items {
+		e.Items[i].KeyExpr = w(item.KeyExpr).(Expression)
+		e.Items[i].ValueExpr = w(item.ValueExpr).(Expression)
 	}
 }
 
@@ -710,12 +676,10 @@ func (e *ObjectConsExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics
 
 		if key.IsNull() {
 			diags = append(diags, &hcl.Diagnostic{
-				Severity:    hcl.DiagError,
-				Summary:     "Null value as key",
-				Detail:      "Can't use a null value as a key.",
-				Subject:     item.ValueExpr.Range().Ptr(),
-				Expression:  item.KeyExpr,
-				EvalContext: ctx,
+				Severity: hcl.DiagError,
+				Summary:  "Null value as key",
+				Detail:   "Can't use a null value as a key.",
+				Subject:  item.ValueExpr.Range().Ptr(),
 			})
 			known = false
 			continue
@@ -725,12 +689,10 @@ func (e *ObjectConsExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics
 		key, err = convert.Convert(key, cty.String)
 		if err != nil {
 			diags = append(diags, &hcl.Diagnostic{
-				Severity:    hcl.DiagError,
-				Summary:     "Incorrect key type",
-				Detail:      fmt.Sprintf("Can't use this value as a key: %s.", err.Error()),
-				Subject:     item.KeyExpr.Range().Ptr(),
-				Expression:  item.KeyExpr,
-				EvalContext: ctx,
+				Severity: hcl.DiagError,
+				Summary:  "Incorrect key type",
+				Detail:   fmt.Sprintf("Can't use this value as a key: %s.", err.Error()),
+				Subject:  item.ValueExpr.Range().Ptr(),
 			})
 			known = false
 			continue
@@ -793,31 +755,11 @@ func (e *ObjectConsKeyExpr) walkChildNodes(w internalWalkFunc) {
 	// We only treat our wrapped expression as a real expression if we're
 	// not going to interpret it as a literal.
 	if e.literalName() == "" {
-		w(e.Wrapped)
+		e.Wrapped = w(e.Wrapped).(Expression)
 	}
 }
 
 func (e *ObjectConsKeyExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
-	// Because we accept a naked identifier as a literal key rather than a
-	// reference, it's confusing to accept a traversal containing periods
-	// here since we can't tell if the user intends to create a key with
-	// periods or actually reference something. To avoid confusing downstream
-	// errors we'll just prohibit a naked multi-step traversal here and
-	// require the user to state their intent more clearly.
-	// (This is handled at evaluation time rather than parse time because
-	// an application using static analysis _can_ accept a naked multi-step
-	// traversal here, if desired.)
-	if travExpr, isTraversal := e.Wrapped.(*ScopeTraversalExpr); isTraversal && len(travExpr.Traversal) > 1 {
-		var diags hcl.Diagnostics
-		diags = append(diags, &hcl.Diagnostic{
-			Severity: hcl.DiagError,
-			Summary:  "Ambiguous attribute key",
-			Detail:   "If this expression is intended to be a reference, wrap it in parentheses. If it's instead intended as a literal name containing periods, wrap it in quotes to create a string literal.",
-			Subject:  e.Range().Ptr(),
-		})
-		return cty.DynamicVal, diags
-	}
-
 	if ln := e.literalName(); ln != "" {
 		return cty.StringVal(ln), nil
 	}
@@ -877,13 +819,11 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 
 	if collVal.IsNull() {
 		diags = append(diags, &hcl.Diagnostic{
-			Severity:    hcl.DiagError,
-			Summary:     "Iteration over null value",
-			Detail:      "A null value cannot be used as the collection in a 'for' expression.",
-			Subject:     e.CollExpr.Range().Ptr(),
-			Context:     &e.SrcRange,
-			Expression:  e.CollExpr,
-			EvalContext: ctx,
+			Severity: hcl.DiagError,
+			Summary:  "Iteration over null value",
+			Detail:   "A null value cannot be used as the collection in a 'for' expression.",
+			Subject:  e.CollExpr.Range().Ptr(),
+			Context:  &e.SrcRange,
 		})
 		return cty.DynamicVal, diags
 	}
@@ -898,10 +838,8 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 				"A value of type %s cannot be used as the collection in a 'for' expression.",
 				collVal.Type().FriendlyName(),
 			),
-			Subject:     e.CollExpr.Range().Ptr(),
-			Context:     &e.SrcRange,
-			Expression:  e.CollExpr,
-			EvalContext: ctx,
+			Subject: e.CollExpr.Range().Ptr(),
+			Context: &e.SrcRange,
 		})
 		return cty.DynamicVal, diags
 	}
@@ -909,13 +847,14 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		return cty.DynamicVal, diags
 	}
 
+	childCtx := ctx.NewChild()
+	childCtx.Variables = map[string]cty.Value{}
+
 	// Before we start we'll do an early check to see if any CondExpr we've
 	// been given is of the wrong type. This isn't 100% reliable (it may
 	// be DynamicVal until real values are given) but it should catch some
 	// straightforward cases and prevent a barrage of repeated errors.
 	if e.CondExpr != nil {
-		childCtx := ctx.NewChild()
-		childCtx.Variables = map[string]cty.Value{}
 		if e.KeyVar != "" {
 			childCtx.Variables[e.KeyVar] = cty.DynamicVal
 		}
@@ -925,26 +864,22 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		diags = append(diags, condDiags...)
 		if result.IsNull() {
 			diags = append(diags, &hcl.Diagnostic{
-				Severity:    hcl.DiagError,
-				Summary:     "Condition is null",
-				Detail:      "The value of the 'if' clause must not be null.",
-				Subject:     e.CondExpr.Range().Ptr(),
-				Context:     &e.SrcRange,
-				Expression:  e.CondExpr,
-				EvalContext: ctx,
+				Severity: hcl.DiagError,
+				Summary:  "Condition is null",
+				Detail:   "The value of the 'if' clause must not be null.",
+				Subject:  e.CondExpr.Range().Ptr(),
+				Context:  &e.SrcRange,
 			})
 			return cty.DynamicVal, diags
 		}
 		_, err := convert.Convert(result, cty.Bool)
 		if err != nil {
 			diags = append(diags, &hcl.Diagnostic{
-				Severity:    hcl.DiagError,
-				Summary:     "Invalid 'for' condition",
-				Detail:      fmt.Sprintf("The 'if' clause value is invalid: %s.", err.Error()),
-				Subject:     e.CondExpr.Range().Ptr(),
-				Context:     &e.SrcRange,
-				Expression:  e.CondExpr,
-				EvalContext: ctx,
+				Severity: hcl.DiagError,
+				Summary:  "Invalid 'for' condition",
+				Detail:   fmt.Sprintf("The 'if' clause value is invalid: %s.", err.Error()),
+				Subject:  e.CondExpr.Range().Ptr(),
+				Context:  &e.SrcRange,
 			})
 			return cty.DynamicVal, diags
 		}
@@ -968,8 +903,6 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		known := true
 		for it.Next() {
 			k, v := it.Element()
-			childCtx := ctx.NewChild()
-			childCtx.Variables = map[string]cty.Value{}
 			if e.KeyVar != "" {
 				childCtx.Variables[e.KeyVar] = k
 			}
@@ -981,13 +914,11 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 				if includeRaw.IsNull() {
 					if known {
 						diags = append(diags, &hcl.Diagnostic{
-							Severity:    hcl.DiagError,
-							Summary:     "Invalid 'for' condition",
-							Detail:      "The value of the 'if' clause must not be null.",
-							Subject:     e.CondExpr.Range().Ptr(),
-							Context:     &e.SrcRange,
-							Expression:  e.CondExpr,
-							EvalContext: childCtx,
+							Severity: hcl.DiagError,
+							Summary:  "Condition is null",
+							Detail:   "The value of the 'if' clause must not be null.",
+							Subject:  e.CondExpr.Range().Ptr(),
+							Context:  &e.SrcRange,
 						})
 					}
 					known = false
@@ -997,13 +928,11 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 				if err != nil {
 					if known {
 						diags = append(diags, &hcl.Diagnostic{
-							Severity:    hcl.DiagError,
-							Summary:     "Invalid 'for' condition",
-							Detail:      fmt.Sprintf("The 'if' clause value is invalid: %s.", err.Error()),
-							Subject:     e.CondExpr.Range().Ptr(),
-							Context:     &e.SrcRange,
-							Expression:  e.CondExpr,
-							EvalContext: childCtx,
+							Severity: hcl.DiagError,
+							Summary:  "Invalid 'for' condition",
+							Detail:   fmt.Sprintf("The 'if' clause value is invalid: %s.", err.Error()),
+							Subject:  e.CondExpr.Range().Ptr(),
+							Context:  &e.SrcRange,
 						})
 					}
 					known = false
@@ -1025,13 +954,11 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 			if keyRaw.IsNull() {
 				if known {
 					diags = append(diags, &hcl.Diagnostic{
-						Severity:    hcl.DiagError,
-						Summary:     "Invalid object key",
-						Detail:      "Key expression in 'for' expression must not produce a null value.",
-						Subject:     e.KeyExpr.Range().Ptr(),
-						Context:     &e.SrcRange,
-						Expression:  e.KeyExpr,
-						EvalContext: childCtx,
+						Severity: hcl.DiagError,
+						Summary:  "Invalid object key",
+						Detail:   "Key expression in 'for' expression must not produce a null value.",
+						Subject:  e.KeyExpr.Range().Ptr(),
+						Context:  &e.SrcRange,
 					})
 				}
 				known = false
@@ -1046,13 +973,11 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 			if err != nil {
 				if known {
 					diags = append(diags, &hcl.Diagnostic{
-						Severity:    hcl.DiagError,
-						Summary:     "Invalid object key",
-						Detail:      fmt.Sprintf("The key expression produced an invalid result: %s.", err.Error()),
-						Subject:     e.KeyExpr.Range().Ptr(),
-						Context:     &e.SrcRange,
-						Expression:  e.KeyExpr,
-						EvalContext: childCtx,
+						Severity: hcl.DiagError,
+						Summary:  "Invalid object key",
+						Detail:   fmt.Sprintf("The key expression produced an invalid result: %s.", err.Error()),
+						Subject:  e.KeyExpr.Range().Ptr(),
+						Context:  &e.SrcRange,
 					})
 				}
 				known = false
@@ -1072,13 +997,11 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 						Severity: hcl.DiagError,
 						Summary:  "Duplicate object key",
 						Detail: fmt.Sprintf(
-							"Two different items produced the key %q in this 'for' expression. If duplicates are expected, use the ellipsis (...) after the value expression to enable grouping by key.",
+							"Two different items produced the key %q in this for expression. If duplicates are expected, use the ellipsis (...) after the value expression to enable grouping by key.",
 							k,
 						),
-						Subject:     e.KeyExpr.Range().Ptr(),
-						Context:     &e.SrcRange,
-						Expression:  e.KeyExpr,
-						EvalContext: childCtx,
+						Subject: e.KeyExpr.Range().Ptr(),
+						Context: &e.SrcRange,
 					})
 				} else {
 					vals[key.AsString()] = val
@@ -1108,8 +1031,6 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		known := true
 		for it.Next() {
 			k, v := it.Element()
-			childCtx := ctx.NewChild()
-			childCtx.Variables = map[string]cty.Value{}
 			if e.KeyVar != "" {
 				childCtx.Variables[e.KeyVar] = k
 			}
@@ -1121,13 +1042,11 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 				if includeRaw.IsNull() {
 					if known {
 						diags = append(diags, &hcl.Diagnostic{
-							Severity:    hcl.DiagError,
-							Summary:     "Invalid 'for' condition",
-							Detail:      "The value of the 'if' clause must not be null.",
-							Subject:     e.CondExpr.Range().Ptr(),
-							Context:     &e.SrcRange,
-							Expression:  e.CondExpr,
-							EvalContext: childCtx,
+							Severity: hcl.DiagError,
+							Summary:  "Condition is null",
+							Detail:   "The value of the 'if' clause must not be null.",
+							Subject:  e.CondExpr.Range().Ptr(),
+							Context:  &e.SrcRange,
 						})
 					}
 					known = false
@@ -1145,13 +1064,11 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 				if err != nil {
 					if known {
 						diags = append(diags, &hcl.Diagnostic{
-							Severity:    hcl.DiagError,
-							Summary:     "Invalid 'for' condition",
-							Detail:      fmt.Sprintf("The 'if' clause value is invalid: %s.", err.Error()),
-							Subject:     e.CondExpr.Range().Ptr(),
-							Context:     &e.SrcRange,
-							Expression:  e.CondExpr,
-							EvalContext: childCtx,
+							Severity: hcl.DiagError,
+							Summary:  "Invalid 'for' condition",
+							Detail:   fmt.Sprintf("The 'if' clause value is invalid: %s.", err.Error()),
+							Subject:  e.CondExpr.Range().Ptr(),
+							Context:  &e.SrcRange,
 						})
 					}
 					known = false
@@ -1178,7 +1095,7 @@ func (e *ForExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 }
 
 func (e *ForExpr) walkChildNodes(w internalWalkFunc) {
-	w(e.CollExpr)
+	e.CollExpr = w(e.CollExpr).(Expression)
 
 	scopeNames := map[string]struct{}{}
 	if e.KeyVar != "" {
@@ -1191,17 +1108,17 @@ func (e *ForExpr) walkChildNodes(w internalWalkFunc) {
 	if e.KeyExpr != nil {
 		w(ChildScope{
 			LocalNames: scopeNames,
-			Expr:       e.KeyExpr,
+			Expr:       &e.KeyExpr,
 		})
 	}
 	w(ChildScope{
 		LocalNames: scopeNames,
-		Expr:       e.ValExpr,
+		Expr:       &e.ValExpr,
 	})
 	if e.CondExpr != nil {
 		w(ChildScope{
 			LocalNames: scopeNames,
-			Expr:       e.CondExpr,
+			Expr:       &e.CondExpr,
 		})
 	}
 }
@@ -1235,78 +1152,26 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 		return cty.DynamicVal, diags
 	}
 
-	sourceTy := sourceVal.Type()
-	if sourceTy == cty.DynamicPseudoType {
-		// If we don't even know the _type_ of our source value yet then
-		// we'll need to defer all processing, since we can't decide our
-		// result type either.
+	if sourceVal.IsNull() {
+		diags = append(diags, &hcl.Diagnostic{
+			Severity: hcl.DiagError,
+			Summary:  "Splat of null value",
+			Detail:   "Splat expressions (with the * symbol) cannot be applied to null values.",
+			Subject:  e.Source.Range().Ptr(),
+			Context:  hcl.RangeBetween(e.Source.Range(), e.MarkerRange).Ptr(),
+		})
+		return cty.DynamicVal, diags
+	}
+	if !sourceVal.IsKnown() {
 		return cty.DynamicVal, diags
 	}
 
 	// A "special power" of splat expressions is that they can be applied
 	// both to tuples/lists and to other values, and in the latter case
-	// the value will be treated as an implicit single-item tuple, or as
-	// an empty tuple if the value is null.
-	autoUpgrade := !(sourceTy.IsTupleType() || sourceTy.IsListType() || sourceTy.IsSetType())
-
-	if sourceVal.IsNull() {
-		if autoUpgrade {
-			return cty.EmptyTupleVal, diags
-		}
-		diags = append(diags, &hcl.Diagnostic{
-			Severity:    hcl.DiagError,
-			Summary:     "Splat of null value",
-			Detail:      "Splat expressions (with the * symbol) cannot be applied to null sequences.",
-			Subject:     e.Source.Range().Ptr(),
-			Context:     hcl.RangeBetween(e.Source.Range(), e.MarkerRange).Ptr(),
-			Expression:  e.Source,
-			EvalContext: ctx,
-		})
-		return cty.DynamicVal, diags
-	}
-
-	if autoUpgrade {
-		sourceVal = cty.TupleVal([]cty.Value{sourceVal})
-		sourceTy = sourceVal.Type()
-	}
-
-	// We'll compute our result type lazily if we need it. In the normal case
-	// it's inferred automatically from the value we construct.
-	resultTy := func() (cty.Type, hcl.Diagnostics) {
-		chiCtx := ctx.NewChild()
-		var diags hcl.Diagnostics
-		switch {
-		case sourceTy.IsListType() || sourceTy.IsSetType():
-			ety := sourceTy.ElementType()
-			e.Item.setValue(chiCtx, cty.UnknownVal(ety))
-			val, itemDiags := e.Each.Value(chiCtx)
-			diags = append(diags, itemDiags...)
-			e.Item.clearValue(chiCtx) // clean up our temporary value
-			return cty.List(val.Type()), diags
-		case sourceTy.IsTupleType():
-			etys := sourceTy.TupleElementTypes()
-			resultTys := make([]cty.Type, 0, len(etys))
-			for _, ety := range etys {
-				e.Item.setValue(chiCtx, cty.UnknownVal(ety))
-				val, itemDiags := e.Each.Value(chiCtx)
-				diags = append(diags, itemDiags...)
-				e.Item.clearValue(chiCtx) // clean up our temporary value
-				resultTys = append(resultTys, val.Type())
-			}
-			return cty.Tuple(resultTys), diags
-		default:
-			// Should never happen because of our promotion to list above.
-			return cty.DynamicPseudoType, diags
-		}
-	}
-
-	if !sourceVal.IsKnown() {
-		// We can't produce a known result in this case, but we'll still
-		// indicate what the result type would be, allowing any downstream type
-		// checking to proceed.
-		ty, tyDiags := resultTy()
-		diags = append(diags, tyDiags...)
-		return cty.UnknownVal(ty), diags
+	// the value will be treated as an implicit single-value list. We'll
+	// deal with that here first.
+	if !(sourceVal.Type().IsTupleType() || sourceVal.Type().IsListType() || sourceVal.Type().IsSetType()) {
+		sourceVal = cty.ListVal([]cty.Value{sourceVal})
 	}
 
 	vals := make([]cty.Value, 0, sourceVal.LengthInt())
@@ -1330,28 +1195,15 @@ func (e *SplatExpr) Value(ctx *hcl.EvalContext) (cty.Value, hcl.Diagnostics) {
 	e.Item.clearValue(ctx) // clean up our temporary value
 
 	if !isKnown {
-		// We'll ingore the resultTy diagnostics in this case since they
-		// will just be the same errors we saw while iterating above.
-		ty, _ := resultTy()
-		return cty.UnknownVal(ty), diags
+		return cty.DynamicVal, diags
 	}
 
-	switch {
-	case sourceTy.IsListType() || sourceTy.IsSetType():
-		if len(vals) == 0 {
-			ty, tyDiags := resultTy()
-			diags = append(diags, tyDiags...)
-			return cty.ListValEmpty(ty.ElementType()), diags
-		}
-		return cty.ListVal(vals), diags
-	default:
-		return cty.TupleVal(vals), diags
-	}
+	return cty.TupleVal(vals), diags
 }
 
 func (e *SplatExpr) walkChildNodes(w internalWalkFunc) {
-	w(e.Source)
-	w(e.Each)
+	e.Source = w(e.Source).(Expression)
+	e.Each = w(e.Each).(Expression)
 }
 
 func (e *SplatExpr) Range() hcl.Range {

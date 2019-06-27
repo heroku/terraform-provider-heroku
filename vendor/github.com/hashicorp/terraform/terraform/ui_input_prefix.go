@@ -1,7 +1,6 @@
 package terraform
 
 import (
-	"context"
 	"fmt"
 )
 
@@ -13,8 +12,8 @@ type PrefixUIInput struct {
 	UIInput     UIInput
 }
 
-func (i *PrefixUIInput) Input(ctx context.Context, opts *InputOpts) (string, error) {
+func (i *PrefixUIInput) Input(opts *InputOpts) (string, error) {
 	opts.Id = fmt.Sprintf("%s.%s", i.IdPrefix, opts.Id)
 	opts.Query = fmt.Sprintf("%s%s", i.QueryPrefix, opts.Query)
-	return i.UIInput.Input(ctx, opts)
+	return i.UIInput.Input(opts)
 }
