@@ -3,6 +3,7 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/acctest"
@@ -37,7 +38,6 @@ func TestAccHerokuAddon_Basic(t *testing.T) {
 	})
 }
 
-// GH-198
 func TestAccHerokuAddon_noPlan(t *testing.T) {
 	var addon heroku.AddOn
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
@@ -68,6 +68,50 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "plan", "memcachier"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccHerokuAddon_CustomName(t *testing.T) {
+	var addon heroku.AddOn
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	customName := fmt.Sprintf("tftest-%s", acctest.RandString(15))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAddonConfig_CustomName(appName, customName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
+					testAccCheckHerokuAddonAttributes(&addon, "memcachier:dev"),
+					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "app", appName),
+					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "plan", "memcachier"),
+					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "name", customName),
+				),
+			},
+		},
+	})
+}
+
+func TestAccHerokuAddon_CustomName_Invalid(t *testing.T) {
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	customName := "da.%dsadsa$d"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
+				ExpectError: regexp.MustCompile(`Invalid custom addon name:.*`),
 			},
 		},
 	})
@@ -189,4 +233,18 @@ resource "heroku_addon" "foobar" {
     app = "${heroku_app.foobar.name}"
     plan = "memcachier"
 }`, appName)
+}
+
+func testAccCheckHerokuAddonConfig_CustomName(appName, customAddonName string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_addon" "foobar" {
+    app = "${heroku_app.foobar.name}"
+    plan = "memcachier"
+    name = "%s"
+}`, appName, customAddonName)
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -12,6 +13,10 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	heroku "github.com/heroku/heroku-go/v5"
+)
+
+const (
+	AddonNameMaxLength = 256
 )
 
 // Global lock to prevent parallelism for heroku_addon since
@@ -46,6 +51,12 @@ func resourceHerokuAddon() *schema.Resource {
 				Required: true,
 			},
 
+			"name": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
 			"config": {
 				Type:     schema.TypeMap,
 				Optional: true,
@@ -53,11 +64,6 @@ func resourceHerokuAddon() *schema.Resource {
 			},
 
 			"provider_id": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-
-			"name": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -90,6 +96,16 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 		for k, v := range c.(map[string]interface{}) {
 			opts.Config[k] = v.(string)
 		}
+	}
+
+	if v := d.Get("name").(string); v != "" {
+		// Validate name with regex
+		valErr := validateAddonName(v)
+		if valErr != nil {
+			return valErr
+		}
+
+		opts.Name = &v
 	}
 
 	log.Printf("[DEBUG] Addon create configuration: %#v, %#v", app, opts)
@@ -152,19 +168,26 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceHerokuAddonUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
+	opts := heroku.AddOnUpdateOpts{}
 
 	app := d.Get("app").(string)
 
 	if d.HasChange("plan") {
-		ad, err := client.AddOnUpdate(
-			context.TODO(), app, d.Id(), heroku.AddOnUpdateOpts{Plan: d.Get("plan").(string)})
-		if err != nil {
-			return err
-		}
-
-		// Store the new ID
-		d.SetId(ad.ID)
+		opts.Plan = d.Get("plan").(string)
 	}
+
+	// TODO: uncomment once the go client supports this
+	//if d.HasChange("name") {
+	//	opts.Name = d.Get("name").(string)
+	//}
+
+	ad, updateErr := client.AddOnUpdate(context.TODO(), app, d.Id(), opts)
+	if updateErr != nil {
+		return updateErr
+	}
+
+	// Store the new addon id if applicable
+	d.SetId(ad.ID)
 
 	return resourceHerokuAddonRead(d, meta)
 }
@@ -232,4 +255,33 @@ func AddOnStateRefreshFunc(client *heroku.Service, appID, addOnID string) resour
 		// heroku-go is updated.
 		return (*heroku.AddOn)(addon), addon.State, nil
 	}
+}
+
+// validateAddonName uses the documented regex expression to make sure the user provided addon name is valid.
+//
+// Reference: https://devcenter.heroku.com/articles/platform-api-reference#add-on-create-optional-parameters
+func validateAddonName(name string) error {
+	errors := make([]string, 0)
+
+	// First validate length. There is no documented length
+	// but I've tried up to 256 characters so this will be max for now.
+	if len(name) > AddonNameMaxLength {
+		errors = append(errors, fmt.Sprintf("Length cannot exceed %v characters", AddonNameMaxLength))
+	}
+
+	// Then validate the content of the string against documented regex.
+	regex := regexp.MustCompile(`^[a-zA-Z][A-Za-z0-9_-]+$`)
+	matches := regex.FindStringSubmatch(name)
+	if len(matches) == 0 {
+		errors = append(errors, "Needs to match this regex: ^[a-zA-Z][A-Za-z0-9_-]+$")
+	}
+
+	if len(errors) > 0 {
+		errFormatted := ""
+		for _, err := range errors {
+			errFormatted += fmt.Sprintf("-%s\n", err)
+		}
+		return fmt.Errorf("Invalid custom addon name:\n" + errFormatted)
+	}
+	return nil
 }
