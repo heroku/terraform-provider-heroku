@@ -3,6 +3,7 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform/helper/validation"
 	"log"
 	"net/url"
 	"regexp"
@@ -13,10 +14,6 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	heroku "github.com/heroku/heroku-go/v5"
-)
-
-const (
-	AddonNameMaxLength = 256
 )
 
 // Global lock to prevent parallelism for heroku_addon since
@@ -52,9 +49,10 @@ func resourceHerokuAddon() *schema.Resource {
 			},
 
 			"name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validateCustomAddonName,
 			},
 
 			"config": {
@@ -79,6 +77,25 @@ func resourceHerokuAddon() *schema.Resource {
 	}
 }
 
+func validateCustomAddonName(v interface{}, k string) (ws []string, errors []error) {
+	// Check length
+	v1 := validation.StringLenBetween(1, 256)
+	_, errs1 := v1(v, k)
+	for _, err := range errs1 {
+		errors = append(errors, err)
+	}
+
+	// Check validity
+	valRegex := regexp.MustCompile(`^[a-zA-Z][A-Za-z0-9_-]+$`)
+	v2 := validation.StringMatch(valRegex, "Invalid custom addon name: must start with a letter and can only contain lowercase letters, numbers, and dashes")
+	_, errs2 := v2(v, k)
+	for _, err := range errs2 {
+		errors = append(errors, err)
+	}
+
+	return ws, errors
+}
+
 func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	addonLock.Lock()
 	defer addonLock.Unlock()
@@ -99,12 +116,6 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if v := d.Get("name").(string); v != "" {
-		// Validate name with regex
-		valErr := validateAddonName(v)
-		if valErr != nil {
-			return valErr
-		}
-
 		opts.Name = &v
 	}
 
@@ -255,33 +266,4 @@ func AddOnStateRefreshFunc(client *heroku.Service, appID, addOnID string) resour
 		// heroku-go is updated.
 		return (*heroku.AddOn)(addon), addon.State, nil
 	}
-}
-
-// validateAddonName uses the documented regex expression to make sure the user provided addon name is valid.
-//
-// Reference: https://devcenter.heroku.com/articles/platform-api-reference#add-on-create-optional-parameters
-func validateAddonName(name string) error {
-	errors := make([]string, 0)
-
-	// First validate length. There is no documented length
-	// but I've tried up to 256 characters so this will be max for now.
-	if len(name) > AddonNameMaxLength {
-		errors = append(errors, fmt.Sprintf("Length cannot exceed %v characters", AddonNameMaxLength))
-	}
-
-	// Then validate the content of the string against documented regex.
-	regex := regexp.MustCompile(`^[a-zA-Z][A-Za-z0-9_-]+$`)
-	matches := regex.FindStringSubmatch(name)
-	if len(matches) == 0 {
-		errors = append(errors, "Needs to match this regex: ^[a-zA-Z][A-Za-z0-9_-]+$")
-	}
-
-	if len(errors) > 0 {
-		errFormatted := ""
-		for _, err := range errors {
-			errFormatted += fmt.Sprintf("-%s\n", err)
-		}
-		return fmt.Errorf("Invalid custom addon name:\n" + errFormatted)
-	}
-	return nil
 }

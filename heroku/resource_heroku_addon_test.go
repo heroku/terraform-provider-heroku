@@ -111,7 +111,41 @@ func TestAccHerokuAddon_CustomName_Invalid(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
-				ExpectError: regexp.MustCompile(`Invalid custom addon name:.*`),
+				ExpectError: regexp.MustCompile(`config is invalid: invalid value for name`),
+			},
+		},
+	})
+}
+
+func TestAccHerokuAddon_CustomName_EmptyString(t *testing.T) {
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	customName := ""
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
+				ExpectError: regexp.MustCompile(`config is invalid: 2 problems:.*`),
+			},
+		},
+	})
+}
+
+func TestAccHerokuAddon_CustomName_FirstCharNum(t *testing.T) {
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	customName := "1dasdad"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
+				ExpectError: regexp.MustCompile(`config is invalid: invalid value for name`),
 			},
 		},
 	})
