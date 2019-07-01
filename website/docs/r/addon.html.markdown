@@ -30,7 +30,7 @@ resource "heroku_addon" "webhook" {
   app  = "${heroku_app.default.name}"
   plan = "deployhooks:http"
 
-  config {
+  config = {
     url = "http://google.com"
   }
 }
