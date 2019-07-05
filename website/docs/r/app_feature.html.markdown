@@ -42,5 +42,5 @@ App features can be imported using the combination of the application name, a co
 
 For example:
 ```
-$ terraform import heroku_app_feature.runtime_metrics foobar:runtime_metrics
+$ terraform import heroku_app_feature.log-runtime-metrics foobar:log-runtime-metrics
 ```
