@@ -8,8 +8,8 @@ description: |-
 
 # heroku\_domain
 
-Provides a Heroku App resource. This can be used to
-create and manage applications on Heroku.
+Provides a Heroku Domain resource. This can be used to
+create and manage custom domains on Heroku.
 
 ## Example Usage
 
