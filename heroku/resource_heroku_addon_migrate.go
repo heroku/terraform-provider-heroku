@@ -6,7 +6,8 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 	heroku "github.com/heroku/heroku-go/v5"
 	"log"
-	"reflect"
+	"strconv"
+	"strings"
 )
 
 func resourceHerokuAddonMigrate(v int, is *terraform.InstanceState, meta interface{}) (*terraform.InstanceState, error) {
@@ -64,9 +65,67 @@ func migrateAddonConfigFromListSetToSet(is *terraform.InstanceState, client *her
 
 	// Check to see if heroku_addon.config is a TypeList of TypeSet
 	log.Printf("Checking if heroku_addon state is the old TypeList of TypeSet")
-	config := is.Attributes["config"]
+	if is.Attributes["config.%"] != "" {
+		// This means the config attribute is the correct data type of just a TypeSet.
+		log.Printf("heroku_addon.config is the correct data type. No migration needed.")
+		return is, nil
+	}
 
-	fmt.Println(reflect.TypeOf(config))
+	// If the execution has gotten this far, this means the config attribute is a TypeList of TypeSets,
+	// which means we migrate it to just a TypeSet.
+	log.Printf("heroku_addon.config is not the correct data type. Migrating to a TypeList of TypeSet to TypeSet.")
+
+	// Define a map to store the new format of configs.
+	configMap := map[string]string{}
+
+	// Get the length & generate a slice
+	configLength, convertErr := strconv.Atoi(is.Attributes["config.#"])
+	if convertErr != nil {
+		return nil, convertErr
+	}
+	configLengthSlice := makeRange(0, configLength-1)
+
+	for _, i := range configLengthSlice {
+		matchStr := fmt.Sprintf("config.%v.", i)
+		keys := getAttributeKeys(is.Attributes, matchStr)
+		for _, k := range keys {
+			oldConfigKey := fmt.Sprintf("config.%v.%s", i, k)
+			configMap[k] = is.Attributes[oldConfigKey]
+
+			// Then delete the old key/value pair
+			delete(is.Attributes, oldConfigKey)
+		}
+	}
+
+	// Set the new map of config to its length
+	is.Attributes["config.%"] = strconv.Itoa(len(configMap))
+
+	// Set each new config key/value pair.
+	for k, v := range configMap {
+		is.Attributes[fmt.Sprintf("config.%s", k)] = v
+	}
+
+	// Delete the old config TypeList
+	delete(is.Attributes, "config.#")
 
 	return is, nil
+}
+
+func getAttributeKeys(attrs map[string]string, matchStr string) []string {
+	keys := make([]string, 0)
+	for k := range attrs {
+		if strings.Contains(k, matchStr) {
+			kSlice := strings.Split(k, matchStr)
+			keys = append(keys, kSlice[1])
+		}
+	}
+	return keys
+}
+
+func makeRange(min, max int) []int {
+	a := make([]int, max-min+1)
+	for i := range a {
+		a[i] = min + i
+	}
+	return a
 }
