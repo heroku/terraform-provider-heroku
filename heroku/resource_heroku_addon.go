@@ -31,7 +31,7 @@ func resourceHerokuAddon() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 
-		SchemaVersion: 1,
+		SchemaVersion: 2,
 		MigrateState:  resourceHerokuAddonMigrate,
 
 		Schema: map[string]*schema.Schema{
