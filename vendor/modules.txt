@@ -136,7 +136,7 @@ github.com/hashicorp/terraform/svchost
 github.com/hashicorp/terraform/svchost/auth
 # github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb
 github.com/hashicorp/yamux
-# github.com/heroku/heroku-go/v5 v5.0.0-beta.1
+# github.com/heroku/heroku-go/v5 v5.1.0
 github.com/heroku/heroku-go/v5
 # github.com/jmespath/go-jmespath v0.0.0-20160803190731-bd40a432e4c7
 github.com/jmespath/go-jmespath

@@ -15,14 +15,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/google/go-querystring/query"
 	"io"
 	"net/http"
 	"reflect"
 	"runtime"
 	"strings"
 	"time"
-
-	"github.com/google/go-querystring/query"
 )
 
 const (
@@ -215,9 +214,13 @@ type Account struct {
 	Beta                bool      `json:"beta" url:"beta,key"`                     // whether allowed to utilize beta Heroku features
 	CreatedAt           time.Time `json:"created_at" url:"created_at,key"`         // when account was created
 	DefaultOrganization *struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of organization
-		Name string `json:"name" url:"name,key"` // unique name of organization
-	} `json:"default_organization" url:"default_organization,key"` // organization selected by default
+		ID   string `json:"id" url:"id,key"`     // unique identifier of team
+		Name string `json:"name" url:"name,key"` // unique name of team
+	} `json:"default_organization" url:"default_organization,key"` // team selected by default
+	DefaultTeam *struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of team
+		Name string `json:"name" url:"name,key"` // unique name of team
+	} `json:"default_team" url:"default_team,key"` // team selected by default
 	DelinquentAt     *time.Time `json:"delinquent_at" url:"delinquent_at,key"` // when account became delinquent
 	Email            string     `json:"email" url:"email,key"`                 // unique email address of account
 	Federated        bool       `json:"federated" url:"federated,key"`         // whether the user is federated and belongs to an Identity Provider
@@ -225,13 +228,16 @@ type Account struct {
 	IdentityProvider *struct {
 		ID           string `json:"id" url:"id,key"` // unique identifier of this identity provider
 		Organization struct {
-			Name string `json:"name" url:"name,key"` // unique name of organization
+			Name string `json:"name" url:"name,key"` // unique name of team
 		} `json:"organization" url:"organization,key"`
 		Owner struct {
 			ID   string `json:"id" url:"id,key"`     // unique identifier of the owner
 			Name string `json:"name" url:"name,key"` // name of the owner
 			Type string `json:"type" url:"type,key"` // type of the owner
 		} `json:"owner" url:"owner,key"` // entity that owns this identity provider
+		Team struct {
+			Name string `json:"name" url:"name,key"` // unique name of team
+		} `json:"team" url:"team,key"`
 	} `json:"identity_provider" url:"identity_provider,key"` // Identity Provider details for federated users.
 	LastLogin               *time.Time `json:"last_login" url:"last_login,key"`                               // when account last authorized with Heroku
 	Name                    *string    `json:"name" url:"name,key"`                                           // full name of the account owner
@@ -415,7 +421,8 @@ func (s *Service) AddOnListByApp(ctx context.Context, appIdentity string, lr *Li
 }
 
 type AddOnUpdateOpts struct {
-	Plan string `json:"plan" url:"plan,key"` // unique identifier of this plan
+	Name *string `json:"name,omitempty" url:"name,omitempty,key"` // globally unique name of the add-on
+	Plan string  `json:"plan" url:"plan,key"`                     // unique identifier of this plan
 }
 
 // Change add-on plan. Some add-ons may not support changing plans. In
@@ -1051,9 +1058,9 @@ type App struct {
 	Maintenance                  bool      `json:"maintenance" url:"maintenance,key"`                                       // maintenance status of app
 	Name                         string    `json:"name" url:"name,key"`                                                     // unique name of app
 	Organization                 *struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of organization
-		Name string `json:"name" url:"name,key"` // unique name of organization
-	} `json:"organization" url:"organization,key"` // identity of organization
+		ID   string `json:"id" url:"id,key"`     // unique identifier of team
+		Name string `json:"name" url:"name,key"` // unique name of team
+	} `json:"organization" url:"organization,key"` // identity of team
 	Owner struct {
 		Email string `json:"email" url:"email,key"` // unique email address of account
 		ID    string `json:"id" url:"id,key"`       // unique identifier of an account
@@ -1233,10 +1240,10 @@ type AppSetup struct {
 }
 type AppSetupCreateOpts struct {
 	App *struct {
-		Locked       *bool   `json:"locked,omitempty" url:"locked,omitempty,key"`             // are other organization members forbidden from joining this app.
+		Locked       *bool   `json:"locked,omitempty" url:"locked,omitempty,key"`             // are other team members forbidden from joining this app.
 		Name         *string `json:"name,omitempty" url:"name,omitempty,key"`                 // unique name of app
-		Organization *string `json:"organization,omitempty" url:"organization,omitempty,key"` // unique name of organization
-		Personal     *bool   `json:"personal,omitempty" url:"personal,omitempty,key"`         // force creation of the app in the user account even if a default org
+		Organization *string `json:"organization,omitempty" url:"organization,omitempty,key"` // unique name of team
+		Personal     *bool   `json:"personal,omitempty" url:"personal,omitempty,key"`         // force creation of the app in the user account even if a default team
 		// is set.
 		Region *string `json:"region,omitempty" url:"region,omitempty,key"` // unique name of region
 		Space  *string `json:"space,omitempty" url:"space,omitempty,key"`   // unique name of space
@@ -1617,31 +1624,6 @@ func (s *Service) BuildDeleteCache(ctx context.Context, appIdentity string) (*Bu
 	return &build, s.Delete(ctx, &build, fmt.Sprintf("/apps/%v/build-cache", appIdentity))
 }
 
-// A build result contains the output from a build.
-type BuildResult struct {
-	Build struct {
-		ID              string `json:"id" url:"id,key"`                               // unique identifier of build
-		OutputStreamURL string `json:"output_stream_url" url:"output_stream_url,key"` // Build process output will be available from this URL as a stream. The
-		// stream is available as either `text/plain` or `text/event-stream`.
-		// Clients should be prepared to handle disconnects and can resume the
-		// stream by sending a `Range` header (for `text/plain`) or a
-		// `Last-Event-Id` header (for `text/event-stream`).
-		Status string `json:"status" url:"status,key"` // status of build
-	} `json:"build" url:"build,key"` // identity of build
-	ExitCode float64 `json:"exit_code" url:"exit_code,key"` // status from the build
-	Lines    []struct {
-		Line   string `json:"line" url:"line,key"`     // A line of output from the build.
-		Stream string `json:"stream" url:"stream,key"` // The output stream where the line was sent.
-	} `json:"lines" url:"lines,key"` // A list of all the lines of a build's output. This has been replaced
-	// by the `output_stream_url` attribute on the build resource.
-}
-
-// Info for existing result.
-func (s *Service) BuildResultInfo(ctx context.Context, appIdentity string, buildIdentity string) (*BuildResult, error) {
-	var buildResult BuildResult
-	return &buildResult, s.Get(ctx, &buildResult, fmt.Sprintf("/apps/%v/builds/%v/result", appIdentity, buildIdentity), nil, nil)
-}
-
 // A buildpack installation represents a buildpack that will be run
 // against an app.
 type BuildpackInstallation struct {
@@ -1868,8 +1850,9 @@ type DynoCreateOpts struct {
 	Env        map[string]string `json:"env,omitempty" url:"env,omitempty,key"`                   // custom environment to add to the dyno config vars
 	ForceNoTty *bool             `json:"force_no_tty,omitempty" url:"force_no_tty,omitempty,key"` // force an attached one-off dyno to not run in a tty
 	Size       *string           `json:"size,omitempty" url:"size,omitempty,key"`                 // dyno size (default: "standard-1X")
-	TimeToLive *int              `json:"time_to_live,omitempty" url:"time_to_live,omitempty,key"` // seconds until dyno expires, after which it will soon be killed
-	Type       *string           `json:"type,omitempty" url:"type,omitempty,key"`                 // type of process
+	TimeToLive *int              `json:"time_to_live,omitempty" url:"time_to_live,omitempty,key"` // seconds until dyno expires, after which it will soon be killed, max
+	// 86400 seconds (24 hours)
+	Type *string `json:"type,omitempty" url:"type,omitempty,key"` // type of process
 }
 
 // Create a new dyno.
@@ -2066,16 +2049,15 @@ func (s *Service) FormationUpdate(ctx context.Context, appIdentity string, forma
 	return &formation, s.Patch(ctx, &formation, fmt.Sprintf("/apps/%v/formation/%v", appIdentity, formationIdentity), o)
 }
 
-// Identity Providers represent the SAML configuration of an
-// Organization.
+// Identity Providers represent the SAML configuration of an Team.
 type IdentityProvider struct {
 	Certificate  string    `json:"certificate" url:"certificate,key"` // raw contents of the public certificate (eg: .crt or .pem file)
 	CreatedAt    time.Time `json:"created_at" url:"created_at,key"`   // when provider record was created
 	EntityID     string    `json:"entity_id" url:"entity_id,key"`     // URL identifier provided by the identity provider
 	ID           string    `json:"id" url:"id,key"`                   // unique identifier of this identity provider
 	Organization *struct {
-		Name string `json:"name" url:"name,key"` // unique name of organization
-	} `json:"organization" url:"organization,key"` // organization associated with this identity provider
+		Name string `json:"name" url:"name,key"` // unique name of team
+	} `json:"organization" url:"organization,key"` // team associated with this identity provider
 	Owner struct {
 		ID   string `json:"id" url:"id,key"`     // unique identifier of the owner
 		Name string `json:"name" url:"name,key"` // name of the owner
@@ -2085,52 +2067,12 @@ type IdentityProvider struct {
 	SsoTargetURL string    `json:"sso_target_url" url:"sso_target_url,key"` // single sign on URL for this identity provider
 	UpdatedAt    time.Time `json:"updated_at" url:"updated_at,key"`         // when the identity provider record was updated
 }
-type IdentityProviderListByOrganizationResult []IdentityProvider
-
-// Get a list of an organization's Identity Providers
-func (s *Service) IdentityProviderListByOrganization(ctx context.Context, organizationName string, lr *ListRange) (IdentityProviderListByOrganizationResult, error) {
-	var identityProvider IdentityProviderListByOrganizationResult
-	return identityProvider, s.Get(ctx, &identityProvider, fmt.Sprintf("/organizations/%v/identity-providers", organizationName), nil, lr)
-}
-
-type IdentityProviderCreateByOrganizationOpts struct {
-	Certificate  string  `json:"certificate" url:"certificate,key"`                           // raw contents of the public certificate (eg: .crt or .pem file)
-	EntityID     string  `json:"entity_id" url:"entity_id,key"`                               // URL identifier provided by the identity provider
-	SloTargetURL *string `json:"slo_target_url,omitempty" url:"slo_target_url,omitempty,key"` // single log out URL for this identity provider
-	SsoTargetURL string  `json:"sso_target_url" url:"sso_target_url,key"`                     // single sign on URL for this identity provider
-}
-
-// Create an Identity Provider for an organization
-func (s *Service) IdentityProviderCreateByOrganization(ctx context.Context, organizationName string, o IdentityProviderCreateByOrganizationOpts) (*IdentityProvider, error) {
-	var identityProvider IdentityProvider
-	return &identityProvider, s.Post(ctx, &identityProvider, fmt.Sprintf("/organizations/%v/identity-providers", organizationName), o)
-}
-
-type IdentityProviderUpdateByOrganizationOpts struct {
-	Certificate  *string `json:"certificate,omitempty" url:"certificate,omitempty,key"`       // raw contents of the public certificate (eg: .crt or .pem file)
-	EntityID     *string `json:"entity_id,omitempty" url:"entity_id,omitempty,key"`           // URL identifier provided by the identity provider
-	SloTargetURL *string `json:"slo_target_url,omitempty" url:"slo_target_url,omitempty,key"` // single log out URL for this identity provider
-	SsoTargetURL *string `json:"sso_target_url,omitempty" url:"sso_target_url,omitempty,key"` // single sign on URL for this identity provider
-}
-
-// Update an organization's Identity Provider
-func (s *Service) IdentityProviderUpdateByOrganization(ctx context.Context, organizationName string, identityProviderID string, o IdentityProviderUpdateByOrganizationOpts) (*IdentityProvider, error) {
-	var identityProvider IdentityProvider
-	return &identityProvider, s.Patch(ctx, &identityProvider, fmt.Sprintf("/organizations/%v/identity-providers/%v", organizationName, identityProviderID), o)
-}
-
-// Delete an organization's Identity Provider
-func (s *Service) IdentityProviderDeleteByOrganization(ctx context.Context, organizationName string, identityProviderID string) (*IdentityProvider, error) {
-	var identityProvider IdentityProvider
-	return &identityProvider, s.Delete(ctx, &identityProvider, fmt.Sprintf("/organizations/%v/identity-providers/%v", organizationName, identityProviderID))
-}
-
 type IdentityProviderListByTeamResult []IdentityProvider
 
 // Get a list of a team's Identity Providers
-func (s *Service) IdentityProviderListByTeam(ctx context.Context, teamIdentity string, lr *ListRange) (IdentityProviderListByTeamResult, error) {
+func (s *Service) IdentityProviderListByTeam(ctx context.Context, teamName string, lr *ListRange) (IdentityProviderListByTeamResult, error) {
 	var identityProvider IdentityProviderListByTeamResult
-	return identityProvider, s.Get(ctx, &identityProvider, fmt.Sprintf("/teams/%v/identity-providers", teamIdentity), nil, lr)
+	return identityProvider, s.Get(ctx, &identityProvider, fmt.Sprintf("/teams/%v/identity-providers", teamName), nil, lr)
 }
 
 type IdentityProviderCreateByTeamOpts struct {
@@ -2141,9 +2083,9 @@ type IdentityProviderCreateByTeamOpts struct {
 }
 
 // Create an Identity Provider for a team
-func (s *Service) IdentityProviderCreateByTeam(ctx context.Context, teamIdentity string, o IdentityProviderCreateByTeamOpts) (*IdentityProvider, error) {
+func (s *Service) IdentityProviderCreateByTeam(ctx context.Context, teamName string, o IdentityProviderCreateByTeamOpts) (*IdentityProvider, error) {
 	var identityProvider IdentityProvider
-	return &identityProvider, s.Post(ctx, &identityProvider, fmt.Sprintf("/teams/%v/identity-providers", teamIdentity), o)
+	return &identityProvider, s.Post(ctx, &identityProvider, fmt.Sprintf("/teams/%v/identity-providers", teamName), o)
 }
 
 type IdentityProviderUpdateByTeamOpts struct {
@@ -2154,9 +2096,9 @@ type IdentityProviderUpdateByTeamOpts struct {
 }
 
 // Update a team's Identity Provider
-func (s *Service) IdentityProviderUpdateByTeam(ctx context.Context, teamIdentity string, identityProviderID string, o IdentityProviderUpdateByTeamOpts) (*IdentityProvider, error) {
+func (s *Service) IdentityProviderUpdateByTeam(ctx context.Context, teamName string, identityProviderID string, o IdentityProviderUpdateByTeamOpts) (*IdentityProvider, error) {
 	var identityProvider IdentityProvider
-	return &identityProvider, s.Patch(ctx, &identityProvider, fmt.Sprintf("/teams/%v/identity-providers/%v", teamIdentity, identityProviderID), o)
+	return &identityProvider, s.Patch(ctx, &identityProvider, fmt.Sprintf("/teams/%v/identity-providers/%v", teamName, identityProviderID), o)
 }
 
 // Delete a team's Identity Provider
@@ -2601,582 +2543,6 @@ func (s *Service) OAuthTokenDelete(ctx context.Context, oauthTokenIdentity strin
 	return &oauthToken, s.Delete(ctx, &oauthToken, fmt.Sprintf("/oauth/tokens/%v", oauthTokenIdentity))
 }
 
-// Deprecated: Organizations allow you to manage access to a shared
-// group of applications across your development team.
-type Organization struct {
-	CreatedAt             time.Time `json:"created_at" url:"created_at,key"`                           // when the organization was created
-	CreditCardCollections bool      `json:"credit_card_collections" url:"credit_card_collections,key"` // whether charges incurred by the org are paid by credit card.
-	Default               bool      `json:"default" url:"default,key"`                                 // whether to use this organization when none is specified
-	ID                    string    `json:"id" url:"id,key"`                                           // unique identifier of organization
-	MembershipLimit       *float64  `json:"membership_limit" url:"membership_limit,key"`               // upper limit of members allowed in an organization.
-	Name                  string    `json:"name" url:"name,key"`                                       // unique name of organization
-	ProvisionedLicenses   bool      `json:"provisioned_licenses" url:"provisioned_licenses,key"`       // whether the org is provisioned licenses by salesforce.
-	Role                  *string   `json:"role" url:"role,key"`                                       // role in the organization
-	Type                  string    `json:"type" url:"type,key"`                                       // type of organization.
-	UpdatedAt             time.Time `json:"updated_at" url:"updated_at,key"`                           // when the organization was updated
-}
-type OrganizationListResult []Organization
-
-// List organizations in which you are a member.
-func (s *Service) OrganizationList(ctx context.Context, lr *ListRange) (OrganizationListResult, error) {
-	var organization OrganizationListResult
-	return organization, s.Get(ctx, &organization, fmt.Sprintf("/organizations"), nil, lr)
-}
-
-// Info for an organization.
-func (s *Service) OrganizationInfo(ctx context.Context, organizationIdentity string) (*Organization, error) {
-	var organization Organization
-	return &organization, s.Get(ctx, &organization, fmt.Sprintf("/organizations/%v", organizationIdentity), nil, nil)
-}
-
-type OrganizationUpdateOpts struct {
-	Default *bool   `json:"default,omitempty" url:"default,omitempty,key"` // whether to use this organization when none is specified
-	Name    *string `json:"name,omitempty" url:"name,omitempty,key"`       // unique name of organization
-}
-
-// Update organization properties.
-func (s *Service) OrganizationUpdate(ctx context.Context, organizationIdentity string, o OrganizationUpdateOpts) (*Organization, error) {
-	var organization Organization
-	return &organization, s.Patch(ctx, &organization, fmt.Sprintf("/organizations/%v", organizationIdentity), o)
-}
-
-type OrganizationCreateOpts struct {
-	Address1        *string `json:"address_1,omitempty" url:"address_1,omitempty,key"`               // street address line 1
-	Address2        *string `json:"address_2,omitempty" url:"address_2,omitempty,key"`               // street address line 2
-	CardNumber      *string `json:"card_number,omitempty" url:"card_number,omitempty,key"`           // encrypted card number of payment method
-	City            *string `json:"city,omitempty" url:"city,omitempty,key"`                         // city
-	Country         *string `json:"country,omitempty" url:"country,omitempty,key"`                   // country
-	Cvv             *string `json:"cvv,omitempty" url:"cvv,omitempty,key"`                           // card verification value
-	ExpirationMonth *string `json:"expiration_month,omitempty" url:"expiration_month,omitempty,key"` // expiration month
-	ExpirationYear  *string `json:"expiration_year,omitempty" url:"expiration_year,omitempty,key"`   // expiration year
-	FirstName       *string `json:"first_name,omitempty" url:"first_name,omitempty,key"`             // the first name for payment method
-	LastName        *string `json:"last_name,omitempty" url:"last_name,omitempty,key"`               // the last name for payment method
-	Name            string  `json:"name" url:"name,key"`                                             // unique name of organization
-	Other           *string `json:"other,omitempty" url:"other,omitempty,key"`                       // metadata
-	PostalCode      *string `json:"postal_code,omitempty" url:"postal_code,omitempty,key"`           // postal code
-	State           *string `json:"state,omitempty" url:"state,omitempty,key"`                       // state
-}
-
-// Create a new organization.
-func (s *Service) OrganizationCreate(ctx context.Context, o OrganizationCreateOpts) (*Organization, error) {
-	var organization Organization
-	return &organization, s.Post(ctx, &organization, fmt.Sprintf("/organizations"), o)
-}
-
-// Delete an existing organization.
-func (s *Service) OrganizationDelete(ctx context.Context, organizationIdentity string) (*Organization, error) {
-	var organization Organization
-	return &organization, s.Delete(ctx, &organization, fmt.Sprintf("/organizations/%v", organizationIdentity))
-}
-
-// Deprecated: A list of add-ons the Organization uses across all apps
-type OrganizationAddOn struct{}
-type OrganizationAddOnListForOrganizationResult []struct {
-	Actions      []struct{} `json:"actions" url:"actions,key"` // provider actions for this specific add-on
-	AddonService struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of this add-on-service
-		Name string `json:"name" url:"name,key"` // unique name of this add-on-service
-	} `json:"addon_service" url:"addon_service,key"` // identity of add-on service
-	App struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of app
-		Name string `json:"name" url:"name,key"` // unique name of app
-	} `json:"app" url:"app,key"` // billing application associated with this add-on
-	BilledPrice *struct {
-		Cents    int    `json:"cents" url:"cents,key"`       // price in cents per unit of plan
-		Contract bool   `json:"contract" url:"contract,key"` // price is negotiated in a contract outside of monthly add-on billing
-		Unit     string `json:"unit" url:"unit,key"`         // unit of price for plan
-	} `json:"billed_price" url:"billed_price,key"` // billed price
-	BillingEntity struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of the billing entity
-		Name string `json:"name" url:"name,key"` // name of the billing entity
-		Type string `json:"type" url:"type,key"` // type of Object of the billing entity; new types allowed at any time.
-	} `json:"billing_entity" url:"billing_entity,key"` // billing entity associated with this add-on
-	ConfigVars []string  `json:"config_vars" url:"config_vars,key"` // config vars exposed to the owning app by this add-on
-	CreatedAt  time.Time `json:"created_at" url:"created_at,key"`   // when add-on was created
-	ID         string    `json:"id" url:"id,key"`                   // unique identifier of add-on
-	Name       string    `json:"name" url:"name,key"`               // globally unique name of the add-on
-	Plan       struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of this plan
-		Name string `json:"name" url:"name,key"` // unique name of this plan
-	} `json:"plan" url:"plan,key"` // identity of add-on plan
-	ProviderID string    `json:"provider_id" url:"provider_id,key"` // id of this add-on with its provider
-	State      string    `json:"state" url:"state,key"`             // state in the add-on's lifecycle
-	UpdatedAt  time.Time `json:"updated_at" url:"updated_at,key"`   // when add-on was updated
-	WebURL     *string   `json:"web_url" url:"web_url,key"`         // URL for logging into web interface of add-on (e.g. a dashboard)
-}
-
-// List add-ons used across all Organization apps
-func (s *Service) OrganizationAddOnListForOrganization(ctx context.Context, organizationIdentity string, lr *ListRange) (OrganizationAddOnListForOrganizationResult, error) {
-	var organizationAddOn OrganizationAddOnListForOrganizationResult
-	return organizationAddOn, s.Get(ctx, &organizationAddOn, fmt.Sprintf("/organizations/%v/addons", organizationIdentity), nil, lr)
-}
-
-// Deprecated: An organization app encapsulates the organization
-// specific functionality of Heroku apps.
-type OrganizationApp struct {
-	ArchivedAt *time.Time `json:"archived_at" url:"archived_at,key"` // when app was archived
-	BuildStack struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of stack
-		Name string `json:"name" url:"name,key"` // unique name of stack
-	} `json:"build_stack" url:"build_stack,key"` // identity of the stack that will be used for new builds
-	BuildpackProvidedDescription *string   `json:"buildpack_provided_description" url:"buildpack_provided_description,key"` // description from buildpack of app
-	CreatedAt                    time.Time `json:"created_at" url:"created_at,key"`                                         // when app was created
-	GitURL                       string    `json:"git_url" url:"git_url,key"`                                               // git repo URL of app
-	ID                           string    `json:"id" url:"id,key"`                                                         // unique identifier of app
-	Joined                       bool      `json:"joined" url:"joined,key"`                                                 // is the current member a collaborator on this app.
-	Locked                       bool      `json:"locked" url:"locked,key"`                                                 // are other organization members forbidden from joining this app.
-	Maintenance                  bool      `json:"maintenance" url:"maintenance,key"`                                       // maintenance status of app
-	Name                         string    `json:"name" url:"name,key"`                                                     // unique name of app
-	Organization                 *struct {
-		Name string `json:"name" url:"name,key"` // unique name of organization
-	} `json:"organization" url:"organization,key"` // organization that owns this app
-	Owner *struct {
-		Email string `json:"email" url:"email,key"` // unique email address of account
-		ID    string `json:"id" url:"id,key"`       // unique identifier of an account
-	} `json:"owner" url:"owner,key"` // identity of app owner
-	Region struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of region
-		Name string `json:"name" url:"name,key"` // unique name of region
-	} `json:"region" url:"region,key"` // identity of app region
-	ReleasedAt *time.Time `json:"released_at" url:"released_at,key"` // when app was released
-	RepoSize   *int       `json:"repo_size" url:"repo_size,key"`     // git repo size in bytes of app
-	SlugSize   *int       `json:"slug_size" url:"slug_size,key"`     // slug size in bytes of app
-	Space      *struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of space
-		Name string `json:"name" url:"name,key"` // unique name of space
-	} `json:"space" url:"space,key"` // identity of space
-	Stack struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of stack
-		Name string `json:"name" url:"name,key"` // unique name of stack
-	} `json:"stack" url:"stack,key"` // identity of app stack
-	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when app was updated
-	WebURL    string    `json:"web_url" url:"web_url,key"`       // web URL of app
-}
-type OrganizationAppCreateOpts struct {
-	Locked       *bool   `json:"locked,omitempty" url:"locked,omitempty,key"`             // are other organization members forbidden from joining this app.
-	Name         *string `json:"name,omitempty" url:"name,omitempty,key"`                 // unique name of app
-	Organization *string `json:"organization,omitempty" url:"organization,omitempty,key"` // unique name of organization
-	Personal     *bool   `json:"personal,omitempty" url:"personal,omitempty,key"`         // force creation of the app in the user account even if a default org
-	// is set.
-	Region *string `json:"region,omitempty" url:"region,omitempty,key"` // unique name of region
-	Space  *string `json:"space,omitempty" url:"space,omitempty,key"`   // unique name of space
-	Stack  *string `json:"stack,omitempty" url:"stack,omitempty,key"`   // unique name of stack
-}
-
-// Create a new app in the specified organization, in the default
-// organization if unspecified,  or in personal account, if default
-// organization is not set.
-func (s *Service) OrganizationAppCreate(ctx context.Context, o OrganizationAppCreateOpts) (*OrganizationApp, error) {
-	var organizationApp OrganizationApp
-	return &organizationApp, s.Post(ctx, &organizationApp, fmt.Sprintf("/organizations/apps"), o)
-}
-
-type OrganizationAppListForOrganizationResult []OrganizationApp
-
-// List organization apps.
-func (s *Service) OrganizationAppListForOrganization(ctx context.Context, organizationIdentity string, lr *ListRange) (OrganizationAppListForOrganizationResult, error) {
-	var organizationApp OrganizationAppListForOrganizationResult
-	return organizationApp, s.Get(ctx, &organizationApp, fmt.Sprintf("/organizations/%v/apps", organizationIdentity), nil, lr)
-}
-
-// Info for an organization app.
-func (s *Service) OrganizationAppInfo(ctx context.Context, organizationAppIdentity string) (*OrganizationApp, error) {
-	var organizationApp OrganizationApp
-	return &organizationApp, s.Get(ctx, &organizationApp, fmt.Sprintf("/organizations/apps/%v", organizationAppIdentity), nil, nil)
-}
-
-type OrganizationAppUpdateLockedOpts struct {
-	Locked bool `json:"locked" url:"locked,key"` // are other organization members forbidden from joining this app.
-}
-
-// Lock or unlock an organization app.
-func (s *Service) OrganizationAppUpdateLocked(ctx context.Context, organizationAppIdentity string, o OrganizationAppUpdateLockedOpts) (*OrganizationApp, error) {
-	var organizationApp OrganizationApp
-	return &organizationApp, s.Patch(ctx, &organizationApp, fmt.Sprintf("/organizations/apps/%v", organizationAppIdentity), o)
-}
-
-type OrganizationAppTransferToAccountOpts struct {
-	Owner string `json:"owner" url:"owner,key"` // unique email address of account
-}
-
-// Transfer an existing organization app to another Heroku account.
-func (s *Service) OrganizationAppTransferToAccount(ctx context.Context, organizationAppIdentity string, o OrganizationAppTransferToAccountOpts) (*OrganizationApp, error) {
-	var organizationApp OrganizationApp
-	return &organizationApp, s.Patch(ctx, &organizationApp, fmt.Sprintf("/organizations/apps/%v", organizationAppIdentity), o)
-}
-
-type OrganizationAppTransferToOrganizationOpts struct {
-	Owner string `json:"owner" url:"owner,key"` // unique name of organization
-}
-
-// Transfer an existing organization app to another organization.
-func (s *Service) OrganizationAppTransferToOrganization(ctx context.Context, organizationAppIdentity string, o OrganizationAppTransferToOrganizationOpts) (*OrganizationApp, error) {
-	var organizationApp OrganizationApp
-	return &organizationApp, s.Patch(ctx, &organizationApp, fmt.Sprintf("/organizations/apps/%v", organizationAppIdentity), o)
-}
-
-// Deprecated: An organization collaborator represents an account that
-// has been given access to an organization app on Heroku.
-type OrganizationAppCollaborator struct {
-	App struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of app
-		Name string `json:"name" url:"name,key"` // unique name of app
-	} `json:"app" url:"app,key"` // app collaborator belongs to
-	CreatedAt time.Time `json:"created_at" url:"created_at,key"` // when collaborator was created
-	ID        string    `json:"id" url:"id,key"`                 // unique identifier of collaborator
-	Role      *string   `json:"role" url:"role,key"`             // role in the organization
-	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when collaborator was updated
-	User      struct {
-		Email     string `json:"email" url:"email,key"`         // unique email address of account
-		Federated bool   `json:"federated" url:"federated,key"` // whether the user is federated and belongs to an Identity Provider
-		ID        string `json:"id" url:"id,key"`               // unique identifier of an account
-	} `json:"user" url:"user,key"` // identity of collaborated account
-}
-type OrganizationAppCollaboratorCreateOpts struct {
-	Permissions []*string `json:"permissions,omitempty" url:"permissions,omitempty,key"` // An array of permissions to give to the collaborator.
-	Silent      *bool     `json:"silent,omitempty" url:"silent,omitempty,key"`           // whether to suppress email invitation when creating collaborator
-	User        string    `json:"user" url:"user,key"`                                   // unique email address of account
-}
-
-// Create a new collaborator on an organization app. Use this endpoint
-// instead of the `/apps/{app_id_or_name}/collaborator` endpoint when
-// you want the collaborator to be granted [permissions]
-// (https://devcenter.heroku.com/articles/org-users-access#roles-and-app-
-// permissions) according to their role in the organization.
-func (s *Service) OrganizationAppCollaboratorCreate(ctx context.Context, appIdentity string, o OrganizationAppCollaboratorCreateOpts) (*OrganizationAppCollaborator, error) {
-	var organizationAppCollaborator OrganizationAppCollaborator
-	return &organizationAppCollaborator, s.Post(ctx, &organizationAppCollaborator, fmt.Sprintf("/organizations/apps/%v/collaborators", appIdentity), o)
-}
-
-// Delete an existing collaborator from an organization app.
-func (s *Service) OrganizationAppCollaboratorDelete(ctx context.Context, organizationAppIdentity string, organizationAppCollaboratorIdentity string) (*OrganizationAppCollaborator, error) {
-	var organizationAppCollaborator OrganizationAppCollaborator
-	return &organizationAppCollaborator, s.Delete(ctx, &organizationAppCollaborator, fmt.Sprintf("/organizations/apps/%v/collaborators/%v", organizationAppIdentity, organizationAppCollaboratorIdentity))
-}
-
-// Info for a collaborator on an organization app.
-func (s *Service) OrganizationAppCollaboratorInfo(ctx context.Context, organizationAppIdentity string, organizationAppCollaboratorIdentity string) (*OrganizationAppCollaborator, error) {
-	var organizationAppCollaborator OrganizationAppCollaborator
-	return &organizationAppCollaborator, s.Get(ctx, &organizationAppCollaborator, fmt.Sprintf("/organizations/apps/%v/collaborators/%v", organizationAppIdentity, organizationAppCollaboratorIdentity), nil, nil)
-}
-
-type OrganizationAppCollaboratorUpdateOpts struct {
-	Permissions []string `json:"permissions" url:"permissions,key"` // An array of permissions to give to the collaborator.
-}
-
-// Update an existing collaborator from an organization app.
-func (s *Service) OrganizationAppCollaboratorUpdate(ctx context.Context, organizationAppIdentity string, organizationAppCollaboratorIdentity string, o OrganizationAppCollaboratorUpdateOpts) (*OrganizationAppCollaborator, error) {
-	var organizationAppCollaborator OrganizationAppCollaborator
-	return &organizationAppCollaborator, s.Patch(ctx, &organizationAppCollaborator, fmt.Sprintf("/organizations/apps/%v/collaborators/%v", organizationAppIdentity, organizationAppCollaboratorIdentity), o)
-}
-
-type OrganizationAppCollaboratorListResult []OrganizationAppCollaborator
-
-// List collaborators on an organization app.
-func (s *Service) OrganizationAppCollaboratorList(ctx context.Context, organizationAppIdentity string, lr *ListRange) (OrganizationAppCollaboratorListResult, error) {
-	var organizationAppCollaborator OrganizationAppCollaboratorListResult
-	return organizationAppCollaborator, s.Get(ctx, &organizationAppCollaborator, fmt.Sprintf("/organizations/apps/%v/collaborators", organizationAppIdentity), nil, lr)
-}
-
-// Deprecated: An organization app permission is a behavior that is
-// assigned to a user in an organization app.
-type OrganizationAppPermission struct {
-	Description string `json:"description" url:"description,key"` // A description of what the app permission allows.
-	Name        string `json:"name" url:"name,key"`               // The name of the app permission.
-}
-type OrganizationAppPermissionListResult []OrganizationAppPermission
-
-// Lists permissions available to organizations.
-func (s *Service) OrganizationAppPermissionList(ctx context.Context, lr *ListRange) (OrganizationAppPermissionListResult, error) {
-	var organizationAppPermission OrganizationAppPermissionListResult
-	return organizationAppPermission, s.Get(ctx, &organizationAppPermission, fmt.Sprintf("/organizations/permissions"), nil, lr)
-}
-
-// Deprecated: An organization feature represents a feature enabled on
-// an organization account.
-type OrganizationFeature struct {
-	CreatedAt     time.Time `json:"created_at" url:"created_at,key"`         // when organization feature was created
-	Description   string    `json:"description" url:"description,key"`       // description of organization feature
-	DisplayName   string    `json:"display_name" url:"display_name,key"`     // user readable feature name
-	DocURL        string    `json:"doc_url" url:"doc_url,key"`               // documentation URL of organization feature
-	Enabled       bool      `json:"enabled" url:"enabled,key"`               // whether or not organization feature has been enabled
-	FeedbackEmail string    `json:"feedback_email" url:"feedback_email,key"` // e-mail to send feedback about the feature
-	ID            string    `json:"id" url:"id,key"`                         // unique identifier of organization feature
-	Name          string    `json:"name" url:"name,key"`                     // unique name of organization feature
-	State         string    `json:"state" url:"state,key"`                   // state of organization feature
-	UpdatedAt     time.Time `json:"updated_at" url:"updated_at,key"`         // when organization feature was updated
-}
-
-// Info for an existing organization feature.
-func (s *Service) OrganizationFeatureInfo(ctx context.Context, organizationIdentity string, organizationFeatureIdentity string) (*OrganizationFeature, error) {
-	var organizationFeature OrganizationFeature
-	return &organizationFeature, s.Get(ctx, &organizationFeature, fmt.Sprintf("/organizations/%v/features/%v", organizationIdentity, organizationFeatureIdentity), nil, nil)
-}
-
-type OrganizationFeatureListResult []OrganizationFeature
-
-// List existing organization features.
-func (s *Service) OrganizationFeatureList(ctx context.Context, organizationIdentity string, lr *ListRange) (OrganizationFeatureListResult, error) {
-	var organizationFeature OrganizationFeatureListResult
-	return organizationFeature, s.Get(ctx, &organizationFeature, fmt.Sprintf("/organizations/%v/features", organizationIdentity), nil, lr)
-}
-
-type OrganizationFeatureUpdateOpts struct {
-	Enabled bool `json:"enabled" url:"enabled,key"` // whether or not organization feature has been enabled
-}
-
-// Update an existing organization feature.
-func (s *Service) OrganizationFeatureUpdate(ctx context.Context, organizationIdentity string, organizationFeatureIdentity string, o OrganizationFeatureUpdateOpts) (*OrganizationFeature, error) {
-	var organizationFeature OrganizationFeature
-	return &organizationFeature, s.Patch(ctx, &organizationFeature, fmt.Sprintf("/organizations/%v/features/%v", organizationIdentity, organizationFeatureIdentity), o)
-}
-
-// Deprecated: An organization invitation represents an invite to an
-// organization.
-type OrganizationInvitation struct {
-	CreatedAt time.Time `json:"created_at" url:"created_at,key"` // when invitation was created
-	ID        string    `json:"id" url:"id,key"`                 // Unique identifier of an invitation
-	InvitedBy struct {
-		Email string  `json:"email" url:"email,key"` // unique email address of account
-		ID    string  `json:"id" url:"id,key"`       // unique identifier of an account
-		Name  *string `json:"name" url:"name,key"`   // full name of the account owner
-	} `json:"invited_by" url:"invited_by,key"`
-	Organization struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of organization
-		Name string `json:"name" url:"name,key"` // unique name of organization
-	} `json:"organization" url:"organization,key"`
-	Role      *string   `json:"role" url:"role,key"`             // role in the organization
-	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when invitation was updated
-	User      struct {
-		Email string  `json:"email" url:"email,key"` // unique email address of account
-		ID    string  `json:"id" url:"id,key"`       // unique identifier of an account
-		Name  *string `json:"name" url:"name,key"`   // full name of the account owner
-	} `json:"user" url:"user,key"`
-}
-type OrganizationInvitationListResult []OrganizationInvitation
-
-// Get a list of an organization's Identity Providers
-func (s *Service) OrganizationInvitationList(ctx context.Context, organizationName string, lr *ListRange) (OrganizationInvitationListResult, error) {
-	var organizationInvitation OrganizationInvitationListResult
-	return organizationInvitation, s.Get(ctx, &organizationInvitation, fmt.Sprintf("/organizations/%v/invitations", organizationName), nil, lr)
-}
-
-type OrganizationInvitationCreateOpts struct {
-	Email string  `json:"email" url:"email,key"` // unique email address of account
-	Role  *string `json:"role" url:"role,key"`   // role in the organization
-}
-
-// Create Organization Invitation
-func (s *Service) OrganizationInvitationCreate(ctx context.Context, organizationIdentity string, o OrganizationInvitationCreateOpts) (*OrganizationInvitation, error) {
-	var organizationInvitation OrganizationInvitation
-	return &organizationInvitation, s.Put(ctx, &organizationInvitation, fmt.Sprintf("/organizations/%v/invitations", organizationIdentity), o)
-}
-
-// Revoke an organization invitation.
-func (s *Service) OrganizationInvitationRevoke(ctx context.Context, organizationIdentity string, organizationInvitationIdentity string) (*OrganizationInvitation, error) {
-	var organizationInvitation OrganizationInvitation
-	return &organizationInvitation, s.Delete(ctx, &organizationInvitation, fmt.Sprintf("/organizations/%v/invitations/%v", organizationIdentity, organizationInvitationIdentity))
-}
-
-// Get an invitation by its token
-func (s *Service) OrganizationInvitationGet(ctx context.Context, organizationInvitationToken string, lr *ListRange) (*OrganizationInvitation, error) {
-	var organizationInvitation OrganizationInvitation
-	return &organizationInvitation, s.Get(ctx, &organizationInvitation, fmt.Sprintf("/organizations/invitations/%v", organizationInvitationToken), nil, lr)
-}
-
-type OrganizationInvitationAcceptResult struct {
-	CreatedAt               time.Time `json:"created_at" url:"created_at,key"`                               // when the membership record was created
-	Email                   string    `json:"email" url:"email,key"`                                         // email address of the organization member
-	Federated               bool      `json:"federated" url:"federated,key"`                                 // whether the user is federated and belongs to an Identity Provider
-	ID                      string    `json:"id" url:"id,key"`                                               // unique identifier of organization member
-	Role                    *string   `json:"role" url:"role,key"`                                           // role in the organization
-	TwoFactorAuthentication bool      `json:"two_factor_authentication" url:"two_factor_authentication,key"` // whether the Enterprise organization member has two factor
-	// authentication enabled
-	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when the membership record was updated
-	User      struct {
-		Email string  `json:"email" url:"email,key"` // unique email address of account
-		ID    string  `json:"id" url:"id,key"`       // unique identifier of an account
-		Name  *string `json:"name" url:"name,key"`   // full name of the account owner
-	} `json:"user" url:"user,key"` // user information for the membership
-}
-
-// Accept Organization Invitation
-func (s *Service) OrganizationInvitationAccept(ctx context.Context, organizationInvitationToken string) (*OrganizationInvitationAcceptResult, error) {
-	var organizationInvitation OrganizationInvitationAcceptResult
-	return &organizationInvitation, s.Post(ctx, &organizationInvitation, fmt.Sprintf("/organizations/invitations/%v/accept", organizationInvitationToken), nil)
-}
-
-// Deprecated: An organization invoice is an itemized bill of goods for
-// an organization which includes pricing and charges.
-type OrganizationInvoice struct {
-	AddonsTotal       int       `json:"addons_total" url:"addons_total,key"`               // total add-ons charges in on this invoice
-	ChargesTotal      int       `json:"charges_total" url:"charges_total,key"`             // total charges on this invoice
-	CreatedAt         time.Time `json:"created_at" url:"created_at,key"`                   // when invoice was created
-	CreditsTotal      int       `json:"credits_total" url:"credits_total,key"`             // total credits on this invoice
-	DatabaseTotal     int       `json:"database_total" url:"database_total,key"`           // total database charges on this invoice
-	DynoUnits         float64   `json:"dyno_units" url:"dyno_units,key"`                   // The total amount of dyno units consumed across dyno types.
-	ID                string    `json:"id" url:"id,key"`                                   // unique identifier of this invoice
-	Number            int       `json:"number" url:"number,key"`                           // human readable invoice number
-	PaymentStatus     string    `json:"payment_status" url:"payment_status,key"`           // Status of the invoice payment.
-	PeriodEnd         string    `json:"period_end" url:"period_end,key"`                   // the ending date that the invoice covers
-	PeriodStart       string    `json:"period_start" url:"period_start,key"`               // the starting date that this invoice covers
-	PlatformTotal     int       `json:"platform_total" url:"platform_total,key"`           // total platform charges on this invoice
-	State             int       `json:"state" url:"state,key"`                             // payment status for this invoice (pending, successful, failed)
-	Total             int       `json:"total" url:"total,key"`                             // combined total of charges and credits on this invoice
-	UpdatedAt         time.Time `json:"updated_at" url:"updated_at,key"`                   // when invoice was updated
-	WeightedDynoHours float64   `json:"weighted_dyno_hours" url:"weighted_dyno_hours,key"` // The total amount of hours consumed across dyno types.
-}
-
-// Info for existing invoice.
-func (s *Service) OrganizationInvoiceInfo(ctx context.Context, organizationIdentity string, organizationInvoiceIdentity int) (*OrganizationInvoice, error) {
-	var organizationInvoice OrganizationInvoice
-	return &organizationInvoice, s.Get(ctx, &organizationInvoice, fmt.Sprintf("/organizations/%v/invoices/%v", organizationIdentity, organizationInvoiceIdentity), nil, nil)
-}
-
-type OrganizationInvoiceListResult []OrganizationInvoice
-
-// List existing invoices.
-func (s *Service) OrganizationInvoiceList(ctx context.Context, organizationIdentity string, lr *ListRange) (OrganizationInvoiceListResult, error) {
-	var organizationInvoice OrganizationInvoiceListResult
-	return organizationInvoice, s.Get(ctx, &organizationInvoice, fmt.Sprintf("/organizations/%v/invoices", organizationIdentity), nil, lr)
-}
-
-// Deprecated: An organization member is an individual with access to an
-// organization.
-type OrganizationMember struct {
-	CreatedAt               time.Time `json:"created_at" url:"created_at,key"`                               // when the membership record was created
-	Email                   string    `json:"email" url:"email,key"`                                         // email address of the organization member
-	Federated               bool      `json:"federated" url:"federated,key"`                                 // whether the user is federated and belongs to an Identity Provider
-	ID                      string    `json:"id" url:"id,key"`                                               // unique identifier of organization member
-	Role                    *string   `json:"role" url:"role,key"`                                           // role in the organization
-	TwoFactorAuthentication bool      `json:"two_factor_authentication" url:"two_factor_authentication,key"` // whether the Enterprise organization member has two factor
-	// authentication enabled
-	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when the membership record was updated
-	User      struct {
-		Email string  `json:"email" url:"email,key"` // unique email address of account
-		ID    string  `json:"id" url:"id,key"`       // unique identifier of an account
-		Name  *string `json:"name" url:"name,key"`   // full name of the account owner
-	} `json:"user" url:"user,key"` // user information for the membership
-}
-type OrganizationMemberCreateOrUpdateOpts struct {
-	Email     string  `json:"email" url:"email,key"`                             // email address of the organization member
-	Federated *bool   `json:"federated,omitempty" url:"federated,omitempty,key"` // whether the user is federated and belongs to an Identity Provider
-	Role      *string `json:"role" url:"role,key"`                               // role in the organization
-}
-
-// Create a new organization member, or update their role.
-func (s *Service) OrganizationMemberCreateOrUpdate(ctx context.Context, organizationIdentity string, o OrganizationMemberCreateOrUpdateOpts) (*OrganizationMember, error) {
-	var organizationMember OrganizationMember
-	return &organizationMember, s.Put(ctx, &organizationMember, fmt.Sprintf("/organizations/%v/members", organizationIdentity), o)
-}
-
-type OrganizationMemberCreateOpts struct {
-	Email     string  `json:"email" url:"email,key"`                             // email address of the organization member
-	Federated *bool   `json:"federated,omitempty" url:"federated,omitempty,key"` // whether the user is federated and belongs to an Identity Provider
-	Role      *string `json:"role" url:"role,key"`                               // role in the organization
-}
-
-// Create a new organization member.
-func (s *Service) OrganizationMemberCreate(ctx context.Context, organizationIdentity string, o OrganizationMemberCreateOpts) (*OrganizationMember, error) {
-	var organizationMember OrganizationMember
-	return &organizationMember, s.Post(ctx, &organizationMember, fmt.Sprintf("/organizations/%v/members", organizationIdentity), o)
-}
-
-type OrganizationMemberUpdateOpts struct {
-	Email     string  `json:"email" url:"email,key"`                             // email address of the organization member
-	Federated *bool   `json:"federated,omitempty" url:"federated,omitempty,key"` // whether the user is federated and belongs to an Identity Provider
-	Role      *string `json:"role" url:"role,key"`                               // role in the organization
-}
-
-// Update an organization member.
-func (s *Service) OrganizationMemberUpdate(ctx context.Context, organizationIdentity string, o OrganizationMemberUpdateOpts) (*OrganizationMember, error) {
-	var organizationMember OrganizationMember
-	return &organizationMember, s.Patch(ctx, &organizationMember, fmt.Sprintf("/organizations/%v/members", organizationIdentity), o)
-}
-
-// Remove a member from the organization.
-func (s *Service) OrganizationMemberDelete(ctx context.Context, organizationIdentity string, organizationMemberIdentity string) (*OrganizationMember, error) {
-	var organizationMember OrganizationMember
-	return &organizationMember, s.Delete(ctx, &organizationMember, fmt.Sprintf("/organizations/%v/members/%v", organizationIdentity, organizationMemberIdentity))
-}
-
-type OrganizationMemberListResult []OrganizationMember
-
-// List members of the organization.
-func (s *Service) OrganizationMemberList(ctx context.Context, organizationIdentity string, lr *ListRange) (OrganizationMemberListResult, error) {
-	var organizationMember OrganizationMemberListResult
-	return organizationMember, s.Get(ctx, &organizationMember, fmt.Sprintf("/organizations/%v/members", organizationIdentity), nil, lr)
-}
-
-type OrganizationMemberAppListResult []struct {
-	ArchivedAt *time.Time `json:"archived_at" url:"archived_at,key"` // when app was archived
-	BuildStack struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of stack
-		Name string `json:"name" url:"name,key"` // unique name of stack
-	} `json:"build_stack" url:"build_stack,key"` // identity of the stack that will be used for new builds
-	BuildpackProvidedDescription *string   `json:"buildpack_provided_description" url:"buildpack_provided_description,key"` // description from buildpack of app
-	CreatedAt                    time.Time `json:"created_at" url:"created_at,key"`                                         // when app was created
-	GitURL                       string    `json:"git_url" url:"git_url,key"`                                               // git repo URL of app
-	ID                           string    `json:"id" url:"id,key"`                                                         // unique identifier of app
-	Joined                       bool      `json:"joined" url:"joined,key"`                                                 // is the current member a collaborator on this app.
-	Locked                       bool      `json:"locked" url:"locked,key"`                                                 // are other organization members forbidden from joining this app.
-	Maintenance                  bool      `json:"maintenance" url:"maintenance,key"`                                       // maintenance status of app
-	Name                         string    `json:"name" url:"name,key"`                                                     // unique name of app
-	Organization                 *struct {
-		Name string `json:"name" url:"name,key"` // unique name of organization
-	} `json:"organization" url:"organization,key"` // organization that owns this app
-	Owner *struct {
-		Email string `json:"email" url:"email,key"` // unique email address of account
-		ID    string `json:"id" url:"id,key"`       // unique identifier of an account
-	} `json:"owner" url:"owner,key"` // identity of app owner
-	Region struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of region
-		Name string `json:"name" url:"name,key"` // unique name of region
-	} `json:"region" url:"region,key"` // identity of app region
-	ReleasedAt *time.Time `json:"released_at" url:"released_at,key"` // when app was released
-	RepoSize   *int       `json:"repo_size" url:"repo_size,key"`     // git repo size in bytes of app
-	SlugSize   *int       `json:"slug_size" url:"slug_size,key"`     // slug size in bytes of app
-	Space      *struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of space
-		Name string `json:"name" url:"name,key"` // unique name of space
-	} `json:"space" url:"space,key"` // identity of space
-	Stack struct {
-		ID   string `json:"id" url:"id,key"`     // unique identifier of stack
-		Name string `json:"name" url:"name,key"` // unique name of stack
-	} `json:"stack" url:"stack,key"` // identity of app stack
-	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when app was updated
-	WebURL    string    `json:"web_url" url:"web_url,key"`       // web URL of app
-}
-
-// List the apps of a member.
-func (s *Service) OrganizationMemberAppList(ctx context.Context, organizationIdentity string, organizationMemberIdentity string, lr *ListRange) (OrganizationMemberAppListResult, error) {
-	var organizationMember OrganizationMemberAppListResult
-	return organizationMember, s.Get(ctx, &organizationMember, fmt.Sprintf("/organizations/%v/members/%v/apps", organizationIdentity, organizationMemberIdentity), nil, lr)
-}
-
-// Deprecated: Tracks an organization's preferences
-type OrganizationPreferences struct {
-	DefaultPermission *string `json:"default-permission" url:"default-permission,key"` // The default permission used when adding new members to the
-	// organization
-	WhitelistingEnabled *bool `json:"whitelisting-enabled" url:"whitelisting-enabled,key"` // Whether whitelisting rules should be applied to add-on installations
-}
-
-// Retrieve Organization Preferences
-func (s *Service) OrganizationPreferencesList(ctx context.Context, organizationPreferencesIdentity string) (*OrganizationPreferences, error) {
-	var organizationPreferences OrganizationPreferences
-	return &organizationPreferences, s.Get(ctx, &organizationPreferences, fmt.Sprintf("/organizations/%v/preferences", organizationPreferencesIdentity), nil, nil)
-}
-
-type OrganizationPreferencesUpdateOpts struct {
-	WhitelistingEnabled *bool `json:"whitelisting-enabled,omitempty" url:"whitelisting-enabled,omitempty,key"` // Whether whitelisting rules should be applied to add-on installations
-}
-
-// Update Organization Preferences
-func (s *Service) OrganizationPreferencesUpdate(ctx context.Context, organizationPreferencesIdentity string, o OrganizationPreferencesUpdateOpts) (*OrganizationPreferences, error) {
-	var organizationPreferences OrganizationPreferences
-	return &organizationPreferences, s.Patch(ctx, &organizationPreferences, fmt.Sprintf("/organizations/%v/preferences", organizationPreferencesIdentity), o)
-}
-
 // An outbound-ruleset is a collection of rules that specify what hosts
 // Dynos are allowed to communicate with.
 type OutboundRuleset struct {
@@ -3264,9 +2630,8 @@ func (s *Service) PasswordResetCompleteResetPassword(ctx context.Context, passwo
 	return &passwordReset, s.Post(ctx, &passwordReset, fmt.Sprintf("/password-resets/%v/actions/finalize", passwordResetResetPasswordToken), o)
 }
 
-// [Peering](https://devcenter.heroku.com/articles/private-space-vpc-peer
-// ing) provides a way to peer your Private Space VPC to another AWS
-// VPC.
+// [Peering](https://devcenter.heroku.com/articles/private-space-peering)
+//  provides a way to peer your Private Space VPC to another AWS VPC.
 type Peering struct {
 	AwsAccountID string    `json:"aws_account_id" url:"aws_account_id,key"` // The AWS account ID of your Private Space.
 	AwsRegion    string    `json:"aws_region" url:"aws_region,key"`         // The AWS region of the peer connection.
@@ -3304,8 +2669,8 @@ func (s *Service) PeeringInfo(ctx context.Context, spaceIdentity string, peering
 }
 
 // [Peering
-// Info](https://devcenter.heroku.com/articles/private-space-vpc-peering)
-//  gives you the information necessary to peer an AWS VPC to a Private
+// Info](https://devcenter.heroku.com/articles/private-space-peering)
+// gives you the information necessary to peer an AWS VPC to a Private
 // Space.
 type PeeringInfo struct {
 	AwsAccountID          string   `json:"aws_account_id" url:"aws_account_id,key"`                   // The AWS account ID of your Private Space.
@@ -3834,7 +3199,7 @@ type Space struct {
 	ID           string `json:"id" url:"id,key"`     // unique identifier of space
 	Name         string `json:"name" url:"name,key"` // unique name of space
 	Organization struct {
-		Name string `json:"name" url:"name,key"` // unique name of organization
+		Name string `json:"name" url:"name,key"` // unique name of team
 	} `json:"organization" url:"organization,key"` // organization that owns this space
 	Region struct {
 		ID   string `json:"id" url:"id,key"`     // unique identifier of region
@@ -4115,6 +3480,47 @@ func (s *Service) TeamCreate(ctx context.Context, o TeamCreateOpts) (*Team, erro
 func (s *Service) TeamDelete(ctx context.Context, teamIdentity string) (*Team, error) {
 	var team Team
 	return &team, s.Delete(ctx, &team, fmt.Sprintf("/teams/%v", teamIdentity))
+}
+
+type TeamAddOn struct{}
+type TeamAddOnListForTeamResult []struct {
+	Actions      []struct{} `json:"actions" url:"actions,key"` // provider actions for this specific add-on
+	AddonService struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of this add-on-service
+		Name string `json:"name" url:"name,key"` // unique name of this add-on-service
+	} `json:"addon_service" url:"addon_service,key"` // identity of add-on service
+	App struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of app
+		Name string `json:"name" url:"name,key"` // unique name of app
+	} `json:"app" url:"app,key"` // billing application associated with this add-on
+	BilledPrice *struct {
+		Cents    int    `json:"cents" url:"cents,key"`       // price in cents per unit of plan
+		Contract bool   `json:"contract" url:"contract,key"` // price is negotiated in a contract outside of monthly add-on billing
+		Unit     string `json:"unit" url:"unit,key"`         // unit of price for plan
+	} `json:"billed_price" url:"billed_price,key"` // billed price
+	BillingEntity struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of the billing entity
+		Name string `json:"name" url:"name,key"` // name of the billing entity
+		Type string `json:"type" url:"type,key"` // type of Object of the billing entity; new types allowed at any time.
+	} `json:"billing_entity" url:"billing_entity,key"` // billing entity associated with this add-on
+	ConfigVars []string  `json:"config_vars" url:"config_vars,key"` // config vars exposed to the owning app by this add-on
+	CreatedAt  time.Time `json:"created_at" url:"created_at,key"`   // when add-on was created
+	ID         string    `json:"id" url:"id,key"`                   // unique identifier of add-on
+	Name       string    `json:"name" url:"name,key"`               // globally unique name of the add-on
+	Plan       struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of this plan
+		Name string `json:"name" url:"name,key"` // unique name of this plan
+	} `json:"plan" url:"plan,key"` // identity of add-on plan
+	ProviderID string    `json:"provider_id" url:"provider_id,key"` // id of this add-on with its provider
+	State      string    `json:"state" url:"state,key"`             // state in the add-on's lifecycle
+	UpdatedAt  time.Time `json:"updated_at" url:"updated_at,key"`   // when add-on was updated
+	WebURL     *string   `json:"web_url" url:"web_url,key"`         // URL for logging into web interface of add-on (e.g. a dashboard)
+}
+
+// List add-ons used across all Team apps
+func (s *Service) TeamAddOnListForTeam(ctx context.Context, teamIdentity string, lr *ListRange) (TeamAddOnListForTeamResult, error) {
+	var teamAddOn TeamAddOnListForTeamResult
+	return teamAddOn, s.Get(ctx, &teamAddOn, fmt.Sprintf("/teams/%v/addons", teamIdentity), nil, lr)
 }
 
 // A team app encapsulates the team specific functionality of Heroku
@@ -4458,9 +3864,9 @@ type TeamMember struct {
 	} `json:"user" url:"user,key"` // user information for the membership
 }
 type TeamMemberCreateOrUpdateOpts struct {
-	Email     string  `json:"email" url:"email,key"`                             // email address of the team member
-	Federated *bool   `json:"federated,omitempty" url:"federated,omitempty,key"` // whether the user is federated and belongs to an Identity Provider
-	Role      *string `json:"role" url:"role,key"`                               // role in the team
+	Email     string `json:"email" url:"email,key"`                             // email address of the team member
+	Federated *bool  `json:"federated,omitempty" url:"federated,omitempty,key"` // whether the user is federated and belongs to an Identity Provider
+	Role      string `json:"role" url:"role,key"`                               // role in the team
 }
 
 // Create a new team member, or update their role.
@@ -4470,9 +3876,9 @@ func (s *Service) TeamMemberCreateOrUpdate(ctx context.Context, teamIdentity str
 }
 
 type TeamMemberCreateOpts struct {
-	Email     string  `json:"email" url:"email,key"`                             // email address of the team member
-	Federated *bool   `json:"federated,omitempty" url:"federated,omitempty,key"` // whether the user is federated and belongs to an Identity Provider
-	Role      *string `json:"role" url:"role,key"`                               // role in the team
+	Email     string `json:"email" url:"email,key"`                             // email address of the team member
+	Federated *bool  `json:"federated,omitempty" url:"federated,omitempty,key"` // whether the user is federated and belongs to an Identity Provider
+	Role      string `json:"role" url:"role,key"`                               // role in the team
 }
 
 // Create a new team member.
@@ -4482,9 +3888,9 @@ func (s *Service) TeamMemberCreate(ctx context.Context, teamIdentity string, o T
 }
 
 type TeamMemberUpdateOpts struct {
-	Email     string  `json:"email" url:"email,key"`                             // email address of the team member
-	Federated *bool   `json:"federated,omitempty" url:"federated,omitempty,key"` // whether the user is federated and belongs to an Identity Provider
-	Role      *string `json:"role" url:"role,key"`                               // role in the team
+	Email     string `json:"email" url:"email,key"`                             // email address of the team member
+	Federated *bool  `json:"federated,omitempty" url:"federated,omitempty,key"` // whether the user is federated and belongs to an Identity Provider
+	Role      string `json:"role" url:"role,key"`                               // role in the team
 }
 
 // Update a team member.
@@ -4576,6 +3982,40 @@ func (s *Service) TeamPreferencesUpdate(ctx context.Context, teamPreferencesIden
 	return &teamPreferences, s.Patch(ctx, &teamPreferences, fmt.Sprintf("/teams/%v/preferences", teamPreferencesIdentity), o)
 }
 
+// A space is an isolated, highly available, secure app execution
+// environments, running in the modern VPC substrate.
+type TeamSpace struct{}
+type TeamSpaceListResult []struct {
+	CIDR string `json:"cidr" url:"cidr,key"` // The RFC-1918 CIDR the Private Space will use. It must be a /16 in
+	// 10.0.0.0/8, 172.16.0.0/12 or 192.168.0.0/16
+	CreatedAt time.Time `json:"created_at" url:"created_at,key"` // when space was created
+	DataCIDR  string    `json:"data_cidr" url:"data_cidr,key"`   // The RFC-1918 CIDR that the Private Space will use for the
+	// Heroku-managed peering connection that's automatically created when
+	// using Heroku Data add-ons. It must be between a /16 and a /20
+	ID           string `json:"id" url:"id,key"`     // unique identifier of space
+	Name         string `json:"name" url:"name,key"` // unique name of space
+	Organization struct {
+		Name string `json:"name" url:"name,key"` // unique name of team
+	} `json:"organization" url:"organization,key"` // organization that owns this space
+	Region struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of region
+		Name string `json:"name" url:"name,key"` // unique name of region
+	} `json:"region" url:"region,key"` // identity of space region
+	Shield bool   `json:"shield" url:"shield,key"` // true if this space has shield enabled
+	State  string `json:"state" url:"state,key"`   // availability of this space
+	Team   struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of team
+		Name string `json:"name" url:"name,key"` // unique name of team
+	} `json:"team" url:"team,key"` // team that owns this space
+	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when space was updated
+}
+
+// List spaces owned by the team
+func (s *Service) TeamSpaceList(ctx context.Context, teamIdentity string, lr *ListRange) (TeamSpaceListResult, error) {
+	var teamSpace TeamSpaceListResult
+	return teamSpace, s.Get(ctx, &teamSpace, fmt.Sprintf("/teams/%v/spaces", teamIdentity), nil, lr)
+}
+
 // A single test case belonging to a test run
 type TestCase struct {
 	CreatedAt   time.Time `json:"created_at" url:"created_at,key"`   // when test case was created
@@ -4647,8 +4087,8 @@ type TestRun struct {
 	Message      *string `json:"message" url:"message,key"` // human friendly message indicating reason for an error
 	Number       int     `json:"number" url:"number,key"`   // the auto incrementing test run number
 	Organization *struct {
-		Name string `json:"name" url:"name,key"` // unique name of organization
-	} `json:"organization" url:"organization,key"` // the organization that owns this test-run
+		Name string `json:"name" url:"name,key"` // unique name of team
+	} `json:"organization" url:"organization,key"` // the team that owns this test-run
 	Pipeline struct {
 		ID string `json:"id" url:"id,key"` // unique identifier of pipeline
 	} `json:"pipeline" url:"pipeline,key"` // the pipeline which owns this test-run
@@ -4660,9 +4100,13 @@ type TestRun struct {
 		Beta                bool      `json:"beta" url:"beta,key"`                     // whether allowed to utilize beta Heroku features
 		CreatedAt           time.Time `json:"created_at" url:"created_at,key"`         // when account was created
 		DefaultOrganization *struct {
-			ID   string `json:"id" url:"id,key"`     // unique identifier of organization
-			Name string `json:"name" url:"name,key"` // unique name of organization
-		} `json:"default_organization" url:"default_organization,key"` // organization selected by default
+			ID   string `json:"id" url:"id,key"`     // unique identifier of team
+			Name string `json:"name" url:"name,key"` // unique name of team
+		} `json:"default_organization" url:"default_organization,key"` // team selected by default
+		DefaultTeam *struct {
+			ID   string `json:"id" url:"id,key"`     // unique identifier of team
+			Name string `json:"name" url:"name,key"` // unique name of team
+		} `json:"default_team" url:"default_team,key"` // team selected by default
 		DelinquentAt     *time.Time `json:"delinquent_at" url:"delinquent_at,key"` // when account became delinquent
 		Email            string     `json:"email" url:"email,key"`                 // unique email address of account
 		Federated        bool       `json:"federated" url:"federated,key"`         // whether the user is federated and belongs to an Identity Provider
@@ -4670,13 +4114,16 @@ type TestRun struct {
 		IdentityProvider *struct {
 			ID           string `json:"id" url:"id,key"` // unique identifier of this identity provider
 			Organization struct {
-				Name string `json:"name" url:"name,key"` // unique name of organization
+				Name string `json:"name" url:"name,key"` // unique name of team
 			} `json:"organization" url:"organization,key"`
 			Owner struct {
 				ID   string `json:"id" url:"id,key"`     // unique identifier of the owner
 				Name string `json:"name" url:"name,key"` // name of the owner
 				Type string `json:"type" url:"type,key"` // type of the owner
 			} `json:"owner" url:"owner,key"` // entity that owns this identity provider
+			Team struct {
+				Name string `json:"name" url:"name,key"` // unique name of team
+			} `json:"team" url:"team,key"`
 		} `json:"identity_provider" url:"identity_provider,key"` // Identity Provider details for federated users.
 		LastLogin               *time.Time `json:"last_login" url:"last_login,key"`                               // when account last authorized with Heroku
 		Name                    *string    `json:"name" url:"name,key"`                                           // full name of the account owner
@@ -4694,7 +4141,7 @@ type TestRunCreateOpts struct {
 	CommitMessage string  `json:"commit_message" url:"commit_message,key"`                 // the message for the commit under test
 	CommitSha     string  `json:"commit_sha" url:"commit_sha,key"`                         // the SHA hash of the commit under test
 	Debug         *bool   `json:"debug,omitempty" url:"debug,omitempty,key"`               // whether the test run was started for interactive debugging
-	Organization  *string `json:"organization,omitempty" url:"organization,omitempty,key"` // unique name of organization
+	Organization  *string `json:"organization,omitempty" url:"organization,omitempty,key"` // unique name of team
 	Pipeline      string  `json:"pipeline" url:"pipeline,key"`                             // unique identifier of pipeline
 	SourceBlobURL string  `json:"source_blob_url" url:"source_blob_url,key"`               // The download location for the source code to be tested
 }
@@ -4737,7 +4184,7 @@ func (s *Service) TestRunUpdate(ctx context.Context, testRunNumber int, o TestRu
 
 // Tracks a user's preferences and message dismissals
 type UserPreferences struct {
-	DefaultOrganization        *string `json:"default-organization" url:"default-organization,key"`                   // User's default organization
+	DefaultOrganization        *string `json:"default-organization" url:"default-organization,key"`                   // User's default team
 	DismissedGettingStarted    *bool   `json:"dismissed-getting-started" url:"dismissed-getting-started,key"`         // Whether the user has dismissed the getting started banner
 	DismissedGithubBanner      *bool   `json:"dismissed-github-banner" url:"dismissed-github-banner,key"`             // Whether the user has dismissed the GitHub link banner
 	DismissedOrgAccessControls *bool   `json:"dismissed-org-access-controls" url:"dismissed-org-access-controls,key"` // Whether the user has dismissed the Organization Access Controls
@@ -4758,7 +4205,7 @@ func (s *Service) UserPreferencesList(ctx context.Context, userPreferencesIdenti
 }
 
 type UserPreferencesUpdateOpts struct {
-	DefaultOrganization        *string `json:"default-organization,omitempty" url:"default-organization,omitempty,key"`                   // User's default organization
+	DefaultOrganization        *string `json:"default-organization,omitempty" url:"default-organization,omitempty,key"`                   // User's default team
 	DismissedGettingStarted    *bool   `json:"dismissed-getting-started,omitempty" url:"dismissed-getting-started,omitempty,key"`         // Whether the user has dismissed the getting started banner
 	DismissedGithubBanner      *bool   `json:"dismissed-github-banner,omitempty" url:"dismissed-github-banner,omitempty,key"`             // Whether the user has dismissed the GitHub link banner
 	DismissedOrgAccessControls *bool   `json:"dismissed-org-access-controls,omitempty" url:"dismissed-org-access-controls,omitempty,key"` // Whether the user has dismissed the Organization Access Controls
@@ -4778,8 +4225,8 @@ func (s *Service) UserPreferencesUpdate(ctx context.Context, userPreferencesIden
 	return &userPreferences, s.Patch(ctx, &userPreferences, fmt.Sprintf("/users/%v/preferences", userPreferencesIdentity), o)
 }
 
-// [VPN](https://devcenter.heroku.com/articles/private-spaces-vpn?preview
-// =1) provides a way to connect your Private Spaces to your network via
+// [VPN](https://devcenter.heroku.com/articles/private-space-vpn-connecti
+// on) provides a way to connect your Private Spaces to your network via
 // VPN.
 type VPNConnection struct {
 	ID             string   `json:"id" url:"id,key"`                             // VPN ID
@@ -4831,7 +4278,7 @@ func (s *Service) VPNConnectionInfo(ctx context.Context, spaceIdentity string, v
 	return &vpnConnection, s.Get(ctx, &vpnConnection, fmt.Sprintf("/spaces/%v/vpn-connections/%v", spaceIdentity, vpnConnectionIdentity), nil, nil)
 }
 
-// Entities that have been whitelisted to be used by an Organization
+// Entities that have been whitelisted to be used by an Team
 type WhitelistedAddOnService struct {
 	AddedAt time.Time `json:"added_at" url:"added_at,key"` // when the add-on service was whitelisted
 	AddedBy struct {
@@ -4845,34 +4292,9 @@ type WhitelistedAddOnService struct {
 	} `json:"addon_service" url:"addon_service,key"` // the Add-on Service whitelisted for use
 	ID string `json:"id" url:"id,key"` // unique identifier for this whitelisting entity
 }
-type WhitelistedAddOnServiceListByOrganizationResult []WhitelistedAddOnService
-
-// List all whitelisted Add-on Services for an Organization
-func (s *Service) WhitelistedAddOnServiceListByOrganization(ctx context.Context, organizationIdentity string, lr *ListRange) (WhitelistedAddOnServiceListByOrganizationResult, error) {
-	var whitelistedAddOnService WhitelistedAddOnServiceListByOrganizationResult
-	return whitelistedAddOnService, s.Get(ctx, &whitelistedAddOnService, fmt.Sprintf("/organizations/%v/whitelisted-addon-services", organizationIdentity), nil, lr)
-}
-
-type WhitelistedAddOnServiceCreateByOrganizationOpts struct {
-	AddonService *string `json:"addon_service,omitempty" url:"addon_service,omitempty,key"` // name of the Add-on to whitelist
-}
-type WhitelistedAddOnServiceCreateByOrganizationResult []WhitelistedAddOnService
-
-// Whitelist an Add-on Service
-func (s *Service) WhitelistedAddOnServiceCreateByOrganization(ctx context.Context, organizationIdentity string, o WhitelistedAddOnServiceCreateByOrganizationOpts) (WhitelistedAddOnServiceCreateByOrganizationResult, error) {
-	var whitelistedAddOnService WhitelistedAddOnServiceCreateByOrganizationResult
-	return whitelistedAddOnService, s.Post(ctx, &whitelistedAddOnService, fmt.Sprintf("/organizations/%v/whitelisted-addon-services", organizationIdentity), o)
-}
-
-// Remove a whitelisted entity
-func (s *Service) WhitelistedAddOnServiceDeleteByOrganization(ctx context.Context, organizationIdentity string, whitelistedAddOnServiceIdentity string) (*WhitelistedAddOnService, error) {
-	var whitelistedAddOnService WhitelistedAddOnService
-	return &whitelistedAddOnService, s.Delete(ctx, &whitelistedAddOnService, fmt.Sprintf("/organizations/%v/whitelisted-addon-services/%v", organizationIdentity, whitelistedAddOnServiceIdentity))
-}
-
 type WhitelistedAddOnServiceListByTeamResult []WhitelistedAddOnService
 
-// List all whitelisted Add-on Services for a Team
+// List all whitelisted Add-on Services for an Team
 func (s *Service) WhitelistedAddOnServiceListByTeam(ctx context.Context, teamIdentity string, lr *ListRange) (WhitelistedAddOnServiceListByTeamResult, error) {
 	var whitelistedAddOnService WhitelistedAddOnServiceListByTeamResult
 	return whitelistedAddOnService, s.Get(ctx, &whitelistedAddOnService, fmt.Sprintf("/teams/%v/whitelisted-addon-services", teamIdentity), nil, lr)
