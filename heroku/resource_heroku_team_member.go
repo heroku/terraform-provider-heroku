@@ -73,7 +73,7 @@ func resourceHerokuTeamMemberSet(d *schema.ResourceData, meta interface{}) error
 
 	opts := heroku.TeamMemberCreateOrUpdateOpts{
 		Email:     email,
-		Role:      &role,
+		Role:      role,
 		Federated: &federated,
 	}
 
