@@ -1,4 +1,4 @@
-## 2.0.2 (Unreleased)
+## 2.0.2 (July 11, 2019)
 
 IMPROVEMENTS:
 * Upgrade heroku-go client to stable Go Module support `v5` & to provide more Heroku Platform API features [#211](https://github.com/terraform-providers/terraform-provider-heroku/pull/211)
