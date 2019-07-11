@@ -1,4 +1,12 @@
 ## 2.0.2 (Unreleased)
+
+IMPROVEMENTS:
+* Upgrade heroku-go client to stable Go Module support `v5` & to provide more Heroku Platform API features [#211](https://github.com/terraform-providers/terraform-provider-heroku/pull/211)
+
+BUG FIXES:
+* Revise docs for Terraform v0.12 map attribute-assignment syntax [#212](https://github.com/terraform-providers/terraform-provider-heroku/pull/212) & [#216](https://github.com/terraform-providers/terraform-provider-heroku/pull/216)
+* Revise docs to correct `import` example [#215](https://github.com/terraform-providers/terraform-provider-heroku/pull/215)
+
 ## 2.0.1 (June 20, 2019)
 
 BUG FIXES:
