@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/heroku/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go/v5"
 )
 
 func TestAccHerokuAccountFeature_Basic(t *testing.T) {

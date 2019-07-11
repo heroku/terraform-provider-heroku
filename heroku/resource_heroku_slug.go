@@ -14,7 +14,7 @@ import (
 
 	uuid "github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform/helper/schema"
-	heroku "github.com/heroku/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go/v5"
 )
 
 func resourceHerokuSlug() *schema.Resource {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	heroku "github.com/heroku/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go/v5"
 )
 
 func resourceHerokuTeamMember() *schema.Resource {
@@ -73,7 +73,7 @@ func resourceHerokuTeamMemberSet(d *schema.ResourceData, meta interface{}) error
 
 	opts := heroku.TeamMemberCreateOrUpdateOpts{
 		Email:     email,
-		Role:      &role,
+		Role:      role,
 		Federated: &federated,
 	}
 

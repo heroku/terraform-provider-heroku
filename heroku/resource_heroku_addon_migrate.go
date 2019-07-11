@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/heroku/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go/v5"
 	"log"
 )
 

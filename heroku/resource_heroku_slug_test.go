@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	heroku "github.com/heroku/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go/v5"
 )
 
 func TestAccHerokuSlug_Basic(t *testing.T) {

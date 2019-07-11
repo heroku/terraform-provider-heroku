@@ -21,9 +21,6 @@ func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuApp_basic(appName, appStack),
-			},
-			{
 				Config: testAccCheckHerokuAppWithDatasource_basic(appName, appStack),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(

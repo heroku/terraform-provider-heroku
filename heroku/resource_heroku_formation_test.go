@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/heroku/heroku-go/v3"
+	heroku "github.com/heroku/heroku-go/v5"
 )
 
 func TestAccHerokuFormationSingleUpdate_WithOrg(t *testing.T) {
