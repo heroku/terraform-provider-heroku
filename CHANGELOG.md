@@ -1,4 +1,4 @@
-## 2.0.3 (Unreleased)
+## 2.0.3 (July 12, 2019)
 
 BUG FIXES:
 * Restore compatibility with Terraform 0.12 [#220](https://github.com/terraform-providers/terraform-provider-heroku/pull/220)
