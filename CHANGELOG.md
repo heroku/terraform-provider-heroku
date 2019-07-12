@@ -1,5 +1,11 @@
-## 2.1.0 (Unreleased)
+## 2.0.3 (Unreleased)
+
+BUG FIXES:
+* Restore compatibility with Terraform 0.12 [#220](https://github.com/terraform-providers/terraform-provider-heroku/pull/220)
+
 ## 2.0.2 (July 11, 2019)
+
+**This release is broken for Terraform 0.12.**
 
 IMPROVEMENTS:
 * Upgrade heroku-go client to stable Go Module support `v5` & to provide more Heroku Platform API features [#211](https://github.com/terraform-providers/terraform-provider-heroku/pull/211)
