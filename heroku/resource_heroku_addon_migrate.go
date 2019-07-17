@@ -65,7 +65,7 @@ func migrateAddonConfigFromListSetToSet(is *terraform.InstanceState, client *her
 
 	// Check to see if heroku_addon.config is a TypeList of TypeSet
 	log.Printf("Checking if heroku_addon state is the old TypeList of TypeSet")
-	if is.Attributes["config.%"] != "" {
+	if is.Attributes["config.%"] != "" && is.Attributes["config"] != "" { // support pre-v0.12 and v0.12 state definition of TypeMap
 		// This means the config attribute is the correct data type of just a TypeSet.
 		log.Printf("heroku_addon.config is the correct data type. No migration needed.")
 		return is, nil
@@ -78,16 +78,22 @@ func migrateAddonConfigFromListSetToSet(is *terraform.InstanceState, client *her
 	// Define a map to store the new format of configs.
 	configMap := map[string]string{}
 
-	// Get the length & generate a slice
+	// Get the length & generate a slice that represents the number of TypeSet elements in the TypeList.
 	configLength, convertErr := strconv.Atoi(is.Attributes["config.#"])
 	if convertErr != nil {
 		return nil, convertErr
 	}
-	configLengthSlice := makeRange(0, configLength-1)
+	configLengthRange := makeRange(0, configLength-1)
 
-	for _, i := range configLengthSlice {
+	// Iterate through configLengthRange to get all the elements in the config TypeList.
+	for _, i := range configLengthRange {
+		// Define the matchStr will be used later to find the full attribute key.
 		matchStr := fmt.Sprintf("config.%v.", i)
+
+		// Get all keys that match matchStr
 		keys := getAttributeKeys(is.Attributes, matchStr)
+
+		// Iterate through all the keys and define new key/value pairs in configMap.
 		for _, k := range keys {
 			oldConfigKey := fmt.Sprintf("config.%v.%s", i, k)
 			configMap[k] = is.Attributes[oldConfigKey]
@@ -97,7 +103,7 @@ func migrateAddonConfigFromListSetToSet(is *terraform.InstanceState, client *her
 		}
 	}
 
-	// Set the new map of config to its length
+	// Set the new map of config to its length.
 	is.Attributes["config.%"] = strconv.Itoa(len(configMap))
 
 	// Set each new config key/value pair.
@@ -105,12 +111,17 @@ func migrateAddonConfigFromListSetToSet(is *terraform.InstanceState, client *her
 		is.Attributes[fmt.Sprintf("config.%s", k)] = v
 	}
 
-	// Delete the old config TypeList
+	// Delete the old config TypeList.
 	delete(is.Attributes, "config.#")
+
+	log.Printf("Migrated heroku_addon.config attribute from TypeList of TypeSet to TypeSet.")
 
 	return is, nil
 }
 
+// getAttributeKeys iterates through the resource's attribute to extract the config key.
+//
+// For example, the config key in state is "config.0.maxmemory_policy", so we need to extract just "maxmemory_policy' part.
 func getAttributeKeys(attrs map[string]string, matchStr string) []string {
 	keys := make([]string, 0)
 	for k := range attrs {
@@ -122,6 +133,7 @@ func getAttributeKeys(attrs map[string]string, matchStr string) []string {
 	return keys
 }
 
+// makeRange creates a slice of int between two numbers.
 func makeRange(min, max int) []int {
 	a := make([]int, max-min+1)
 	for i := range a {
