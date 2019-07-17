@@ -1,4 +1,9 @@
-## 2.1.0 (Unreleased)
+## 2.0.4 (Unreleased)
+
+BUG FIXES:
+* Add migration for `heroku_addon` to fix dirty plan after `heroku_addon.config` attribute changed from `TypeList` of `TypeSet`
+ to `TypeSet` ([#217](https://github.com/terraform-providers/terraform-provider-heroku/pull/217))
+
 ## 2.0.3 (July 12, 2019)
 
 BUG FIXES:
