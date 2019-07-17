@@ -76,7 +76,7 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 func TestAccHerokuAddon_CustomName(t *testing.T) {
 	var addon heroku.AddOn
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	customName := fmt.Sprintf("tftest-%s", acctest.RandString(15))
+	customName := fmt.Sprintf("custom-addonname-%s", acctest.RandString(15))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

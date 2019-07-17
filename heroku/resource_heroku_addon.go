@@ -187,10 +187,10 @@ func resourceHerokuAddonUpdate(d *schema.ResourceData, meta interface{}) error {
 		opts.Plan = d.Get("plan").(string)
 	}
 
-	// TODO: uncomment once the go client supports this
-	//if d.HasChange("name") {
-	//	opts.Name = d.Get("name").(string)
-	//}
+	if d.HasChange("name") {
+		n := d.Get("name").(string)
+		opts.Name = &n
+	}
 
 	ad, updateErr := client.AddOnUpdate(context.TODO(), app, d.Id(), opts)
 	if updateErr != nil {
