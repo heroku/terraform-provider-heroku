@@ -71,7 +71,7 @@ resource "heroku_app_config_association" "foobar2" {
 ## Argument Reference
 
 * `app_id` - (Required) A Heroku app's `UUID`. Can also be the name of the Heroku app but `UUID` is preferred as it is idempotent.
-* `vars` - Map of config vars that are can be outputted in plaintext.
+* `vars` - Map of config vars that are output in plaintext.
 * `sensitive_vars` - This is the same as `vars`. The main difference between the two
 attributes is `sensitive_vars` outputs are redacted on-screen and replaced by a <sensitive> placeholder, following a terraform
 plan or apply. It is recommended to put private keys, passwords, etc in this argument.
