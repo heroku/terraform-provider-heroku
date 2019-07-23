@@ -1,6 +1,6 @@
-## 2.0.4 (Unreleased)
+## 2.1.0 (Unreleased)
 
-IMPROVEMENTS:
+FEATURES:
 * `heroku_addon` - Ability to set addon name ([#210](https://github.com/terraform-providers/terraform-provider-heroku/pull/210))
 
 BUG FIXES:
