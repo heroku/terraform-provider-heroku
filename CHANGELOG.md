@@ -1,5 +1,8 @@
 ## 2.0.4 (Unreleased)
 
+IMPROVEMENTS:
+* `heroku_addon` - Ability to set addon name ([#210](https://github.com/terraform-providers/terraform-provider-heroku/pull/210))
+
 BUG FIXES:
 * Add migration for `heroku_addon` to fix dirty plan after `heroku_addon.config` attribute changed from `TypeList` of `TypeSet`
  to `TypeSet` ([#217](https://github.com/terraform-providers/terraform-provider-heroku/pull/217))
