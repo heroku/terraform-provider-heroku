@@ -3,8 +3,10 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform/helper/validation"
 	"log"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -46,6 +48,13 @@ func resourceHerokuAddon() *schema.Resource {
 				Required: true,
 			},
 
+			"name": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validateCustomAddonName,
+			},
+
 			"config": {
 				Type:     schema.TypeMap,
 				Optional: true,
@@ -53,11 +62,6 @@ func resourceHerokuAddon() *schema.Resource {
 			},
 
 			"provider_id": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-
-			"name": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -71,6 +75,25 @@ func resourceHerokuAddon() *schema.Resource {
 			},
 		},
 	}
+}
+
+func validateCustomAddonName(v interface{}, k string) (ws []string, errors []error) {
+	// Check length
+	v1 := validation.StringLenBetween(1, 256)
+	_, errs1 := v1(v, k)
+	for _, err := range errs1 {
+		errors = append(errors, err)
+	}
+
+	// Check validity
+	valRegex := regexp.MustCompile(`^[a-zA-Z][A-Za-z0-9_-]+$`)
+	v2 := validation.StringMatch(valRegex, "Invalid custom addon name: must start with a letter and can only contain lowercase letters, numbers, and dashes")
+	_, errs2 := v2(v, k)
+	for _, err := range errs2 {
+		errors = append(errors, err)
+	}
+
+	return ws, errors
 }
 
 func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
@@ -90,6 +113,10 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 		for k, v := range c.(map[string]interface{}) {
 			opts.Config[k] = v.(string)
 		}
+	}
+
+	if v := d.Get("name").(string); v != "" {
+		opts.Name = &v
 	}
 
 	log.Printf("[DEBUG] Addon create configuration: %#v, %#v", app, opts)
@@ -152,19 +179,26 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceHerokuAddonUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
+	opts := heroku.AddOnUpdateOpts{}
 
 	app := d.Get("app").(string)
 
 	if d.HasChange("plan") {
-		ad, err := client.AddOnUpdate(
-			context.TODO(), app, d.Id(), heroku.AddOnUpdateOpts{Plan: d.Get("plan").(string)})
-		if err != nil {
-			return err
-		}
-
-		// Store the new ID
-		d.SetId(ad.ID)
+		opts.Plan = d.Get("plan").(string)
 	}
+
+	if d.HasChange("name") {
+		n := d.Get("name").(string)
+		opts.Name = &n
+	}
+
+	ad, updateErr := client.AddOnUpdate(context.TODO(), app, d.Id(), opts)
+	if updateErr != nil {
+		return updateErr
+	}
+
+	// Store the new addon id if applicable
+	d.SetId(ad.ID)
 
 	return resourceHerokuAddonRead(d, meta)
 }

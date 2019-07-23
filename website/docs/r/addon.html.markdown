@@ -43,6 +43,7 @@ The following arguments are supported:
 * `app` - (Required) The Heroku app to add to.
 * `plan` - (Required) The addon to add.
 * `config` - (Optional) Optional plan configuration.
+* `name` - (Optional) Globally unique name of the add-on.
 
 ## Attributes Reference
 
