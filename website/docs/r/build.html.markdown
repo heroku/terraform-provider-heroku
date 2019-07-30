@@ -11,7 +11,7 @@ description: |-
 Provides a [Heroku Build](https://devcenter.heroku.com/articles/platform-api-reference#build)
 resource, to deploy source code to a Heroku app.
 
-Either a URL or local path, pointing to a [tarball](https://en.wikipedia.org/wiki/Tar_(computing)) of the source code, may be deployed. If a local path is used, it may instead point to a directory of source code, which will be tarballed automatically and then deployed.
+Either a [URL](#source-urls) or [local path](#local-source), pointing to a [tarball](https://en.wikipedia.org/wiki/Tar_(computing)) of the source code, may be deployed. If a local path is used, it may instead point to a directory of source code, which will be tarballed automatically and then deployed.
 
 This resource waits until the [build](https://devcenter.heroku.com/articles/build-and-release-using-the-api) & [release](https://devcenter.heroku.com/articles/release-phase) completes.
 
@@ -40,6 +40,8 @@ A [`heroku.yml` manifest](https://devcenter.heroku.com/articles/build-docker-ima
 ## Source URLs
 A `source.url` may point to any `https://` URL that responds to a `GET` with a tarball source code. When running `terraform apply`, the source code will only be fetched once for a successful build. Change the URL to force a new resource.
 
+Useful for building public, open-source source code, such as projects that publish releases on GitHub.
+
 ### GitHub URLs
 GitHub provides [release](https://help.github.com/articles/creating-releases/) tarballs through URLs. Create a release and then use the tag as a `source.url`, such as:
 
@@ -49,17 +51,7 @@ https://github.com/username/example/archive/v1.0.0.tar.gz
 
 Using a branch or master `source.url` is possible, but be aware that tracking down exactly what commit was deployed for a given `terraform apply` may be difficult. On the other hand, using stable release tags ensures repeatability of the Terraform configuration.
 
-## Local source
-A `source.path` may point to either:
-
-* a directory of source code
-* a tarball of source code
-
-When running `terraform apply`, if the contents (SHA256) of the source path changed since the last `apply`, then a new build will start.
-
-## Example Usage with Source URL
-
-Ideal for production-quality, collaborative Terraform configuration, when stability & repeatability is favored.
+### Example Usage with Source URL
 
 ```hcl
 resource "heroku_app" "foobar" {
@@ -87,9 +79,18 @@ resource "heroku_formation" "foobar" {
 }
 ```
 
-## Example Usage with Local Source Directory
+## Local source
+A `source.path` may point to either:
 
-Ideal for quickly iterating local development.
+* a tarball of source code
+* a directory of source code
+  * use `src/appname` relative path to reference `src/` sub-directories, monorepo-style
+  * use `../appname` relative or `/opt/src/appname` absolute paths to external directories
+    * *something else will need to manage the state of that external source code, before Heroku Build*
+
+When running `terraform apply`, if the contents (SHA256) of the source path changed since the last `apply`, then a new build will start.
+
+### Example Usage with Local Source Directory
 
 ```hcl
 resource "heroku_app" "foobar" {
