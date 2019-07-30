@@ -8,7 +8,7 @@ description: |-
 
 # heroku\_config
 Provides a Heroku Config resource, making it possible to define variables 
-to be used throughout your Heroku terraform configurations. Combined with `heroku_config_association`,
+to be used throughout your Heroku terraform configurations. Combined with `heroku_app_config_association`,
 these two resources enable users to decouple setting config var(s) from the `heroku_app` resource.
 
 ~> **NOTE:** Unlike most Terraform resources, this resource **DOES NOT** by itself create, update or delete anything in Heroku. 
