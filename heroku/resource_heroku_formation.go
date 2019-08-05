@@ -191,7 +191,6 @@ func resourceHerokuFormationRetrieve(id string, appName string, client *heroku.S
 }
 
 func (f *formation) GetInfo(appName string) error {
-	var errs []error
 	var err error
 
 	log.Printf("[INFO] The formation's app name is %s", appName)
@@ -199,7 +198,7 @@ func (f *formation) GetInfo(appName string) error {
 
 	formation, err := f.Client.FormationInfo(context.TODO(), appName, f.Id)
 	if err != nil {
-		errs = append(errs, err)
+		return err
 	} else {
 		f.Formation = &herokuFormation{}
 		f.Formation.AppName = formation.App.Name
