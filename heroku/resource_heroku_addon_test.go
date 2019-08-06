@@ -77,6 +77,7 @@ func TestAccHerokuAddon_CustomName(t *testing.T) {
 	var addon heroku.AddOn
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	customName := fmt.Sprintf("custom-addonname-%s", acctest.RandString(15))
+	customAttachmentName := fmt.Sprintf("custom-attachment-name-%s", acctest.RandString(15))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -84,7 +85,7 @@ func TestAccHerokuAddon_CustomName(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAddonConfig_CustomName(appName, customName),
+				Config: testAccCheckHerokuAddonConfig_CustomName(appName, customName, customAttachmentName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
 					testAccCheckHerokuAddonAttributes(&addon, "memcachier:dev"),
@@ -94,6 +95,8 @@ func TestAccHerokuAddon_CustomName(t *testing.T) {
 						"heroku_addon.foobar", "plan", "memcachier"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "name", customName),
+					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "attachment_name", customAttachmentName),
 				),
 			},
 		},
@@ -110,7 +113,7 @@ func TestAccHerokuAddon_CustomName_Invalid(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
+				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName, ""),
 				ExpectError: regexp.MustCompile(`config is invalid: invalid value for name`),
 			},
 		},
@@ -127,7 +130,7 @@ func TestAccHerokuAddon_CustomName_EmptyString(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
+				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName, ""),
 				ExpectError: regexp.MustCompile(`config is invalid: 2 problems:.*`),
 			},
 		},
@@ -144,7 +147,7 @@ func TestAccHerokuAddon_CustomName_FirstCharNum(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
+				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName, ""),
 				ExpectError: regexp.MustCompile(`config is invalid: invalid value for name`),
 			},
 		},
@@ -269,7 +272,7 @@ resource "heroku_addon" "foobar" {
 }`, appName)
 }
 
-func testAccCheckHerokuAddonConfig_CustomName(appName, customAddonName string) string {
+func testAccCheckHerokuAddonConfig_CustomName(appName, customAddonName, customAttachmentName string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
@@ -280,5 +283,6 @@ resource "heroku_addon" "foobar" {
     app = "${heroku_app.foobar.name}"
     plan = "memcachier"
     name = "%s"
-}`, appName, customAddonName)
+	attachment_name = "%s"
+}`, appName, customAddonName, customAttachmentName)
 }
