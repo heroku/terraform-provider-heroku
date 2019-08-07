@@ -43,7 +43,7 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 func TestAccHerokuApp_Disappears(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	appStack := "cedar-14"
+	appStack := "heroku-18"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -66,8 +66,8 @@ func TestAccHerokuApp_Change(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	appName2 := fmt.Sprintf("%s-v2", appName)
-	appStack := "cedar-14"
-	appStack2 := "heroku-16"
+	appStack := "heroku-16"
+	appStack2 := "heroku-18"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
