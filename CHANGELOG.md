@@ -1,4 +1,11 @@
-## 2.2.0 (Unreleased)
+## 2.1.1 (Unreleased)
+
+BUG FIXES:
+* Rework `heroku_addon.config` migration ([#230](https://github.com/terraform-providers/terraform-provider-heroku/pull/230))
+* Fix `heroku_formation` segfault when app does not exist ([#229](https://github.com/terraform-providers/terraform-provider-heroku/pull/229))
+* Docs correction ([#225](https://github.com/terraform-providers/terraform-provider-heroku/pull/225)) & clarification ([#224](https://github.com/terraform-providers/terraform-provider-heroku/pull/224))
+
+
 ## 2.1.0 (July 24, 2019)
 
 FEATURES:
