@@ -1,4 +1,4 @@
-## 2.1.1 (Unreleased)
+## 2.1.1 (August 07, 2019)
 
 BUG FIXES:
 * Rework `heroku_addon.config` migration ([#230](https://github.com/terraform-providers/terraform-provider-heroku/pull/230))
