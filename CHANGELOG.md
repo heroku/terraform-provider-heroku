@@ -1,4 +1,4 @@
-## 2.1.2 (Unreleased)
+## 2.1.2 (August 09, 2019)
 
 IMPROVEMENTS:
 * Update vendored Terraform to v0.12.6 ([#234](https://github.com/terraform-providers/terraform-provider-heroku/pull/234))
