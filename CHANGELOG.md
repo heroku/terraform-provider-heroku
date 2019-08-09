@@ -1,4 +1,10 @@
 ## 2.1.2 (Unreleased)
+
+IMPROVEMENTS:
+* Update vendored Terraform to v0.12.6 ([#234](https://github.com/terraform-providers/terraform-provider-heroku/pull/234))
+* Stop creating `cedar-14` apps during tests ([#232](https://github.com/terraform-providers/terraform-provider-heroku/pull/232))
+* Standardize UUID usage on `google/uuid` ([#228](https://github.com/terraform-providers/terraform-provider-heroku/pull/228))
+
 ## 2.1.1 (August 07, 2019)
 
 BUG FIXES:
