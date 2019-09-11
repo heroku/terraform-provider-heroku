@@ -67,30 +67,6 @@ func TestProviderConfigureUsesHeadersForClient(t *testing.T) {
 	}
 }
 
-// TODO: uncomment when a better to test netrc isolated from env
-// func TestProviderConfigureUseNetrc(t *testing.T) {
-// 	// Create a dummy netrc file
-// 	tmpfileNetrc, err := createTempConfigFile(`machine api.heroku.com login email_login password api_key`, ".netrc")
-// 	if err != nil {
-// 		t.Fatal(err.Error())
-// 	}
-// 	defer os.Remove(tmpfileNetrc.Name())
-// 	os.Setenv("NETRC_PATH", tmpfileNetrc.Name())
-// 	defer os.Unsetenv("NETRC_PATH")
-// 	raw := make(map[string]interface{})
-
-// 	rp := Provider()
-// 	err = rp.Configure(terraform.NewResourceConfigRaw(raw))
-// 	meta := rp.(*schema.Provider).Meta()
-// 	if meta == nil {
-// 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
-// 	}
-// 	configuration := meta.(*Config)
-
-// 	assert.Equal(t, "email_login", configuration.Email)
-// 	assert.Equal(t, "api_key", configuration.APIKey)
-// }
-
 func testAccPreCheck(t *testing.T) {
 	testAccConfig.GetOrAbort(t, helper.TestConfigAPIKey)
 }
