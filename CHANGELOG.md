@@ -1,4 +1,4 @@
-## 2.2.0 (Unreleased)
+## 2.2.0 (September 19, 2019)
 
 FEATURES:
 * `heroku_app_webhook` - Ability to manage App Webhooks ([#239](https://github.com/terraform-providers/terraform-provider-heroku/pull/239))
