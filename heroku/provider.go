@@ -71,6 +71,7 @@ func Provider() terraform.ResourceProvider {
 			"heroku_app_config_association":            resourceHerokuAppConfigAssociation(),
 			"heroku_app_feature":                       resourceHerokuAppFeature(),
 			"heroku_app_release":                       resourceHerokuAppRelease(),
+			"heroku_app_webhook":                       resourceHerokuAppWebhook(),
 			"heroku_build":                             resourceHerokuBuild(),
 			"heroku_cert":                              resourceHerokuCert(),
 			"heroku_config":                            resourceHerokuConfig(),
