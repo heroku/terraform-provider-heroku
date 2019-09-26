@@ -2,7 +2,7 @@ package heroku
 
 import (
 	"context"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func dataSourceHerokuTeam() *schema.Resource {

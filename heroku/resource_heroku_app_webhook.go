@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	validation "github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	validation "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
