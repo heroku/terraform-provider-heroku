@@ -1,4 +1,4 @@
-## 2.2.1 (Unreleased)
+## 2.2.1 (October 03, 2019)
 
 IMPROVEMENTS:
 * Migrate to Terraform Plugin SDK ([#240](https://github.com/terraform-providers/terraform-provider-heroku/pull/240))
