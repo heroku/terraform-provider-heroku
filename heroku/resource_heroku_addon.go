@@ -3,7 +3,7 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"log"
 	"net/url"
 	"regexp"
@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
