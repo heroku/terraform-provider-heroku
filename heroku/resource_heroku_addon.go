@@ -126,7 +126,7 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if as := d.Get("as").(string); as != "" {
-		opts.Attachment = &struct{
+		opts.Attachment = &struct {
 			Name *string `json:"name,omitempty" url:"name,omitempty,key"`
 		}{&as}
 	}
