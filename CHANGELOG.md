@@ -1,4 +1,8 @@
 ## 2.2.2 (Unreleased)
+
+IMPROVEMENTS:
+* `heroku_addon` - New attribute `attachment_name` to specify add-ons attachment name ([#241](https://github.com/terraform-providers/terraform-provider-heroku/pull/241))
+
 ## 2.2.1 (October 03, 2019)
 
 IMPROVEMENTS:
