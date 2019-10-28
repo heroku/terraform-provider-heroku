@@ -31,6 +31,8 @@ func TestAccHerokuAddon_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "app", appName),
 					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "attachment_name", "foobar_an"),
+					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "plan", "deployhooks:http"),
 				),
 			},
@@ -250,6 +252,7 @@ resource "heroku_app" "foobar" {
 resource "heroku_addon" "foobar" {
     app = "${heroku_app.foobar.name}"
     plan = "deployhooks:http"
+    attachment_name = "foobar_an"
     config = {
         url = "http://google.com"
 	}

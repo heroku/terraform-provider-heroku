@@ -55,6 +55,12 @@ func resourceHerokuAddon() *schema.Resource {
 				ValidateFunc: validateCustomAddonName,
 			},
 
+			"attachment_name": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
 			"config": {
 				Type:     schema.TypeMap,
 				Optional: true,
@@ -117,6 +123,12 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 
 	if v := d.Get("name").(string); v != "" {
 		opts.Name = &v
+	}
+
+	if an := d.Get("attachment_name").(string); an != "" {
+		opts.Attachment = &struct {
+			Name *string `json:"name,omitempty" url:"name,omitempty,key"`
+		}{&an}
 	}
 
 	log.Printf("[DEBUG] Addon create configuration: %#v, %#v", app, opts)

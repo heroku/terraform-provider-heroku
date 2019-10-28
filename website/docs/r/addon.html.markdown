@@ -44,6 +44,7 @@ The following arguments are supported:
 * `plan` - (Required) The addon to add.
 * `config` - (Optional) Optional plan configuration.
 * `name` - (Optional) Globally unique name of the add-on.
+* `attachment_name` - (Optional) Sets the add-ons attachment name.
 
 ## Attributes Reference
 
