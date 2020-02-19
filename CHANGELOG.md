@@ -1,4 +1,8 @@
 ## 2.2.2 (Unreleased)
+
+IMPROVEMENTS
+* Upgrade to Terraform Plugin SDK v1.7.0 ([#248](https://github.com/terraform-providers/terraform-provider-heroku/pull/248))
+
 ## 2.2.1 (October 03, 2019)
 
 IMPROVEMENTS:
