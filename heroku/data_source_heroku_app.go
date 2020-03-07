@@ -1,8 +1,6 @@
 package heroku
 
 import (
-	"time"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -13,6 +11,11 @@ func dataSourceHerokuApp() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+			},
+
+			"id": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 
 			"space": {
@@ -93,6 +96,10 @@ func dataSourceHerokuApp() *schema.Resource {
 					},
 				},
 			},
+			"uuid": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -106,7 +113,7 @@ func dataSourceHerokuAppRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	d.SetId(time.Now().UTC().String())
+	d.SetId(app.App.Name)
 
 	if app.Organization {
 		err := setOrganizationDetails(d, app)
@@ -122,6 +129,7 @@ func dataSourceHerokuAppRead(d *schema.ResourceData, m interface{}) error {
 
 	d.Set("buildpacks", app.Buildpacks)
 	d.Set("config_vars", app.Vars)
+	d.Set("uuid", app.App.ID)
 
 	return nil
 }

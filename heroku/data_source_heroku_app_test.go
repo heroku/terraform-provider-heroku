@@ -26,6 +26,8 @@ func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "name", appName),
 					resource.TestCheckResourceAttr(
+						"data.heroku_app.foobar", "id", appName),
+					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "stack", appStack),
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "region", "us"),
@@ -41,6 +43,8 @@ func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 						"data.heroku_app.foobar", "acm", "false"),
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "heroku_hostname", herokuHostname),
+					resource.TestCheckResourceAttrSet(
+						"data.heroku_app.foobar", "uuid"),
 				),
 			},
 		},
