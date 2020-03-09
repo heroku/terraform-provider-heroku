@@ -34,7 +34,7 @@ Development happens in the [GitHub repo](https://github.com/terraform-providers/
 # Configure the Heroku provider
 provider "heroku" {
   email   = "ops@company.com"
-  api_key = "${var.heroku_api_key}"
+  api_key = var.heroku_api_key
 }
 
 # Create a new application
@@ -61,7 +61,7 @@ to the Heroku provider block:
 ```hcl
 provider "heroku" {
   email   = "ops@company.com"
-  api_key = "${var.heroku_api_key}"
+  api_key = var.heroku_api_key
 }
 ```
 
