@@ -13,11 +13,6 @@ func dataSourceHerokuApp() *schema.Resource {
 				Required: true,
 			},
 
-			"id": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-
 			"space": {
 				Type:     schema.TypeString,
 				Computed: true,
