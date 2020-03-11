@@ -91,10 +91,6 @@ func dataSourceHerokuApp() *schema.Resource {
 					},
 				},
 			},
-			"uuid": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 		},
 	}
 }
@@ -108,7 +104,7 @@ func dataSourceHerokuAppRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	d.SetId(app.App.Name)
+	d.SetId(app.App.ID)
 
 	if app.Organization {
 		err := setOrganizationDetails(d, app)
@@ -124,7 +120,6 @@ func dataSourceHerokuAppRead(d *schema.ResourceData, m interface{}) error {
 
 	d.Set("buildpacks", app.Buildpacks)
 	d.Set("config_vars", app.Vars)
-	d.Set("uuid", app.App.ID)
 
 	return nil
 }

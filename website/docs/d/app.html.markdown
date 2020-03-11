@@ -30,7 +30,7 @@ The following arguments are supported:
 
 The following attributes are exported:
 
-* `id` - The ID of the app. This is also the name of the application.
+* `id` - The unique UUID of the Heroku app.
 * `name` - The name of the application. In Heroku, this is also the
    unique ID.
 * `stack` - The application stack is what platform to run the application
@@ -51,4 +51,3 @@ The following attributes are exported:
   - `name` - The name of the Heroku Team (organization).
   - `locked` - True if the app access is locked
   - `personal` 
-* `uuid` - The unique UUID of the Heroku app.
