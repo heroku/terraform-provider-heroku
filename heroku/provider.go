@@ -79,6 +79,7 @@ func Provider() terraform.ResourceProvider {
 			"heroku_drain":                             resourceHerokuDrain(),
 			"heroku_formation":                         resourceHerokuFormation(),
 			"heroku_pipeline":                          resourceHerokuPipeline(),
+			"heroku_pipeline_config_var":               resourceHerokuPipelineConfigVar(),
 			"heroku_pipeline_coupling":                 resourceHerokuPipelineCoupling(),
 			"heroku_slug":                              resourceHerokuSlug(),
 			"heroku_space":                             resourceHerokuSpace(),

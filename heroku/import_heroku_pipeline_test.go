@@ -17,7 +17,7 @@ func TestAccHerokuPipeline_importBasic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuPipelineDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuPipelineConfig_basic(pName),
+				Config: testAccCheckHerokuPipeline_basic(pName),
 			},
 			{
 				ResourceName:            "heroku_pipeline.foobar",

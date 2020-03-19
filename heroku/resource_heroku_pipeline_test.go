@@ -22,7 +22,7 @@ func TestAccHerokuPipeline_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuPipelineDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuPipelineConfig_basic(pipelineName),
+				Config: testAccCheckHerokuPipeline_basic(pipelineName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuPipelineExists("heroku_pipeline.foobar", &pipeline),
 					resource.TestCheckResourceAttr(
@@ -30,7 +30,7 @@ func TestAccHerokuPipeline_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckHerokuPipelineConfig_basic(pipelineName2),
+				Config: testAccCheckHerokuPipeline_basic(pipelineName2),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"heroku_pipeline.foobar", "name", pipelineName2),
@@ -40,7 +40,7 @@ func TestAccHerokuPipeline_Basic(t *testing.T) {
 	})
 }
 
-func testAccCheckHerokuPipelineConfig_basic(pipelineName string) string {
+func testAccCheckHerokuPipeline_basic(pipelineName string) string {
 	return fmt.Sprintf(`
 resource "heroku_pipeline" "foobar" {
   name = "%s"

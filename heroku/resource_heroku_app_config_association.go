@@ -49,9 +49,8 @@ func resourceHerokuAppConfigAssociation() *schema.Resource {
 	}
 }
 
-// As config var sensitivity is not a built-in Heroku distinction, it will not be possible to import this resource.
 func resourceHerokuAppConfigAssociationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	noImportErr := fmt.Errorf("it is not possible to import heroku_app_config_association since there are no remote resources")
+	noImportErr := fmt.Errorf("not possible to import this resource")
 
 	return nil, noImportErr
 }
@@ -64,7 +63,7 @@ func resourceHerokuAppConfigAssociationCreate(d *schema.ResourceData, m interfac
 	sensitiveVars := getSensitiveVars(d)
 
 	// Check for duplicates between vars & sensitive_vars
-	dupeErr := duplicateChecker(vars, sensitiveVars)
+	dupeErr := duplicateVarsChecker(vars, sensitiveVars)
 	if dupeErr != nil {
 		return dupeErr
 	}
@@ -91,30 +90,18 @@ func resourceHerokuAppConfigAssociationRead(d *schema.ResourceData, m interface{
 		return setErr
 	}
 
-	vettedVars := make(map[string]string)
-	vettedSensitiveVars := make(map[string]string)
-	vars := getVars(d)
-	sensitiveVars := getSensitiveVars(d)
-
 	remoteAppVars, remoteAppGetErr := retrieveConfigVars(appId, client)
 	if remoteAppGetErr != nil {
 		return remoteAppGetErr
 	}
 
-	// Verify through each vars and sensitiveVars by checking each key, value pair against what was set romotely
-	for k := range vars {
-		vettedVars[k] = remoteAppVars[k]
-	}
+	vettedConfigVars, vettedSensitiveConfigVars := vetVarsForState(getVars(d), getSensitiveVars(d), remoteAppVars)
 
-	for k := range sensitiveVars {
-		vettedSensitiveVars[k] = remoteAppVars[k]
+	if err := d.Set("vars", vettedConfigVars); err != nil {
+		log.Printf("[WARN] Error setting app config vars: %s", err)
 	}
-
-	if err := d.Set("vars", vettedVars); err != nil {
-		log.Printf("[WARN] Error setting vars: %s", err)
-	}
-	if err := d.Set("sensitive_vars", vettedSensitiveVars); err != nil {
-		log.Printf("[WARN] Error setting sensitive vars: %s", err)
+	if err := d.Set("sensitive_vars", vettedSensitiveConfigVars); err != nil {
+		log.Printf("[WARN] Error setting app config sensitive vars: %s", err)
 	}
 
 	return nil
@@ -159,39 +146,8 @@ func resourceHerokuAppConfigAssociationDelete(d *schema.ResourceData, m interfac
 	return nil
 }
 
-func mergeVars(vars, sensitiveVars map[string]interface{}) map[string]interface{} {
-	combined := make(map[string]interface{})
-
-	for k, v := range vars {
-		if v != nil {
-			combined[k] = v
-		}
-	}
-
-	for k, v := range sensitiveVars {
-		if v != nil {
-			combined[k] = v
-		}
-	}
-
-	return combined
-}
-
 func updateVars(id string, client *heroku.Service, o map[string]interface{}, n map[string]interface{}) error {
-	vars := make(map[string]*string)
-
-	for k, v := range o {
-		if v != nil {
-			vars[k] = nil
-		}
-	}
-
-	for k, v := range n {
-		if v != nil {
-			val := v.(string)
-			vars[k] = &val
-		}
-	}
+	vars := constructVars(o, n)
 
 	log.Printf("[INFO] Updating config vars: *%#v", vars)
 	if _, err := client.ConfigVarUpdate(context.TODO(), id, vars); err != nil {
@@ -223,24 +179,6 @@ func updateVars(id string, client *heroku.Service, o map[string]interface{}, n m
 	}
 
 	return nil
-}
-
-func getVarDiff(d *schema.ResourceData, key string) (old, new map[string]interface{}) {
-	log.Printf("[INFO] Does %s have change: *%#v", key, d.HasChange(key))
-	if d.HasChange(key) {
-		o, n := d.GetChange(key)
-		if o == nil {
-			o = map[string]interface{}{}
-		}
-		if n == nil {
-			n = map[string]interface{}{}
-		}
-
-		old = o.(map[string]interface{})
-		new = n.(map[string]interface{})
-	}
-
-	return old, new
 }
 
 // getVars extracts the vars attribute generically from a Heroku resource.

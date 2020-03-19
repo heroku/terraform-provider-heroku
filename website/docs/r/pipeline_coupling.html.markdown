@@ -8,7 +8,6 @@ description: |-
 
 # heroku\_pipeline\_coupling
 
-
 Provides a [Heroku Pipeline Coupling](https://devcenter.heroku.com/articles/pipelines)
 resource.
 
