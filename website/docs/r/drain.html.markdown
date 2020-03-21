@@ -15,7 +15,7 @@ create and manage Log Drains on Heroku.
 
 ```hcl
 resource "heroku_drain" "default" {
-  app = "test-app"
+  app = "ebb78898-5fae-44c1-9a0b-3171e1e4b372"
   url = "syslog://terraform.example.com:1234"
 }
 ```
@@ -24,8 +24,8 @@ resource "heroku_drain" "default" {
 
 The following arguments are supported:
 
+* `app` - (Required) A Heroku app's `UUID`. Can also be the name of the Heroku app but `UUID` is preferred as it is idempotent.
 * `url` - (Required) The URL for Heroku to drain your logs to.
-* `app` - (Required) The Heroku app to link to.
 
 ## Attributes Reference
 

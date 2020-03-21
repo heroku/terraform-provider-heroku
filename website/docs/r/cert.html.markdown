@@ -26,7 +26,7 @@ resource "heroku_addon" "ssl" {
 
 # Establish certificate for a given application
 resource "heroku_cert" "ssl_certificate" {
-  app               = "${heroku_app.default.name}"
+  app               = "${heroku_app.default.id}"
   certificate_chain = "${file("server.crt")}"
   private_key       = "${file("server.key")}"
   depends_on        = ["heroku_addon.ssl"]
@@ -37,7 +37,7 @@ resource "heroku_cert" "ssl_certificate" {
 
 The following arguments are supported:
 
-* `app` - (Required) The Heroku app to add to.
+* `app` - (Required) A Heroku app's `UUID`. Can also be the name of the Heroku app but `UUID` is preferred as it is idempotent.
 * `certificate_chain` - (Required) The certificate chain to add
 * `private_key` - (Required) The private key for a given certificate chain
 

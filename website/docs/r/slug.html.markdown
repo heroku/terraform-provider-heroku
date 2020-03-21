@@ -75,7 +75,7 @@ resource "heroku_formation" "foobar" {
 
 The following arguments are supported:
 
-* `app` - (Required) The ID of the Heroku app
+* `app` - (Required) A Heroku app's `UUID`. Can also be the name of the Heroku app but `UUID` is preferred as it is idempotent.
 * `buildpack_provided_description` - Description of language or app framework, `"Ruby/Rack"`; displayed as the app's language in the Heroku Dashboard
 * `checksum` - Hash of the slug for verifying its integrity, auto-generated from contents of `file_path` or `file_url`, `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 * `commit` - Identification of the code with your version control system (eg: SHA of the git HEAD), `"60883d9e8947a57e04dc9124f25df004866a2051"`

@@ -27,7 +27,7 @@ resource "heroku_addon" "database" {
 
 # Add a web-hook addon for the app
 resource "heroku_addon" "webhook" {
-  app  = "${heroku_app.default.name}"
+  app  = "${heroku_app.default.id}"
   plan = "deployhooks:http"
 
   config = {
@@ -40,7 +40,7 @@ resource "heroku_addon" "webhook" {
 
 The following arguments are supported:
 
-* `app` - (Required) The Heroku app to add to.
+* `app` - (Required) A Heroku app's `UUID`. Can also be the name of the Heroku app but `UUID` is preferred as it is idempotent.
 * `plan` - (Required) The addon to add.
 * `config` - (Optional) Optional plan configuration.
 * `name` - (Optional) Globally unique name of the add-on.
