@@ -244,35 +244,18 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 		return nil, err
 	}
 
-	// Flag organization apps by setting the organization name
-	if app.Organization != nil {
-		setErr := d.Set("organization", []map[string]interface{}{
-			{"name": app.Organization.Name},
-		})
-
-		if setErr != nil {
-			return nil, setErr
-		}
-	}
-
 	// XXX Heroku's API treats app UUID's and names the same. This can cause
 	// confusion as other parts of this provider assume the app NAME is the app
 	// ID, as a lot of the Heroku API will accept BOTH. App ID's aren't very
 	// easy to get, so it makes more sense to just use the name as much as possible.
-	d.SetId(app.Name)
-	setErr := d.Set("acm", app.Acm)
-	if setErr != nil {
-		return nil, setErr
-	}
+	//
+	// EDIT: (March 21, 2020) - The statement above causes issues for child resources
+	// of heroku_app such as heroku_addon where the `app` attribute is often set to ForceNew.
+	// As the app's name can change, its UUID does not. Therefore the heroku_app.id should have originally
+	// be set to the UUID to prevent unnecessary destroy and recreates of child resources. - DJ
+	d.SetId(app.ID)
 
-	if app.InternalRouting != nil {
-		setErr = d.Set("internal_routing", *app.InternalRouting)
-		if setErr != nil {
-			return nil, setErr
-		}
-	}
-
-	return []*schema.ResourceData{d}, nil
+	return []*schema.ResourceData{d}, resourceHerokuAppRead(d, m)
 }
 
 func switchHerokuAppCreate(d *schema.ResourceData, meta interface{}) (err error) {
@@ -316,7 +299,7 @@ func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	d.SetId(a.Name)
+	d.SetId(a.ID)
 	log.Printf("[INFO] App ID: %s", d.Id())
 
 	if err := performAppPostCreateTasks(d, client); err != nil {
@@ -387,7 +370,7 @@ func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 
-	d.SetId(a.Name)
+	d.SetId(a.ID)
 	log.Printf("[INFO] App ID: %s", d.Id())
 
 	if err := performAppPostCreateTasks(d, client); err != nil {
@@ -522,7 +505,7 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.SetId(updatedApp.Name)
+	d.SetId(updatedApp.ID)
 
 	if d.HasChange("buildpacks") {
 		err := updateBuildpacks(d.Id(), client, d.Get("buildpacks").([]interface{}))
