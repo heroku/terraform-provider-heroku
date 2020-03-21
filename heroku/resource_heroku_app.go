@@ -196,6 +196,7 @@ func resourceHerokuApp() *schema.Resource {
 			"acm": {
 				Type:     schema.TypeBool,
 				Optional: true,
+				Computed: true,
 			},
 
 			"heroku_hostname": {
