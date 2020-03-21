@@ -37,7 +37,7 @@ type application struct {
 
 	App          *herokuApplication // The heroku application
 	Client       *heroku.Service    // Client to interact with the heroku API
-	Vars         map[string]string  // The vars on the application
+	Vars         map[string]string  // Represents all vars on a heroku app.
 	Buildpacks   []string           // The application's buildpack names or URLs
 	Organization bool               // is the application organization app
 }
@@ -255,7 +255,9 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	// be set to the UUID to prevent unnecessary destroy and recreates of child resources. - DJ
 	d.SetId(app.ID)
 
-	return []*schema.ResourceData{d}, resourceHerokuAppRead(d, m)
+	readErr := resourceHerokuAppRead(d, m)
+
+	return []*schema.ResourceData{d}, readErr
 }
 
 func switchHerokuAppCreate(d *schema.ResourceData, meta interface{}) (err error) {
@@ -416,9 +418,6 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	careSensitive := make(map[string]struct{})
 	sensitiveConfigVars := make(map[string]string)
 
-	// Only track buildpacks when set in the configuration.
-	_, buildpacksConfigured := d.GetOk("buildpacks")
-
 	organizationApp := isOrganizationApp(d)
 
 	// Only set the config_vars that we have set in the configuration.
@@ -452,13 +451,6 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	if buildpacksConfigured {
-		buildpacksErr := d.Set("buildpacks", app.Buildpacks)
-		if buildpacksErr != nil {
-			return buildpacksErr
-		}
-	}
-
 	log.Printf("[LOG] Setting config vars: %s", configVars)
 	if err := d.Set("config_vars", configVars); err != nil {
 		log.Printf("[WARN] Error setting config vars: %s", err)
@@ -471,6 +463,11 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 
 	if err := d.Set("all_config_vars", app.Vars); err != nil {
 		log.Printf("[WARN] Error setting all_config_vars: %s", err)
+	}
+
+	buildpacksErr := d.Set("buildpacks", app.Buildpacks)
+	if buildpacksErr != nil {
+		return buildpacksErr
 	}
 
 	if organizationApp {
@@ -630,7 +627,7 @@ func retrieveBuildpacks(id string, client *heroku.Service) ([]string, error) {
 		return nil, err
 	}
 
-	buildpacks := []string{}
+	buildpacks := make([]string, 0)
 	for _, installation := range results {
 		buildpacks = append(buildpacks, installation.Buildpack.Name)
 	}
