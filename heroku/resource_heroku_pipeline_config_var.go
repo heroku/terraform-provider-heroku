@@ -136,7 +136,13 @@ func resourceHerokuPipelineConfigVarRead(d *schema.ResourceData, meta interface{
 		return getErr
 	}
 
-	vettedConfigVars, vettedSensitiveConfigVars := vetVarsForState(getVars(d), getSensitiveVars(d), remotePipelineVars)
+	// Need to convert remotePipelineVars to a data type required by vetVarsForState
+	rpvFormatted := make(map[string]string)
+	for key, value := range remotePipelineVars {
+		rpvFormatted[key] = fmt.Sprintf("%v", value)
+	}
+
+	vettedConfigVars, vettedSensitiveConfigVars := vetVarsForState(getVars(d), getSensitiveVars(d), rpvFormatted)
 
 	log.Printf("[DEBUG] pipeline config vars to be set in state: *%#v", vettedConfigVars)
 	log.Printf("[DEBUG] pipeline sensitive config vars to be set in state: *%#v", vettedSensitiveConfigVars)
@@ -162,7 +168,7 @@ func resourceHerokuPipelineConfigVarDelete(d *schema.ResourceData, meta interfac
 	log.Printf("[INFO] Removing pipeline [%s] stage [%s] config vars", pipelineID, pipelineStage)
 
 	// Delete all config vars by setting the vars defined in resource schema to nil value.
-	updateErr := updatePipelineConfigVars(client, pipelineID, pipelineStage, allOldVars, nil)
+	updateErr := updatePipelineConfigVars(client, pipelineID, pipelineStage, allVars, nil)
 	if updateErr != nil {
 		return updateErr
 	}

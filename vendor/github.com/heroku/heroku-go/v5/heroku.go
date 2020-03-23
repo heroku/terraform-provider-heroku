@@ -24,6 +24,8 @@ import (
 	"time"
 )
 
+var _ = time.Second
+
 const (
 	Version          = "v5"
 	DefaultUserAgent = "heroku/" + Version + " (" + runtime.GOOS + "; " + runtime.GOARCH + ")"
@@ -1546,6 +1548,29 @@ func (s *Service) AppWebhookEventList(ctx context.Context, appIdentity string, l
 	return appWebhookEvent, s.Get(ctx, &appWebhookEvent, fmt.Sprintf("/apps/%v/webhook-events", appIdentity), nil, lr)
 }
 
+// An audit trail archive represents a monthly json zipped file
+// containing events
+type Archive struct {
+	Checksum  string    `json:"checksum" url:"checksum,key"`     // checksum for the archive
+	CreatedAt time.Time `json:"created_at" url:"created_at,key"` // when archive was created
+	Month     int       `json:"month" url:"month,key"`           // month of the archive
+	Size      int       `json:"size" url:"size,key"`             // size of the archive in bytes
+	URL       string    `json:"url" url:"url,key"`               // url where to download the archive
+	Year      int       `json:"year" url:"year,key"`             // year of the archive
+}
+
+// Get archive for a single month.
+func (s *Service) ArchiveInfo(ctx context.Context, enterpriseAccountIdentity string, archiveYear int, archiveMonth int) (*Archive, error) {
+	var archive Archive
+	return &archive, s.Get(ctx, &archive, fmt.Sprintf("/enterprise-accounts/%v/archives/%v/%v", enterpriseAccountIdentity, archiveYear, archiveMonth), nil, nil)
+}
+
+// List existing archives.
+func (s *Service) ArchiveList(ctx context.Context, enterpriseAccountIdentity string, lr *ListRange) (*Archive, error) {
+	var archive Archive
+	return &archive, s.Get(ctx, &archive, fmt.Sprintf("/enterprise-accounts/%v/archives", enterpriseAccountIdentity), nil, lr)
+}
+
 // A build represents the process of transforming a code tarball into a
 // slug
 type Build struct {
@@ -1926,6 +1951,233 @@ type DynoSizeListResult []DynoSize
 func (s *Service) DynoSizeList(ctx context.Context, lr *ListRange) (DynoSizeListResult, error) {
 	var dynoSize DynoSizeListResult
 	return dynoSize, s.Get(ctx, &dynoSize, fmt.Sprintf("/dyno-sizes"), nil, lr)
+}
+
+// Enterprise accounts allow companies to manage their development teams
+// and billing.
+type EnterpriseAccount struct {
+	CreatedAt        time.Time `json:"created_at" url:"created_at,key"` // when the enterprise account was created
+	ID               string    `json:"id" url:"id,key"`                 // unique identifier of the enterprise account
+	IdentityProvider *struct {
+		ID    string `json:"id" url:"id,key"`     // unique identifier of this identity provider
+		Name  string `json:"name" url:"name,key"` // user-friendly unique identifier for this identity provider
+		Owner struct {
+			ID   string `json:"id" url:"id,key"`     // unique identifier of the owner
+			Name string `json:"name" url:"name,key"` // name of the owner
+			Type string `json:"type" url:"type,key"` // type of the owner
+		} `json:"owner" url:"owner,key"` // entity that owns this identity provider
+	} `json:"identity_provider" url:"identity_provider,key"` // Identity Provider associated with the Enterprise Account
+	Name        string    `json:"name" url:"name,key"`               // unique name of the enterprise account
+	Permissions []string  `json:"permissions" url:"permissions,key"` // the current user's permissions for this enterprise account
+	Trial       bool      `json:"trial" url:"trial,key"`             // whether the enterprise account is a trial or not
+	UpdatedAt   time.Time `json:"updated_at" url:"updated_at,key"`   // when the enterprise account was updated
+}
+type EnterpriseAccountListResult []EnterpriseAccount
+
+// List enterprise accounts in which you are a member.
+func (s *Service) EnterpriseAccountList(ctx context.Context, lr *ListRange) (EnterpriseAccountListResult, error) {
+	var enterpriseAccount EnterpriseAccountListResult
+	return enterpriseAccount, s.Get(ctx, &enterpriseAccount, fmt.Sprintf("/enterprise-accounts"), nil, lr)
+}
+
+// Information about an enterprise account.
+func (s *Service) EnterpriseAccountInfo(ctx context.Context, enterpriseAccountIdentity string) (*EnterpriseAccount, error) {
+	var enterpriseAccount EnterpriseAccount
+	return &enterpriseAccount, s.Get(ctx, &enterpriseAccount, fmt.Sprintf("/enterprise-accounts/%v", enterpriseAccountIdentity), nil, nil)
+}
+
+type EnterpriseAccountUpdateOpts struct {
+	Name *string `json:"name,omitempty" url:"name,omitempty,key"` // unique name of the enterprise account
+}
+
+// Update enterprise account properties
+func (s *Service) EnterpriseAccountUpdate(ctx context.Context, enterpriseAccountIdentity string, o EnterpriseAccountUpdateOpts) (*EnterpriseAccount, error) {
+	var enterpriseAccount EnterpriseAccount
+	return &enterpriseAccount, s.Patch(ctx, &enterpriseAccount, fmt.Sprintf("/enterprise-accounts/%v", enterpriseAccountIdentity), o)
+}
+
+// Enterprise account members are users with access to an enterprise
+// account.
+type EnterpriseAccountMember struct {
+	EnterpriseAccount struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of the enterprise account
+		Name string `json:"name" url:"name,key"` // unique name of the enterprise account
+	} `json:"enterprise_account" url:"enterprise_account,key"`
+	ID               string `json:"id" url:"id,key"` // unique identifier of the member
+	IdentityProvider *struct {
+		ID    string `json:"id" url:"id,key"`     // unique identifier of this identity provider
+		Name  string `json:"name" url:"name,key"` // name of the identity provider
+		Owner struct {
+			ID   string `json:"id" url:"id,key"`     // unique identifier of the owner
+			Name string `json:"name" url:"name,key"` // name of the owner
+			Type string `json:"type" url:"type,key"` // type of the owner
+		} `json:"owner" url:"owner,key"` // entity that owns this identity provider
+		Redacted bool `json:"redacted" url:"redacted,key"` // whether the identity_provider information is redacted or not
+	} `json:"identity_provider" url:"identity_provider,key"` // Identity Provider information the member is federated with
+	Permissions []struct {
+		Description string `json:"description" url:"description,key"`
+		Name        string `json:"name" url:"name,key"` // permission in the enterprise account
+	} `json:"permissions" url:"permissions,key"` // enterprise account permissions
+	TwoFactorAuthentication bool `json:"two_factor_authentication" url:"two_factor_authentication,key"` // whether the Enterprise Account member has two factor authentication
+	// enabled
+	User struct {
+		Email string `json:"email" url:"email,key"` // unique email address of account
+		ID    string `json:"id" url:"id,key"`       // unique identifier of an account
+	} `json:"user" url:"user,key"` // user information for the membership
+}
+type EnterpriseAccountMemberListResult []EnterpriseAccountMember
+
+// List members in an enterprise account.
+func (s *Service) EnterpriseAccountMemberList(ctx context.Context, enterpriseAccountIdentity string, lr *ListRange) (EnterpriseAccountMemberListResult, error) {
+	var enterpriseAccountMember EnterpriseAccountMemberListResult
+	return enterpriseAccountMember, s.Get(ctx, &enterpriseAccountMember, fmt.Sprintf("/enterprise-accounts/%v/members", enterpriseAccountIdentity), nil, lr)
+}
+
+type EnterpriseAccountMemberCreateOpts struct {
+	Federated   *bool    `json:"federated,omitempty" url:"federated,omitempty,key"` // whether membership is being created as part of SSO JIT
+	Permissions []string `json:"permissions" url:"permissions,key"`                 // permissions for enterprise account
+	User        string   `json:"user" url:"user,key"`                               // unique email address of account
+}
+
+// Create a member in an enterprise account.
+func (s *Service) EnterpriseAccountMemberCreate(ctx context.Context, enterpriseAccountIdentity string, o EnterpriseAccountMemberCreateOpts) (*EnterpriseAccountMember, error) {
+	var enterpriseAccountMember EnterpriseAccountMember
+	return &enterpriseAccountMember, s.Post(ctx, &enterpriseAccountMember, fmt.Sprintf("/enterprise-accounts/%v/members", enterpriseAccountIdentity), o)
+}
+
+type EnterpriseAccountMemberUpdateOpts struct {
+	Permissions []string `json:"permissions" url:"permissions,key"` // permissions for enterprise account
+}
+
+// Update a member in an enterprise account.
+func (s *Service) EnterpriseAccountMemberUpdate(ctx context.Context, enterpriseAccountIdentity string, enterpriseAccountMemberUserIdentity string, o EnterpriseAccountMemberUpdateOpts) (*EnterpriseAccountMember, error) {
+	var enterpriseAccountMember EnterpriseAccountMember
+	return &enterpriseAccountMember, s.Patch(ctx, &enterpriseAccountMember, fmt.Sprintf("/enterprise-accounts/%v/members/%v", enterpriseAccountIdentity, enterpriseAccountMemberUserIdentity), o)
+}
+
+// delete a member in an enterprise account.
+func (s *Service) EnterpriseAccountMemberDelete(ctx context.Context, enterpriseAccountIdentity string, enterpriseAccountMemberUserIdentity string) (*EnterpriseAccountMember, error) {
+	var enterpriseAccountMember EnterpriseAccountMember
+	return &enterpriseAccountMember, s.Delete(ctx, &enterpriseAccountMember, fmt.Sprintf("/enterprise-accounts/%v/members/%v", enterpriseAccountIdentity, enterpriseAccountMemberUserIdentity))
+}
+
+// Usage for an enterprise account at a daily resolution.
+type EnterpriseAccountUsageDaily struct {
+	Addons  float64 `json:"addons" url:"addons,key"`   // total add-on credits used
+	Data    float64 `json:"data" url:"data,key"`       // total add-on credits used for first party add-ons
+	Date    string  `json:"date" url:"date,key"`       // date of the usage
+	Dynos   float64 `json:"dynos" url:"dynos,key"`     // dynos used
+	ID      string  `json:"id" url:"id,key"`           // enterprise account identifier
+	Name    string  `json:"name" url:"name,key"`       // name of the enterprise account
+	Partner float64 `json:"partner" url:"partner,key"` // total add-on credits used for third party add-ons
+	Space   float64 `json:"space" url:"space,key"`     // space credits used
+	Teams   []struct {
+		Addons float64 `json:"addons" url:"addons,key"` // total add-on credits used
+		Apps   []struct {
+			Addons  float64 `json:"addons" url:"addons,key"`     // total add-on credits used
+			AppName string  `json:"app_name" url:"app_name,key"` // unique name of app
+			Data    float64 `json:"data" url:"data,key"`         // total add-on credits used for first party add-ons
+			Dynos   float64 `json:"dynos" url:"dynos,key"`       // dynos used
+			Partner float64 `json:"partner" url:"partner,key"`   // total add-on credits used for third party add-ons
+		} `json:"apps" url:"apps,key"` // app usage in the team
+		Data    float64 `json:"data" url:"data,key"`       // total add-on credits used for first party add-ons
+		Dynos   float64 `json:"dynos" url:"dynos,key"`     // dynos used
+		ID      string  `json:"id" url:"id,key"`           // team identifier
+		Name    string  `json:"name" url:"name,key"`       // name of the team
+		Partner float64 `json:"partner" url:"partner,key"` // total add-on credits used for third party add-ons
+		Space   float64 `json:"space" url:"space,key"`     // space credits used
+	} `json:"teams" url:"teams,key"` // usage by team
+}
+type EnterpriseAccountUsageDailyInfoResult []EnterpriseAccountUsageDaily
+
+// Retrieves usage for an enterprise account for a range of days. Start
+// and end dates can be specified as query parameters using the date
+// format, YYYY-MM-DD format. For example,
+// '/enterprise-accounts/example-account/usage/daily?start=2019-01-01&end
+// =2019-01-31' specifies all days in January for 2019.
+func (s *Service) EnterpriseAccountUsageDailyInfo(ctx context.Context, enterpriseAccountID string, lr *ListRange) (EnterpriseAccountUsageDailyInfoResult, error) {
+	var enterpriseAccountUsageDaily EnterpriseAccountUsageDailyInfoResult
+	return enterpriseAccountUsageDaily, s.Get(ctx, &enterpriseAccountUsageDaily, fmt.Sprintf("/enterprise-accounts/%v/usage/daily", enterpriseAccountID), nil, lr)
+}
+
+// Usage for an enterprise account at a monthly resolution.
+type EnterpriseAccountUsageMonthly struct {
+	Addons  float64 `json:"addons" url:"addons,key"`   // total add-on credits used
+	Connect float64 `json:"connect" url:"connect,key"` // average connect rows synced
+	Data    float64 `json:"data" url:"data,key"`       // total add-on credits used for first party add-ons
+	Dynos   float64 `json:"dynos" url:"dynos,key"`     // dynos used
+	ID      string  `json:"id" url:"id,key"`           // enterprise account identifier
+	Month   string  `json:"month" url:"month,key"`     // year and month of the usage
+	Name    string  `json:"name" url:"name,key"`       // name of the enterprise account
+	Partner float64 `json:"partner" url:"partner,key"` // total add-on credits used for third party add-ons
+	Space   float64 `json:"space" url:"space,key"`     // space credits used
+	Teams   []struct {
+		Addons float64 `json:"addons" url:"addons,key"` // total add-on credits used
+		Apps   []struct {
+			Addons  float64 `json:"addons" url:"addons,key"`     // total add-on credits used
+			AppName string  `json:"app_name" url:"app_name,key"` // unique name of app
+			Data    float64 `json:"data" url:"data,key"`         // total add-on credits used for first party add-ons
+			Dynos   float64 `json:"dynos" url:"dynos,key"`       // dynos used
+			Partner float64 `json:"partner" url:"partner,key"`   // total add-on credits used for third party add-ons
+		} `json:"apps" url:"apps,key"` // app usage in the team
+		Connect float64 `json:"connect" url:"connect,key"` // average connect rows synced
+		Data    float64 `json:"data" url:"data,key"`       // total add-on credits used for first party add-ons
+		Dynos   float64 `json:"dynos" url:"dynos,key"`     // dynos used
+		ID      string  `json:"id" url:"id,key"`           // team identifier
+		Name    string  `json:"name" url:"name,key"`       // name of the team
+		Partner float64 `json:"partner" url:"partner,key"` // total add-on credits used for third party add-ons
+		Space   float64 `json:"space" url:"space,key"`     // space credits used
+	} `json:"teams" url:"teams,key"` // usage by team
+}
+type EnterpriseAccountUsageMonthlyInfoResult []EnterpriseAccountUsageMonthly
+
+// Retrieves usage for an enterprise account for a range of months.
+// Start and end dates can be specified as query parameters using the
+// date format, YYYY-MM format. For example,
+// '/enterprise-accounts/example-account/usage/monthly?start=2019-01&end=
+// 2019-02' specifies usage in January and February for 2019. If no end
+// date is specified, one month of usage is returned.
+func (s *Service) EnterpriseAccountUsageMonthlyInfo(ctx context.Context, enterpriseAccountID string, lr *ListRange) (EnterpriseAccountUsageMonthlyInfoResult, error) {
+	var enterpriseAccountUsageMonthly EnterpriseAccountUsageMonthlyInfoResult
+	return enterpriseAccountUsageMonthly, s.Get(ctx, &enterpriseAccountUsageMonthly, fmt.Sprintf("/enterprise-accounts/%v/usage/monthly", enterpriseAccountID), nil, lr)
+}
+
+// An audit trail event represents some action on the platform
+type Event struct {
+	Action string `json:"action" url:"action,key"` // action for the event
+	Actor  struct {
+		Email string `json:"email" url:"email,key"`
+		ID    string `json:"id" url:"id,key"`
+	} `json:"actor" url:"actor,key"` // user who caused event
+	App struct {
+		ID   string `json:"id" url:"id,key"`
+		Name string `json:"name" url:"name,key"`
+	} `json:"app" url:"app,key"` // app upon which event took place
+	CreatedAt         time.Time `json:"created_at" url:"created_at,key"` // when event was created
+	Data              struct{}  `json:"data" url:"data,key"`             // data specific to the event
+	EnterpriseAccount struct {
+		ID   string `json:"id" url:"id,key"`
+		Name string `json:"name" url:"name,key"`
+	} `json:"enterprise_account" url:"enterprise_account,key"` // enterprise account on which the event happened
+	ID    string `json:"id" url:"id,key"` // unique identifier of event
+	Owner struct {
+		Email string `json:"email" url:"email,key"`
+		ID    string `json:"id" url:"id,key"`
+	} `json:"owner" url:"owner,key"` // owner of the app targeted by the event
+	Request struct {
+		IPAddress string `json:"ip_address" url:"ip_address,key"`
+	} `json:"request" url:"request,key"` // information about where the action was triggered
+	Team struct {
+		ID   string `json:"id" url:"id,key"`
+		Name string `json:"name" url:"name,key"`
+	} `json:"team" url:"team,key"` // team on which the event happened
+	Type string `json:"type" url:"type,key"` // type of event
+}
+
+// List existing events.
+func (s *Service) EventList(ctx context.Context, enterpriseAccountIdentity string, lr *ListRange) (*Event, error) {
+	var event Event
+	return &event, s.Get(ctx, &event, fmt.Sprintf("/enterprise-accounts/%v/events", enterpriseAccountIdentity), nil, lr)
 }
 
 // Filters are special endpoints to allow for API consumers to specify a
@@ -2690,15 +2942,43 @@ func (s *Service) PeeringInfoInfo(ctx context.Context, spaceIdentity string) (*P
 	return &peeringInfo, s.Get(ctx, &peeringInfo, fmt.Sprintf("/spaces/%v/peering-info", spaceIdentity), nil, nil)
 }
 
+// An owned entity including users' permissions.
+type PermissionEntity struct {
+	ID     string `json:"id" url:"id,key"`           // ID of the entity.
+	Name   string `json:"name" url:"name,key"`       // Name of the entity.
+	TeamID string `json:"team_id" url:"team_id,key"` // unique identifier of team
+	Type   string `json:"type" url:"type,key"`       // The type of object the entity is referring to.
+	Users  []struct {
+		Email       string   `json:"email" url:"email,key"`             // unique email address of account
+		ID          string   `json:"id" url:"id,key"`                   // unique identifier of an account
+		Permissions []string `json:"permissions" url:"permissions,key"` // enterprise account permissions
+	} `json:"users" url:"users,key"` // Users that have access to the entity.
+}
+type PermissionEntityListResult []PermissionEntity
+
+// List permission entities for a team.
+func (s *Service) PermissionEntityList(ctx context.Context, teamIdentity string, lr *ListRange) (PermissionEntityListResult, error) {
+	var permissionEntity PermissionEntityListResult
+	return permissionEntity, s.Get(ctx, &permissionEntity, fmt.Sprintf("/teams/%v/permissions", teamIdentity), nil, lr)
+}
+
 // A pipeline allows grouping of apps into different stages.
 type Pipeline struct {
 	CreatedAt time.Time `json:"created_at" url:"created_at,key"` // when pipeline was created
 	ID        string    `json:"id" url:"id,key"`                 // unique identifier of pipeline
 	Name      string    `json:"name" url:"name,key"`             // name of pipeline
+	Owner     *struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of a pipeline owner
+		Type string `json:"type" url:"type,key"` // type of pipeline owner
+	} `json:"owner" url:"owner,key"` // Owner of a pipeline.
 	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when pipeline was updated
 }
 type PipelineCreateOpts struct {
-	Name string `json:"name" url:"name,key"` // name of pipeline
+	Name  string `json:"name" url:"name,key"` // name of pipeline
+	Owner *struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of a pipeline owner
+		Type string `json:"type" url:"type,key"` // type of pipeline owner
+	} `json:"owner,omitempty" url:"owner,omitempty,key"` // Owner of a pipeline.
 }
 
 // Create a new pipeline.
@@ -2732,9 +3012,74 @@ func (s *Service) PipelineUpdate(ctx context.Context, pipelineID string, o Pipel
 type PipelineListResult []Pipeline
 
 // List existing pipelines.
-func (s *Service) PipelineList(ctx context.Context, lr *ListRange) (PipelineListResult, error) {
-	var pipeline PipelineListResult
-	return pipeline, s.Get(ctx, &pipeline, fmt.Sprintf("/pipelines"), nil, lr)
+func (s *Service) PipelineList(ctx context.Context, lr *ListRange) error {
+	return s.Get(ctx, nil, fmt.Sprintf("/pipelines"), nil, lr)
+}
+
+// Information about latest builds of apps in a pipeline.
+type PipelineBuild struct{}
+type PipelineBuildListResult []struct {
+	App struct {
+		ID string `json:"id" url:"id,key"` // unique identifier of app
+	} `json:"app" url:"app,key"` // app that the build belongs to
+	Buildpacks []struct {
+		Name string `json:"name" url:"name,key"` // Buildpack Registry name of the buildpack for the app
+		URL  string `json:"url" url:"url,key"`   // the URL of the buildpack for the app
+	} `json:"buildpacks" url:"buildpacks,key"` // buildpacks executed for this build, in order
+	CreatedAt       time.Time `json:"created_at" url:"created_at,key"`               // when build was created
+	ID              string    `json:"id" url:"id,key"`                               // unique identifier of build
+	OutputStreamURL string    `json:"output_stream_url" url:"output_stream_url,key"` // Build process output will be available from this URL as a stream. The
+	// stream is available as either `text/plain` or `text/event-stream`.
+	// Clients should be prepared to handle disconnects and can resume the
+	// stream by sending a `Range` header (for `text/plain`) or a
+	// `Last-Event-Id` header (for `text/event-stream`).
+	Release *struct {
+		ID string `json:"id" url:"id,key"` // unique identifier of release
+	} `json:"release" url:"release,key"` // release resulting from the build
+	Slug *struct {
+		ID string `json:"id" url:"id,key"` // unique identifier of slug
+	} `json:"slug" url:"slug,key"` // slug created by this build
+	SourceBlob struct {
+		Checksum *string `json:"checksum" url:"checksum,key"` // an optional checksum of the gzipped tarball for verifying its
+		// integrity
+		URL string `json:"url" url:"url,key"` // URL where gzipped tar archive of source code for build was
+		// downloaded.
+		Version *string `json:"version" url:"version,key"` // Version of the gzipped tarball.
+	} `json:"source_blob" url:"source_blob,key"` // location of gzipped tarball of source code used to create build
+	Stack     string    `json:"stack" url:"stack,key"`           // stack of build
+	Status    string    `json:"status" url:"status,key"`         // status of build
+	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when build was updated
+	User      struct {
+		Email string `json:"email" url:"email,key"` // unique email address of account
+		ID    string `json:"id" url:"id,key"`       // unique identifier of an account
+	} `json:"user" url:"user,key"` // user that started the build
+}
+
+// List latest builds for each app in a pipeline
+func (s *Service) PipelineBuildList(ctx context.Context, pipelineIdentity string, lr *ListRange) (PipelineBuildListResult, error) {
+	var pipelineBuild PipelineBuildListResult
+	return pipelineBuild, s.Get(ctx, &pipelineBuild, fmt.Sprintf("/pipelines/%v/latest-builds", pipelineIdentity), nil, lr)
+}
+
+// Pipeline Config Vars allow you to manage the configuration
+// information provided to a pipeline.
+type PipelineConfigVar map[string]string
+type PipelineConfigVarInfoForAppResult map[string]*string
+
+// Get config-vars for a pipeline stage.
+func (s *Service) PipelineConfigVarInfoForApp(ctx context.Context, pipelineID string, pipelineCouplingStage string) (PipelineConfigVarInfoForAppResult, error) {
+	var pipelineConfigVar PipelineConfigVarInfoForAppResult
+	return pipelineConfigVar, s.Get(ctx, &pipelineConfigVar, fmt.Sprintf("/pipelines/%v/stage/%v/config-vars", pipelineID, pipelineCouplingStage), nil, nil)
+}
+
+type PipelineConfigVarUpdateResult map[string]*string
+
+// Update config-vars for a pipeline stage. You can update existing
+// config-vars by setting them again, and remove by setting it to
+// `null`.
+func (s *Service) PipelineConfigVarUpdate(ctx context.Context, pipelineID string, pipelineCouplingStage string, o map[string]*string) (PipelineConfigVarUpdateResult, error) {
+	var pipelineConfigVar PipelineConfigVarUpdateResult
+	return pipelineConfigVar, s.Patch(ctx, &pipelineConfigVar, fmt.Sprintf("/pipelines/%v/stage/%v/config-vars", pipelineID, pipelineCouplingStage), o)
 }
 
 // Information about an app's coupling to a pipeline
@@ -2758,11 +3103,11 @@ func (s *Service) PipelineCouplingListByPipeline(ctx context.Context, pipelineID
 	return pipelineCoupling, s.Get(ctx, &pipelineCoupling, fmt.Sprintf("/pipelines/%v/pipeline-couplings", pipelineID), nil, lr)
 }
 
-type PipelineCouplingListForCurrentUserResult []PipelineCoupling
+type PipelineCouplingListByCurrentUserResult []PipelineCoupling
 
 // List pipeline couplings for the current user.
-func (s *Service) PipelineCouplingListForCurrentUser(ctx context.Context, lr *ListRange) (PipelineCouplingListForCurrentUserResult, error) {
-	var pipelineCoupling PipelineCouplingListForCurrentUserResult
+func (s *Service) PipelineCouplingListByCurrentUser(ctx context.Context, lr *ListRange) (PipelineCouplingListByCurrentUserResult, error) {
+	var pipelineCoupling PipelineCouplingListByCurrentUserResult
 	return pipelineCoupling, s.Get(ctx, &pipelineCoupling, fmt.Sprintf("/users/~/pipeline-couplings"), nil, lr)
 }
 
@@ -2772,6 +3117,14 @@ type PipelineCouplingListResult []PipelineCoupling
 func (s *Service) PipelineCouplingList(ctx context.Context, lr *ListRange) (PipelineCouplingListResult, error) {
 	var pipelineCoupling PipelineCouplingListResult
 	return pipelineCoupling, s.Get(ctx, &pipelineCoupling, fmt.Sprintf("/pipeline-couplings"), nil, lr)
+}
+
+type PipelineCouplingListByTeamResult []PipelineCoupling
+
+// List pipeline couplings for a team.
+func (s *Service) PipelineCouplingListByTeam(ctx context.Context, teamIdentity string, lr *ListRange) (PipelineCouplingListByTeamResult, error) {
+	var pipelineCoupling PipelineCouplingListByTeamResult
+	return pipelineCoupling, s.Get(ctx, &pipelineCoupling, fmt.Sprintf("/teams/%v/pipeline-couplings", teamIdentity), nil, lr)
 }
 
 type PipelineCouplingCreateOpts struct {
@@ -2808,10 +3161,45 @@ func (s *Service) PipelineCouplingUpdate(ctx context.Context, pipelineCouplingId
 	return &pipelineCoupling, s.Patch(ctx, &pipelineCoupling, fmt.Sprintf("/pipeline-couplings/%v", pipelineCouplingIdentity), o)
 }
 
-// Info for an existing app pipeline coupling.
+// Info for an existing pipeline coupling.
 func (s *Service) PipelineCouplingInfoByApp(ctx context.Context, appIdentity string) (*PipelineCoupling, error) {
 	var pipelineCoupling PipelineCoupling
 	return &pipelineCoupling, s.Get(ctx, &pipelineCoupling, fmt.Sprintf("/apps/%v/pipeline-couplings", appIdentity), nil, nil)
+}
+
+// Information about latest deployments of apps in a pipeline.
+type PipelineDeployment struct{}
+type PipelineDeploymentListResult []struct {
+	AddonPlanNames []string `json:"addon_plan_names" url:"addon_plan_names,key"` // add-on plans installed on the app for this release
+	App            struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of app
+		Name string `json:"name" url:"name,key"` // unique name of app
+	} `json:"app" url:"app,key"` // app involved in the release
+	CreatedAt       time.Time `json:"created_at" url:"created_at,key"`               // when release was created
+	Current         bool      `json:"current" url:"current,key"`                     // indicates this release as being the current one for the app
+	Description     string    `json:"description" url:"description,key"`             // description of changes in this release
+	ID              string    `json:"id" url:"id,key"`                               // unique identifier of release
+	OutputStreamURL *string   `json:"output_stream_url" url:"output_stream_url,key"` // Release command output will be available from this URL as a stream.
+	// The stream is available as either `text/plain` or
+	// `text/event-stream`. Clients should be prepared to handle disconnects
+	// and can resume the stream by sending a `Range` header (for
+	// `text/plain`) or a `Last-Event-Id` header (for `text/event-stream`).
+	Slug *struct {
+		ID string `json:"id" url:"id,key"` // unique identifier of slug
+	} `json:"slug" url:"slug,key"` // slug running in this release
+	Status    string    `json:"status" url:"status,key"`         // current status of the release
+	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when release was updated
+	User      struct {
+		Email string `json:"email" url:"email,key"` // unique email address of account
+		ID    string `json:"id" url:"id,key"`       // unique identifier of an account
+	} `json:"user" url:"user,key"` // user that created the release
+	Version int `json:"version" url:"version,key"` // unique version assigned to the release
+}
+
+// List latest slug releases for each app in a pipeline
+func (s *Service) PipelineDeploymentList(ctx context.Context, pipelineIdentity string, lr *ListRange) (PipelineDeploymentListResult, error) {
+	var pipelineDeployment PipelineDeploymentListResult
+	return pipelineDeployment, s.Get(ctx, &pipelineDeployment, fmt.Sprintf("/pipelines/%v/latest-deployments", pipelineIdentity), nil, lr)
 }
 
 // Promotions allow you to move code from an app in a pipeline to all
@@ -2882,6 +3270,90 @@ type PipelinePromotionTargetListResult []PipelinePromotionTarget
 func (s *Service) PipelinePromotionTargetList(ctx context.Context, pipelinePromotionID string, lr *ListRange) (PipelinePromotionTargetListResult, error) {
 	var pipelinePromotionTarget PipelinePromotionTargetListResult
 	return pipelinePromotionTarget, s.Get(ctx, &pipelinePromotionTarget, fmt.Sprintf("/pipeline-promotions/%v/promotion-targets", pipelinePromotionID), nil, lr)
+}
+
+// Information about latest releases of apps in a pipeline.
+type PipelineRelease struct{}
+type PipelineReleaseListResult []struct {
+	AddonPlanNames []string `json:"addon_plan_names" url:"addon_plan_names,key"` // add-on plans installed on the app for this release
+	App            struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of app
+		Name string `json:"name" url:"name,key"` // unique name of app
+	} `json:"app" url:"app,key"` // app involved in the release
+	CreatedAt       time.Time `json:"created_at" url:"created_at,key"`               // when release was created
+	Current         bool      `json:"current" url:"current,key"`                     // indicates this release as being the current one for the app
+	Description     string    `json:"description" url:"description,key"`             // description of changes in this release
+	ID              string    `json:"id" url:"id,key"`                               // unique identifier of release
+	OutputStreamURL *string   `json:"output_stream_url" url:"output_stream_url,key"` // Release command output will be available from this URL as a stream.
+	// The stream is available as either `text/plain` or
+	// `text/event-stream`. Clients should be prepared to handle disconnects
+	// and can resume the stream by sending a `Range` header (for
+	// `text/plain`) or a `Last-Event-Id` header (for `text/event-stream`).
+	Slug *struct {
+		ID string `json:"id" url:"id,key"` // unique identifier of slug
+	} `json:"slug" url:"slug,key"` // slug running in this release
+	Status    string    `json:"status" url:"status,key"`         // current status of the release
+	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when release was updated
+	User      struct {
+		Email string `json:"email" url:"email,key"` // unique email address of account
+		ID    string `json:"id" url:"id,key"`       // unique identifier of an account
+	} `json:"user" url:"user,key"` // user that created the release
+	Version int `json:"version" url:"version,key"` // unique version assigned to the release
+}
+
+// List latest releases for each app in a pipeline
+func (s *Service) PipelineReleaseList(ctx context.Context, pipelineIdentity string, lr *ListRange) (PipelineReleaseListResult, error) {
+	var pipelineRelease PipelineReleaseListResult
+	return pipelineRelease, s.Get(ctx, &pipelineRelease, fmt.Sprintf("/pipelines/%v/latest-releases", pipelineIdentity), nil, lr)
+}
+
+// A pipeline's stack is determined by the apps in the pipeline. This is
+// used during creation of CI and Review Apps that have no stack defined
+// in app.json
+type PipelineStack struct {
+	Stack *struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of stack
+		Name string `json:"name" url:"name,key"` // unique name of stack
+	} `json:"stack" url:"stack,key"` // identity of the stack that will be used for new builds without a
+	// stack defined in CI and Review Apps
+}
+
+// The stack for a given pipeline, used for CI and Review Apps that have
+// no stack defined in app.json.
+func (s *Service) PipelineStackDefaultStack(ctx context.Context, pipelineIdentity string) (*PipelineStack, error) {
+	var pipelineStack PipelineStack
+	return &pipelineStack, s.Get(ctx, &pipelineStack, fmt.Sprintf("/pipelines/%v/pipeline-stack", pipelineIdentity), nil, nil)
+}
+
+// A pipeline transfer is the process of changing pipeline ownership
+// along with the contained apps.
+type PipelineTransfer struct {
+	NewOwner *struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of a pipeline owner
+		Type string `json:"type" url:"type,key"` // type of pipeline owner
+	} `json:"new_owner" url:"new_owner,key"` // Owner of a pipeline.
+	Pipeline struct {
+		ID string `json:"id" url:"id,key"` // unique identifier of pipeline
+	} `json:"pipeline" url:"pipeline,key"` // pipeline being transferred
+	PreviousOwner *struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of a pipeline owner
+		Type string `json:"type" url:"type,key"` // type of pipeline owner
+	} `json:"previous_owner" url:"previous_owner,key"` // Owner of a pipeline.
+}
+type PipelineTransferCreateOpts struct {
+	NewOwner struct {
+		ID   *string `json:"id,omitempty" url:"id,omitempty,key"`     // unique identifier of a pipeline owner
+		Type *string `json:"type,omitempty" url:"type,omitempty,key"` // type of pipeline owner
+	} `json:"new_owner" url:"new_owner,key"` // New pipeline owner
+	Pipeline struct {
+		ID *string `json:"id,omitempty" url:"id,omitempty,key"` // unique identifier of pipeline
+	} `json:"pipeline" url:"pipeline,key"` // The pipeline to transfer
+}
+
+// Create a new pipeline transfer.
+func (s *Service) PipelineTransferCreate(ctx context.Context, o PipelineTransferCreateOpts) (*PipelineTransfer, error) {
+	var pipelineTransfer PipelineTransfer
+	return &pipelineTransfer, s.Post(ctx, &pipelineTransfer, fmt.Sprintf("/pipeline-transfers"), o)
 }
 
 // Plans represent different configurations of add-ons that may be added
@@ -3037,6 +3509,147 @@ type ReleaseRollbackOpts struct {
 func (s *Service) ReleaseRollback(ctx context.Context, appIdentity string, o ReleaseRollbackOpts) (*Release, error) {
 	var release Release
 	return &release, s.Post(ctx, &release, fmt.Sprintf("/apps/%v/releases", appIdentity), o)
+}
+
+// An ephemeral app to review a set of changes
+type ReviewApp struct {
+	App *struct {
+		ID string `json:"id" url:"id,key"` // unique identifier of app
+	} `json:"app" url:"app,key"` // the Heroku app associated to this review app
+	AppSetup *struct {
+		ID string `json:"id" url:"id,key"` // unique identifier of app setup
+	} `json:"app_setup" url:"app_setup,key"` // the app setup for this review app
+	Branch      string    `json:"branch" url:"branch,key"`             // the branch of the repository which the review app is based on
+	CreatedAt   time.Time `json:"created_at" url:"created_at,key"`     // when test run was created
+	Creator     struct{}  `json:"creator" url:"creator,key"`           // The user who created the review app
+	ErrorStatus *string   `json:"error_status" url:"error_status,key"` // error message from creating the review app if any
+	ForkRepo    *struct {
+		ID *int `json:"id" url:"id,key"` // repository id of the fork the branch resides in
+	} `json:"fork_repo" url:"fork_repo,key"`
+	ID       string  `json:"id" url:"id,key"`           // unique identifier of the review app
+	Message  *string `json:"message" url:"message,key"` // message from creating the review app if any
+	Pipeline struct {
+		ID string `json:"id" url:"id,key"` // unique identifier of pipeline
+	} `json:"pipeline" url:"pipeline,key"` // the pipeline which this review app belongs to
+	PrNumber *int `json:"pr_number" url:"pr_number,key"` // GitHub Pull Request number if the Review app was created
+	// automatically
+	Status    string    `json:"status" url:"status,key"`           // current state of the review app
+	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"`   // when review app was updated
+	WaitForCi bool      `json:"wait_for_ci" url:"wait_for_ci,key"` // wait for ci before building the app
+}
+type ReviewAppCreateOpts struct {
+	Branch      string             `json:"branch" url:"branch,key"`                                 // the branch of the repository which the review app is based on
+	Environment map[string]*string `json:"environment,omitempty" url:"environment,omitempty,key"`   // hash of config vars
+	ForkRepoID  *int               `json:"fork_repo_id,omitempty" url:"fork_repo_id,omitempty,key"` // repository id of the fork the branch resides in
+	Pipeline    string             `json:"pipeline" url:"pipeline,key"`                             // unique identifier of pipeline
+	SourceBlob  struct {
+		URL *string `json:"url,omitempty" url:"url,omitempty,key"` // URL where gzipped tar archive of source code for build was
+		// downloaded.
+		Version *string `json:"version,omitempty" url:"version,omitempty,key"` // The version number (or SHA) of the code to build.
+	} `json:"source_blob" url:"source_blob,key"` // The download location for the review app's source code
+}
+
+// Create a new review app
+func (s *Service) ReviewAppCreate(ctx context.Context, o ReviewAppCreateOpts) (*ReviewApp, error) {
+	var reviewApp ReviewApp
+	return &reviewApp, s.Post(ctx, &reviewApp, fmt.Sprintf("/review-apps"), o)
+}
+
+// Gets an existing review app
+func (s *Service) ReviewAppGetReviewApp(ctx context.Context, reviewAppID string) (*ReviewApp, error) {
+	var reviewApp ReviewApp
+	return &reviewApp, s.Get(ctx, &reviewApp, fmt.Sprintf("/review-apps/%v", reviewAppID), nil, nil)
+}
+
+// Delete an existing review app
+func (s *Service) ReviewAppDelete(ctx context.Context, reviewAppID string) (*ReviewApp, error) {
+	var reviewApp ReviewApp
+	return &reviewApp, s.Delete(ctx, &reviewApp, fmt.Sprintf("/review-apps/%v", reviewAppID))
+}
+
+// Get a review app using the associated app_id
+func (s *Service) ReviewAppGetReviewAppByAppID(ctx context.Context, appIdentity string) (*ReviewApp, error) {
+	var reviewApp ReviewApp
+	return &reviewApp, s.Get(ctx, &reviewApp, fmt.Sprintf("/apps/%v/review-app", appIdentity), nil, nil)
+}
+
+type ReviewAppListResult []ReviewApp
+
+// List review apps for a pipeline
+func (s *Service) ReviewAppList(ctx context.Context, pipelineID string, lr *ListRange) (ReviewAppListResult, error) {
+	var reviewApp ReviewAppListResult
+	return reviewApp, s.Get(ctx, &reviewApp, fmt.Sprintf("/pipelines/%v/review-apps", pipelineID), nil, lr)
+}
+
+// Review apps can be configured for pipelines.
+type ReviewAppConfig struct {
+	AutomaticReviewApps bool    `json:"automatic_review_apps" url:"automatic_review_apps,key"` // enable automatic review apps for pull requests
+	BaseName            *string `json:"base_name" url:"base_name,key"`                         // A unique prefix that will be used to create review app names
+	DeployTarget        *struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of deploy target
+		Type string `json:"type" url:"type,key"` // type of deploy target
+	} `json:"deploy_target" url:"deploy_target,key"` // the deploy target for the review apps of a pipeline
+	DestroyStaleApps bool `json:"destroy_stale_apps" url:"destroy_stale_apps,key"` // automatically destroy review apps when they haven't been deployed for
+	// a number of days
+	PipelineID string `json:"pipeline_id" url:"pipeline_id,key"` // unique identifier of pipeline
+	Repo       struct {
+		ID int `json:"id" url:"id,key"` // repository id
+	} `json:"repo" url:"repo,key"`
+	StaleDays int `json:"stale_days" url:"stale_days,key"` // number of days without a deployment after which to consider a review
+	// app stale
+	WaitForCi bool `json:"wait_for_ci" url:"wait_for_ci,key"` // If true, review apps are created only when CI passes
+}
+type ReviewAppConfigEnableOpts struct {
+	AutomaticReviewApps *bool   `json:"automatic_review_apps,omitempty" url:"automatic_review_apps,omitempty,key"` // enable automatic review apps for pull requests
+	BaseName            *string `json:"base_name,omitempty" url:"base_name,omitempty,key"`                         // A unique prefix that will be used to create review app names
+	DeployTarget        *struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of deploy target
+		Type string `json:"type" url:"type,key"` // type of deploy target
+	} `json:"deploy_target,omitempty" url:"deploy_target,omitempty,key"` // the deploy target for the review apps of a pipeline
+	DestroyStaleApps *bool `json:"destroy_stale_apps,omitempty" url:"destroy_stale_apps,omitempty,key"` // automatically destroy review apps when they haven't been deployed for
+	// a number of days
+	Repo      string `json:"repo" url:"repo,key"`                                 // repository name
+	StaleDays *int   `json:"stale_days,omitempty" url:"stale_days,omitempty,key"` // number of days without a deployment after which to consider a review
+	// app stale
+	WaitForCi *bool `json:"wait_for_ci,omitempty" url:"wait_for_ci,omitempty,key"` // If true, review apps are created only when CI passes
+}
+
+// Enable review apps for a pipeline
+func (s *Service) ReviewAppConfigEnable(ctx context.Context, pipelineID string, o ReviewAppConfigEnableOpts) (*ReviewAppConfig, error) {
+	var reviewAppConfig ReviewAppConfig
+	return &reviewAppConfig, s.Post(ctx, &reviewAppConfig, fmt.Sprintf("/pipelines/%v/review-app-config", pipelineID), o)
+}
+
+// Get review apps configuration for a pipeline
+func (s *Service) ReviewAppConfigInfo(ctx context.Context, pipelineID string) (*ReviewAppConfig, error) {
+	var reviewAppConfig ReviewAppConfig
+	return &reviewAppConfig, s.Get(ctx, &reviewAppConfig, fmt.Sprintf("/pipelines/%v/review-app-config", pipelineID), nil, nil)
+}
+
+type ReviewAppConfigUpdateOpts struct {
+	AutomaticReviewApps *bool   `json:"automatic_review_apps,omitempty" url:"automatic_review_apps,omitempty,key"` // enable automatic review apps for pull requests
+	BaseName            *string `json:"base_name,omitempty" url:"base_name,omitempty,key"`                         // A unique prefix that will be used to create review app names
+	DeployTarget        *struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of deploy target
+		Type string `json:"type" url:"type,key"` // type of deploy target
+	} `json:"deploy_target,omitempty" url:"deploy_target,omitempty,key"` // the deploy target for the review apps of a pipeline
+	DestroyStaleApps *bool `json:"destroy_stale_apps,omitempty" url:"destroy_stale_apps,omitempty,key"` // automatically destroy review apps when they haven't been deployed for
+	// a number of days
+	StaleDays *int `json:"stale_days,omitempty" url:"stale_days,omitempty,key"` // number of days without a deployment after which to consider a review
+	// app stale
+	WaitForCi *bool `json:"wait_for_ci,omitempty" url:"wait_for_ci,omitempty,key"` // If true, review apps are created only when CI passes
+}
+
+// Update review app configuration for a pipeline
+func (s *Service) ReviewAppConfigUpdate(ctx context.Context, pipelineID string, o ReviewAppConfigUpdateOpts) (*ReviewAppConfig, error) {
+	var reviewAppConfig ReviewAppConfig
+	return &reviewAppConfig, s.Patch(ctx, &reviewAppConfig, fmt.Sprintf("/pipelines/%v/review-app-config", pipelineID), o)
+}
+
+// Disable review apps for a pipeline
+func (s *Service) ReviewAppConfigDelete(ctx context.Context, pipelineID string) (*ReviewAppConfig, error) {
+	var reviewAppConfig ReviewAppConfig
+	return &reviewAppConfig, s.Delete(ctx, &reviewAppConfig, fmt.Sprintf("/pipelines/%v/review-app-config", pipelineID))
 }
 
 // A slug is a snapshot of your application code that is ready to run on
@@ -3322,6 +3935,43 @@ func (s *Service) SpaceNATInfo(ctx context.Context, spaceIdentity string) (*Spac
 	return &spaceNAT, s.Get(ctx, &spaceNAT, fmt.Sprintf("/spaces/%v/nat", spaceIdentity), nil, nil)
 }
 
+// Transfer spaces between enterprise teams with the same Enterprise
+// Account.
+type SpaceTransfer struct{}
+type SpaceTransferTransferOpts struct {
+	NewOwner string `json:"new_owner" url:"new_owner,key"` // unique name of team
+}
+type SpaceTransferTransferResult struct {
+	CIDR string `json:"cidr" url:"cidr,key"` // The RFC-1918 CIDR the Private Space will use. It must be a /16 in
+	// 10.0.0.0/8, 172.16.0.0/12 or 192.168.0.0/16
+	CreatedAt time.Time `json:"created_at" url:"created_at,key"` // when space was created
+	DataCIDR  string    `json:"data_cidr" url:"data_cidr,key"`   // The RFC-1918 CIDR that the Private Space will use for the
+	// Heroku-managed peering connection that's automatically created when
+	// using Heroku Data add-ons. It must be between a /16 and a /20
+	ID           string `json:"id" url:"id,key"`     // unique identifier of space
+	Name         string `json:"name" url:"name,key"` // unique name of space
+	Organization struct {
+		Name string `json:"name" url:"name,key"` // unique name of team
+	} `json:"organization" url:"organization,key"` // organization that owns this space
+	Region struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of region
+		Name string `json:"name" url:"name,key"` // unique name of region
+	} `json:"region" url:"region,key"` // identity of space region
+	Shield bool   `json:"shield" url:"shield,key"` // true if this space has shield enabled
+	State  string `json:"state" url:"state,key"`   // availability of this space
+	Team   struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of team
+		Name string `json:"name" url:"name,key"` // unique name of team
+	} `json:"team" url:"team,key"` // team that owns this space
+	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when space was updated
+}
+
+// Transfer space between enterprise teams
+func (s *Service) SpaceTransferTransfer(ctx context.Context, spaceIdentity string, o SpaceTransferTransferOpts) (*SpaceTransferTransferResult, error) {
+	var spaceTransfer SpaceTransferTransferResult
+	return &spaceTransfer, s.Post(ctx, &spaceTransfer, fmt.Sprintf("/spaces/%v/transfer", spaceIdentity), o)
+}
+
 // [SSL Endpoint](https://devcenter.heroku.com/articles/ssl-endpoint) is
 // a public address serving custom SSL cert for HTTPS traffic to a
 // Heroku app. Note that an app must have the `ssl:endpoint` add-on
@@ -3378,7 +4028,6 @@ type SSLEndpointUpdateOpts struct {
 	// advantageous by adding missing intermediaries, stripping unnecessary
 	// ones, etc.
 	PrivateKey *string `json:"private_key,omitempty" url:"private_key,omitempty,key"` // contents of the private key (eg .key file)
-	Rollback   *bool   `json:"rollback,omitempty" url:"rollback,omitempty,key"`       // indicates that a rollback should be performed
 }
 
 // Update an existing SSL endpoint.
@@ -3418,13 +4067,21 @@ type Team struct {
 	CreatedAt             time.Time `json:"created_at" url:"created_at,key"`                           // when the team was created
 	CreditCardCollections bool      `json:"credit_card_collections" url:"credit_card_collections,key"` // whether charges incurred by the team are paid by credit card.
 	Default               bool      `json:"default" url:"default,key"`                                 // whether to use this team when none is specified
-	ID                    string    `json:"id" url:"id,key"`                                           // unique identifier of team
-	MembershipLimit       *float64  `json:"membership_limit" url:"membership_limit,key"`               // upper limit of members allowed in a team.
-	Name                  string    `json:"name" url:"name,key"`                                       // unique name of team
-	ProvisionedLicenses   bool      `json:"provisioned_licenses" url:"provisioned_licenses,key"`       // whether the team is provisioned licenses by salesforce.
-	Role                  *string   `json:"role" url:"role,key"`                                       // role in the team
-	Type                  string    `json:"type" url:"type,key"`                                       // type of team.
-	UpdatedAt             time.Time `json:"updated_at" url:"updated_at,key"`                           // when the team was updated
+	EnterpriseAccount     *struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of the enterprise account
+		Name string `json:"name" url:"name,key"` // unique name of the enterprise account
+	} `json:"enterprise_account" url:"enterprise_account,key"`
+	ID               string `json:"id" url:"id,key"` // unique identifier of team
+	IdentityProvider *struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of this identity provider
+		Slug string `json:"slug" url:"slug,key"` // user-friendly unique identifier for this identity provider
+	} `json:"identity_provider" url:"identity_provider,key"` // Identity Provider associated with the Team
+	MembershipLimit     *float64  `json:"membership_limit" url:"membership_limit,key"`         // upper limit of members allowed in a team.
+	Name                string    `json:"name" url:"name,key"`                                 // unique name of team
+	ProvisionedLicenses bool      `json:"provisioned_licenses" url:"provisioned_licenses,key"` // whether the team is provisioned licenses by salesforce.
+	Role                *string   `json:"role" url:"role,key"`                                 // role in the team
+	Type                string    `json:"type" url:"type,key"`                                 // type of team.
+	UpdatedAt           time.Time `json:"updated_at" url:"updated_at,key"`                     // when the team was updated
 }
 type TeamListResult []Team
 
@@ -3480,6 +4137,24 @@ func (s *Service) TeamCreate(ctx context.Context, o TeamCreateOpts) (*Team, erro
 func (s *Service) TeamDelete(ctx context.Context, teamIdentity string) (*Team, error) {
 	var team Team
 	return &team, s.Delete(ctx, &team, fmt.Sprintf("/teams/%v", teamIdentity))
+}
+
+type TeamListByEnterpriseAccountResult []Team
+
+// List teams for an enterprise account.
+func (s *Service) TeamListByEnterpriseAccount(ctx context.Context, enterpriseAccountIdentity string, lr *ListRange) (TeamListByEnterpriseAccountResult, error) {
+	var team TeamListByEnterpriseAccountResult
+	return team, s.Get(ctx, &team, fmt.Sprintf("/enterprise-accounts/%v/teams", enterpriseAccountIdentity), nil, lr)
+}
+
+type TeamCreateInEnterpriseAccountOpts struct {
+	Name string `json:"name" url:"name,key"` // unique name of team
+}
+
+// Create a team in an enterprise account.
+func (s *Service) TeamCreateInEnterpriseAccount(ctx context.Context, enterpriseAccountIdentity string, o TeamCreateInEnterpriseAccountOpts) (*Team, error) {
+	var team Team
+	return &team, s.Post(ctx, &team, fmt.Sprintf("/enterprise-accounts/%v/teams", enterpriseAccountIdentity), o)
 }
 
 type TeamAddOn struct{}
@@ -3659,8 +4334,8 @@ type TeamAppCollaboratorCreateOpts struct {
 // Create a new collaborator on a team app. Use this endpoint instead of
 // the `/apps/{app_id_or_name}/collaborator` endpoint when you want the
 // collaborator to be granted [permissions]
-// (https://devcenter.heroku.com/articles/org-users-access#roles-and-app-
-// permissions) according to their role in the team.
+// (https://devcenter.heroku.com/articles/org-users-access#roles-and-perm
+// issions) according to their role in the team.
 func (s *Service) TeamAppCollaboratorCreate(ctx context.Context, appIdentity string, o TeamAppCollaboratorCreateOpts) (*TeamAppCollaborator, error) {
 	var teamAppCollaborator TeamAppCollaborator
 	return &teamAppCollaborator, s.Post(ctx, &teamAppCollaborator, fmt.Sprintf("/teams/apps/%v/collaborators", appIdentity), o)
@@ -3791,12 +4466,22 @@ func (s *Service) TeamInvitationGet(ctx context.Context, teamInvitationToken str
 }
 
 type TeamInvitationAcceptResult struct {
-	CreatedAt               time.Time `json:"created_at" url:"created_at,key"`                               // when the membership record was created
-	Email                   string    `json:"email" url:"email,key"`                                         // email address of the team member
-	Federated               bool      `json:"federated" url:"federated,key"`                                 // whether the user is federated and belongs to an Identity Provider
-	ID                      string    `json:"id" url:"id,key"`                                               // unique identifier of the team member
-	Role                    *string   `json:"role" url:"role,key"`                                           // role in the team
-	TwoFactorAuthentication bool      `json:"two_factor_authentication" url:"two_factor_authentication,key"` // whether the Enterprise team member has two factor authentication
+	CreatedAt        time.Time `json:"created_at" url:"created_at,key"` // when the membership record was created
+	Email            string    `json:"email" url:"email,key"`           // email address of the team member
+	Federated        bool      `json:"federated" url:"federated,key"`   // whether the user is federated and belongs to an Identity Provider
+	ID               string    `json:"id" url:"id,key"`                 // unique identifier of the team member
+	IdentityProvider *struct {
+		ID    string `json:"id" url:"id,key"`     // unique identifier of this identity provider
+		Name  string `json:"name" url:"name,key"` // name of the identity provider
+		Owner struct {
+			ID   string `json:"id" url:"id,key"`     // unique identifier of the owner
+			Name string `json:"name" url:"name,key"` // name of the owner
+			Type string `json:"type" url:"type,key"` // type of the owner
+		} `json:"owner" url:"owner,key"` // entity that owns this identity provider
+		Redacted bool `json:"redacted" url:"redacted,key"` // whether the identity_provider information is redacted or not
+	} `json:"identity_provider" url:"identity_provider,key"` // Identity Provider information the member is federated with
+	Role                    *string `json:"role" url:"role,key"`                                           // role in the team
+	TwoFactorAuthentication bool    `json:"two_factor_authentication" url:"two_factor_authentication,key"` // whether the Enterprise team member has two factor authentication
 	// enabled
 	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when the membership record was updated
 	User      struct {
@@ -3849,12 +4534,22 @@ func (s *Service) TeamInvoiceList(ctx context.Context, teamIdentity string, lr *
 
 // A team member is an individual with access to a team.
 type TeamMember struct {
-	CreatedAt               time.Time `json:"created_at" url:"created_at,key"`                               // when the membership record was created
-	Email                   string    `json:"email" url:"email,key"`                                         // email address of the team member
-	Federated               bool      `json:"federated" url:"federated,key"`                                 // whether the user is federated and belongs to an Identity Provider
-	ID                      string    `json:"id" url:"id,key"`                                               // unique identifier of the team member
-	Role                    *string   `json:"role" url:"role,key"`                                           // role in the team
-	TwoFactorAuthentication bool      `json:"two_factor_authentication" url:"two_factor_authentication,key"` // whether the Enterprise team member has two factor authentication
+	CreatedAt        time.Time `json:"created_at" url:"created_at,key"` // when the membership record was created
+	Email            string    `json:"email" url:"email,key"`           // email address of the team member
+	Federated        bool      `json:"federated" url:"federated,key"`   // whether the user is federated and belongs to an Identity Provider
+	ID               string    `json:"id" url:"id,key"`                 // unique identifier of the team member
+	IdentityProvider *struct {
+		ID    string `json:"id" url:"id,key"`     // unique identifier of this identity provider
+		Name  string `json:"name" url:"name,key"` // name of the identity provider
+		Owner struct {
+			ID   string `json:"id" url:"id,key"`     // unique identifier of the owner
+			Name string `json:"name" url:"name,key"` // name of the owner
+			Type string `json:"type" url:"type,key"` // type of the owner
+		} `json:"owner" url:"owner,key"` // entity that owns this identity provider
+		Redacted bool `json:"redacted" url:"redacted,key"` // whether the identity_provider information is redacted or not
+	} `json:"identity_provider" url:"identity_provider,key"` // Identity Provider information the member is federated with
+	Role                    *string `json:"role" url:"role,key"`                                           // role in the team
+	TwoFactorAuthentication bool    `json:"two_factor_authentication" url:"two_factor_authentication,key"` // whether the Enterprise team member has two factor authentication
 	// enabled
 	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when the membership record was updated
 	User      struct {
@@ -4014,6 +4709,68 @@ type TeamSpaceListResult []struct {
 func (s *Service) TeamSpaceList(ctx context.Context, teamIdentity string, lr *ListRange) (TeamSpaceListResult, error) {
 	var teamSpace TeamSpaceListResult
 	return teamSpace, s.Get(ctx, &teamSpace, fmt.Sprintf("/teams/%v/spaces", teamIdentity), nil, lr)
+}
+
+// Usage for an enterprise team at a daily resolution.
+type TeamUsageDaily struct {
+	Addons float64 `json:"addons" url:"addons,key"` // total add-on credits used
+	Apps   []struct {
+		Addons  float64 `json:"addons" url:"addons,key"`     // total add-on credits used
+		AppName string  `json:"app_name" url:"app_name,key"` // unique name of app
+		Data    float64 `json:"data" url:"data,key"`         // total add-on credits used for first party add-ons
+		Dynos   float64 `json:"dynos" url:"dynos,key"`       // dynos used
+		Partner float64 `json:"partner" url:"partner,key"`   // total add-on credits used for third party add-ons
+	} `json:"apps" url:"apps,key"` // app usage in the team
+	Data    float64 `json:"data" url:"data,key"`       // total add-on credits used for first party add-ons
+	Date    string  `json:"date" url:"date,key"`       // date of the usage
+	Dynos   float64 `json:"dynos" url:"dynos,key"`     // dynos used
+	ID      string  `json:"id" url:"id,key"`           // team identifier
+	Name    string  `json:"name" url:"name,key"`       // name of the team
+	Partner float64 `json:"partner" url:"partner,key"` // total add-on credits used for third party add-ons
+	Space   float64 `json:"space" url:"space,key"`     // space credits used
+}
+type TeamUsageDailyInfoResult []TeamUsageDaily
+
+// Retrieves usage for an enterprise team for a range of days. Start and
+// end dates can be specified as query parameters using the date format,
+// YYYY-MM-DD format. For example,
+// '/teams/example-team/usage?start=2019-01-01&end=2019-01-31' specifies
+// all days in January for 2019.
+func (s *Service) TeamUsageDailyInfo(ctx context.Context, teamID string, lr *ListRange) (TeamUsageDailyInfoResult, error) {
+	var teamUsageDaily TeamUsageDailyInfoResult
+	return teamUsageDaily, s.Get(ctx, &teamUsageDaily, fmt.Sprintf("/teams/%v/usage/daily", teamID), nil, lr)
+}
+
+// Usage for an enterprise team at a monthly resolution.
+type TeamUsageMonthly struct {
+	Addons float64 `json:"addons" url:"addons,key"` // total add-on credits used
+	Apps   []struct {
+		Addons  float64 `json:"addons" url:"addons,key"`     // total add-on credits used
+		AppName string  `json:"app_name" url:"app_name,key"` // unique name of app
+		Data    float64 `json:"data" url:"data,key"`         // total add-on credits used for first party add-ons
+		Dynos   float64 `json:"dynos" url:"dynos,key"`       // dynos used
+		Partner float64 `json:"partner" url:"partner,key"`   // total add-on credits used for third party add-ons
+	} `json:"apps" url:"apps,key"` // app usage in the team
+	Connect float64 `json:"connect" url:"connect,key"` // average connect rows synced
+	Data    float64 `json:"data" url:"data,key"`       // total add-on credits used for first party add-ons
+	Dynos   float64 `json:"dynos" url:"dynos,key"`     // dynos used
+	ID      string  `json:"id" url:"id,key"`           // team identifier
+	Month   string  `json:"month" url:"month,key"`     // year and month of the usage
+	Name    string  `json:"name" url:"name,key"`       // name of the team
+	Partner float64 `json:"partner" url:"partner,key"` // total add-on credits used for third party add-ons
+	Space   float64 `json:"space" url:"space,key"`     // space credits used
+}
+type TeamUsageMonthlyInfoResult []TeamUsageMonthly
+
+// Retrieves usage for an enterprise team for a range of months. Start
+// and end dates can be specified as query parameters using the date
+// format, YYYY-MM format. For example,
+// '/teams/example-team/usage?start=2019-01&end=2019-02' specifies usage
+// in January and February for 2019. If no end date is specified, one
+// month of usage is returned.
+func (s *Service) TeamUsageMonthlyInfo(ctx context.Context, teamID string, lr *ListRange) (TeamUsageMonthlyInfoResult, error) {
+	var teamUsageMonthly TeamUsageMonthlyInfoResult
+	return teamUsageMonthly, s.Get(ctx, &teamUsageMonthly, fmt.Sprintf("/teams/%v/usage/monthly", teamID), nil, lr)
 }
 
 // A single test case belonging to a test run
