@@ -11,12 +11,11 @@ description: |-
 Provides a resource to manage a pipeline's config vars.
 
 ~> **NOTE:** The pipeline config var API only relates to the config vars that can be set at the pipeline level.
-These are:
-
+These two supported stages are:
 - Heroku CI config vars (test stage)
 - Review Apps config vars (review stage)
 
-The other stages, (development, staging & production) do not have stage-level config vars, only those on the apps within each stage.
+The development, staging & production stages do not have stage-level config vars, only those on the apps within each stage.
 
 ## Example Usage
 
@@ -46,16 +45,20 @@ resource "heroku_pipeline_config_var" "configs" {
 The following arguments are supported:
 
 * `pipeline_id` - (Required) The UUID of an existing pipeline.
+
 * `pipeline_stage` - (Required) The pipeline's stage. Supported values are `test` & `review`.
+
 * `vars` - Map of config vars that can be output in plaintext.
-* `sensitive_vars` - This is the same as `vars`. The main difference between the two
-attributes is `sensitive_vars` outputs are redacted on-screen and replaced by a <sensitive> placeholder, following a terraform
-plan or apply. It is recommended to put private keys, passwords, etc in this argument.
+
+* `sensitive_vars` - This is the same as `vars`. The main difference between the two attributes is `sensitive_vars` outputs
+are redacted on-screen and replaced by a `<sensitive>` placeholder, following a terraform `plan` or `apply`.
+It is recommended to put private keys, passwords, etc in this argument.
 
 ## Attributes Reference
+
 The following attributes are exported:
 
-N/A
+* `all_vars` - All vars of a pipeline stage. This is marked `sensitive` so that `sensitive_vars` do not leak in the console/logs.
 
 ## Import
 This resource defines two config var attributes with one of them used for masking any sensitive/secret variables

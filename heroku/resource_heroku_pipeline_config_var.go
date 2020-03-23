@@ -52,6 +52,14 @@ func resourceHerokuPipelineConfigVar() *schema.Resource {
 					Sensitive: true,
 				},
 			},
+
+			"all_vars": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				// These are marked Sensitive so that "sensitive_config_vars" do not
+				// leak in the console/logs.
+				Sensitive: true,
+			},
 		},
 	}
 }
@@ -138,7 +146,7 @@ func resourceHerokuPipelineConfigVarRead(d *schema.ResourceData, meta interface{
 	// Need to convert remotePipelineVars to a data type required by vetVarsForState
 	rpvFormatted := make(map[string]string)
 	for key, value := range remotePipelineVars {
-		rpvFormatted[key] = fmt.Sprintf("%v", value)
+		rpvFormatted[key] = *value
 	}
 
 	vettedConfigVars, vettedSensitiveConfigVars := vetVarsForState(getVars(d), getSensitiveVars(d), rpvFormatted)
@@ -151,6 +159,7 @@ func resourceHerokuPipelineConfigVarRead(d *schema.ResourceData, meta interface{
 	setErr = d.Set("pipeline_stage", pipelineStage)
 	setErr = d.Set("vars", vettedConfigVars)
 	setErr = d.Set("sensitive_vars", vettedSensitiveConfigVars)
+	setErr = d.Set("all_vars", rpvFormatted)
 
 	return setErr
 }

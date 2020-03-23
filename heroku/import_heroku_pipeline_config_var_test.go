@@ -17,7 +17,7 @@ func TestAccHerokuPipelineConfigVar_importBasic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuPipelineConfigVar_basic(name, name),
+				Config: testAccCheckHerokuPipelineConfigVar_basic(name, stage),
 			},
 			{
 				ResourceName:      "heroku_pipeline_config_var.configs",

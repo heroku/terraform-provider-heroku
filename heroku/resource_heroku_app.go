@@ -178,7 +178,7 @@ func resourceHerokuApp() *schema.Resource {
 				Type:     schema.TypeMap,
 				Computed: true,
 				// These are marked Sensitive so that "sensitive_config_vars" do not
-				// leak in the console/logs and also avoids unneccesary disclosure of
+				// leak in the console/logs and also avoids unnecessary disclosure of
 				// add-on secrets in logs.
 				Sensitive: true,
 			},
