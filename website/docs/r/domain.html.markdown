@@ -21,7 +21,7 @@ resource "heroku_app" "default" {
 
 # Associate a custom domain
 resource "heroku_domain" "default" {
-  app      = "${heroku_app.default.id}"
+  app      = "${heroku_app.default.name}"
   hostname = "terraform.example.com"
 }
 ```
@@ -30,8 +30,8 @@ resource "heroku_domain" "default" {
 
 The following arguments are supported:
 
-* `app` - (Required) A Heroku app's `UUID`. Can also be the name of the Heroku app but `UUID` is preferred as it is idempotent.
 * `hostname` - (Required) The hostname to serve requests from.
+* `app` - (Required) The Heroku app to link to.
 
 ## Attributes Reference
 

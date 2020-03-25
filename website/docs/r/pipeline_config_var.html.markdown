@@ -12,8 +12,8 @@ Provides a resource to manage a pipeline's config vars.
 
 ~> **NOTE:** The pipeline config var API only relates to the config vars that can be set at the pipeline level.
 These two supported stages are:
-- Heroku CI config vars (test stage)
-- Review Apps config vars (review stage)
+- [Heroku CI](https://devcenter.heroku.com/articles/heroku-ci#setting-environment-variables-the-env-key) config vars (test stage)
+- [Review Apps](https://devcenter.heroku.com/articles/github-integration-review-apps#configuration) config vars (review stage)
 
 The development, staging & production stages do not have stage-level config vars, only those on the apps within each stage.
 

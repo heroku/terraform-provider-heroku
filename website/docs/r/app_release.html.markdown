@@ -25,7 +25,7 @@ resource "heroku_app" "foobar" {
 # Upload your slug
 
 resource "heroku_app_release" "foobar-release" {
-    app = "${heroku_app.foobar.id}"
+    app = "${heroku_app.foobar.name}"
     slug_id = "01234567-89ab-cdef-0123-456789abcdef"
 }
 ```
@@ -34,7 +34,7 @@ resource "heroku_app_release" "foobar-release" {
 
 The following arguments are supported:
 
-* `app` - (Required) A Heroku app's `UUID`. Can also be the name of the Heroku app but `UUID` is preferred as it is idempotent.
+* `app` - (Required) The name of the application
 * `slug_id` - unique identifier of slug
 * `description` - description of changes in this release
 

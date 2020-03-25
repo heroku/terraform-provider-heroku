@@ -24,7 +24,7 @@ The output will contain **User Features** and **App Features**. This resource ma
 
 ```hcl
 resource "heroku_app_feature" "log_runtime_metrics" {
-  app = "ebb78898-5fae-44c1-9a0b-3171e1e4b372"
+  app = "test-app"
   name = "log-runtime-metrics"
 }
 ```
@@ -33,7 +33,7 @@ resource "heroku_app_feature" "log_runtime_metrics" {
 
 The following arguments are supported:
 
-* `app` - (Required) A Heroku app's `UUID`. Can also be the name of the Heroku app but `UUID` is preferred as it is idempotent.
+* `app` - (Required) The Heroku app to link to.
 * `name` - (Required) The name of the App Feature to manage.
 * `enabled` - (Optional) Whether to enable or disable the App Feature. The default value is true.
 
