@@ -27,7 +27,7 @@ resource "aws_vpc_peering_connection" "request" {
 
 # Accept the request.
 resource "heroku_space_peering_connection_accepter" "accept" {
-  space                     = "${heroku_space.peer_space.name}"
+  space                     = "${heroku_space.peer_space.id}"
   vpc_peering_connection_id = "${aws_vpc_peering_connection.request.id}"
 }
 ```
@@ -36,7 +36,7 @@ resource "heroku_space_peering_connection_accepter" "accept" {
 
 The following arguments are supported:
 
-* `space` - (Required) The name of the space.
+* `space` - (Required) The `UUID` of the space.
 * `vpc_peering_connection_id` - (Required) The peering connection request ID.
 
 ## Attributes Reference

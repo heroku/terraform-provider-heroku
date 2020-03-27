@@ -8,7 +8,6 @@ description: |-
 
 # heroku\_pipeline\_coupling
 
-
 Provides a [Heroku Pipeline Coupling](https://devcenter.heroku.com/articles/pipelines)
 resource.
 
@@ -36,13 +35,13 @@ resource "heroku_pipeline" "test-app" {
 
 # Couple apps to different pipeline stages
 resource "heroku_pipeline_coupling" "staging" {
-  app      = "${heroku_app.staging.name}"
+  app      = "${heroku_app.staging.id}"
   pipeline = "${heroku_pipeline.test-app.id}"
   stage    = "staging"
 }
 
 resource "heroku_pipeline_coupling" "production" {
-  app      = "${heroku_app.production.name}"
+  app      = "${heroku_app.production.id}"
   pipeline = "${heroku_pipeline.test-app.id}"
   stage    = "production"
 }
@@ -52,7 +51,7 @@ resource "heroku_pipeline_coupling" "production" {
 
 The following arguments are supported:
 
-* `app` - (Required) The name of the app for this coupling.
+* `app` - (Required) A Heroku app's `UUID`. Can also be the name of the Heroku app but `UUID` is preferred as it is idempotent.
 * `pipeline` - (Required) The ID of the pipeline to add this app to.
 * `stage` - (Required) The stage to couple this app to. Must be one of
 `review`, `development`, `staging`, or `production`.

@@ -116,12 +116,11 @@ func resourceHerokuCertUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	app := d.Get("app").(string)
 	preprocess := true
-	rollback := false
 	opts := heroku.SSLEndpointUpdateOpts{
 		CertificateChain: heroku.String(d.Get("certificate_chain").(string)),
 		Preprocess:       &preprocess,
 		PrivateKey:       heroku.String(d.Get("private_key").(string)),
-		Rollback:         &rollback}
+	}
 
 	if d.HasChange("certificate_chain") || d.HasChange("private_key") {
 		log.Printf("[DEBUG] SSL Certificate update configuration: %#v, %#v", app, opts)

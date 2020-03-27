@@ -71,7 +71,7 @@ resource "heroku_app_config_association" "foobar2" {
 ## Argument Reference
 
 * `app_id` - (Required) A Heroku app's `UUID`. Can also be the name of the Heroku app but `UUID` is preferred as it is idempotent.
-* `vars` - Map of config vars that are output in plaintext.
+* `vars` - Map of config vars that can be output in plaintext.
 * `sensitive_vars` - This is the same as `vars`. The main difference between the two
 attributes is `sensitive_vars` outputs are redacted on-screen and replaced by a <sensitive> placeholder, following a terraform
 plan or apply. It is recommended to put private keys, passwords, etc in this argument.
@@ -82,5 +82,10 @@ The following attributes are exported:
 * `id` - The ID of the app config association.
 
 ## Import
-The `heroku_app_config_association` resource's primary attributes are managed only within Terraform state.
-It does not exist as a native Heroku resource. Therefore, it is not possible to import an existing `heroku_app_config_association` resource.
+This resource defines two config var attributes with one of them used for masking any sensitive/secret variables
+during a `terraform plan|apply` in a CI build, terminal, etc. This 'sensitive' distinction for config vars is unique to
+this provider and not a built-in feature of the Heroku Platform API. Therefore, it will not be possible to import
+this resource.
+
+However, it is safe to define the resource in your configuration file and execute a `terraform apply`
+as the end result is `noop` when the config vars already exist on the remote resource.

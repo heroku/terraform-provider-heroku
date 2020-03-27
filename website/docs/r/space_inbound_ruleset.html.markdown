@@ -22,7 +22,7 @@ resource "heroku_space" "default" {
 
 # Allow all traffic EXCEPT 8.8.4.4 to access the HPS.
 resource "heroku_space_inbound_ruleset" "default" {
-  space = "${heroku_space.default.name}"
+  space = "${heroku_space.default.id}"
 
   rule {
     action = "allow"
@@ -40,7 +40,7 @@ resource "heroku_space_inbound_ruleset" "default" {
 
 The following arguments are supported:
 
-* `space` - (Required) The name of the space.
+* `space` - (Required) The `UUID` of the space.
 * `rule` - (Required) At least one `rule` block. Rules are documented below.
 
 A `rule` block supports the following arguments:
