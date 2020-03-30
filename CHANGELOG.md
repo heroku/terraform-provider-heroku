@@ -1,4 +1,4 @@
-## 2.3.0 (Unreleased)
+## 2.3.0 (March 30, 2020)
 
 FEATURES:
 * New resource: `heroku_pipeline_config_var` ([#256](https://github.com/terraform-providers/terraform-provider-heroku/pull/256))
