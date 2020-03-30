@@ -107,7 +107,7 @@ func dataSourceHerokuAppRead(d *schema.ResourceData, m interface{}) error {
 	d.SetId(app.App.ID)
 
 	if app.IsTeamApp {
-		setErr := setOrganizationDetails(d, app)
+		setErr := setTeamDetails(d, app)
 		if setErr != nil {
 			return setErr
 		}

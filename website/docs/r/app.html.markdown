@@ -8,8 +8,7 @@ description: |-
 
 # heroku\_app
 
-Provides a Heroku App resource. This can be used to
-create and manage applications on Heroku.
+Provides a Heroku App resource. This can be used to create and manage applications on Heroku.
 
 ## Example Usage
 
@@ -30,8 +29,7 @@ resource "heroku_app" "default" {
 
 ## Example Usage for a Team
 
-A Heroku "team" was originally called an "organization", and that is still 
-the identifier used in this resource.
+A Heroku "team" was originally called an "organization", and that is still the identifier used in this resource.
 
 ```hcl
 resource "heroku_app" "default" {

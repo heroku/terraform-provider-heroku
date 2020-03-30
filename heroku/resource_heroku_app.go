@@ -18,18 +18,18 @@ import (
 // application. We use this for common storage of values needed for the
 // heroku.App and heroku.TeamApp types
 type herokuApplication struct {
-	Name             string
-	Region           string
-	Space            string
-	Stack            string
-	InternalRouting  bool
-	GitURL           string
-	WebURL           string
-	OrganizationName string
-	Locked           bool
-	Personal         bool
-	Acm              bool
-	ID               string
+	Name            string
+	Region          string
+	Space           string
+	Stack           string
+	InternalRouting bool
+	GitURL          string
+	WebURL          string
+	TeamName        string
+	Locked          bool
+	Personal        bool
+	Acm             bool
+	ID              string
 }
 
 // type application is used to store all the details of a heroku app
@@ -196,8 +196,8 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 }
 
 func switchHerokuAppCreate(d *schema.ResourceData, meta interface{}) (err error) {
-	if isOrganizationApp(d) {
-		err = resourceHerokuOrgAppCreate(d, meta)
+	if isTeamApp(d) {
+		err = resourceHerokuTeamAppCreate(d, meta)
 	} else {
 		err = resourceHerokuAppCreate(d, meta)
 	}
@@ -246,7 +246,7 @@ func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourceHerokuAppRead(d, meta)
 }
 
-func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceHerokuTeamAppCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
 	// Build up our creation options
@@ -254,23 +254,23 @@ func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error 
 
 	v := d.Get("organization").([]interface{})
 	if len(v) > 1 {
-		return fmt.Errorf("Error Creating Heroku App: Only 1 Heroku Organization is permitted")
+		return fmt.Errorf("rrror Creating Heroku App: Only 1 Heroku Team (organization) is permitted")
 	}
-	orgDetails := v[0].(map[string]interface{})
+	newTeamApp := v[0].(map[string]interface{})
 
-	if v := orgDetails["name"]; v != nil {
+	if v := newTeamApp["name"]; v != nil {
 		vs := v.(string)
 		log.Printf("[DEBUG] Organization name: %s", vs)
 		opts.Team = &vs
 	}
 
-	if v := orgDetails["personal"]; v != nil {
+	if v := newTeamApp["personal"]; v != nil {
 		vs := v.(bool)
 		log.Printf("[DEBUG] Organization Personal: %t", vs)
 		opts.Personal = &vs
 	}
 
-	if v := orgDetails["locked"]; v != nil {
+	if v := newTeamApp["locked"]; v != nil {
 		vs := v.(bool)
 		log.Printf("[DEBUG] Organization locked: %t", vs)
 		opts.Locked = &vs
@@ -318,17 +318,17 @@ func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error 
 	return resourceHerokuAppRead(d, meta)
 }
 
-func setOrganizationDetails(d *schema.ResourceData, app *application) (err error) {
+func setTeamDetails(d *schema.ResourceData, app *application) (err error) {
 	err = d.Set("space", app.App.Space)
 
-	orgDetails := map[string]interface{}{
-		"name":   app.App.OrganizationName,
+	teamAppDetails := map[string]interface{}{
+		"name":   app.App.TeamName,
 		"locked": app.App.Locked,
 
 		// Platform API does not return this value so set state to resource schema value.
 		"personal": d.Get("personal"),
 	}
-	err = d.Set("organization", []interface{}{orgDetails})
+	err = d.Set("organization", []interface{}{teamAppDetails})
 
 	return err
 }
@@ -406,7 +406,7 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if app.IsTeamApp {
-		orgErr := setOrganizationDetails(d, app)
+		orgErr := setTeamDetails(d, app)
 		if orgErr != nil {
 			return orgErr
 		}
@@ -507,7 +507,7 @@ func resourceHerokuAppDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Deleting App: %s", d.Id())
 	_, err := client.AppDelete(context.TODO(), d.Id())
 	if err != nil {
-		return fmt.Errorf("Error deleting App: %s", err)
+		return fmt.Errorf("error deleting App: %s", err)
 	}
 
 	d.SetId("")
@@ -518,7 +518,7 @@ func resourceHerokuAppExists(d *schema.ResourceData, meta interface{}) (bool, er
 	var err error
 	client := meta.(*Config).Api
 
-	if isOrganizationApp(d) {
+	if isTeamApp(d) {
 		_, err = client.TeamAppInfo(context.TODO(), d.Id())
 	} else {
 		_, err = client.AppInfo(context.TODO(), d.Id())
@@ -540,7 +540,7 @@ func resourceHerokuAppRetrieve(id string, client *heroku.Service) (*application,
 	err := app.Update()
 
 	if err != nil {
-		return nil, fmt.Errorf("Error retrieving app: %s", err)
+		return nil, fmt.Errorf("error retrieving app: %s", err)
 	}
 
 	return &app, nil
@@ -582,7 +582,7 @@ func (a *application) Update() error {
 			return teamAppGetErr
 		}
 
-		a.App.OrganizationName = teamApp.Team.Name
+		a.App.TeamName = teamApp.Team.Name
 		a.App.Locked = teamApp.Locked
 	}
 
@@ -605,7 +605,7 @@ func (a *application) Update() error {
 	return nil
 }
 
-func isOrganizationApp(d *schema.ResourceData) bool {
+func isTeamApp(d *schema.ResourceData) bool {
 	v := d.Get("organization").([]interface{})
 	return len(v) > 0 && v[0] != nil
 }
