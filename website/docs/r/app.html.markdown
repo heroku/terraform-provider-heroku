@@ -95,9 +95,8 @@ config vars to `heroku_app_config_association` resource.
 
 The following attributes are exported:
 
-* `id` - The ID of the app. This is also the name of the application.
-* `name` - The name of the application. In Heroku, this is also the
-   unique ID.
+* `id` - The ID of the app. This is the UUID of the app. **NOTE:** Use this for `null_resource` triggers.
+* `name` - The name of the application.
 * `stack` - The application stack is what platform to run the application
    in.
 * `space` - The private space the app should run in.
@@ -114,12 +113,13 @@ The following attributes are exported:
     exist for the app, containing both those set by Terraform and those
     set externally. (These are treated as "sensitive" so that
     their values are redacted in console output.)
-* `uuid` - The unique UUID of the Heroku app. **NOTE:** Use this for `null_resource` triggers.
 
 ## Import
 
-Apps can be imported using the App `id`, e.g.
+Apps can be imported using an existing app's `UUID` or name.
 
+For example:
 ```
 $ terraform import heroku_app.foobar MyApp
+$ terraform import heroku_app.foobar e74ac056-7d00-4a7e-aa80-df4bc413a825
 ```
