@@ -252,7 +252,7 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	// EDIT: (March 21, 2020) - The statement above causes issues for child resources
 	// of heroku_app such as heroku_addon where the `app` attribute is often set to ForceNew.
 	// As the app's name can change, its UUID does not. Therefore the heroku_app.id should have originally
-	// be set to the UUID to prevent unnecessary destroy and recreates of child resources. - DJ
+	// be set to the UUID to prevent unnecessary destroy and recreates of child app resources. - DJ
 	d.SetId(app.ID)
 
 	readErr := resourceHerokuAppRead(d, m)
