@@ -27,6 +27,7 @@ type herokuApplication struct {
 	WebURL           string
 	OrganizationName string
 	Locked           bool
+	Personal         bool
 	Acm              bool
 	ID               string
 }
@@ -69,7 +70,15 @@ func (a *application) Update() error {
 		}
 
 		if app.Organization != nil {
-			a.App.OrganizationName = app.Organization.Name
+			// Need to do another API call to the /teams/apps endpoint to retrieve
+			// additional info about a team app that isn't exposed through the /apps endpoint.
+			teamApp, teamAppGetErr := a.Client.TeamAppInfo(context.TODO(), a.Id)
+			if teamAppGetErr != nil {
+				return teamAppGetErr
+			}
+
+			a.App.OrganizationName = teamApp.Team.Name
+			a.App.Locked = teamApp.Locked
 		} else {
 			log.Println("[DEBUG] Something is wrong - didn't get information about organization name, while the app is marked as being so")
 		}
@@ -218,11 +227,13 @@ func resourceHerokuApp() *schema.Resource {
 						"locked": {
 							Type:     schema.TypeBool,
 							Optional: true,
+							Computed: true,
 						},
 
 						"personal": {
 							Type:     schema.TypeBool,
 							Optional: true,
+							Computed: true,
 						},
 					},
 				},
@@ -313,6 +324,7 @@ func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
+
 	// Build up our creation options
 	opts := heroku.TeamAppCreateOpts{}
 
@@ -386,9 +398,11 @@ func setOrganizationDetails(d *schema.ResourceData, app *application) (err error
 	err = d.Set("space", app.App.Space)
 
 	orgDetails := map[string]interface{}{
-		"name":     app.App.OrganizationName,
-		"locked":   app.App.Locked,
-		"personal": false,
+		"name":   app.App.OrganizationName,
+		"locked": app.App.Locked,
+
+		// Platform API does not return this value so set state to resource schema value.
+		"personal": d.Get("personal"),
 	}
 	err = d.Set("organization", []interface{}{orgDetails})
 

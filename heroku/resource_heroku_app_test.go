@@ -389,6 +389,30 @@ func TestAccHerokuApp_SensitiveConfigVars(t *testing.T) {
 	})
 }
 
+func TestAccHerokuApp_Organization_Locked(t *testing.T) {
+	var app heroku.TeamApp
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+		},
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAppDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAppConfig_locked(appName, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
+					resource.TestCheckResourceAttr("heroku_app.foobar", "organization.0.locked", "true"),
+					resource.TestCheckResourceAttr("heroku_app.foobar", "organization.0.name", org),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckHerokuAppDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*Config).Api
 
@@ -898,6 +922,19 @@ resource "heroku_app" "foobar" {
   sensitive_config_vars = {
     FOO = "bar1"
     PRIVATE_KEY = "it is a secret1"
+  }
+}`, appName, org)
+}
+
+func testAccCheckHerokuAppConfig_locked(appName, org string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+  name   = "%s"
+  region = "us"
+
+  organization {
+    name = "%s"
+	locked = true
   }
 }`, appName, org)
 }
