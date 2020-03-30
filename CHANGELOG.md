@@ -1,4 +1,15 @@
 ## 2.3.0 (Unreleased)
+
+FEATURES:
+* New resource: `heroku_pipeline_config_var` ([#256](https://github.com/terraform-providers/terraform-provider-heroku/pull/256))
+
+IMPROVEMENTS:
+* Upgrade `heroku-go` to `v5.2.0` ([#256](https://github.com/terraform-providers/terraform-provider-heroku/pull/256))
+
+BUG FIXES:
+* Properly set `heroku_app.acm` when this attribute is not defined ([#256](https://github.com/terraform-providers/terraform-provider-heroku/pull/256))
+* Remove quoted interpolation-only expressions in docs ([#245](https://github.com/terraform-providers/terraform-provider-heroku/pull/245))
+
 ## 2.2.2 (February 20, 2020)
 
 IMPROVEMENTS
