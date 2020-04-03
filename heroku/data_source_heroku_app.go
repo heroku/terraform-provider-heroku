@@ -1,8 +1,6 @@
 package heroku
 
 import (
-	"time"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -106,7 +104,7 @@ func dataSourceHerokuAppRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	d.SetId(time.Now().UTC().String())
+	d.SetId(app.App.ID)
 
 	if app.Organization {
 		err := setOrganizationDetails(d, app)

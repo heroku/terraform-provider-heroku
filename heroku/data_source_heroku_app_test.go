@@ -25,6 +25,8 @@ func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "name", appName),
+					resource.TestCheckResourceAttrSet(
+						"data.heroku_app.foobar", "id"),
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "stack", appStack),
 					resource.TestCheckResourceAttr(
