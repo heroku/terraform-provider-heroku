@@ -93,7 +93,7 @@ config vars to `heroku_app_config_association` resource.
 
 The following attributes are exported:
 
-* `id` - The ID of the app. This is the UUID of the app. **NOTE:** Use this for `null_resource` triggers.
+* `id` - The ID of the app. This is also the name of the app.
 * `name` - The name of the application.
 * `stack` - The application stack is what platform to run the application
    in.
@@ -111,6 +111,7 @@ The following attributes are exported:
     exist for the app, containing both those set by Terraform and those
     set externally. (These are treated as "sensitive" so that
     their values are redacted in console output.)
+* `uuid` - The unique UUID of the Heroku app. **NOTE:** Use this for `null_resource` triggers.
 
 ## Import
 

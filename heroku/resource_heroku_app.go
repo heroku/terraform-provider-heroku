@@ -167,6 +167,11 @@ func resourceHerokuApp() *schema.Resource {
 					},
 				},
 			},
+
+			"uuid": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -186,9 +191,9 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	//
 	// EDIT: (March 21, 2020) - The statement above causes issues for child resources
 	// of heroku_app such as heroku_addon where the `app` attribute is often set to ForceNew.
-	// As the app's name can change, its UUID does not. Therefore the heroku_app.id should have originally
-	// be set to the UUID to prevent unnecessary destroy and recreates of child app resources. - DJ
-	d.SetId(app.ID)
+	// As the app's name can change, its UUID does not. Therefore the heroku_app.id should be set to the UUID - DJ
+	// Punting this change for now.
+	d.SetId(app.Name)
 
 	readErr := resourceHerokuAppRead(d, m)
 
@@ -236,7 +241,7 @@ func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	d.SetId(a.ID)
+	d.SetId(a.Name)
 	log.Printf("[INFO] App ID: %s", d.Id())
 
 	if err := performAppPostCreateTasks(d, client); err != nil {
@@ -308,7 +313,7 @@ func resourceHerokuTeamAppCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	d.SetId(a.ID)
+	d.SetId(a.Name)
 	log.Printf("[INFO] App ID: %s", d.Id())
 
 	if err := performAppPostCreateTasks(d, client); err != nil {
@@ -341,6 +346,7 @@ func setAppDetails(d *schema.ResourceData, app *application) (err error) {
 	err = d.Set("git_url", app.App.GitURL)
 	err = d.Set("web_url", app.App.WebURL)
 	err = d.Set("acm", app.App.Acm)
+	err = d.Set("uuid", app.App.ID)
 	err = d.Set("heroku_hostname", fmt.Sprintf("%s.herokuapp.com", app.App.Name))
 
 	return err
@@ -437,7 +443,7 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.SetId(updatedApp.ID)
+	d.SetId(updatedApp.Name)
 
 	if d.HasChange("buildpacks") {
 		err := updateBuildpacks(d.Id(), client, d.Get("buildpacks").([]interface{}))
