@@ -32,6 +32,11 @@ resource "heroku_app" "production" {
 # Create a Heroku pipeline
 resource "heroku_pipeline" "test-app" {
   name = "test-app"
+
+  owner {
+	id = "16d1c25f-d879-4f4d-ad1b-d807169aaa1c"
+	type = "user"
+  }
 }
 
 # Couple apps to different pipeline stages
@@ -53,6 +58,17 @@ resource "heroku_pipeline_coupling" "production" {
 The following arguments are supported:
 
 * `name` - (Required) The name of the pipeline.
+
+* `owner` - (Required) The owner of the pipeline. This block as the following required attributes:
+    * `id` - (Required) The unique identifier (UUID) of a pipeline owner.
+    * `type` - (Required) The type of pipeline owner. Can be either `user` or `team`.
+
+
+Regarding the `owner` attribute block, please note the following:
+* The Heroku Platform API allows a pipeline to be created without an owner. However, the UI indicates pipelines require an owner.
+Therefore to enforce a best practice, this provider will require this attribute be set in your configuration(s).
+* While the UI allows users to change pipeline ownership, the Platform API does not. Therefore to prevent config drift,
+the provider will force a resource creation should you change the `owner` in your configuration(s).
 
 ## Attributes Reference
 
