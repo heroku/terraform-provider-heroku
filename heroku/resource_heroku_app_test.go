@@ -3,6 +3,7 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"log"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
@@ -521,22 +522,26 @@ func testAccCheckHerokuAppBuildpacks(appName string, multi bool) resource.TestCh
 			return err
 		}
 
-		buildpacks := []string{}
+		log.Printf("[DEBUG] List of the app's buildpack installations: %v", results)
+
+		buildpacks := make([]string, 0)
 		for _, installation := range results {
 			buildpacks = append(buildpacks, installation.Buildpack.Name)
 		}
 
+		log.Printf("[DEBUG] List of the buildpacks: %v", buildpacks)
+
 		if multi {
 			herokuMulti := "https://github.com/heroku/heroku-buildpack-multi-procfile"
 			if len(buildpacks) != 2 || buildpacks[0] != herokuMulti || buildpacks[1] != "heroku/go" {
-				return fmt.Errorf("Bad buildpacks: %v", buildpacks)
+				return fmt.Errorf("bad buildpacks: %v", buildpacks)
 			}
 
 			return nil
 		}
 
 		if len(buildpacks) != 1 || buildpacks[0] != "heroku/go" {
-			return fmt.Errorf("Bad buildpacks: %v", buildpacks)
+			return fmt.Errorf("bad buildpacks: %v", buildpacks)
 		}
 
 		return nil
@@ -552,13 +557,13 @@ func testAccCheckHerokuAppNoBuildpacks(appName string) resource.TestCheckFunc {
 			return err
 		}
 
-		buildpacks := []string{}
+		buildpacks := make([]string, 0)
 		for _, installation := range results {
 			buildpacks = append(buildpacks, installation.Buildpack.Name)
 		}
 
 		if len(buildpacks) != 0 {
-			return fmt.Errorf("Bad buildpacks: %v", buildpacks)
+			return fmt.Errorf("bad buildpacks: %v", buildpacks)
 		}
 
 		return nil
@@ -759,6 +764,8 @@ func testAccCheckHerokuAppConfig_no_vars(appName string) string {
 resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
+
+  buildpacks = []
 
   config_vars = {}
 }`, appName)
