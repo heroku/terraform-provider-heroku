@@ -33,7 +33,7 @@ jobs:
         HEROKU_SPACES_ORGANIZATION: terraform-ci-test-team
         HEROKU_TEAM: terraform-ci-test-team
         HEROKU_EMAIL: mars+heroku-terraform-ci@heroku.com
-        HEROKU_TEST_USER: mars+heroku-terraform-ci@heroku.com
+        HEROKU_TEST_USER: mars+heroku-terraform-ci-admin@heroku.com
         HEROKU_NON_ADMIN_TEST_USER: mars+heroku-terraform-ci-member@heroku.com
         HEROKU_SLUG_ID: 8527dbf3-c0a0-4255-beab-aca0aad1dfc9
         GOFLAGS: "-mod=vendor"
