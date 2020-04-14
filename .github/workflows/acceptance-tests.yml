@@ -1,4 +1,4 @@
-name: Acceptance tests
+name: Acceptance
 on:
   pull_request:
     branches:
@@ -12,8 +12,8 @@ on:
 
 jobs:
 
-  acceptance_tests:
-    name: Acceptance tests
+  tests:
+    name: Tests
     runs-on: ubuntu-latest
     steps:
     - name: Install Go 1.13
