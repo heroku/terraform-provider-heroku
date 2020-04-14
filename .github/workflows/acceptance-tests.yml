@@ -28,11 +28,10 @@ jobs:
       run: |
         make testacc TEST="./heroku/"
       env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         HEROKU_ORGANIZATION: heroku-terraform-ci
         HEROKU_SPACES_ORGANIZATION: heroku-terraform-ci
         HEROKU_EMAIL: mars+heroku-terraform-ci@heroku.com
         HEROKU_TEST_USER: mars+heroku-terraform-ci@heroku.com
         HEROKU_NON_ADMIN_TEST_USER: mars+heroku-terraform-ci-member@heroku.com
         HEROKU_SLUG_ID: 8527dbf3-c0a0-4255-beab-aca0aad1dfc9
-        # This key value is set in GitHub repo secrets
-        # HEROKU_API_KEY: xxxxx
