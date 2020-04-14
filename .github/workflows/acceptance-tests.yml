@@ -29,8 +29,8 @@ jobs:
         make testacc TEST="./heroku/"
       env:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        HEROKU_ORGANIZATION: heroku-terraform-ci
-        HEROKU_SPACES_ORGANIZATION: heroku-terraform-ci
+        HEROKU_ORGANIZATION: terraform-ci-test-team
+        HEROKU_SPACES_ORGANIZATION: terraform-ci-test-team
         HEROKU_EMAIL: mars+heroku-terraform-ci@heroku.com
         HEROKU_TEST_USER: mars+heroku-terraform-ci@heroku.com
         HEROKU_NON_ADMIN_TEST_USER: mars+heroku-terraform-ci-member@heroku.com
