@@ -204,7 +204,6 @@ func TestAccHerokuApp_ExternallySetBuildpacks(t *testing.T) {
 				Config:    testAccCheckHerokuAppConfig_no_vars(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
-					testAccCheckHerokuAppBuildpacks(appName, false),
 					resource.TestCheckNoResourceAttr("heroku_app.foobar", "buildpacks.0"),
 				),
 			},
@@ -541,7 +540,7 @@ func testAccCheckHerokuAppBuildpacks(appName string, multi bool) resource.TestCh
 		}
 
 		if len(buildpacks) != 1 || buildpacks[0] != "heroku/go" {
-			return fmt.Errorf("bad buildpacks: %v", buildpacks)
+			return fmt.Errorf("expected buildpack length to not equal 1 OR buildpacks[0] to not be \"heroku/go\" but got: %v", buildpacks)
 		}
 
 		return nil
@@ -563,7 +562,7 @@ func testAccCheckHerokuAppNoBuildpacks(appName string) resource.TestCheckFunc {
 		}
 
 		if len(buildpacks) != 0 {
-			return fmt.Errorf("bad buildpacks: %v", buildpacks)
+			return fmt.Errorf("expected 0 buildpacks but got %d: %v", len(buildpacks), buildpacks)
 		}
 
 		return nil
