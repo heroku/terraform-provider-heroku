@@ -137,27 +137,27 @@ func resourceHerokuSpaceVPNConnectionCreate(d *schema.ResourceData, meta interfa
 	id := conn.ID
 
 	log.Printf("[DEBUG] Waiting for VPN (%s) to be allocated", id)
-	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		conn, err := client.VPNConnectionInfo(context.TODO(), space, id)
+	retryErr := resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		vpn, vpnGetErr := client.VPNConnectionInfo(context.TODO(), space, id)
 
 		// Retry on "not found"
-		if err != nil && strings.Contains(err.Error(), "VPN is not found") {
+		if vpnGetErr != nil && strings.Contains(vpnGetErr.Error(), "VPN is not found") {
 			return resource.RetryableError(fmt.Errorf("Waiting for new VPN connection"))
 		}
 
 		// Fail for any remaining error
-		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error fetching VPN connection status: %s", err))
+		if vpnGetErr != nil {
+			return resource.NonRetryableError(fmt.Errorf("Error fetching VPN connection status: %s", vpnGetErr))
 		}
 
-		if conn.Status != "active" {
-			return resource.RetryableError(fmt.Errorf("Want VPN connection status 'active', instead got '%s'", conn.Status))
+		if vpn.Status != "active" {
+			return resource.RetryableError(fmt.Errorf("Want VPN connection status 'active', instead got '%s'", vpn.Status))
 		}
 
 		return resource.NonRetryableError(nil)
 	})
-	if err != nil {
-		return fmt.Errorf("Error waiting for VPN to become available: %v", err)
+	if retryErr != nil {
+		return fmt.Errorf("Error waiting for VPN to become available: %v", retryErr)
 	}
 
 	d.SetId(buildCompositeID(space, id))
