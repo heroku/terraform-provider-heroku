@@ -1,0 +1,105 @@
+name: Publish binaries on release
+on:
+  release:
+    types:
+    - published
+jobs:
+
+  release-linux-amd64:
+    name: Release linux/amd64
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get release tag
+      id: release_tag
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+    - name: Install Go 1.13
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13
+      id: go
+
+    - uses: actions/checkout@master
+
+    - name: Build
+      run: |
+        echo "Creating binary archive $RELEASE_FILENAME.zip"
+        go build -mod=vendor -ldflags="-X=github.com/terraform-providers/terraform-provider-heroku/version.ProviderVersion=${{ steps.release_tag.outputs.VERSION }}"
+        zip -r "$RELEASE_FILENAME.zip" terraform-provider-heroku
+      env:
+        GOARCH: amd64
+        GOOS: linux
+        RELEASE_FILENAME: terraform-provider-heroku_${{ steps.release_tag.outputs.VERSION }}_linux_amd64
+
+    - name: Publish binaries
+      uses: skx/github-action-publish-binaries@release-1.3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        args: 'terraform-provider-heroku_*.zip'
+
+  release-darwin-amd64:
+    name: Release darwin/amd64
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get release tag
+      id: release_tag
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+    - name: Install Go 1.13
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13
+      id: go
+
+    - uses: actions/checkout@master
+
+    - name: Build
+      run: |
+        echo "Creating binary archive $RELEASE_FILENAME.zip"
+        go build -mod=vendor -ldflags="-X=github.com/terraform-providers/terraform-provider-heroku/version.ProviderVersion=${{ steps.release_tag.outputs.VERSION }}"
+        zip -r "$RELEASE_FILENAME.zip" terraform-provider-heroku
+      env:
+        GOARCH: amd64
+        GOOS: darwin
+        RELEASE_FILENAME: terraform-provider-heroku_${{ steps.release_tag.outputs.VERSION }}_darwin_amd64
+
+    - name: Publish binaries
+      uses: skx/github-action-publish-binaries@release-1.3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        args: 'terraform-provider-heroku_*.zip'
+
+  release-windows-amd64:
+    name: Release windows/amd64
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get release tag
+      id: release_tag
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+    - name: Install Go 1.13
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13
+      id: go
+
+    - uses: actions/checkout@master
+
+    - name: Build
+      run: |
+        echo "Creating binary archive $RELEASE_FILENAME.zip"
+        go build -mod=vendor -ldflags="-X=github.com/terraform-providers/terraform-provider-heroku/version.ProviderVersion=${{ steps.release_tag.outputs.VERSION }}"
+        zip -r "$RELEASE_FILENAME.zip" terraform-provider-heroku.exe
+      env:
+        GOARCH: amd64
+        GOOS: windows
+        RELEASE_FILENAME: terraform-provider-heroku_${{ steps.release_tag.outputs.VERSION }}_windows_amd64
+
+    - name: Publish binaries
+      uses: skx/github-action-publish-binaries@release-1.3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        args: 'terraform-provider-heroku_*.zip'
