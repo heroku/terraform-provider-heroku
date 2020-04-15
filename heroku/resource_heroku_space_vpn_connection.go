@@ -156,6 +156,9 @@ func resourceHerokuSpaceVPNConnectionCreate(d *schema.ResourceData, meta interfa
 
 		return resource.NonRetryableError(nil)
 	})
+	if err != nil {
+		return fmt.Errorf("Error waiting for VPN to become available: %v", err)
+	}
 
 	d.SetId(buildCompositeID(space, id))
 
