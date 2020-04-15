@@ -1,7 +1,7 @@
-[![Build Status](https://travis-ci.org/terraform-providers/terraform-provider-heroku.svg?branch=master)](https://travis-ci.org/terraform-providers/terraform-provider-heroku)
-
 Terraform Provider Heroku
 =========================
+
+![Acceptance tests](https://github.com/terraform-providers/terraform-provider-heroku/workflows/Acceptance/badge.svg)
 
 This provider is used to configure resources supported by the [Heroku Platform API](https://devcenter.heroku.com/articles/platform-api-reference).
 
