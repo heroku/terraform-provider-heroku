@@ -1,7 +1,7 @@
 Terraform Provider Heroku
 =========================
 
-![Acceptance tests](https://github.com/terraform-providers/terraform-provider-heroku/workflows/Acceptance/badge.svg)
+[![Acceptance tests](https://github.com/terraform-providers/terraform-provider-heroku/workflows/Acceptance/badge.svg)](https://github.com/terraform-providers/terraform-provider-heroku/actions?query=workflow%3AAcceptance)
 
 This provider is used to configure resources supported by the [Heroku Platform API](https://devcenter.heroku.com/articles/platform-api-reference).
 
