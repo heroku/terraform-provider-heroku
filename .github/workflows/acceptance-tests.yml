@@ -36,6 +36,6 @@ jobs:
         HEROKU_TEST_USER: mars+heroku-terraform-ci-admin@heroku.com
         HEROKU_NON_ADMIN_TEST_USER: mars+heroku-terraform-ci-member@heroku.com
         HEROKU_SLUG_ID: 8527dbf3-c0a0-4255-beab-aca0aad1dfc9
-        HEROKU_USER_ID: 04eb779f-b046-4bc3-9b7e-d2c8512c3927
+        HEROKU_USER_ID: 007fa6e2-00a1-429e-92a0-7bbe14b063fc
         GOFLAGS: "-mod=vendor"
         # TF_LOG: DEBUG

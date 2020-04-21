@@ -10,7 +10,6 @@ import (
 
 func TestAccHerokuPipeline_importBasic(t *testing.T) {
 	pName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	ownerID := testAccConfig.GetUserIDOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -18,7 +17,7 @@ func TestAccHerokuPipeline_importBasic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuPipelineDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuPipeline_basic(pName, ownerID, "user"),
+				Config: testAccCheckHerokuPipeline_NoOwner(pName),
 			},
 			{
 				ResourceName:            "heroku_pipeline.foobar",

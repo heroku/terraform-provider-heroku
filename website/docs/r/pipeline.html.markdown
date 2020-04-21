@@ -66,9 +66,8 @@ The following arguments are supported:
 
 Regarding the `owner` attribute block, please note the following:
 * The Heroku Platform API allows a pipeline to be created without an owner. However, the UI indicates pipelines require an owner.
-Therefore to enforce a best practice, this provider will require this attribute be set in your configuration(s).
-* While the UI allows users to change pipeline ownership, the Platform API does not. Therefore to prevent config drift,
-the provider will force a resource creation should you change the `owner` in your configuration(s).
+So to improve usability, if the `owner` attribute block is not set in your configuration(s), the pipeline owner
+will default to the user that generated the `HEROKU_API_KEY` used to authenticate to the Platform API via this provider.
 
 ## Attributes Reference
 

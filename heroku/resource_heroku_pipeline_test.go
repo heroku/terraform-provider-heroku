@@ -46,6 +46,30 @@ func TestAccHerokuPipeline_Basic(t *testing.T) {
 	})
 }
 
+func TestAccHerokuPipeline_NoOwner(t *testing.T) {
+	var pipeline heroku.Pipeline
+	pipelineName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	ownerID := testAccConfig.GetUserIDOrSkip(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuPipelineDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuPipeline_NoOwner(pipelineName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuPipelineExists("heroku_pipeline.foobar", &pipeline),
+					resource.TestCheckResourceAttr(
+						"heroku_pipeline.foobar", "name", pipelineName),
+					resource.TestCheckResourceAttr(
+						"heroku_pipeline.foobar", "owner.0.id", ownerID),
+				),
+			},
+		},
+	})
+}
+
 func TestAccHerokuPipeline_InvalidOwnerID(t *testing.T) {
 	pipelineName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
@@ -88,6 +112,14 @@ resource "heroku_pipeline" "foobar" {
   }
 }
 `, pipelineName, pipelineOwnerID, pipelineOwnerType)
+}
+
+func testAccCheckHerokuPipeline_NoOwner(pipelineName string) string {
+	return fmt.Sprintf(`
+resource "heroku_pipeline" "foobar" {
+  name = "%s"
+}
+`, pipelineName)
 }
 
 func testAccCheckHerokuPipelineExists(n string, pipeline *heroku.Pipeline) resource.TestCheckFunc {

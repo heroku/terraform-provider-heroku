@@ -32,7 +32,8 @@ func resourceHerokuPipeline() *schema.Resource {
 
 			"owner": {
 				Type:     schema.TypeList,
-				Required: true,
+				Optional: true,
+				Computed: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -80,25 +81,36 @@ func resourceHerokuPipelineCreate(d *schema.ResourceData, meta interface{}) erro
 		opts.Name = vs
 	}
 
+	// If the owner is set, use it. Otherwise, pipeline ownership will default
+	// to the authenticated user for this provider.
+	opts.Owner = (*struct {
+		ID   string `json:"id" url:"id,key"`
+		Type string `json:"type" url:"type,key"`
+	})(&struct {
+		ID   string
+		Type string
+	}{ID: "", Type: ""})
 	if v, ok := d.GetOk("owner"); ok {
 		vi := v.([]interface{})
 		ownerInfo := vi[0].(map[string]interface{})
 
 		ownerID := ownerInfo["id"].(string)
-		log.Printf("[DEBUG] New pipeline owner id: %s", ownerID)
-
 		ownerType := ownerInfo["type"].(string)
-		log.Printf("[DEBUG] New pipeline owner type: %s", ownerType)
 
-		opts.Owner = (*struct {
-			ID   string `json:"id" url:"id,key"`
-			Type string `json:"type" url:"type,key"`
-		})(&struct {
-			ID   string
-			Type string
-		}{ID: ownerID, Type: ownerType})
+		opts.Owner.ID = ownerID
+		opts.Owner.Type = ownerType
+	} else {
+		authUser, authGetUserErr := client.AccountInfo(context.TODO())
+		if authGetUserErr != nil {
+			return authGetUserErr
+		}
 
+		opts.Owner.ID = authUser.ID
+		opts.Owner.Type = "user"
 	}
+
+	log.Printf("[DEBUG] New pipeline owner id: %s", opts.Owner.ID)
+	log.Printf("[DEBUG] New pipeline owner type: %s", opts.Owner.Type)
 
 	log.Printf("[DEBUG] Pipeline create configuration: %#v", opts)
 
