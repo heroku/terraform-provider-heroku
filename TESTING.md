@@ -40,6 +40,7 @@ The following parameters are available for running the test. The absence of some
 * **HEROKU_NON_ADMIN_TEST_USER**(`string`) The name of an existing non-admin user belonging to the organization, that will be used for various test cases.
 * **HEROKU_SLUG_ID**(`string`) The ID of an existing slug built in the Common Runtime (otherwise "Slug not compatible with space" errors will be thrown)
 * **HEROKU_SPACES_ORGANIZATION**(`string`) The Heroku Enterprise Team for which Heroku Private Space tests will be run under.
+* **HEROKU_USER_ID**(`string`) The UUID of an existing Heroku user.
 * **TF_LOG**(`DEBUG|TRACE`) Enables more detailed logging of tests, including http request/responses. 
 
 For example:
