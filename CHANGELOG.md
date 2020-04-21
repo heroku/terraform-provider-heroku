@@ -1,4 +1,19 @@
 ## 2.4.0 (Unreleased)
+
+FEATURES:
+* **Resource `heroku_pipeline`** now supports setting `owner` user or team, including defaulting to the current API key's user ID ([#259](https://github.com/terraform-providers/terraform-provider-heroku/pull/259))
+
+IMPROVEMENTS:
+* **Terraform Provider acceptance tests** now run on pull requests, pushes to master, and nightly using [GitHub Actions](https://github.com/terraform-providers/terraform-provider-heroku/actions) configured for the [CI workflows](https://github.com/terraform-providers/terraform-provider-heroku/tree/master/.github/workflows)
+
+BUG FIXES:
+* **Resource `heroku_app`**
+  * now imports `buildpacks` and other attributes, consistent with create & read ([#257](https://github.com/terraform-providers/terraform-provider-heroku/pull/257))
+  * now reads `organization.locked`, consistent with create ([#257](https://github.com/terraform-providers/terraform-provider-heroku/pull/257))
+  * drops the non-standard `uuid` attribute ([#257](https://github.com/terraform-providers/terraform-provider-heroku/pull/257))
+* **Data source `heroku_app`** now returns `id` attribute, consistent with resource `heroku_app` ([#259](https://github.com/terraform-providers/terraform-provider-heroku/pull/259))
+
+
 ## 2.3.0 (March 30, 2020)
 
 FEATURES:
