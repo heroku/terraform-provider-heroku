@@ -11,7 +11,7 @@ BUG FIXES:
   * now imports `buildpacks` and other attributes, consistent with create & read ([#257](https://github.com/terraform-providers/terraform-provider-heroku/pull/257))
   * now reads `organization.locked`, consistent with create ([#257](https://github.com/terraform-providers/terraform-provider-heroku/pull/257))
   * drops the non-standard `uuid` attribute ([#257](https://github.com/terraform-providers/terraform-provider-heroku/pull/257))
-* **Data source `heroku_app`** now returns `id` attribute, consistent with resource `heroku_app` ([#259](https://github.com/terraform-providers/terraform-provider-heroku/pull/259))
+* **Data source `heroku_app`** now returns `id` attribute, consistent with resource `heroku_app` ([#255](https://github.com/terraform-providers/terraform-provider-heroku/pull/255))
 
 
 ## 2.3.0 (March 30, 2020)
