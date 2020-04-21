@@ -3,6 +3,7 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"log"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
@@ -203,7 +204,6 @@ func TestAccHerokuApp_ExternallySetBuildpacks(t *testing.T) {
 				Config:    testAccCheckHerokuAppConfig_no_vars(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
-					testAccCheckHerokuAppBuildpacks(appName, false),
 					resource.TestCheckNoResourceAttr("heroku_app.foobar", "buildpacks.0"),
 				),
 			},
@@ -389,6 +389,30 @@ func TestAccHerokuApp_SensitiveConfigVars(t *testing.T) {
 	})
 }
 
+func TestAccHerokuApp_Organization_Locked(t *testing.T) {
+	var app heroku.TeamApp
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+		},
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAppDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAppConfig_locked(appName, org),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
+					resource.TestCheckResourceAttr("heroku_app.foobar", "organization.0.locked", "true"),
+					resource.TestCheckResourceAttr("heroku_app.foobar", "organization.0.name", org),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckHerokuAppDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*Config).Api
 
@@ -497,22 +521,26 @@ func testAccCheckHerokuAppBuildpacks(appName string, multi bool) resource.TestCh
 			return err
 		}
 
-		buildpacks := []string{}
+		log.Printf("[DEBUG] List of the app's buildpack installations: %v", results)
+
+		buildpacks := make([]string, 0)
 		for _, installation := range results {
 			buildpacks = append(buildpacks, installation.Buildpack.Name)
 		}
 
+		log.Printf("[DEBUG] List of the buildpacks: %v", buildpacks)
+
 		if multi {
 			herokuMulti := "https://github.com/heroku/heroku-buildpack-multi-procfile"
 			if len(buildpacks) != 2 || buildpacks[0] != herokuMulti || buildpacks[1] != "heroku/go" {
-				return fmt.Errorf("Bad buildpacks: %v", buildpacks)
+				return fmt.Errorf("bad buildpacks: %v", buildpacks)
 			}
 
 			return nil
 		}
 
 		if len(buildpacks) != 1 || buildpacks[0] != "heroku/go" {
-			return fmt.Errorf("Bad buildpacks: %v", buildpacks)
+			return fmt.Errorf("expected buildpack length to not equal 1 OR buildpacks[0] to not be \"heroku/go\" but got: %v", buildpacks)
 		}
 
 		return nil
@@ -528,13 +556,13 @@ func testAccCheckHerokuAppNoBuildpacks(appName string) resource.TestCheckFunc {
 			return err
 		}
 
-		buildpacks := []string{}
+		buildpacks := make([]string, 0)
 		for _, installation := range results {
 			buildpacks = append(buildpacks, installation.Buildpack.Name)
 		}
 
 		if len(buildpacks) != 0 {
-			return fmt.Errorf("Bad buildpacks: %v", buildpacks)
+			return fmt.Errorf("expected 0 buildpacks but got %d: %v", len(buildpacks), buildpacks)
 		}
 
 		return nil
@@ -736,6 +764,8 @@ resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
 
+  buildpacks = []
+
   config_vars = {}
 }`, appName)
 }
@@ -898,6 +928,19 @@ resource "heroku_app" "foobar" {
   sensitive_config_vars = {
     FOO = "bar1"
     PRIVATE_KEY = "it is a secret1"
+  }
+}`, appName, org)
+}
+
+func testAccCheckHerokuAppConfig_locked(appName, org string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+  name   = "%s"
+  region = "us"
+
+  organization {
+    name = "%s"
+	locked = true
   }
 }`, appName, org)
 }

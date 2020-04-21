@@ -99,17 +99,17 @@ func dataSourceHerokuAppRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Config).Api
 
 	name := d.Get("name").(string)
-	app, err := resourceHerokuAppRetrieve(name, true, client)
+	app, err := resourceHerokuAppRetrieve(name, client)
 	if err != nil {
 		return err
 	}
 
 	d.SetId(app.App.ID)
 
-	if app.Organization {
-		err := setOrganizationDetails(d, app)
-		if err != nil {
-			return err
+	if app.IsTeamApp {
+		setErr := setTeamDetails(d, app)
+		if setErr != nil {
+			return setErr
 		}
 	}
 

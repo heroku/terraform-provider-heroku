@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"log"
 	"net/url"
 	"time"
@@ -18,86 +19,29 @@ import (
 // application. We use this for common storage of values needed for the
 // heroku.App and heroku.TeamApp types
 type herokuApplication struct {
-	Name             string
-	Region           string
-	Space            string
-	Stack            string
-	InternalRouting  bool
-	GitURL           string
-	WebURL           string
-	OrganizationName string
-	Locked           bool
-	Acm              bool
-	ID               string
+	Name            string
+	Region          string
+	Space           string
+	Stack           string
+	InternalRouting bool
+	GitURL          string
+	WebURL          string
+	TeamName        string
+	Locked          bool
+	Personal        bool
+	Acm             bool
+	ID              string
 }
 
 // type application is used to store all the details of a heroku app
 type application struct {
 	Id string // Id of the resource
 
-	App          *herokuApplication // The heroku application
-	Client       *heroku.Service    // Client to interact with the heroku API
-	Vars         map[string]string  // The vars on the application
-	Buildpacks   []string           // The application's buildpack names or URLs
-	Organization bool               // is the application organization app
-}
-
-// Updates the application to have the latest from remote
-func (a *application) Update() error {
-	var errs []error
-	var err error
-
-	app, err := a.Client.AppInfo(context.TODO(), a.Id)
-	if err != nil {
-		errs = append(errs, err)
-	} else {
-		a.App = &herokuApplication{}
-		a.App.Name = app.Name
-		a.App.Region = app.Region.Name
-		a.App.Stack = app.BuildStack.Name
-		a.App.GitURL = app.GitURL
-		a.App.WebURL = app.WebURL
-		a.App.Acm = app.Acm
-		a.App.ID = app.ID
-
-		if app.InternalRouting != nil {
-			a.App.InternalRouting = *app.InternalRouting
-		}
-
-		if app.Space != nil {
-			a.App.Space = app.Space.Name
-		}
-
-		if app.Organization != nil {
-			a.App.OrganizationName = app.Organization.Name
-		} else {
-			log.Println("[DEBUG] Something is wrong - didn't get information about organization name, while the app is marked as being so")
-		}
-
-	}
-
-	if app.Organization != nil {
-		a.App.Locked, err = retrieveOrgLockState(a.Id, app.Organization.Name, a.Client)
-		if err != nil {
-			errs = append(errs, err)
-		}
-	}
-
-	a.Buildpacks, err = retrieveBuildpacks(a.Id, a.Client)
-	if err != nil {
-		errs = append(errs, err)
-	}
-
-	a.Vars, err = retrieveConfigVars(a.Id, a.Client)
-	if err != nil {
-		errs = append(errs, err)
-	}
-
-	if len(errs) > 0 {
-		return &multierror.Error{Errors: errs}
-	}
-
-	return nil
+	App        *herokuApplication // The heroku application
+	Client     *heroku.Service    // Client to interact with the heroku API
+	Vars       map[string]string  // Represents all vars on a heroku app.
+	Buildpacks []string           // The application's buildpack names or URLs
+	IsTeamApp  bool               // Is the application a team (organization) app
 }
 
 func resourceHerokuApp() *schema.Resource {
@@ -136,12 +80,6 @@ func resourceHerokuApp() *schema.Resource {
 				Computed: true,
 			},
 
-			"uuid": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-
 			"internal_routing": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -152,6 +90,7 @@ func resourceHerokuApp() *schema.Resource {
 			"buildpacks": {
 				Type:     schema.TypeList,
 				Optional: true,
+				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -211,29 +150,32 @@ func resourceHerokuApp() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringIsNotEmpty,
 						},
 
 						"locked": {
 							Type:     schema.TypeBool,
 							Optional: true,
+							Computed: true,
 						},
 
 						"personal": {
 							Type:     schema.TypeBool,
 							Optional: true,
+							Computed: true,
 						},
 					},
 				},
 			},
+
+			"uuid": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
-}
-
-func isOrganizationApp(d *schema.ResourceData) bool {
-	v := d.Get("organization").([]interface{})
-	return len(v) > 0 && v[0] != nil
 }
 
 func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -244,40 +186,25 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 		return nil, err
 	}
 
-	// Flag organization apps by setting the organization name
-	if app.Organization != nil {
-		setErr := d.Set("organization", []map[string]interface{}{
-			{"name": app.Organization.Name},
-		})
-
-		if setErr != nil {
-			return nil, setErr
-		}
-	}
-
 	// XXX Heroku's API treats app UUID's and names the same. This can cause
 	// confusion as other parts of this provider assume the app NAME is the app
 	// ID, as a lot of the Heroku API will accept BOTH. App ID's aren't very
 	// easy to get, so it makes more sense to just use the name as much as possible.
+	//
+	// EDIT: (March 21, 2020) - The statement above causes issues for child resources
+	// of heroku_app such as heroku_addon where the `app` attribute is often set to ForceNew.
+	// As the app's name can change, its UUID does not. Therefore the heroku_app.id should be set to the UUID - DJ
+	// Punting this change for now.
 	d.SetId(app.Name)
-	setErr := d.Set("acm", app.Acm)
-	if setErr != nil {
-		return nil, setErr
-	}
 
-	if app.InternalRouting != nil {
-		setErr = d.Set("internal_routing", *app.InternalRouting)
-		if setErr != nil {
-			return nil, setErr
-		}
-	}
+	readErr := resourceHerokuAppRead(d, m)
 
-	return []*schema.ResourceData{d}, nil
+	return []*schema.ResourceData{d}, readErr
 }
 
 func switchHerokuAppCreate(d *schema.ResourceData, meta interface{}) (err error) {
-	if isOrganizationApp(d) {
-		err = resourceHerokuOrgAppCreate(d, meta)
+	if isTeamApp(d) {
+		err = resourceHerokuTeamAppCreate(d, meta)
 	} else {
 		err = resourceHerokuAppCreate(d, meta)
 	}
@@ -326,30 +253,31 @@ func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourceHerokuAppRead(d, meta)
 }
 
-func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceHerokuTeamAppCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
+
 	// Build up our creation options
 	opts := heroku.TeamAppCreateOpts{}
 
 	v := d.Get("organization").([]interface{})
 	if len(v) > 1 {
-		return fmt.Errorf("Error Creating Heroku App: Only 1 Heroku Organization is permitted")
+		return fmt.Errorf("rrror Creating Heroku App: Only 1 Heroku Team (organization) is permitted")
 	}
-	orgDetails := v[0].(map[string]interface{})
+	newTeamApp := v[0].(map[string]interface{})
 
-	if v := orgDetails["name"]; v != nil {
+	if v := newTeamApp["name"]; v != nil {
 		vs := v.(string)
 		log.Printf("[DEBUG] Organization name: %s", vs)
 		opts.Team = &vs
 	}
 
-	if v := orgDetails["personal"]; v != nil {
+	if v := newTeamApp["personal"]; v != nil {
 		vs := v.(bool)
 		log.Printf("[DEBUG] Organization Personal: %t", vs)
 		opts.Personal = &vs
 	}
 
-	if v := orgDetails["locked"]; v != nil {
+	if v := newTeamApp["locked"]; v != nil {
 		vs := v.(bool)
 		log.Printf("[DEBUG] Organization locked: %t", vs)
 		opts.Locked = &vs
@@ -397,15 +325,17 @@ func resourceHerokuOrgAppCreate(d *schema.ResourceData, meta interface{}) error 
 	return resourceHerokuAppRead(d, meta)
 }
 
-func setOrganizationDetails(d *schema.ResourceData, app *application) (err error) {
+func setTeamDetails(d *schema.ResourceData, app *application) (err error) {
 	err = d.Set("space", app.App.Space)
 
-	orgDetails := map[string]interface{}{
-		"name":     app.App.OrganizationName,
-		"locked":   app.App.Locked,
-		"personal": false,
+	teamAppDetails := map[string]interface{}{
+		"name":   app.App.TeamName,
+		"locked": app.App.Locked,
+
+		// Platform API does not return this value so set state to resource schema value.
+		"personal": d.Get("personal"),
 	}
-	err = d.Set("organization", []interface{}{orgDetails})
+	err = d.Set("organization", []interface{}{teamAppDetails})
 
 	return err
 }
@@ -433,14 +363,9 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	careSensitive := make(map[string]struct{})
 	sensitiveConfigVars := make(map[string]string)
 
-	// Only track buildpacks when set in the configuration.
-	_, buildpacksConfigured := d.GetOk("buildpacks")
-
-	organizationApp := isOrganizationApp(d)
-
 	// Only set the config_vars that we have set in the configuration.
 	// The "all_config_vars" field has all of them.
-	app, err := resourceHerokuAppRetrieve(d.Id(), organizationApp, client)
+	app, err := resourceHerokuAppRetrieve(d.Id(), client)
 	if err != nil {
 		return err
 	}
@@ -469,13 +394,6 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	if buildpacksConfigured {
-		buildpacksErr := d.Set("buildpacks", app.Buildpacks)
-		if buildpacksErr != nil {
-			return buildpacksErr
-		}
-	}
-
 	log.Printf("[LOG] Setting config vars: %s", configVars)
 	if err := d.Set("config_vars", configVars); err != nil {
 		log.Printf("[WARN] Error setting config vars: %s", err)
@@ -490,8 +408,13 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[WARN] Error setting all_config_vars: %s", err)
 	}
 
-	if organizationApp {
-		orgErr := setOrganizationDetails(d, app)
+	buildpacksErr := d.Set("buildpacks", app.Buildpacks)
+	if buildpacksErr != nil {
+		return buildpacksErr
+	}
+
+	if app.IsTeamApp {
+		orgErr := setTeamDetails(d, app)
 		if orgErr != nil {
 			return orgErr
 		}
@@ -592,7 +515,7 @@ func resourceHerokuAppDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Deleting App: %s", d.Id())
 	_, err := client.AppDelete(context.TODO(), d.Id())
 	if err != nil {
-		return fmt.Errorf("Error deleting App: %s", err)
+		return fmt.Errorf("error deleting App: %s", err)
 	}
 
 	d.SetId("")
@@ -603,7 +526,7 @@ func resourceHerokuAppExists(d *schema.ResourceData, meta interface{}) (bool, er
 	var err error
 	client := meta.(*Config).Api
 
-	if isOrganizationApp(d) {
+	if isTeamApp(d) {
 		_, err = client.TeamAppInfo(context.TODO(), d.Id())
 	} else {
 		_, err = client.AppInfo(context.TODO(), d.Id())
@@ -619,25 +542,80 @@ func resourceHerokuAppExists(d *schema.ResourceData, meta interface{}) (bool, er
 	return true, nil
 }
 
-func resourceHerokuAppRetrieve(id string, organization bool, client *heroku.Service) (*application, error) {
-	app := application{Id: id, Client: client, Organization: organization}
+func resourceHerokuAppRetrieve(id string, client *heroku.Service) (*application, error) {
+	app := application{Id: id, Client: client, IsTeamApp: false}
 
 	err := app.Update()
 
 	if err != nil {
-		return nil, fmt.Errorf("Error retrieving app: %s", err)
+		return nil, fmt.Errorf("error retrieving app: %s", err)
 	}
 
 	return &app, nil
 }
 
-func retrieveOrgLockState(id, org string, client *heroku.Service) (bool, error) {
-	app, err := client.TeamAppInfo(context.TODO(), id)
-	if err != nil {
-		return false, err
+// Updates the application to have the latest from remote
+func (a *application) Update() error {
+	app, appGetErr := a.Client.AppInfo(context.TODO(), a.Id)
+	if appGetErr != nil {
+		return appGetErr
 	}
 
-	return app.Locked, nil
+	a.App = &herokuApplication{}
+	a.App.Name = app.Name
+	a.App.Region = app.Region.Name
+	a.App.Stack = app.BuildStack.Name
+	a.App.GitURL = app.GitURL
+	a.App.WebURL = app.WebURL
+	a.App.Acm = app.Acm
+	a.App.ID = app.ID
+
+	if app.InternalRouting != nil {
+		a.App.InternalRouting = *app.InternalRouting
+	}
+
+	if app.Space != nil {
+		a.App.Space = app.Space.Name
+	}
+
+	// If app is a team/org app, define additional values.
+	if app.Organization != nil && app.Team != nil {
+		// Set to true to control additional state actions downstream
+		a.IsTeamApp = true
+
+		// Need to do another API call to the /teams/apps endpoint to retrieve
+		// additional info about a team app that isn't exposed through the /apps endpoint.
+		teamApp, teamAppGetErr := a.Client.TeamAppInfo(context.TODO(), a.Id)
+		if teamAppGetErr != nil {
+			return teamAppGetErr
+		}
+
+		a.App.TeamName = teamApp.Team.Name
+		a.App.Locked = teamApp.Locked
+	}
+
+	var errs []error
+	var err error
+	a.Buildpacks, err = retrieveBuildpacks(a.Id, a.Client)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	a.Vars, err = retrieveConfigVars(a.Id, a.Client)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	if len(errs) > 0 {
+		return &multierror.Error{Errors: errs}
+	}
+
+	return nil
+}
+
+func isTeamApp(d *schema.ResourceData) bool {
+	v := d.Get("organization").([]interface{})
+	return len(v) > 0 && v[0] != nil
 }
 
 func retrieveBuildpacks(id string, client *heroku.Service) ([]string, error) {
@@ -647,7 +625,7 @@ func retrieveBuildpacks(id string, client *heroku.Service) ([]string, error) {
 		return nil, err
 	}
 
-	buildpacks := []string{}
+	buildpacks := make([]string, 0)
 	for _, installation := range results {
 		buildpacks = append(buildpacks, installation.Buildpack.Name)
 	}

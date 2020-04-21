@@ -52,7 +52,7 @@ func TestAccHerokuFormationUpdateFreeDyno(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuFormationConfig_WithOrg("", appName, slugID, "free", 1),
+				Config: testAccCheckHerokuFormationConfig_WithOutOrg(appName, slugID, "free", 1),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuFormationExists("heroku_formation.foobar-web", &formation),
 					testAccCheckHerokuFormationSizeAttribute(&formation, "Free"),
@@ -128,4 +128,23 @@ resource "heroku_formation" "foobar-web" {
 	quantity = %d
 }
 `, appName, org, slugId, dynoSize, dynoQuant)
+}
+
+func testAccCheckHerokuFormationConfig_WithOutOrg(appName, slugId, dynoSize string, dynoQuant int) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+resource "heroku_app_release" "foobar-release" {
+	app = "${heroku_app.foobar.name}"
+	slug_id = "%s"
+}
+resource "heroku_formation" "foobar-web" {
+	app = "${heroku_app.foobar.name}"
+	type = "web"
+	size = "%s"
+	quantity = %d
+}
+`, appName, slugId, dynoSize, dynoQuant)
 }

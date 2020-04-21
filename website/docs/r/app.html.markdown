@@ -8,8 +8,7 @@ description: |-
 
 # heroku\_app
 
-Provides a Heroku App resource. This can be used to
-create and manage applications on Heroku.
+Provides a Heroku App resource. This can be used to create and manage applications on Heroku.
 
 ## Example Usage
 
@@ -30,8 +29,7 @@ resource "heroku_app" "default" {
 
 ## Example Usage for a Team
 
-A Heroku "team" was originally called an "organization", and that is still 
-the identifier used in this resource.
+A Heroku "team" was originally called an "organization", and that is still the identifier used in this resource.
 
 ```hcl
 resource "heroku_app" "default" {
@@ -95,9 +93,8 @@ config vars to `heroku_app_config_association` resource.
 
 The following attributes are exported:
 
-* `id` - The ID of the app. This is also the name of the application.
-* `name` - The name of the application. In Heroku, this is also the
-   unique ID.
+* `id` - The ID of the app. This is also the name of the app.
+* `name` - The name of the application.
 * `stack` - The application stack is what platform to run the application
    in.
 * `space` - The private space the app should run in.
@@ -118,8 +115,10 @@ The following attributes are exported:
 
 ## Import
 
-Apps can be imported using the App `id`, e.g.
+Apps can be imported using an existing app's `UUID` or name.
 
+For example:
 ```
 $ terraform import heroku_app.foobar MyApp
+$ terraform import heroku_app.foobar e74ac056-7d00-4a7e-aa80-df4bc413a825
 ```
