@@ -1,4 +1,4 @@
-## 2.4.0 (Unreleased)
+## 2.4.0 (April 22, 2020)
 
 FEATURES:
 * **Resource `heroku_pipeline`** now supports setting `owner` user or team, including defaulting to the current API key's user ID ([#259](https://github.com/terraform-providers/terraform-provider-heroku/pull/259))
