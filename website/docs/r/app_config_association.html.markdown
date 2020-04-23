@@ -30,8 +30,6 @@ different values on both resources at the same time. It is recommended to use on
 ## Example HCL
 ```hcl
 resource "heroku_config" "common" {
-    name = "common-vars"
-
     vars = {
         LOG_LEVEL = "info"
     }
