@@ -65,9 +65,11 @@ func resourceHerokuPipelineImport(d *schema.ResourceData, meta interface{}) ([]*
 		return nil, err
 	}
 
-	d.Set("name", p.Name)
+	d.SetId(p.ID)
 
-	return []*schema.ResourceData{d}, nil
+	readErr := resourceHerokuPipelineRead(d, meta)
+
+	return []*schema.ResourceData{d}, readErr
 }
 
 func resourceHerokuPipelineCreate(d *schema.ResourceData, meta interface{}) error {
