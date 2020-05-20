@@ -1,4 +1,11 @@
-## 2.5.0 (Unreleased)
+## 2.4.1 (Unreleased)
+
+IMPROVEMENTS:
+* Upgrade to Terraform Plugin SDK v1.12.0 ([#266](https://github.com/terraform-providers/terraform-provider-heroku/pull/266))
+
+BUG FIXES:
+* Importing a `heroku_pipeline` by its name now sets its ID correctly ([#266](https://github.com/terraform-providers/terraform-provider-heroku/pull/266))
+
 ## 2.4.0 (April 22, 2020)
 
 FEATURES:
