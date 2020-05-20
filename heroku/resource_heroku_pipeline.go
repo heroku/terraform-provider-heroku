@@ -65,7 +65,8 @@ func resourceHerokuPipelineImport(d *schema.ResourceData, meta interface{}) ([]*
 		return nil, err
 	}
 
-	d.Set("name", p.Name)
+	d.SetId(p.ID)
+	setPipelineAttributes(d, p)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -167,12 +168,16 @@ func resourceHerokuPipelineRead(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf("Error retrieving pipeline: %s", err)
 	}
 
+	setPipelineAttributes(d, p)
+
+	return nil
+}
+
+func setPipelineAttributes(d *schema.ResourceData, p *heroku.Pipeline) {
 	d.Set("name", p.Name)
 
 	ownerInfo := make(map[string]string)
 	ownerInfo["id"] = p.Owner.ID
 	ownerInfo["type"] = p.Owner.Type
 	d.Set("owner", []interface{}{ownerInfo})
-
-	return nil
 }

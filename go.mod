@@ -6,7 +6,7 @@ require (
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/go-uuid v1.0.1
 	github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce // indirect
-	github.com/hashicorp/terraform-plugin-sdk v1.7.0
+	github.com/hashicorp/terraform-plugin-sdk v1.12.0
 	github.com/heroku/heroku-go/v5 v5.2.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/verybluebot/tarinator-go v0.0.0-20190613183509-5ab4e1193986
