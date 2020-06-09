@@ -84,9 +84,10 @@ A `source.path` may point to either:
 
 * a tarball of source code
 * a directory of source code
-  * use `src/appname` relative path to reference `src/` sub-directories, monorepo-style
-  * use `../appname` relative or `/opt/src/appname` absolute paths to external directories
-    * *something else will need to manage the state of that external source code, before Heroku Build*
+  * use `src/appname` relative paths to child directories within the Terraform project repo (recommended)
+  * use `/opt/src/appname` absolute or `../appname` relative paths to external directories
+  * **avoid ancestor paths that contain the Terraform configuration itself**
+    * paths such as `../` will [cause errors during apply](https://github.com/terraform-providers/terraform-provider-heroku/issues/269)
 
 When running `terraform apply`, if the contents (SHA256) of the source path changed since the last `apply`, then a new build will start.
 
@@ -104,7 +105,7 @@ resource "heroku_build" "foobar" {
   source = {
     # A local directory, changing its contents will
     # force a new build during `terraform apply`
-    path = "../example-app"
+    path = "src/example-app"
   }
 }
 
