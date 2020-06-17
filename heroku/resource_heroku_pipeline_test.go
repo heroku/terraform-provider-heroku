@@ -3,7 +3,6 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"log"
 	"regexp"
 	"testing"
 
@@ -25,7 +24,7 @@ func TestAccHerokuPipeline_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuPipelineDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuPipeline_basic(pipelineName, ownerID, "team"),
+				Config: testAccCheckHerokuPipeline_basic(pipelineName, ownerID, "user"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuPipelineExists("heroku_pipeline.foobar", &pipeline),
 					resource.TestCheckResourceAttr(
@@ -35,7 +34,7 @@ func TestAccHerokuPipeline_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckHerokuPipeline_basic(pipelineName2, ownerID, "team"),
+				Config: testAccCheckHerokuPipeline_basic(pipelineName2, ownerID, "user"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"heroku_pipeline.foobar", "name", pipelineName2),
@@ -127,19 +126,13 @@ func testAccCheckHerokuPipelineExists(n string, pipeline *heroku.Pipeline) resou
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 
-		log.Printf("[RES STATE] %q", rs)
-
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
 		}
 
-		log.Printf("[RES] found")
-
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("No pipeline name set")
 		}
-
-		log.Printf("[PRIMARY ID] %s", rs.Primary.ID)
 
 		client := testAccProvider.Meta().(*Config).Api
 
