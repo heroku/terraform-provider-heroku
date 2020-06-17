@@ -3,6 +3,7 @@
 *.dll
 *.exe
 .DS_Store
+.env.sample
 example.tf
 terraform.tfplan
 terraform.tfstate
