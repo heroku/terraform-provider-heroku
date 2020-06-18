@@ -92,6 +92,7 @@ func resourceHerokuPipelineCreate(d *schema.ResourceData, meta interface{}) erro
 		ID   string
 		Type string
 	}{ID: "", Type: ""})
+
 	if v, ok := d.GetOk("owner"); ok {
 		vi := v.([]interface{})
 		ownerInfo := vi[0].(map[string]interface{})
