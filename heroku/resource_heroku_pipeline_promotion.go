@@ -155,6 +155,10 @@ func resourceHerokuPipelinePromotionRead(d *schema.ResourceData, meta interface{
 	return nil
 }
 
+//
+// Deeply nested Go structs are ridiculously hard to grok, much less build.
+// Here's a trick to get most of the way to what we need. Build a JSON string
+// like the following:
 // {
 // 	"pipeline": {
 // 		"id": "abc"
@@ -172,75 +176,74 @@ func resourceHerokuPipelinePromotionRead(d *schema.ResourceData, meta interface{
 // 		}
 // 	]
 // }
-
+//
+// ... then decode the above into a Go struct. Here's an example:
 // https://play.golang.org/p/cjPbd8XifwI
-
+//
+// It's still pretty rough sledding. As a result, I've isolated it
+// into a func and in that func I've broken it into chunks to make
+// it a bit more digestible. I hope this helps.
+//
 func createPipelinePromotionCreateOpts(pipelineID, sourceApp string, targetApps []string) (heroku.PipelinePromotionCreateOpts, error) {
-	var sourceAppName, targetAppName *string
+	// Pipeline
+	pipeline := (struct {
+		ID string "json:\"id\" url:\"id,key\""
+	}{
+		ID: pipelineID,
+	})
+
+	// Source app
+	var sourceAppName *string
 	sourceAppName = &sourceApp
 
-	// TODO: update this to accomodate an array of strings, vs just picking the first element.
-	targetAppName = &targetApps[0]
+	source := (*struct {
+		ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
+	})(&struct {
+		ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
+	}{
+		ID: sourceAppName,
+	})
 
-	createOpts := heroku.PipelinePromotionCreateOpts{
-		Pipeline: struct {
-			ID string "json:\"id\" url:\"id,key\""
+	// Target apps
+	type pipelinePomotionTargets []struct {
+		App *struct {
+			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
+		} "json:\"app,omitempty\" url:\"app,omitempty,key\""
+	}
+
+	targets := make(pipelinePomotionTargets, len(targetApps))
+	for i := 0; i < len(targetApps); i++ {
+		name := targetApps[i]
+
+		target := (*struct {
+			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
+		})(&struct {
+			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
 		}{
-			ID: pipelineID,
-		},
+			ID: &name,
+		})
+
+		targets[i].App = target
+	}
+
+	// Build the create opts struct based on the parts above
+	createOpts := heroku.PipelinePromotionCreateOpts{
+		Pipeline: pipeline,
 		Source: struct {
 			App *struct {
 				ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
 			} "json:\"app,omitempty\" url:\"app,omitempty,key\""
 		}{
-			App: (*struct {
-				ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
-			})(&struct {
-				ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
-			}{
-				ID: sourceAppName,
-			}),
+			App: source,
 		},
-		// Targets: []struct {
-		// 	App *struct {
-		// 		ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
-		// 	} "json:\"app,omitempty\" url:\"app,omitempty,key\""
-		// }{
-		// 	struct {
-		// 		App *struct {
-		// 			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
-		// 		} "json:\"app,omitempty\" url:\"app,omitempty,key\""
-		// 	}{
-		// 		App: (*struct {
-		// 			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
-		// 		})(&struct {
-		// 			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
-		// 		}{
-		// 			ID: targetAppName,
-		// 		}),
-		// 	},
-		// },
-		Targets: []struct {
-			App *struct {
-				ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
-			} "json:\"app,omitempty\" url:\"app,omitempty,key\""
-		}{
-			{
-				App: (*struct {
-					ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
-				})(&struct {
-					ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
-				}{
-					ID: targetAppName,
-				}),
-			},
-		},
+		Targets: targets,
 	}
 
-	// log.Printf("[DEBUG] CREATEOPTS: %#v", createOpts)
-	// log.Printf("PIPELINE ID: %s", createOpts.Pipeline.ID)
-	// log.Printf("SOURCE APP NAME: %s", *createOpts.Source.App.ID)
-	// log.Printf("TARGET APP NAME: %s", *createOpts.Targets[0].App.ID)
+	log.Printf("[DEBUG] CREATEOPTS: %#v", createOpts)
+	log.Printf("PIPELINE ID: %s", createOpts.Pipeline.ID)
+	log.Printf("SOURCE APP ID: %s", *createOpts.Source.App.ID)
+	log.Printf("TARGET APP1 ID: %s", *createOpts.Targets[0].App.ID)
+	log.Printf("TARGET APP2 ID: %s", *createOpts.Targets[1].App.ID)
 
 	return createOpts, nil
 }

@@ -13,16 +13,15 @@ import (
 )
 
 func TestAccHerokuPipelinePromotionSingleTarget_Basic(t *testing.T) {
-	var sourceapp heroku.App
-	var targetapp heroku.App
+	var sourceapp, targetapp1, targetapp2 heroku.App
 	var pipeline heroku.Pipeline
 	var apprelease heroku.Release
-	var pipelineCouplingSource heroku.PipelineCoupling
-	var pipelineCouplingTarget heroku.PipelineCoupling
+	var pipelineCouplingSource, pipelineCouplingTarget1, pipelineCouplingTarget2 heroku.PipelineCoupling
 	var promotion heroku.PipelinePromotion
 
 	sourceApp := fmt.Sprintf("tftest-source-%s", acctest.RandString(10))
-	targetApp := fmt.Sprintf("tftest-target-%s", acctest.RandString(10))
+	targetApp1 := fmt.Sprintf("tftest-target1-%s", acctest.RandString(10))
+	targetApp2 := fmt.Sprintf("tftest-target2-%s", acctest.RandString(10))
 	pipelineName := fmt.Sprintf("tftest-pipeline-%s", acctest.RandString(10))
 	pipelineOwnerID := testAccConfig.GetUserIDOrSkip(t)
 	appReleaseSlugID := testAccConfig.GetSlugIDOrSkip(t)
@@ -34,14 +33,16 @@ func TestAccHerokuPipelinePromotionSingleTarget_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				PreConfig: sleep(t, 15),
-				Config:    testAccCheckHerokuPipelinePromotionSingleTarget_basic(sourceApp, targetApp, pipelineName, pipelineOwnerID, appReleaseSlugID),
+				Config:    testAccCheckHerokuPipelinePromotionSingleTarget_basic(sourceApp, targetApp1, targetApp2, pipelineName, pipelineOwnerID, appReleaseSlugID),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar-source-app", &sourceapp),
-					testAccCheckHerokuAppExists("heroku_app.foobar-target-app", &targetapp),
+					testAccCheckHerokuAppExists("heroku_app.foobar-target-app1", &targetapp1),
+					testAccCheckHerokuAppExists("heroku_app.foobar-target-app2", &targetapp2),
 					testAccCheckHerokuPipelineExists("heroku_pipeline.foobar-pipeline", &pipeline),
 					testAccCheckHerokuAppReleaseExists("heroku_app_release.foobar-release", &apprelease),
 					testAccCheckHerokuPipelineCouplingExists("heroku_pipeline_coupling.foobar-source-coupling", &pipelineCouplingSource),
-					testAccCheckHerokuPipelineCouplingExists("heroku_pipeline_coupling.foobar-target-coupling", &pipelineCouplingTarget),
+					testAccCheckHerokuPipelineCouplingExists("heroku_pipeline_coupling.foobar-target-coupling1", &pipelineCouplingTarget1),
+					testAccCheckHerokuPipelineCouplingExists("heroku_pipeline_coupling.foobar-target-coupling2", &pipelineCouplingTarget2),
 					testAccCheckHerokuPipelinePromotionExists("heroku_pipeline_promotion.foobar-promotion", &promotion),
 					resource.TestCheckResourceAttr("heroku_pipeline_promotion.foobar-promotion", "status", "completed"),
 					resource.TestCheckResourceAttrPair("heroku_pipeline_promotion.foobar-promotion", "pipeline", "heroku_pipeline.foobar-pipeline", "id"),
@@ -55,13 +56,17 @@ func TestAccHerokuPipelinePromotionSingleTarget_Basic(t *testing.T) {
 	})
 }
 
-func testAccCheckHerokuPipelinePromotionSingleTarget_basic(sourceApp, targetApp, pipelineName, pipelineOwnerID, appReleaseSlugID string) string {
+func testAccCheckHerokuPipelinePromotionSingleTarget_basic(sourceApp, targetApp1, targetApp2, pipelineName, pipelineOwnerID, appReleaseSlugID string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar-source-app" {
 	name = "%s"
 	region = "us"
 }
-resource "heroku_app" "foobar-target-app" {
+resource "heroku_app" "foobar-target-app1" {
+	name = "%s"
+	region = "us"
+}
+resource "heroku_app" "foobar-target-app2" {
 	name = "%s"
 	region = "us"
 }
@@ -81,17 +86,22 @@ resource "heroku_pipeline_coupling" "foobar-source-coupling" {
 	pipeline = "${heroku_pipeline.foobar-pipeline.id}"
 	stage    = "development"
 }
-resource "heroku_pipeline_coupling" "foobar-target-coupling" {
-	app      = "${heroku_app.foobar-target-app.id}"
+resource "heroku_pipeline_coupling" "foobar-target-coupling1" {
+	app      = "${heroku_app.foobar-target-app1.id}"
+	pipeline = "${heroku_pipeline.foobar-pipeline.id}"
+	stage    = "development"
+}
+resource "heroku_pipeline_coupling" "foobar-target-coupling2" {
+	app      = "${heroku_app.foobar-target-app2.id}"
 	pipeline = "${heroku_pipeline.foobar-pipeline.id}"
 	stage    = "development"
 }
 resource "heroku_pipeline_promotion" "foobar-promotion" {
 	pipeline = "${heroku_pipeline.foobar-pipeline.id}"
 	source = "${heroku_app.foobar-source-app.uuid}"
-	targets = ["${heroku_app.foobar-target-app.uuid}"]
+	targets = ["${heroku_app.foobar-target-app1.uuid}","${heroku_app.foobar-target-app2.uuid}"]
 }
-`, sourceApp, targetApp, pipelineName, pipelineOwnerID, appReleaseSlugID)
+`, sourceApp, targetApp1, targetApp2, pipelineName, pipelineOwnerID, appReleaseSlugID)
 }
 
 func testAccCheckHerokuPipelinePromotionExists(n string, promotion *heroku.PipelinePromotion) resource.TestCheckFunc {
