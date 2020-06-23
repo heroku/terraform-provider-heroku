@@ -35,21 +35,29 @@ func TestAccHerokuPipelinePromotionSingleTarget_Basic(t *testing.T) {
 				PreConfig: sleep(t, 15),
 				Config:    testAccCheckHerokuPipelinePromotionSingleTarget_basic(sourceApp, targetApp1, targetApp2, pipelineName, pipelineOwnerID, appReleaseSlugID),
 				Check: resource.ComposeTestCheckFunc(
+					// Setup a source app
 					testAccCheckHerokuAppExists("heroku_app.foobar-source-app", &sourceapp),
+					// Setup two target apps
 					testAccCheckHerokuAppExists("heroku_app.foobar-target-app1", &targetapp1),
 					testAccCheckHerokuAppExists("heroku_app.foobar-target-app2", &targetapp2),
+					// Setupp a pipeline
 					testAccCheckHerokuPipelineExists("heroku_pipeline.foobar-pipeline", &pipeline),
+					// Setup an app release associated with the source app
 					testAccCheckHerokuAppReleaseExists("heroku_app_release.foobar-release", &apprelease),
+					// Setup pipeline couplings for all three apps to connect them to the pipeline
 					testAccCheckHerokuPipelineCouplingExists("heroku_pipeline_coupling.foobar-source-coupling", &pipelineCouplingSource),
 					testAccCheckHerokuPipelineCouplingExists("heroku_pipeline_coupling.foobar-target-coupling1", &pipelineCouplingTarget1),
 					testAccCheckHerokuPipelineCouplingExists("heroku_pipeline_coupling.foobar-target-coupling2", &pipelineCouplingTarget2),
+					// Setup the pipeline promotion
 					testAccCheckHerokuPipelinePromotionExists("heroku_pipeline_promotion.foobar-promotion", &promotion),
+					// Verify the promotion succeeded/completed
 					resource.TestCheckResourceAttr("heroku_pipeline_promotion.foobar-promotion", "status", "completed"),
+					// Verify promotion attributes
 					resource.TestCheckResourceAttrPair("heroku_pipeline_promotion.foobar-promotion", "pipeline", "heroku_pipeline.foobar-pipeline", "id"),
 					resource.TestCheckResourceAttrPair("heroku_pipeline_promotion.foobar-promotion", "source", "heroku_app.foobar-source-app", "uuid"),
 					resource.TestCheckResourceAttrPair("heroku_pipeline_promotion.foobar-promotion", "release_id", "heroku_app_release.foobar-release", "id"),
-					// TODO: Manually verify targets set on the pipeline promotion
-					//
+					resource.TestCheckResourceAttrPair("heroku_pipeline_promotion.foobar-promotion", "targets.0", "heroku_app.foobar-target-app1", "uuid"),
+					resource.TestCheckResourceAttrPair("heroku_pipeline_promotion.foobar-promotion", "targets.1", "heroku_app.foobar-target-app2", "uuid"),
 				),
 			},
 		},
@@ -134,12 +142,3 @@ func testAccCheckHerokuPipelinePromotionExists(n string, promotion *heroku.Pipel
 		return nil
 	}
 }
-
-// func testVerifyTargetsSet(expected []string) error {
-
-// 	if val, ok := is.Attributes[key]; !ok || val == "" {
-// 		return fmt.Errorf("%s: Attribute '%s' expected to be set", name, key)
-// 	}
-
-// 	return nil
-// }

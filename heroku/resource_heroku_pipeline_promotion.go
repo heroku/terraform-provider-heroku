@@ -62,16 +62,16 @@ func resourceHerokuPipelinePromotionCreate(d *schema.ResourceData, meta interfac
 	var pipelineID, sourceAppName string
 	var targetAppNames []string
 
-	log.Println("[DEBUG] resourceHerokuPipelinePromotionCreate")
+	log.Println("[INFO] resourceHerokuPipelinePromotionCreate")
 
 	if v, ok := d.GetOk("pipeline"); ok {
 		pipelineID = v.(string)
-		log.Printf("[DEBUG] pipeline: %v", pipelineID)
+		// log.Printf("[DEBUG] pipeline: %v", pipelineID)
 	}
 
 	if v, ok := d.GetOk("source"); ok {
 		sourceAppName = v.(string)
-		log.Printf("[DEBUG] source: %q", sourceAppName)
+		// log.Printf("[DEBUG] source: %q", sourceAppName)
 	}
 
 	if targets, ok := d.GetOk("targets"); ok {
@@ -79,7 +79,7 @@ func resourceHerokuPipelinePromotionCreate(d *schema.ResourceData, meta interfac
 			t := v.(string)
 			targetAppNames = append(targetAppNames, t)
 		}
-		log.Printf("[DEBUG] targets: %q", targetAppNames)
+		// log.Printf("[DEBUG] targets: %q", targetAppNames)
 	}
 
 	opts, err := createPipelinePromotionCreateOpts(pipelineID, sourceAppName, targetAppNames)
@@ -180,19 +180,52 @@ func resourceHerokuPipelinePromotionRead(d *schema.ResourceData, meta interface{
 // ... then decode the above into a Go struct. Here's an example:
 // https://play.golang.org/p/cjPbd8XifwI
 //
+// this is the result:
+//
+// PipelinePromotionCreateOpts{
+// 	Pipeline: struct {
+// 		ID string "json:\"id\" url:\"id,key\""
+// 	}{
+// 		ID:"abc"
+// 	},
+// 	Source: struct {
+// 		App *struct {
+// 			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
+// 		} "json:\"app,omitempty\" url:\"app,omitempty,key\""
+// 	}{
+// 		App: (*struct {
+// 			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
+// 		})(0xc00000e0e8) //<-- string pointer to the app name
+// 	},
+// 	Targets: []struct {
+// 		App *struct {
+// 			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
+// 		} "json:\"app,omitempty\" url:\"app,omitempty,key\""
+// 	}{
+// 		struct {
+// 			App *struct {
+// 				ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
+// 			} "json:\"app,omitempty\" url:\"app,omitempty,key\""
+// 		}{
+// 			App: (*struct {
+// 				ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
+// 			})(0xc00000e0f0) //<-- string pointer to the app name
+// 		}
+// 	}
+// }
+//
 // It's still pretty rough sledding. As a result, I've isolated it
-// into a func and in that func I've broken it into chunks to make
-// it a bit more digestible. I hope this helps.
+// into a func and broken it into chunks to make it easier to grok.
 //
 func createPipelinePromotionCreateOpts(pipelineID, sourceApp string, targetApps []string) (heroku.PipelinePromotionCreateOpts, error) {
-	// Pipeline
+	// Set the pipeline
 	pipeline := (struct {
 		ID string "json:\"id\" url:\"id,key\""
 	}{
 		ID: pipelineID,
 	})
 
-	// Source app
+	// Set the source app
 	var sourceAppName *string
 	sourceAppName = &sourceApp
 
@@ -204,7 +237,7 @@ func createPipelinePromotionCreateOpts(pipelineID, sourceApp string, targetApps 
 		ID: sourceAppName,
 	})
 
-	// Target apps
+	// Set target apps
 	type pipelinePomotionTargets []struct {
 		App *struct {
 			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
@@ -239,11 +272,11 @@ func createPipelinePromotionCreateOpts(pipelineID, sourceApp string, targetApps 
 		Targets: targets,
 	}
 
-	log.Printf("[DEBUG] CREATEOPTS: %#v", createOpts)
-	log.Printf("PIPELINE ID: %s", createOpts.Pipeline.ID)
-	log.Printf("SOURCE APP ID: %s", *createOpts.Source.App.ID)
-	log.Printf("TARGET APP1 ID: %s", *createOpts.Targets[0].App.ID)
-	log.Printf("TARGET APP2 ID: %s", *createOpts.Targets[1].App.ID)
+	// log.Printf("[DEBUG] CREATEOPTS: %#v", createOpts)
+	// log.Printf("PIPELINE ID: %s", createOpts.Pipeline.ID)
+	// log.Printf("SOURCE APP ID: %s", *createOpts.Source.App.ID)
+	// log.Printf("TARGET APP1 ID: %s", *createOpts.Targets[0].App.ID)
+	// log.Printf("TARGET APP2 ID: %s", *createOpts.Targets[1].App.ID)
 
 	return createOpts, nil
 }
