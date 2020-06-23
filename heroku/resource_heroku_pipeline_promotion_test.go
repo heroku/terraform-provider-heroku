@@ -29,7 +29,6 @@ func TestAccHerokuPipelinePromotionSingleTarget_Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
-		// CheckDestroy: testAccCheckHerokuPipelineDestroy,
 		Steps: []resource.TestStep{
 			{
 				PreConfig: sleep(t, 15),

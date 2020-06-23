@@ -156,9 +156,10 @@ func resourceHerokuPipelinePromotionRead(d *schema.ResourceData, meta interface{
 }
 
 //
-// Deeply nested Go structs are ridiculously hard to grok, much less build.
-// Here's a trick to get most of the way to what we need. Build a JSON string
+// Deeply nested Go structs are hard to grok, much less build. Here's
+// a trick to get very close to what we need. Build a JSON string
 // like the following:
+//
 // {
 // 	"pipeline": {
 // 		"id": "abc"
@@ -180,7 +181,7 @@ func resourceHerokuPipelinePromotionRead(d *schema.ResourceData, meta interface{
 // ... then decode the above into a Go struct. Here's an example:
 // https://play.golang.org/p/cjPbd8XifwI
 //
-// this is the result:
+// It ends up looking something like this:
 //
 // PipelinePromotionCreateOpts{
 // 	Pipeline: struct {
@@ -214,8 +215,8 @@ func resourceHerokuPipelinePromotionRead(d *schema.ResourceData, meta interface{
 // 	}
 // }
 //
-// It's still pretty rough sledding. As a result, I've isolated it
-// into a func and broken it into chunks to make it easier to grok.
+// It's still pretty rough sledding, espcially when assigning the target app IDs.
+// I've isolated this into a func and chunked it up to make it easier to grok.
 //
 func createPipelinePromotionCreateOpts(pipelineID, sourceApp string, targetApps []string) (heroku.PipelinePromotionCreateOpts, error) {
 	// Set the pipeline
@@ -245,6 +246,7 @@ func createPipelinePromotionCreateOpts(pipelineID, sourceApp string, targetApps 
 	}
 
 	targets := make(pipelinePomotionTargets, len(targetApps))
+
 	for i := 0; i < len(targetApps); i++ {
 		name := targetApps[i]
 
