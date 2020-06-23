@@ -87,11 +87,6 @@ func resourceHerokuPipelinePromotionCreate(d *schema.ResourceData, meta interfac
 		log.Fatal("Error in create opts...")
 	}
 
-	// log.Printf("[DEBUG] PipelinePromotion create configuration: %#v", opts)
-	// log.Printf("--- PIPELINE ID: %s", opts.Pipeline.ID)
-	// log.Printf("--- SOURCE APP NAME: %s", *opts.Source.App.ID)
-	// log.Printf("--- TARGET APP NAME: %s", *opts.Targets[0].App.ID)
-
 	p, err := client.PipelinePromotionCreate(context.TODO(), opts)
 	if err != nil {
 		return fmt.Errorf("Error creating pipeline promotion: %s", err)
@@ -181,19 +176,11 @@ func resourceHerokuPipelinePromotionRead(d *schema.ResourceData, meta interface{
 // https://play.golang.org/p/cjPbd8XifwI
 
 func createPipelinePromotionCreateOpts(pipelineID, sourceApp string, targetApps []string) (heroku.PipelinePromotionCreateOpts, error) {
-	// log.Println("[DEBUG] ENTERING createPipelinePromotionCreateOpts")
-	// log.Println("[DEBUG] PIPELINE: ", pipelineID)
-	// log.Println("[DEBUG] SOURCE  : ", sourceApp)
-	// log.Println("[DEBUG] TARGETS : ", targetApps)
-
 	var sourceAppName, targetAppName *string
 	sourceAppName = &sourceApp
+
 	// TODO: update this to accomodate an array of strings, vs just picking the first element.
 	targetAppName = &targetApps[0]
-
-	// log.Println("[DEBUG] CONVERTED TO *string")
-	// log.Println("[DEBUG] SOURCE  : ", sourceAppName)
-	// log.Println("[DEBUG] TARGET  : ", targetAppName)
 
 	createOpts := heroku.PipelinePromotionCreateOpts{
 		Pipeline: struct {
