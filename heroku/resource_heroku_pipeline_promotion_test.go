@@ -39,7 +39,7 @@ func TestAccHerokuPipelinePromotionSingleTarget_Basic(t *testing.T) {
 					// Setup two target apps
 					testAccCheckHerokuAppExists("heroku_app.foobar-target-app1", &targetapp1),
 					testAccCheckHerokuAppExists("heroku_app.foobar-target-app2", &targetapp2),
-					// Setupp a pipeline
+					// Setup a pipeline
 					testAccCheckHerokuPipelineExists("heroku_pipeline.foobar-pipeline", &pipeline),
 					// Setup an app release associated with the source app
 					testAccCheckHerokuAppReleaseExists("heroku_app_release.foobar-release", &apprelease),

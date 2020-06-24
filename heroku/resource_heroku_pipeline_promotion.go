@@ -59,30 +59,27 @@ func resourceHerokuPipelinePromotion() *schema.Resource {
 func resourceHerokuPipelinePromotionCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	var pipelineID, sourceAppName string
-	var targetAppNames []string
+	var pipelineID, sourceAppUUID string
+	var targetAppUUIDs []string
 
 	log.Println("[INFO] resourceHerokuPipelinePromotionCreate")
 
 	if v, ok := d.GetOk("pipeline"); ok {
 		pipelineID = v.(string)
-		// log.Printf("[DEBUG] pipeline: %v", pipelineID)
 	}
 
 	if v, ok := d.GetOk("source"); ok {
-		sourceAppName = v.(string)
-		// log.Printf("[DEBUG] source: %q", sourceAppName)
+		sourceAppUUID = v.(string)
 	}
 
 	if targets, ok := d.GetOk("targets"); ok {
 		for _, v := range targets.([]interface{}) {
 			t := v.(string)
-			targetAppNames = append(targetAppNames, t)
+			targetAppUUIDs = append(targetAppUUIDs, t)
 		}
-		// log.Printf("[DEBUG] targets: %q", targetAppNames)
 	}
 
-	opts, err := createPipelinePromotionCreateOpts(pipelineID, sourceAppName, targetAppNames)
+	opts, err := createPipelinePromotionCreateOpts(pipelineID, sourceAppUUID, targetAppUUIDs)
 	if err != nil {
 		log.Fatal("Error in create opts...")
 	}
@@ -114,7 +111,7 @@ func resourceHerokuPipelinePromotionCreate(d *schema.ResourceData, meta interfac
 
 // A no-op method as there is no DELETE build in Heroku Platform API.
 func resourceHerokuPipelinePromotionDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[INFO] There is no DELETE for build resource so this is a no-op.")
+	log.Printf("[INFO] There is no DELETE for a pipeline promotion resource so this is a no-op.")
 	return nil
 }
 
@@ -196,7 +193,7 @@ func resourceHerokuPipelinePromotionRead(d *schema.ResourceData, meta interface{
 // 	}{
 // 		App: (*struct {
 // 			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
-// 		})(0xc00000e0e8) //<-- string pointer to the app name
+// 		})(0xc00000e0e8) //<-- string pointer to the app UUID
 // 	},
 // 	Targets: []struct {
 // 		App *struct {
@@ -210,7 +207,7 @@ func resourceHerokuPipelinePromotionRead(d *schema.ResourceData, meta interface{
 // 		}{
 // 			App: (*struct {
 // 				ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
-// 			})(0xc00000e0f0) //<-- string pointer to the app name
+// 			})(0xc00000e0f0) //<-- string pointer to the app UUID
 // 		}
 // 	}
 // }
@@ -218,7 +215,7 @@ func resourceHerokuPipelinePromotionRead(d *schema.ResourceData, meta interface{
 // It's still pretty rough sledding, espcially when assigning the target app IDs.
 // I've isolated this into a func and chunked it up to make it easier to grok.
 //
-func createPipelinePromotionCreateOpts(pipelineID, sourceApp string, targetApps []string) (heroku.PipelinePromotionCreateOpts, error) {
+func createPipelinePromotionCreateOpts(pipelineID, sourceAppUUID string, targetAppUUIDs []string) (heroku.PipelinePromotionCreateOpts, error) {
 	// Set the pipeline
 	pipeline := (struct {
 		ID string "json:\"id\" url:\"id,key\""
@@ -227,15 +224,15 @@ func createPipelinePromotionCreateOpts(pipelineID, sourceApp string, targetApps 
 	})
 
 	// Set the source app
-	var sourceAppName *string
-	sourceAppName = &sourceApp
+	var sourceApp *string
+	sourceApp = &sourceAppUUID
 
 	source := (*struct {
 		ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
 	})(&struct {
 		ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
 	}{
-		ID: sourceAppName,
+		ID: sourceApp,
 	})
 
 	// Set target apps
@@ -245,10 +242,10 @@ func createPipelinePromotionCreateOpts(pipelineID, sourceApp string, targetApps 
 		} "json:\"app,omitempty\" url:\"app,omitempty,key\""
 	}
 
-	targets := make(pipelinePomotionTargets, len(targetApps))
+	targets := make(pipelinePomotionTargets, len(targetAppUUIDs))
 
-	for i := 0; i < len(targetApps); i++ {
-		name := targetApps[i]
+	for i := 0; i < len(targetAppUUIDs); i++ {
+		name := targetAppUUIDs[i]
 
 		target := (*struct {
 			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
@@ -273,12 +270,6 @@ func createPipelinePromotionCreateOpts(pipelineID, sourceApp string, targetApps 
 		},
 		Targets: targets,
 	}
-
-	// log.Printf("[DEBUG] CREATEOPTS: %#v", createOpts)
-	// log.Printf("PIPELINE ID: %s", createOpts.Pipeline.ID)
-	// log.Printf("SOURCE APP ID: %s", *createOpts.Source.App.ID)
-	// log.Printf("TARGET APP1 ID: %s", *createOpts.Targets[0].App.ID)
-	// log.Printf("TARGET APP2 ID: %s", *createOpts.Targets[1].App.ID)
 
 	return createOpts, nil
 }
