@@ -227,13 +227,19 @@ func createPipelinePromotionCreateOpts(pipelineID, sourceAppUUID string, targetA
 	var sourceApp *string
 	sourceApp = &sourceAppUUID
 
-	source := (*struct {
-		ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
-	})(&struct {
-		ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
+	source := struct {
+		App *struct {
+			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
+		} "json:\"app,omitempty\" url:\"app,omitempty,key\""
 	}{
-		ID: sourceApp,
-	})
+		App: (*struct {
+			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
+		})(&struct {
+			ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
+		}{
+			ID: sourceApp,
+		}),
+	}
 
 	// Set target apps
 	type pipelinePomotionTargets []struct {
@@ -258,20 +264,12 @@ func createPipelinePromotionCreateOpts(pipelineID, sourceAppUUID string, targetA
 		targets[i].App = target
 	}
 
-	// Build the create opts struct based on the parts above
-	createOpts := heroku.PipelinePromotionCreateOpts{
+	// Return the opts struct necessary to perform PipelinePromotion
+	return heroku.PipelinePromotionCreateOpts{
 		Pipeline: pipeline,
-		Source: struct {
-			App *struct {
-				ID *string "json:\"id,omitempty\" url:\"id,omitempty,key\""
-			} "json:\"app,omitempty\" url:\"app,omitempty,key\""
-		}{
-			App: source,
-		},
-		Targets: targets,
-	}
-
-	return createOpts, nil
+		Source:   source,
+		Targets:  targets,
+	}, nil
 }
 
 // Returns a resource.StateRefreshFunc that is used to watch a PipelinePromotion.
