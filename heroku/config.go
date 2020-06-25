@@ -4,12 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"runtime"
-	"time"
 
 	"github.com/bgentry/go-netrc/netrc"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
@@ -56,14 +54,7 @@ func NewConfig() *Config {
 }
 
 func (c *Config) initializeAPI() (err error) {
-	transport := &http.Transport{
-		DialContext: (&net.Dialer{
-			Timeout: 5 * time.Second,
-		}).DialContext,
-	}
-
 	c.Api = heroku.NewService(&http.Client{
-		Timeout: 30 * time.Second,
 		Transport: &heroku.Transport{
 			Username: c.Email,
 			Password: c.APIKey,
@@ -71,15 +62,14 @@ func (c *Config) initializeAPI() (err error) {
 				heroku.DefaultUserAgent, version.ProviderVersion),
 			AdditionalHeaders: c.Headers,
 			Debug:             c.DebugHTTP,
-			Transport:         transport,
-			// Transport:         heroku.RoundTripWithRetryBackoff{
-			// Configuration fields for ExponentialBackOff
-			// InitialIntervalSeconds: 30,
-			// RandomizationFactor:    0.25,
-			// Multiplier:             2,
-			// MaxIntervalSeconds:     900,
-			// MaxElapsedTimeSeconds:  0,
-			// },
+			Transport:         heroku.RoundTripWithRetryBackoff{
+				// Configuration fields for ExponentialBackOff
+				// InitialIntervalSeconds: 30,
+				// RandomizationFactor:    0.25,
+				// Multiplier:             2,
+				// MaxIntervalSeconds:     900,
+				// MaxElapsedTimeSeconds:  0,
+			},
 		},
 	})
 
