@@ -17,6 +17,10 @@ func resourceHerokuPipelinePromotion() *schema.Resource {
 		Read:   resourceHerokuPipelinePromotionRead,
 		Delete: resourceHerokuPipelinePromotionDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceHerokuPipelinePromotionImport,
+		},
+
 		Schema: map[string]*schema.Schema{
 			"pipeline": {
 				Type:     schema.TypeString,
@@ -109,7 +113,12 @@ func resourceHerokuPipelinePromotionCreate(d *schema.ResourceData, meta interfac
 	return resourceHerokuPipelinePromotionRead(d, meta)
 }
 
-// A no-op method as there is no DELETE build in Heroku Platform API.
+func resourceHerokuPipelinePromotionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	noImportErr := fmt.Errorf("not possible to import this resource")
+
+	return nil, noImportErr
+}
+
 func resourceHerokuPipelinePromotionDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] There is no DELETE for a pipeline promotion resource so this is a no-op.")
 	return nil
