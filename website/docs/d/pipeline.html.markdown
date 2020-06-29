@@ -25,8 +25,7 @@ data "heroku_pipeline" "foobar" {
 
 The following arguments are supported:
 
-* `name` - (Required) The pipeline name. UUID can also be used here.
-    - If you specify the name, the pipeline **must** have apps associated to it.
+* `name` - (Required) The pipeline name.
 
 ## Attributes Reference
 
