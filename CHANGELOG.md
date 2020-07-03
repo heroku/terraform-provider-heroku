@@ -1,4 +1,4 @@
-## 2.5.0 (Unreleased)
+## 2.5.0 (July 03, 2020)
 
 FEATURES:
 * New data source: `heroku_pipeline` Get information on a Heroku Pipeline ([#268](https://github.com/terraform-providers/terraform-provider-heroku/pull/268))
