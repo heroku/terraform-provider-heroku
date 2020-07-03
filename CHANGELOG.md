@@ -1,4 +1,12 @@
 ## 2.5.0 (Unreleased)
+
+FEATURES:
+* New data source: `heroku_pipeline` Get information on a Heroku Pipeline ([#268](https://github.com/terraform-providers/terraform-provider-heroku/pull/268))
+
+IMPROVEMENTS:
+* Clarify usage constraints of Build source path ([#270](https://github.com/terraform-providers/terraform-provider-heroku/pull/270))
+* Upgrade acceptance tests to Go 1.14 ([#271](https://github.com/terraform-providers/terraform-provider-heroku/pull/271))
+
 ## 2.4.1 (May 20, 2020)
 
 IMPROVEMENTS:
