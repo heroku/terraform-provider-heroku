@@ -319,7 +319,7 @@ func TestAccHerokuApp_Space_Internal(t *testing.T) {
 	})
 }
 
-// https://github.com/terraform-providers/terraform-provider-heroku/issues/2
+// https://github.com/heroku/terraform-provider-heroku/issues/2
 func TestAccHerokuApp_EmptyConfigVars(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))

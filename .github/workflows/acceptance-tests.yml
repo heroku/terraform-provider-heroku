@@ -24,6 +24,15 @@ jobs:
 
     - uses: actions/checkout@master
 
+    - name: Run make fmt
+      if: runner.os != 'Windows'
+      run: |
+        make fmt
+        git diff --exit-code; code=$?; git checkout -- .; (exit $code)
+
+    - name: Run go vet
+      run: go vet ./...
+
     - name: Run tests
       run: |
         make testacc TEST="./heroku/"

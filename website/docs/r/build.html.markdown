@@ -87,7 +87,7 @@ A `source.path` may point to either:
   * use `src/appname` relative paths to child directories within the Terraform project repo (recommended)
   * use `/opt/src/appname` absolute or `../appname` relative paths to external directories
   * **avoid ancestor paths that contain the Terraform configuration itself**
-    * paths such as `../` will [cause errors during apply](https://github.com/terraform-providers/terraform-provider-heroku/issues/269)
+    * paths such as `../` will [cause errors during apply](https://github.com/heroku/terraform-provider-heroku/issues/269)
 
 When running `terraform apply`, if the contents (SHA256) of the source path changed since the last `apply`, then a new build will start.
 

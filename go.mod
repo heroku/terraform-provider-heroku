@@ -1,4 +1,4 @@
-module github.com/terraform-providers/terraform-provider-heroku
+module github.com/heroku/terraform-provider-heroku
 
 require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d
@@ -12,4 +12,4 @@ require (
 	github.com/verybluebot/tarinator-go v0.0.0-20190613183509-5ab4e1193986
 )
 
-go 1.13
+go 1.14

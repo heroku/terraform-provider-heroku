@@ -25,7 +25,7 @@ Create a ready-to-release slug:
 ```hcl
 resource "heroku_slug" "foobar" {
   app      = "${heroku_app.foobar.id}"
-  file_url = "https://github.com/terraform-providers/terraform-provider-heroku/raw/master/heroku/test-fixtures/slug.tgz"
+  file_url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/slug.tgz"
 
   process_types = {
     web = "ruby server.rb"

@@ -13,8 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	heroku "github.com/heroku/heroku-go/v5"
+	"github.com/heroku/terraform-provider-heroku/version"
 	homedir "github.com/mitchellh/go-homedir"
-	"github.com/terraform-providers/terraform-provider-heroku/version"
 )
 
 const (

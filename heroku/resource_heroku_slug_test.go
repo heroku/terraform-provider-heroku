@@ -271,7 +271,7 @@ func testAccCheckHerokuSlugConfig_withRemoteFile(appName string) string {
 resource "heroku_slug" "foobar" {
     app = "${heroku_app.foobar.name}"
     buildpack_provided_description = "Ruby"
-    file_url = "https://github.com/terraform-providers/terraform-provider-heroku/raw/master/heroku/test-fixtures/slug.tgz"
+    file_url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/slug.tgz"
     process_types = {
       web = "ruby server.rb"
     }
@@ -287,7 +287,7 @@ func testAccCheckHerokuSlugConfig_withInsecureRemoteFile(appName string) string 
 resource "heroku_slug" "foobar" {
     app = "${heroku_app.foobar.name}"
     buildpack_provided_description = "Ruby"
-    file_url = "http://github.com/terraform-providers/terraform-provider-heroku/raw/master/heroku/test-fixtures/slug.tgz"
+    file_url = "http://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/slug.tgz"
     process_types = {
       web = "ruby server.rb"
     }

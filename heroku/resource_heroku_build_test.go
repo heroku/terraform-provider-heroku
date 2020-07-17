@@ -184,7 +184,7 @@ func TestAccHerokuBuild_LocalSourceDirectory(t *testing.T) {
 	})
 }
 
-// https://github.com/terraform-providers/terraform-provider-heroku/issues/160
+// https://github.com/heroku/terraform-provider-heroku/issues/160
 func TestAccHerokuBuild_LocalSourceDirectorySelfContained(t *testing.T) {
 	var build heroku.Build
 	defer func() { _ = resetSourceDirectories() }()
