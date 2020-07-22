@@ -22,11 +22,11 @@ simplest path to delivering apps quickly:
 
 ## Contributing
 
-Development happens in the [GitHub repo](https://github.com/terraform-providers/terraform-provider-heroku):
+Development happens in the [GitHub repo](https://github.com/heroku/terraform-provider-heroku):
 
-* [Releases](https://github.com/terraform-providers/terraform-provider-heroku/releases)
-* [Changelog](https://github.com/terraform-providers/terraform-provider-heroku/blob/master/CHANGELOG.md)
-* [Issues](https://github.com/terraform-providers/terraform-provider-heroku/issues)
+* [Releases](https://github.com/heroku/terraform-provider-heroku/releases)
+* [Changelog](https://github.com/heroku/terraform-provider-heroku/blob/master/CHANGELOG.md)
+* [Issues](https://github.com/heroku/terraform-provider-heroku/issues)
 
 ## Example Usage
 
