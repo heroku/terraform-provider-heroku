@@ -6,9 +6,10 @@ on:
   push:
     branches:
     - master
-  schedule:
-    # Three-hours after midnight Pacific
-    - cron: "0 11 * * *"
+# Skip nightly runs, at least until the org's GitHub Actions budget problem is resolved.
+#   schedule:
+#     # Three-hours after midnight Pacific
+#     - cron: "0 11 * * *"
 
 jobs:
 
