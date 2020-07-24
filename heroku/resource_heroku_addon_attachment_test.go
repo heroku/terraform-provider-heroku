@@ -19,6 +19,8 @@ func TestAccHerokuAddonAttachment_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"heroku_addon_attachment.foobar", "app_id", appName),
+					resource.TestCheckResourceAttr(
+						"heroku_addon_attachment.foobar", "namespace", "TEST_NAMESPACE"),
 				),
 			},
 		},
@@ -57,8 +59,9 @@ resource "heroku_addon" "foobar" {
 }
 
 resource "heroku_addon_attachment" "foobar" {
-    app_id   = "${heroku_app.foobar.id}"
-    addon_id = "${heroku_addon.foobar.id}"
+    app_id    = "${heroku_app.foobar.id}"
+    addon_id  = "${heroku_addon.foobar.id}"
+    namespace = "TEST_NAMESPACE"
 }`, appName)
 }
 

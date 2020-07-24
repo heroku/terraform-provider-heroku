@@ -26,6 +26,7 @@ The following arguments are supported:
 * `app_id` - (Required) The ID of the Heroku App to attach to.
 * `addon_id` - (Required) The ID of the existing Heroku Addon to attach.
 * `name` - (Optional) A friendly name for the Heroku Addon Attachment.
+* `namespace` - (Optional) The namespace value for the Heroku Addon Attachment.
 
 ## Attributes Reference
 
