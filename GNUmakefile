@@ -8,8 +8,10 @@ default: build
 build: fmtcheck
 	go install
 
+# Example usage: make release version=0.11.0
 release: fmtcheck
-	scripts/build-release
+	@echo "Generating release."
+	./scripts/build-release $(version)
 
 test: fmtcheck
 	echo $(TEST) | \
