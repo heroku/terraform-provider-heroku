@@ -14,9 +14,17 @@ Attaches a Heroku Addon Resource to an additional Heroku App.
 
 ```hcl
 resource "heroku_addon_attachment" "database" {
-  app_id  = "${heroku_app.default.id}"
-  addon_id = "${heroku_addon.database.id}"
+  app_id  = heroku_app.default.id
+  addon_id = heroku_addon.database.id
 }
+
+// attach postgres credentials
+resource "heroku_addon_attachment" "database_credentials" {
+  app_id  = heroku_app.default.id
+  addon_id = heroku_addon.database.id
+  namespace = "credential: ${var.credential_name}"
+}
+
 ```
 
 ## Argument Reference
@@ -26,7 +34,7 @@ The following arguments are supported:
 * `app_id` - (Required) The ID of the Heroku App to attach to.
 * `addon_id` - (Required) The ID of the existing Heroku Addon to attach.
 * `name` - (Optional) A friendly name for the Heroku Addon Attachment.
-* `namespace` - (Optional) The namespace value for the Heroku Addon Attachment.
+* `namespace` - (Optional) The namespace value for the Heroku Addon Attachment. This can be used to configure the behaviour of the attachment. See [Heroku Platform API Reference](https://devcenter.heroku.com/articles/platform-api-reference#add-on-attachment-create)
 
 ## Attributes Reference
 
