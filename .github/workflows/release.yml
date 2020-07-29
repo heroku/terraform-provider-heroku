@@ -1,8 +1,9 @@
 name: release
 
 on:
-  release:
-    types: [unpublished]
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   goreleaser:
