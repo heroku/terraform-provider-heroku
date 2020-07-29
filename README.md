@@ -1,7 +1,7 @@
 Terraform Provider Heroku
 =========================
 
-[![Acceptance tests](https://github.com/terraform-providers/terraform-provider-heroku/workflows/Acceptance/badge.svg)](https://github.com/terraform-providers/terraform-provider-heroku/actions?query=workflow%3AAcceptance)
+[![Acceptance tests](https://github.com/heroku/terraform-provider-heroku/workflows/Acceptance/badge.svg)](https://github.com/heroku/terraform-provider-heroku/actions?query=workflow%3AAcceptance)
 
 This provider is used to configure resources supported by the [Heroku Platform API](https://devcenter.heroku.com/articles/platform-api-reference).
 
@@ -40,7 +40,7 @@ With Go language, the repository must be cloned to a specific path in `$GOPATH/s
 ```sh
 mkdir -p $GOPATH/src/github.com/terraform-providers
 cd $GOPATH/src/github.com/terraform-providers
-git clone git@github.com:terraform-providers/terraform-provider-heroku
+git clone git@github.com:heroku/terraform-provider-heroku
 ```
 
 ### Build the Provider

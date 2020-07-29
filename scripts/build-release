@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+COLOR_RED='\033[0;31m'
+COLOR_NONE='\033[0m'
+PROVIDER="heroku"
+CURRENT_GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+if [ $CURRENT_GIT_BRANCH != 'master' ]; then
+  printf "\n"
+  printf "${COLOR_RED} Error: The build-release script must be run while on the master branch. \n ${COLOR_NONE}"
+  printf "\n"
+
+  exit 1
+fi
+
+if [ $# -ne 1 ]; then
+  printf "\n"
+  printf "${COLOR_RED} Error: Release version argument required. \n\n ${COLOR_NONE}"
+  printf " Example: \n\n    ./scripts/build 0.9.0 \n\n"
+  printf "  Example (make): \n\n    make release version=0.9.0 \n"
+  printf "\n"
+
+  exit 1
+fi
+
+VERSION="v${1}"
+
+echo "Pulling down latest from origin"
+git pull origin master
+
+echo "Switching to master branch"
+git checkout master
+
+echo "Checking if master branch is clean"
+if [ "$(git status --porcelain)" != "" ]; then
+  printf "\n"
+  printf "${COLOR_RED} Error: branch is not clean. please add/commit or stage any changes first"
+  printf "\n"
+
+  exit 1
+fi
+
+echo "Checking if local & remote master branch are in sync"
+if [ "$(git diff master origin/master)" != "" ]; then
+  printf "\n"
+  printf "${COLOR_RED} Local and remote master branch are not in sync"
+  printf "\n"
+
+  exit 1
+fi
+
+echo "Checking if ${VERSION} tag already exists"
+if git rev-parse "$VERSION" >/dev/null 2>&1; then
+  printf "\n"
+  printf "${COLOR_RED} Error: ${VERSION} already exists! ${COLOR_NONE}"
+  printf "\n"
+
+  exit 1
+fi
+
+echo "Creating new release tag ${VERSION}"
+git tag -a "${VERSION}" -m "Release ${VERSION}"
+
+echo "Pushing new release tag ${VERSION} to upstream origin"
+git push origin "${VERSION}"

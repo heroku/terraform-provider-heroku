@@ -11,7 +11,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	helper "github.com/terraform-providers/terraform-provider-heroku/helper/test"
+	helper "github.com/heroku/terraform-provider-heroku/helper/test"
 )
 
 var testAccProviders map[string]terraform.ResourceProvider

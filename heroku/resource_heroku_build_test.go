@@ -184,7 +184,7 @@ func TestAccHerokuBuild_LocalSourceDirectory(t *testing.T) {
 	})
 }
 
-// https://github.com/terraform-providers/terraform-provider-heroku/issues/160
+// https://github.com/heroku/terraform-provider-heroku/issues/160
 func TestAccHerokuBuild_LocalSourceDirectorySelfContained(t *testing.T) {
 	var build heroku.Build
 	defer func() { _ = resetSourceDirectories() }()
@@ -244,7 +244,7 @@ func testAccCheckHerokuBuildConfig_basic(appName string) string {
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
     source = {
-    	url = "https://github.com/mars/terraform-provider-heroku/raw/build-resource/heroku/test-fixtures/app.tgz"
+        url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/app.tgz"
     }
 }`, appName)
 }
@@ -294,7 +294,7 @@ resource "heroku_build" "foobar" {
     ]
     source = {
       checksum = "SHA256:14671a3dcf1ba3f4976438bfd4654da5d2b18ccefa59d10187ecc1286f08ee29"
-      url = "https://github.com/mars/terraform-provider-heroku/raw/build-resource/heroku/test-fixtures/app.tgz"
+      url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/app.tgz"
       version = "v0"
     }
 }`, appName)

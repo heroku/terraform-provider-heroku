@@ -8,12 +8,17 @@ default: build
 build: fmtcheck
 	go install
 
+# Example usage: make release version=0.11.0
+release: fmtcheck
+	@echo "Generating release."
+	./scripts/build-release $(version)
+
 test: fmtcheck
 	echo $(TEST) | \
 		xargs -t -n4 go test -v $(TESTARGS) -timeout=30s -parallel=4
 
 testacc: fmtcheck
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout=240m -ldflags="-X=github.com/terraform-providers/terraform-provider-heroku/version.ProviderVersion=test"
+	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout=240m -ldflags="-X=github.com/heroku/terraform-provider-heroku/version.ProviderVersion=test"
 
 vet:
 	@echo "go vet ."
