@@ -42,6 +42,12 @@ func resourceHerokuAddonAttachment() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+
+			"namespace": {
+				Type:     schema.TypeString,
+				ForceNew: true,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -53,6 +59,10 @@ func resourceHerokuAddonAttachmentCreate(d *schema.ResourceData, meta interface{
 
 	if v := d.Get("name").(string); v != "" {
 		opts.Name = &v
+	}
+
+	if ns := d.Get("namespace").(string); ns != "" {
+		opts.Namespace = &ns
 	}
 
 	log.Printf("[DEBUG] Addon Attachment create configuration: %#v", opts)
@@ -83,6 +93,7 @@ func resourceHerokuAddonAttachmentRead(d *schema.ResourceData, meta interface{})
 	d.Set("app_id", addonattachment.App.Name)
 	d.Set("addon_id", addonattachment.Addon.ID)
 	d.Set("name", addonattachment.Name)
+	d.Set("namespace", addonattachment.Namespace)
 
 	return nil
 }
