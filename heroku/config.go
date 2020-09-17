@@ -164,13 +164,18 @@ func (c *Config) applyNetrcFile() error {
 	path := os.Getenv("NETRC_PATH")
 
 	if path == "" {
+		dir := os.Getenv("NETRC")
+		if dir == "" {
+			dir = "~"
+		}
+
 		filename := ".netrc"
 		if runtime.GOOS == "windows" {
 			filename = "_netrc"
 		}
 
 		var err error
-		path, err = homedir.Expand("~/" + filename)
+		path, err = homedir.Expand(fmt.Sprintf("%s/", dir) + filename)
 		if err != nil {
 			return err
 		}
