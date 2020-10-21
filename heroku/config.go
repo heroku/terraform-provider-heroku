@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	heroku "github.com/heroku/heroku-go/v5"
-	"github.com/heroku/terraform-provider-heroku/version"
+	"github.com/heroku/terraform-provider-heroku/v2/version"
 	homedir "github.com/mitchellh/go-homedir"
 )
 

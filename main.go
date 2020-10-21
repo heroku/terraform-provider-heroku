@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/plugin"
-	"github.com/heroku/terraform-provider-heroku/heroku"
+	"github.com/heroku/terraform-provider-heroku/v2/heroku"
 )
 
 func main() {

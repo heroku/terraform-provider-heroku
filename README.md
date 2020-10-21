@@ -38,8 +38,8 @@ If you wish to work on the provider, you'll first need [Go](http://www.golang.or
 With Go language, the repository must be cloned to a specific path in `$GOPATH/src` that matches its module import path.
 
 ```sh
-mkdir -p $GOPATH/src/github.com/terraform-providers
-cd $GOPATH/src/github.com/terraform-providers
+mkdir -p $GOPATH/src/github.com/heroku
+cd $GOPATH/src/github.com/heroku
 git clone git@github.com:heroku/terraform-provider-heroku
 ```
 
