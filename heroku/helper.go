@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	heroku "github.com/heroku/heroku-go/v5"
-	"github.com/heroku/terraform-provider-heroku/version"
+	"github.com/heroku/terraform-provider-heroku/v3/version"
 )
 
 // getAppName extracts the app attribute generically from a Heroku resource.
