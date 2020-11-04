@@ -145,12 +145,14 @@ func resourceHerokuApp() *schema.Resource {
 
 			"organization": {
 				Type:     schema.TypeList,
+				MinItems: 0,
+				MaxItems: 1,
 				Optional: true,
-				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
 							Type:         schema.TypeString,
+							ForceNew:     true,
 							Required:     true,
 							ValidateFunc: validation.StringIsNotEmpty,
 						},
@@ -164,6 +166,7 @@ func resourceHerokuApp() *schema.Resource {
 						"personal": {
 							Type:     schema.TypeBool,
 							Optional: true,
+							ForceNew: true,
 							Computed: true,
 						},
 					},
@@ -428,10 +431,12 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
+// resourceHerokuAppUpdate utilizes several unique API endpoints to update the app.
 func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 	opts := heroku.AppUpdateOpts{}
 
+	// Make changes (if any) to the app itself.
 	if d.HasChange("name") {
 		v := d.Get("name").(string)
 		opts.Name = &v
@@ -447,6 +452,7 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetId(updatedApp.Name)
 
+	// Make changes (if any) to the app's buildpack.
 	if d.HasChange("buildpacks") {
 		err := updateBuildpacks(d.Id(), client, d.Get("buildpacks").([]interface{}))
 		if err != nil {
@@ -454,6 +460,7 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	// Make changes (if any) to the app's config vars.
 	// Check if there are overlapping config vars and error out as precaution
 	dupeErr := checkIfDupeConfigVars(d)
 	if dupeErr != nil {
@@ -499,10 +506,29 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	// Make changes (if any) to the app's ACM.
 	if d.HasChange("acm") {
 		err := updateAcm(d.Id(), client, d.Get("acm").(bool))
 		if err != nil {
 			return err
+		}
+	}
+
+	// Make changes (if any) to the app organization lock state.
+	if d.HasChange("organization") {
+		v := d.Get("organization").([]interface{})
+		currentOrgAttrValues := v[0].(map[string]interface{})
+
+		if v := currentOrgAttrValues["locked"]; v != nil {
+			teamAppUpdateOpts := heroku.TeamAppUpdateLockedOpts{}
+			vs := v.(bool)
+			log.Printf("[DEBUG] Organization updated locked: %t", vs)
+			teamAppUpdateOpts.Locked = vs
+
+			_, lockUpdateErr := client.TeamAppUpdateLocked(context.TODO(), d.Id(), teamAppUpdateOpts)
+			if lockUpdateErr != nil {
+				return lockUpdateErr
+			}
 		}
 	}
 
