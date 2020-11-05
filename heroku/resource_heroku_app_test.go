@@ -402,7 +402,15 @@ func TestAccHerokuApp_Organization_Locked(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_locked(appName, org),
+				Config: testAccCheckHerokuAppConfig_locked(appName, org, "false"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
+					resource.TestCheckResourceAttr("heroku_app.foobar", "organization.0.locked", "false"),
+					resource.TestCheckResourceAttr("heroku_app.foobar", "organization.0.name", org),
+				),
+			},
+			{
+				Config: testAccCheckHerokuAppConfig_locked(appName, org, "true"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
 					resource.TestCheckResourceAttr("heroku_app.foobar", "organization.0.locked", "true"),
@@ -932,7 +940,7 @@ resource "heroku_app" "foobar" {
 }`, appName, org)
 }
 
-func testAccCheckHerokuAppConfig_locked(appName, org string) string {
+func testAccCheckHerokuAppConfig_locked(appName, org, locked string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
@@ -940,7 +948,7 @@ resource "heroku_app" "foobar" {
 
   organization {
     name = "%s"
-	locked = true
+	locked = %s
   }
-}`, appName, org)
+}`, appName, org, locked)
 }

@@ -74,9 +74,9 @@ The following arguments are supported:
 
 The `organization` block supports:
 
-* `name` (string) - The name of the Heroku Team
-* `locked` (boolean)
-* `personal` (boolean)
+* `name` (string) - The name of the Heroku Team.
+* `locked` (boolean) - Are other team members forbidden from joining this app.
+* `personal` (boolean) - Force creation of the app in the user account even if a default team is set.
 
 ### Deleting vars
 
