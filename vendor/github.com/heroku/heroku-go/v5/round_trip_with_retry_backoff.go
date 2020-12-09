@@ -30,14 +30,6 @@ func (r RoundTripWithRetryBackoff) RoundTrip(req *http.Request) (*http.Response,
 		lastResponse = nil
 		lastError = nil
 
-		// Fresh copy of the body for each retry.
-		if req.Body != nil {
-			originalBody, _ := req.GetBody()
-			if originalBody != nil {
-				req.Body = originalBody
-			}
-		}
-
 		lastResponse, lastError = http.DefaultTransport.RoundTrip(req)
 		// Detect Heroku API rate limiting
 		// https://devcenter.heroku.com/articles/platform-api-reference#client-error-responses

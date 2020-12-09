@@ -359,6 +359,42 @@
           "type": [
             "boolean"
           ]
+        },
+        "acknowledged_msa": {
+          "description": "whether account has acknowledged the MSA terms of service",
+          "example": false,
+          "readOnly": true,
+          "type": [
+            "boolean"
+          ]
+        },
+        "acknowledged_msa_at": {
+          "description": "when account has acknowledged the MSA terms of service",
+          "example": "2012-01-01T12:00:00Z",
+          "format": "date-time",
+          "readOnly": true,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "italian_customer_terms": {
+          "description": "whether account has acknowledged the Italian customer terms of service",
+          "example": "affirmatively_accepted",
+          "readOnly": true,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "italian_partner_terms": {
+          "description": "whether account has acknowledged the Italian provider terms of service",
+          "example": "affirmatively_accepted",
+          "readOnly": true,
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "links": [
@@ -572,6 +608,18 @@
         "verified": {
           "$ref": "#/definitions/account/definitions/verified"
         },
+        "acknowledged_msa": {
+          "$ref": "#/definitions/account/definitions/acknowledged_msa"
+        },
+        "acknowledged_msa_at": {
+          "$ref": "#/definitions/account/definitions/acknowledged_msa_at"
+        },
+        "italian_customer_terms": {
+          "$ref": "#/definitions/account/definitions/italian_customer_terms"
+        },
+        "italian_partner_terms": {
+          "$ref": "#/definitions/account/definitions/italian_partner_terms"
+        },
         "default_organization": {
           "description": "team selected by default",
           "properties": {
@@ -607,7 +655,7 @@
       }
     },
     "add-on-action": {
-      "description": "Add-on Actions are lifecycle operations for add-on provisioning and deprovisioning. They allow whitelisted add-on providers to (de)provision add-ons in the background and then report back when (de)provisioning is complete.",
+      "description": "Add-on Actions are lifecycle operations for add-on provisioning and deprovisioning. They allow add-on providers to (de)provision add-ons in the background and then report back when (de)provisioning is complete.",
       "$schema": "http://json-schema.org/draft-04/hyper-schema",
       "stability": "development",
       "strictProperties": true,
@@ -2137,6 +2185,157 @@
         },
         "web_url": {
           "$ref": "#/definitions/add-on/definitions/web_url"
+        }
+      }
+    },
+    "allowed-add-on-service": {
+      "description": "Entities that have been allowed to be used by a Team",
+      "$schema": "http://json-schema.org/draft-04/hyper-schema",
+      "stability": "prototype",
+      "strictProperties": true,
+      "title": "Heroku Platform API - Allowed Add-on Service",
+      "type": [
+        "object"
+      ],
+      "definitions": {
+        "added_at": {
+          "description": "when the add-on service was allowed",
+          "example": "2012-01-01T12:00:00Z",
+          "format": "date-time",
+          "readOnly": true,
+          "type": [
+            "string"
+          ]
+        },
+        "added_by": {
+          "description": "the user which allowed the add-on service",
+          "properties": {
+            "email": {
+              "$ref": "#/definitions/account/definitions/email",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "id": {
+              "$ref": "#/definitions/account/definitions/id",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "readOnly": true,
+          "type": [
+            "object"
+          ]
+        },
+        "addon_service": {
+          "description": "the add-on service allowed for use",
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/add-on-service/definitions/id"
+            },
+            "name": {
+              "$ref": "#/definitions/add-on-service/definitions/name"
+            },
+            "human_name": {
+              "$ref": "#/definitions/add-on-service/definitions/human_name"
+            }
+          },
+          "readOnly": true,
+          "type": [
+            "object"
+          ]
+        },
+        "id": {
+          "description": "unique identifier for this allowed add-on service record",
+          "example": "01234567-89ab-cdef-0123-456789abcdef",
+          "format": "uuid",
+          "readOnly": true,
+          "type": [
+            "string"
+          ]
+        },
+        "identity": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/allowed-add-on-service/definitions/id"
+            },
+            {
+              "$ref": "#/definitions/add-on-service/definitions/name"
+            }
+          ]
+        }
+      },
+      "links": [
+        {
+          "description": "List all allowed add-on services for a team",
+          "href": "/teams/{(%23%2Fdefinitions%2Fteam%2Fdefinitions%2Fidentity)}/allowed-addon-services",
+          "method": "GET",
+          "rel": "instances",
+          "targetSchema": {
+            "items": {
+              "$ref": "#/definitions/allowed-add-on-service"
+            },
+            "type": [
+              "array"
+            ]
+          },
+          "title": "List By Team"
+        },
+        {
+          "description": "Allow an Add-on Service",
+          "href": "/teams/{(%23%2Fdefinitions%2Fteam%2Fdefinitions%2Fidentity)}/allowed-addon-services",
+          "method": "POST",
+          "rel": "create",
+          "schema": {
+            "type": [
+              "object"
+            ],
+            "properties": {
+              "addon_service": {
+                "description": "name of the add-on service to allow",
+                "example": "heroku-postgresql",
+                "type": [
+                  "string"
+                ]
+              }
+            }
+          },
+          "targetSchema": {
+            "items": {
+              "$ref": "#/definitions/allowed-add-on-service"
+            },
+            "type": [
+              "array"
+            ]
+          },
+          "title": "Create By Team"
+        },
+        {
+          "description": "Remove an allowed add-on service",
+          "href": "/teams/{(%23%2Fdefinitions%2Fteam%2Fdefinitions%2Fidentity)}/allowed-addon-services/{(%23%2Fdefinitions%2Fallowed-add-on-service%2Fdefinitions%2Fidentity)}",
+          "method": "DELETE",
+          "rel": "destroy",
+          "targetSchema": {
+            "$ref": "#/definitions/allowed-add-on-service"
+          },
+          "title": "Delete By Team"
+        }
+      ],
+      "properties": {
+        "added_at": {
+          "$ref": "#/definitions/allowed-add-on-service/definitions/added_at"
+        },
+        "added_by": {
+          "$ref": "#/definitions/allowed-add-on-service/definitions/added_by"
+        },
+        "addon_service": {
+          "$ref": "#/definitions/allowed-add-on-service/definitions/addon_service"
+        },
+        "id": {
+          "$ref": "#/definitions/allowed-add-on-service/definitions/id"
         }
       }
     },
@@ -4028,7 +4227,7 @@
       "$schema": "http://json-schema.org/draft-04/hyper-schema",
       "title": "Heroku Platform API - Audit Trail Archive",
       "description": "An audit trail archive represents a monthly json zipped file containing events",
-      "stability": "development",
+      "stability": "production",
       "strictProperties": true,
       "type": [
         "object"
@@ -4128,6 +4327,222 @@
         },
         "size": {
           "$ref": "#/definitions/archive/definitions/size"
+        }
+      }
+    },
+    "audit-trail-event": {
+      "$schema": "http://json-schema.org/draft-04/hyper-schema",
+      "title": "Heroku Platform API - Audit Trail Event",
+      "description": "An audit trail event represents some action on the platform",
+      "stability": "production",
+      "strictProperties": true,
+      "type": [
+        "object"
+      ],
+      "definitions": {
+        "id": {
+          "description": "unique identifier of event",
+          "readOnly": true,
+          "format": "uuid",
+          "type": [
+            "string"
+          ]
+        },
+        "identity": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/audit-trail-event/definitions/id"
+            }
+          ]
+        },
+        "type": {
+          "description": "type of event",
+          "readOnly": true,
+          "type": [
+            "string"
+          ]
+        },
+        "action": {
+          "description": "action for the event",
+          "readOnly": true,
+          "type": [
+            "string"
+          ]
+        },
+        "actor": {
+          "description": "user who caused event",
+          "readOnly": true,
+          "type": [
+            "object"
+          ],
+          "properties": {
+            "id": {
+              "format": "uuid",
+              "type": [
+                "string"
+              ]
+            },
+            "email": {
+              "format": "email",
+              "type": [
+                "string"
+              ]
+            }
+          }
+        },
+        "app": {
+          "description": "app upon which event took place",
+          "readOnly": true,
+          "type": [
+            "object"
+          ],
+          "properties": {
+            "id": {
+              "format": "uuid",
+              "type": [
+                "string"
+              ]
+            },
+            "name": {
+              "type": [
+                "string"
+              ]
+            }
+          }
+        },
+        "owner": {
+          "description": "owner of the app targeted by the event",
+          "readOnly": true,
+          "type": [
+            "object"
+          ],
+          "properties": {
+            "id": {
+              "format": "uuid",
+              "type": [
+                "string"
+              ]
+            },
+            "email": {
+              "format": "email",
+              "type": [
+                "string"
+              ]
+            }
+          }
+        },
+        "enterprise_account": {
+          "description": "enterprise account on which the event happened",
+          "readOnly": true,
+          "type": [
+            "object"
+          ],
+          "properties": {
+            "id": {
+              "format": "uuid",
+              "type": [
+                "string"
+              ]
+            },
+            "name": {
+              "type": [
+                "string"
+              ]
+            }
+          }
+        },
+        "team": {
+          "description": "team on which the event happened",
+          "readOnly": true,
+          "type": [
+            "object"
+          ],
+          "properties": {
+            "id": {
+              "format": "uuid",
+              "type": [
+                "string"
+              ]
+            },
+            "name": {
+              "type": [
+                "string"
+              ]
+            }
+          }
+        },
+        "request": {
+          "description": "information about where the action was triggered",
+          "readOnly": true,
+          "type": [
+            "object"
+          ],
+          "properties": {
+            "ip_address": {
+              "format": "ipv4",
+              "type": [
+                "string"
+              ]
+            }
+          }
+        },
+        "data": {
+          "description": "data specific to the event",
+          "readOnly": true,
+          "type": [
+            "object"
+          ]
+        },
+        "created_at": {
+          "description": "when event was created",
+          "format": "date-time",
+          "type": [
+            "string"
+          ]
+        }
+      },
+      "links": [
+        {
+          "description": "List existing events.",
+          "href": "/enterprise-accounts/{(%23%2Fdefinitions%2Fenterprise-account%2Fdefinitions%2Fidentity)}/events",
+          "method": "GET",
+          "rel": "instances",
+          "title": "List"
+        }
+      ],
+      "properties": {
+        "created_at": {
+          "$ref": "#/definitions/audit-trail-event/definitions/created_at"
+        },
+        "id": {
+          "$ref": "#/definitions/audit-trail-event/definitions/id"
+        },
+        "type": {
+          "$ref": "#/definitions/audit-trail-event/definitions/type"
+        },
+        "action": {
+          "$ref": "#/definitions/audit-trail-event/definitions/action"
+        },
+        "actor": {
+          "$ref": "#/definitions/audit-trail-event/definitions/actor"
+        },
+        "app": {
+          "$ref": "#/definitions/audit-trail-event/definitions/app"
+        },
+        "owner": {
+          "$ref": "#/definitions/audit-trail-event/definitions/owner"
+        },
+        "enterprise_account": {
+          "$ref": "#/definitions/audit-trail-event/definitions/enterprise_account"
+        },
+        "team": {
+          "$ref": "#/definitions/audit-trail-event/definitions/team"
+        },
+        "request": {
+          "$ref": "#/definitions/audit-trail-event/definitions/request"
+        },
+        "data": {
+          "$ref": "#/definitions/audit-trail-event/definitions/data"
         }
       }
     },
@@ -5093,11 +5508,19 @@
           "type": [
             "string"
           ]
+        },
+        "sni_endpoint": {
+          "description": "null or unique identifier or name for SNI endpoint",
+          "type": [
+            "null",
+            "string"
+          ]
         }
       },
       "links": [
         {
-          "description": "Create a new domain.",
+          "deactivate_on": "2021-10-31",
+          "description": "Create a new domain. Deprecated in favor of this same endpoint, but with a new required attribute of `sni_endpoint`. During the transitional phase sni_endpoint can be omitted entirely (current behavior), can be a valid id, or can be null which will skip auto-association.",
           "href": "/apps/{(%23%2Fdefinitions%2Fapp%2Fdefinitions%2Fidentity)}/domains",
           "method": "POST",
           "rel": "create",
@@ -5117,7 +5540,57 @@
           "targetSchema": {
             "$ref": "#/definitions/domain"
           },
+          "title": "Create - Deprecated"
+        },
+        {
+          "description": "Create a new domain.",
+          "href": "/apps/{(%23%2Fdefinitions%2Fapp%2Fdefinitions%2Fidentity)}/domains",
+          "method": "POST",
+          "rel": "create",
+          "schema": {
+            "properties": {
+              "hostname": {
+                "$ref": "#/definitions/domain/definitions/hostname"
+              },
+              "sni_endpoint": {
+                "$ref": "#/definitions/domain/definitions/sni_endpoint"
+              }
+            },
+            "required": [
+              "hostname",
+              "sni_endpoint"
+            ],
+            "type": [
+              "object"
+            ]
+          },
+          "targetSchema": {
+            "$ref": "#/definitions/domain"
+          },
           "title": "Create"
+        },
+        {
+          "description": "Associate an SNI endpoint",
+          "href": "/apps/{(%23%2Fdefinitions%2Fapp%2Fdefinitions%2Fidentity)}/domains/{(%23%2Fdefinitions%2Fdomain%2Fdefinitions%2Fidentity)}",
+          "method": "PATCH",
+          "rel": "update",
+          "schema": {
+            "properties": {
+              "sni_endpoint": {
+                "$ref": "#/definitions/domain/definitions/sni_endpoint"
+              }
+            },
+            "required": [
+              "sni_endpoint"
+            ],
+            "type": [
+              "object"
+            ]
+          },
+          "targetSchema": {
+            "$ref": "#/definitions/domain"
+          },
+          "title": "Update"
         },
         {
           "description": "Delete an existing domain",
@@ -5196,6 +5669,21 @@
         },
         "status": {
           "$ref": "#/definitions/domain/definitions/status"
+        },
+        "sni_endpoint": {
+          "description": "sni endpoint the domain is associated with",
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/sni-endpoint/definitions/name"
+            },
+            "id": {
+              "$ref": "#/definitions/sni-endpoint/definitions/id"
+            }
+          },
+          "type": [
+            "null",
+            "object"
+          ]
         }
       }
     },
@@ -6418,222 +6906,6 @@
               "$ref": "#/definitions/identity-provider/definitions/owner"
             }
           }
-        }
-      }
-    },
-    "event": {
-      "$schema": "http://json-schema.org/draft-04/hyper-schema",
-      "title": "Heroku Platform API - Audit Trail Event",
-      "description": "An audit trail event represents some action on the platform",
-      "stability": "development",
-      "strictProperties": true,
-      "type": [
-        "object"
-      ],
-      "definitions": {
-        "id": {
-          "description": "unique identifier of event",
-          "readOnly": true,
-          "format": "uuid",
-          "type": [
-            "string"
-          ]
-        },
-        "identity": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/event/definitions/id"
-            }
-          ]
-        },
-        "type": {
-          "description": "type of event",
-          "readOnly": true,
-          "type": [
-            "string"
-          ]
-        },
-        "action": {
-          "description": "action for the event",
-          "readOnly": true,
-          "type": [
-            "string"
-          ]
-        },
-        "actor": {
-          "description": "user who caused event",
-          "readOnly": true,
-          "type": [
-            "object"
-          ],
-          "properties": {
-            "id": {
-              "format": "uuid",
-              "type": [
-                "string"
-              ]
-            },
-            "email": {
-              "format": "email",
-              "type": [
-                "string"
-              ]
-            }
-          }
-        },
-        "app": {
-          "description": "app upon which event took place",
-          "readOnly": true,
-          "type": [
-            "object"
-          ],
-          "properties": {
-            "id": {
-              "format": "uuid",
-              "type": [
-                "string"
-              ]
-            },
-            "name": {
-              "type": [
-                "string"
-              ]
-            }
-          }
-        },
-        "owner": {
-          "description": "owner of the app targeted by the event",
-          "readOnly": true,
-          "type": [
-            "object"
-          ],
-          "properties": {
-            "id": {
-              "format": "uuid",
-              "type": [
-                "string"
-              ]
-            },
-            "email": {
-              "format": "email",
-              "type": [
-                "string"
-              ]
-            }
-          }
-        },
-        "enterprise_account": {
-          "description": "enterprise account on which the event happened",
-          "readOnly": true,
-          "type": [
-            "object"
-          ],
-          "properties": {
-            "id": {
-              "format": "uuid",
-              "type": [
-                "string"
-              ]
-            },
-            "name": {
-              "type": [
-                "string"
-              ]
-            }
-          }
-        },
-        "team": {
-          "description": "team on which the event happened",
-          "readOnly": true,
-          "type": [
-            "object"
-          ],
-          "properties": {
-            "id": {
-              "format": "uuid",
-              "type": [
-                "string"
-              ]
-            },
-            "name": {
-              "type": [
-                "string"
-              ]
-            }
-          }
-        },
-        "request": {
-          "description": "information about where the action was triggered",
-          "readOnly": true,
-          "type": [
-            "object"
-          ],
-          "properties": {
-            "ip_address": {
-              "format": "ipv4",
-              "type": [
-                "string"
-              ]
-            }
-          }
-        },
-        "data": {
-          "description": "data specific to the event",
-          "readOnly": true,
-          "type": [
-            "object"
-          ]
-        },
-        "created_at": {
-          "description": "when event was created",
-          "format": "date-time",
-          "type": [
-            "string"
-          ]
-        }
-      },
-      "links": [
-        {
-          "description": "List existing events.",
-          "href": "/enterprise-accounts/{(%23%2Fdefinitions%2Fenterprise-account%2Fdefinitions%2Fidentity)}/events",
-          "method": "GET",
-          "rel": "instances",
-          "title": "List"
-        }
-      ],
-      "properties": {
-        "created_at": {
-          "$ref": "#/definitions/event/definitions/created_at"
-        },
-        "id": {
-          "$ref": "#/definitions/event/definitions/id"
-        },
-        "type": {
-          "$ref": "#/definitions/event/definitions/type"
-        },
-        "action": {
-          "$ref": "#/definitions/event/definitions/action"
-        },
-        "actor": {
-          "$ref": "#/definitions/event/definitions/actor"
-        },
-        "app": {
-          "$ref": "#/definitions/event/definitions/app"
-        },
-        "owner": {
-          "$ref": "#/definitions/event/definitions/owner"
-        },
-        "enterprise_account": {
-          "$ref": "#/definitions/event/definitions/enterprise_account"
-        },
-        "team": {
-          "$ref": "#/definitions/event/definitions/team"
-        },
-        "request": {
-          "$ref": "#/definitions/event/definitions/request"
-        },
-        "data": {
-          "$ref": "#/definitions/event/definitions/data"
         }
       }
     },
@@ -11495,7 +11767,7 @@
           ]
         },
         "pr_number": {
-          "description": "GitHub Pull Request number if the Review app was created automatically",
+          "description": "pull request number the review app is built for",
           "example": 24,
           "readOnly": true,
           "type": [
@@ -11514,6 +11786,9 @@
             "properties": {
               "branch": {
                 "$ref": "#/definitions/review-app/definitions/branch"
+              },
+              "pr_number": {
+                "$ref": "#/definitions/review-app/definitions/pr_number"
               },
               "pipeline": {
                 "$ref": "#/definitions/pipeline/definitions/id"
@@ -12119,7 +12394,7 @@
               "size": 2048,
               "stack": {
                 "id": "01234567-89ab-cdef-0123-456789abcdef",
-                "name": "cedar-14"
+                "name": "heroku-18"
               },
               "updated_at": "2012-01-01T12:00:00Z"
             }
@@ -12742,6 +13017,140 @@
         }
       }
     },
+    "space-topology": {
+      "description": "Space Topology provides you with a mechanism for viewing all the running dynos, formations and applications for a space. This is the same data thats used to power our DNS Service Discovery.",
+      "$schema": "http://json-schema.org/draft-04/hyper-schema",
+      "stability": "prototype",
+      "strictProperties": true,
+      "title": "Heroku Platform API - Space Topology",
+      "type": [
+        "object"
+      ],
+      "definitions": {
+        "version": {
+          "description": "version of the space topology payload",
+          "example": 1,
+          "readOnly": true,
+          "type": [
+            "integer"
+          ]
+        },
+        "dyno": {
+          "description": "A dyno",
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/dyno/definitions/id"
+            },
+            "number": {
+              "description": "process number, e.g. 1 in web.1",
+              "example": 1,
+              "type": [
+                "integer"
+              ]
+            },
+            "private_ip": {
+              "description": "RFC1918 Address of Dyno",
+              "example": "10.0.134.42",
+              "type": [
+                "string"
+              ]
+            },
+            "hostname": {
+              "description": "localspace hostname of resource",
+              "example": "1.example-app-90210.app.localspace",
+              "type": [
+                "string"
+              ]
+            }
+          },
+          "type": [
+            "object"
+          ]
+        },
+        "formation": {
+          "description": "formations for application",
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/formation/definitions/id"
+            },
+            "process_type": {
+              "description": "Name of process type",
+              "example": "web",
+              "type": [
+                "string"
+              ]
+            },
+            "dynos": {
+              "description": "Current dynos for application",
+              "items": {
+                "$ref": "#/definitions/space-topology/definitions/dyno"
+              },
+              "type": [
+                "array"
+              ]
+            }
+          },
+          "type": [
+            "object"
+          ]
+        }
+      },
+      "links": [
+        {
+          "description": "Current space topology",
+          "href": "/spaces/{(%23%2Fdefinitions%2Fspace%2Fdefinitions%2Fidentity)}/topology",
+          "method": "GET",
+          "rel": "self",
+          "targetSchema": {
+            "$ref": "#/definitions/space-topology"
+          },
+          "title": "Topology"
+        }
+      ],
+      "properties": {
+        "version": {
+          "$ref": "#/definitions/space-topology/definitions/version"
+        },
+        "apps": {
+          "description": "The apps within this space",
+          "type": [
+            "array"
+          ],
+          "readOnly": true,
+          "items": {
+            "type": [
+              "object"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/app/definitions/id",
+                "readOnly": true
+              },
+              "domains": {
+                "example": [
+                  "example.com",
+                  "example.net"
+                ],
+                "readOnly": true,
+                "type": [
+                  "array"
+                ]
+              },
+              "formation": {
+                "description": "formations for application",
+                "items": {
+                  "$ref": "#/definitions/space-topology/definitions/formation"
+                },
+                "type": [
+                  "array"
+                ],
+                "readOnly": true
+              }
+            }
+          }
+        }
+      }
+    },
     "space-transfer": {
       "description": "Transfer spaces between enterprise teams with the same Enterprise Account.",
       "$schema": "http://json-schema.org/draft-04/hyper-schema",
@@ -13046,6 +13455,24 @@
         "object"
       ],
       "definitions": {
+        "acm": {
+          "readOnly": true,
+          "type": [
+            "boolean"
+          ]
+        },
+        "ca_signed?": {
+          "readOnly": true,
+          "type": [
+            "boolean"
+          ]
+        },
+        "cert_domains": {
+          "readOnly": true,
+          "type": [
+            "array"
+          ]
+        },
         "certificate_chain": {
           "description": "raw contents of the public certificate chain (eg: .crt or .pem file)",
           "example": "-----BEGIN CERTIFICATE----- ...",
@@ -13071,6 +13498,22 @@
             "string"
           ]
         },
+        "display_name": {
+          "description": "unique name for SSL endpoint",
+          "example": "example",
+          "pattern": "^[a-z][a-z0-9-]{2,29}$",
+          "readOnly": false,
+          "type": [
+            "string"
+          ]
+        },
+        "expires_at": {
+          "readOnly": true,
+          "format": "date-time",
+          "type": [
+            "string"
+          ]
+        },
         "id": {
           "description": "unique identifier of this SSL endpoint",
           "example": "01234567-89ab-cdef-0123-456789abcdef",
@@ -13088,6 +13531,12 @@
             {
               "$ref": "#/definitions/ssl-endpoint/definitions/name"
             }
+          ]
+        },
+        "issuer": {
+          "readOnly": true,
+          "type": [
+            "string"
           ]
         },
         "name": {
@@ -13112,6 +13561,25 @@
           "description": "contents of the private key (eg .key file)",
           "example": "-----BEGIN RSA PRIVATE KEY----- ...",
           "readOnly": false,
+          "type": [
+            "string"
+          ]
+        },
+        "self_signed?": {
+          "readOnly": true,
+          "type": [
+            "boolean"
+          ]
+        },
+        "starts_at": {
+          "readOnly": true,
+          "format": "date-time",
+          "type": [
+            "string"
+          ]
+        },
+        "subject": {
+          "readOnly": true,
           "type": [
             "string"
           ]
@@ -13244,11 +13712,61 @@
         "created_at": {
           "$ref": "#/definitions/ssl-endpoint/definitions/created_at"
         },
+        "display_name": {
+          "$ref": "#/definitions/ssl-endpoint/definitions/display_name"
+        },
+        "domains": {
+          "description": "domains associated with this endpoint",
+          "type": [
+            "array"
+          ],
+          "items": {
+            "$ref": "#/definitions/domain/definitions/id"
+          }
+        },
         "id": {
           "$ref": "#/definitions/ssl-endpoint/definitions/id"
         },
         "name": {
           "$ref": "#/definitions/ssl-endpoint/definitions/name"
+        },
+        "ssl_cert": {
+          "description": "certificate provided by this endpoint",
+          "type": [
+            "object"
+          ],
+          "properties": {
+            "ca_signed?": {
+              "$ref": "#/definitions/ssl-endpoint/definitions/ca_signed?"
+            },
+            "cert_domains": {
+              "$ref": "#/definitions/ssl-endpoint/definitions/cert_domains"
+            },
+            "expires_at": {
+              "$ref": "#/definitions/ssl-endpoint/definitions/expires_at"
+            },
+            "issuer": {
+              "$ref": "#/definitions/ssl-endpoint/definitions/issuer"
+            },
+            "self_signed?": {
+              "$ref": "#/definitions/ssl-endpoint/definitions/self_signed?"
+            },
+            "starts_at": {
+              "$ref": "#/definitions/ssl-endpoint/definitions/starts_at"
+            },
+            "subject": {
+              "$ref": "#/definitions/ssl-endpoint/definitions/subject"
+            },
+            "id": {
+              "description": "unique identifier of this SSL certificate",
+              "example": "01234567-89ab-cdef-0123-456789abcdef",
+              "format": "uuid",
+              "readOnly": true,
+              "type": [
+                "string"
+              ]
+            }
+          }
         },
         "updated_at": {
           "$ref": "#/definitions/ssl-endpoint/definitions/updated_at"
@@ -13303,7 +13821,7 @@
         },
         "name": {
           "description": "unique name of stack",
-          "example": "cedar-14",
+          "example": "heroku-18",
           "readOnly": true,
           "type": [
             "string"
@@ -14863,6 +15381,15 @@
             "boolean",
             "null"
           ]
+        },
+        "addons-controls": {
+          "description": "Whether add-on service rules should be applied to add-on installations",
+          "example": true,
+          "readOnly": false,
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       },
       "links": [
@@ -14888,6 +15415,9 @@
             "properties": {
               "whitelisting-enabled": {
                 "$ref": "#/definitions/team-preferences/definitions/whitelisting-enabled"
+              },
+              "addons-controls": {
+                "$ref": "#/definitions/team-preferences/definitions/addons-controls"
               }
             }
           },
@@ -14903,6 +15433,9 @@
         },
         "whitelisting-enabled": {
           "$ref": "#/definitions/team-preferences/definitions/whitelisting-enabled"
+        },
+        "addons-controls": {
+          "$ref": "#/definitions/team-preferences/definitions/addons-controls"
         }
       }
     },
@@ -17020,6 +17553,9 @@
     "add-on": {
       "$ref": "#/definitions/add-on"
     },
+    "allowed-add-on-service": {
+      "$ref": "#/definitions/allowed-add-on-service"
+    },
     "app-feature": {
       "$ref": "#/definitions/app-feature"
     },
@@ -17046,6 +17582,9 @@
     },
     "archive": {
       "$ref": "#/definitions/archive"
+    },
+    "audit-trail-event": {
+      "$ref": "#/definitions/audit-trail-event"
     },
     "build": {
       "$ref": "#/definitions/build"
@@ -17082,9 +17621,6 @@
     },
     "enterprise-account": {
       "$ref": "#/definitions/enterprise-account"
-    },
-    "event": {
-      "$ref": "#/definitions/event"
     },
     "filter-apps": {
       "$ref": "#/definitions/filter-apps"
@@ -17205,6 +17741,9 @@
     },
     "space-nat": {
       "$ref": "#/definitions/space-nat"
+    },
+    "space-topology": {
+      "$ref": "#/definitions/space-topology"
     },
     "space-transfer": {
       "$ref": "#/definitions/space-transfer"
