@@ -1,12 +1,15 @@
 package v5
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"regexp"
 	"strings"
 
 	"github.com/pborman/uuid"
@@ -89,7 +92,19 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		if err != nil {
 			log.Println(err)
 		} else {
-			log.Printf("%s", dump)
+			scanner := bufio.NewScanner(bytes.NewReader(dump))
+			matcher := regexp.MustCompile(`(?i)authorization:`)
+			for scanner.Scan() {
+				line := scanner.Text()
+				if matcher.MatchString(line) {
+					matches := strings.Split(line, `:`)
+					line = fmt.Sprintf("%s: [redacted]", matches[0])
+				}
+				log.Println(line)
+			}
+			if err := scanner.Err(); err != nil {
+				log.Printf("Error scanning HTTP debug output for secret tokens: %s\n", err)
+			}
 		}
 	}
 

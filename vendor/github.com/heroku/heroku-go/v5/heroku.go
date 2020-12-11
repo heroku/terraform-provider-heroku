@@ -212,9 +212,11 @@ func String(v string) *string {
 // An account represents an individual signed up to use the Heroku
 // platform.
 type Account struct {
-	AllowTracking       bool      `json:"allow_tracking" url:"allow_tracking,key"` // whether to allow third party web activity tracking
-	Beta                bool      `json:"beta" url:"beta,key"`                     // whether allowed to utilize beta Heroku features
-	CreatedAt           time.Time `json:"created_at" url:"created_at,key"`         // when account was created
+	AcknowledgedMsa     bool       `json:"acknowledged_msa" url:"acknowledged_msa,key"`       // whether account has acknowledged the MSA terms of service
+	AcknowledgedMsaAt   *time.Time `json:"acknowledged_msa_at" url:"acknowledged_msa_at,key"` // when account has acknowledged the MSA terms of service
+	AllowTracking       bool       `json:"allow_tracking" url:"allow_tracking,key"`           // whether to allow third party web activity tracking
+	Beta                bool       `json:"beta" url:"beta,key"`                               // whether allowed to utilize beta Heroku features
+	CreatedAt           time.Time  `json:"created_at" url:"created_at,key"`                   // when account was created
 	DefaultOrganization *struct {
 		ID   string `json:"id" url:"id,key"`     // unique identifier of team
 		Name string `json:"name" url:"name,key"` // unique name of team
@@ -241,6 +243,10 @@ type Account struct {
 			Name string `json:"name" url:"name,key"` // unique name of team
 		} `json:"team" url:"team,key"`
 	} `json:"identity_provider" url:"identity_provider,key"` // Identity Provider details for federated users.
+	ItalianCustomerTerms *string `json:"italian_customer_terms" url:"italian_customer_terms,key"` // whether account has acknowledged the Italian customer terms of
+	// service
+	ItalianPartnerTerms *string `json:"italian_partner_terms" url:"italian_partner_terms,key"` // whether account has acknowledged the Italian provider terms of
+	// service
 	LastLogin               *time.Time `json:"last_login" url:"last_login,key"`                               // when account last authorized with Heroku
 	Name                    *string    `json:"name" url:"name,key"`                                           // full name of the account owner
 	SmsNumber               *string    `json:"sms_number" url:"sms_number,key"`                               // SMS number of account
@@ -466,9 +472,9 @@ func (s *Service) AddOnResolution(ctx context.Context, o AddOnResolutionOpts) (A
 }
 
 // Add-on Actions are lifecycle operations for add-on provisioning and
-// deprovisioning. They allow whitelisted add-on providers to
-// (de)provision add-ons in the background and then report back when
-// (de)provisioning is complete.
+// deprovisioning. They allow add-on providers to (de)provision add-ons
+// in the background and then report back when (de)provisioning is
+// complete.
 type AddOnAction struct{}
 type AddOnActionProvisionResult struct {
 	Actions      []struct{} `json:"actions" url:"actions,key"` // provider actions for this specific add-on
@@ -1043,6 +1049,45 @@ func (s *Service) AddOnWebhookEventList(ctx context.Context, addOnIdentity strin
 	return addOnWebhookEvent, s.Get(ctx, &addOnWebhookEvent, fmt.Sprintf("/addons/%v/webhook-events", addOnIdentity), nil, lr)
 }
 
+// Entities that have been allowed to be used by a Team
+type AllowedAddOnService struct {
+	AddedAt time.Time `json:"added_at" url:"added_at,key"` // when the add-on service was allowed
+	AddedBy struct {
+		Email string `json:"email" url:"email,key"` // unique email address of account
+		ID    string `json:"id" url:"id,key"`       // unique identifier of an account
+	} `json:"added_by" url:"added_by,key"` // the user which allowed the add-on service
+	AddonService struct {
+		HumanName string `json:"human_name" url:"human_name,key"` // human-readable name of the add-on service provider
+		ID        string `json:"id" url:"id,key"`                 // unique identifier of this add-on-service
+		Name      string `json:"name" url:"name,key"`             // unique name of this add-on-service
+	} `json:"addon_service" url:"addon_service,key"` // the add-on service allowed for use
+	ID string `json:"id" url:"id,key"` // unique identifier for this allowed add-on service record
+}
+type AllowedAddOnServiceListByTeamResult []AllowedAddOnService
+
+// List all allowed add-on services for a team
+func (s *Service) AllowedAddOnServiceListByTeam(ctx context.Context, teamIdentity string, lr *ListRange) (AllowedAddOnServiceListByTeamResult, error) {
+	var allowedAddOnService AllowedAddOnServiceListByTeamResult
+	return allowedAddOnService, s.Get(ctx, &allowedAddOnService, fmt.Sprintf("/teams/%v/allowed-addon-services", teamIdentity), nil, lr)
+}
+
+type AllowedAddOnServiceCreateByTeamOpts struct {
+	AddonService *string `json:"addon_service,omitempty" url:"addon_service,omitempty,key"` // name of the add-on service to allow
+}
+type AllowedAddOnServiceCreateByTeamResult []AllowedAddOnService
+
+// Allow an Add-on Service
+func (s *Service) AllowedAddOnServiceCreateByTeam(ctx context.Context, teamIdentity string, o AllowedAddOnServiceCreateByTeamOpts) (AllowedAddOnServiceCreateByTeamResult, error) {
+	var allowedAddOnService AllowedAddOnServiceCreateByTeamResult
+	return allowedAddOnService, s.Post(ctx, &allowedAddOnService, fmt.Sprintf("/teams/%v/allowed-addon-services", teamIdentity), o)
+}
+
+// Remove an allowed add-on service
+func (s *Service) AllowedAddOnServiceDeleteByTeam(ctx context.Context, teamIdentity string, allowedAddOnServiceIdentity string) (*AllowedAddOnService, error) {
+	var allowedAddOnService AllowedAddOnService
+	return &allowedAddOnService, s.Delete(ctx, &allowedAddOnService, fmt.Sprintf("/teams/%v/allowed-addon-services/%v", teamIdentity, allowedAddOnServiceIdentity))
+}
+
 // An app represents the program that you would like to deploy and run
 // on Heroku.
 type App struct {
@@ -1571,6 +1616,44 @@ func (s *Service) ArchiveList(ctx context.Context, enterpriseAccountIdentity str
 	return &archive, s.Get(ctx, &archive, fmt.Sprintf("/enterprise-accounts/%v/archives", enterpriseAccountIdentity), nil, lr)
 }
 
+// An audit trail event represents some action on the platform
+type AuditTrailEvent struct {
+	Action string `json:"action" url:"action,key"` // action for the event
+	Actor  struct {
+		Email string `json:"email" url:"email,key"`
+		ID    string `json:"id" url:"id,key"`
+	} `json:"actor" url:"actor,key"` // user who caused event
+	App struct {
+		ID   string `json:"id" url:"id,key"`
+		Name string `json:"name" url:"name,key"`
+	} `json:"app" url:"app,key"` // app upon which event took place
+	CreatedAt         time.Time `json:"created_at" url:"created_at,key"` // when event was created
+	Data              struct{}  `json:"data" url:"data,key"`             // data specific to the event
+	EnterpriseAccount struct {
+		ID   string `json:"id" url:"id,key"`
+		Name string `json:"name" url:"name,key"`
+	} `json:"enterprise_account" url:"enterprise_account,key"` // enterprise account on which the event happened
+	ID    string `json:"id" url:"id,key"` // unique identifier of event
+	Owner struct {
+		Email string `json:"email" url:"email,key"`
+		ID    string `json:"id" url:"id,key"`
+	} `json:"owner" url:"owner,key"` // owner of the app targeted by the event
+	Request struct {
+		IPAddress string `json:"ip_address" url:"ip_address,key"`
+	} `json:"request" url:"request,key"` // information about where the action was triggered
+	Team struct {
+		ID   string `json:"id" url:"id,key"`
+		Name string `json:"name" url:"name,key"`
+	} `json:"team" url:"team,key"` // team on which the event happened
+	Type string `json:"type" url:"type,key"` // type of event
+}
+
+// List existing events.
+func (s *Service) AuditTrailEventList(ctx context.Context, enterpriseAccountIdentity string, lr *ListRange) (*AuditTrailEvent, error) {
+	var auditTrailEvent AuditTrailEvent
+	return &auditTrailEvent, s.Get(ctx, &auditTrailEvent, fmt.Sprintf("/enterprise-accounts/%v/events", enterpriseAccountIdentity), nil, lr)
+}
+
 // A build represents the process of transforming a code tarball into a
 // slug
 type Build struct {
@@ -1806,22 +1889,51 @@ type Domain struct {
 		ID   string `json:"id" url:"id,key"`     // unique identifier of app
 		Name string `json:"name" url:"name,key"` // unique name of app
 	} `json:"app" url:"app,key"` // app that owns the domain
-	CName     *string   `json:"cname" url:"cname,key"`           // canonical name record, the address to point a domain at
-	CreatedAt time.Time `json:"created_at" url:"created_at,key"` // when domain was created
-	Hostname  string    `json:"hostname" url:"hostname,key"`     // full hostname
-	ID        string    `json:"id" url:"id,key"`                 // unique identifier of this domain
-	Kind      string    `json:"kind" url:"kind,key"`             // type of domain name
+	CName       *string   `json:"cname" url:"cname,key"`           // canonical name record, the address to point a domain at
+	CreatedAt   time.Time `json:"created_at" url:"created_at,key"` // when domain was created
+	Hostname    string    `json:"hostname" url:"hostname,key"`     // full hostname
+	ID          string    `json:"id" url:"id,key"`                 // unique identifier of this domain
+	Kind        string    `json:"kind" url:"kind,key"`             // type of domain name
+	SniEndpoint *struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of this SNI endpoint
+		Name string `json:"name" url:"name,key"` // unique name for SNI endpoint
+	} `json:"sni_endpoint" url:"sni_endpoint,key"` // sni endpoint the domain is associated with
 	Status    string    `json:"status" url:"status,key"`         // status of this record's cname
 	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when domain was updated
 }
-type DomainCreateOpts struct {
+type DomainCreateDeprecatedOpts struct {
 	Hostname string `json:"hostname" url:"hostname,key"` // full hostname
+}
+
+// Create a new domain. Deprecated in favor of this same endpoint, but
+// with a new required attribute of `sni_endpoint`. During the
+// transitional phase sni_endpoint can be omitted entirely (current
+// behavior), can be a valid id, or can be null which will skip
+// auto-association.
+func (s *Service) DomainCreateDeprecated(ctx context.Context, appIdentity string, o DomainCreateDeprecatedOpts) (*Domain, error) {
+	var domain Domain
+	return &domain, s.Post(ctx, &domain, fmt.Sprintf("/apps/%v/domains", appIdentity), o)
+}
+
+type DomainCreateOpts struct {
+	Hostname    string  `json:"hostname" url:"hostname,key"`         // full hostname
+	SniEndpoint *string `json:"sni_endpoint" url:"sni_endpoint,key"` // null or unique identifier or name for SNI endpoint
 }
 
 // Create a new domain.
 func (s *Service) DomainCreate(ctx context.Context, appIdentity string, o DomainCreateOpts) (*Domain, error) {
 	var domain Domain
 	return &domain, s.Post(ctx, &domain, fmt.Sprintf("/apps/%v/domains", appIdentity), o)
+}
+
+type DomainUpdateOpts struct {
+	SniEndpoint *string `json:"sni_endpoint" url:"sni_endpoint,key"` // null or unique identifier or name for SNI endpoint
+}
+
+// Associate an SNI endpoint
+func (s *Service) DomainUpdate(ctx context.Context, appIdentity string, domainIdentity string, o DomainUpdateOpts) (*Domain, error) {
+	var domain Domain
+	return &domain, s.Patch(ctx, &domain, fmt.Sprintf("/apps/%v/domains/%v", appIdentity, domainIdentity), o)
 }
 
 // Delete an existing domain
@@ -2140,44 +2252,6 @@ type EnterpriseAccountUsageMonthlyInfoResult []EnterpriseAccountUsageMonthly
 func (s *Service) EnterpriseAccountUsageMonthlyInfo(ctx context.Context, enterpriseAccountID string, lr *ListRange) (EnterpriseAccountUsageMonthlyInfoResult, error) {
 	var enterpriseAccountUsageMonthly EnterpriseAccountUsageMonthlyInfoResult
 	return enterpriseAccountUsageMonthly, s.Get(ctx, &enterpriseAccountUsageMonthly, fmt.Sprintf("/enterprise-accounts/%v/usage/monthly", enterpriseAccountID), nil, lr)
-}
-
-// An audit trail event represents some action on the platform
-type Event struct {
-	Action string `json:"action" url:"action,key"` // action for the event
-	Actor  struct {
-		Email string `json:"email" url:"email,key"`
-		ID    string `json:"id" url:"id,key"`
-	} `json:"actor" url:"actor,key"` // user who caused event
-	App struct {
-		ID   string `json:"id" url:"id,key"`
-		Name string `json:"name" url:"name,key"`
-	} `json:"app" url:"app,key"` // app upon which event took place
-	CreatedAt         time.Time `json:"created_at" url:"created_at,key"` // when event was created
-	Data              struct{}  `json:"data" url:"data,key"`             // data specific to the event
-	EnterpriseAccount struct {
-		ID   string `json:"id" url:"id,key"`
-		Name string `json:"name" url:"name,key"`
-	} `json:"enterprise_account" url:"enterprise_account,key"` // enterprise account on which the event happened
-	ID    string `json:"id" url:"id,key"` // unique identifier of event
-	Owner struct {
-		Email string `json:"email" url:"email,key"`
-		ID    string `json:"id" url:"id,key"`
-	} `json:"owner" url:"owner,key"` // owner of the app targeted by the event
-	Request struct {
-		IPAddress string `json:"ip_address" url:"ip_address,key"`
-	} `json:"request" url:"request,key"` // information about where the action was triggered
-	Team struct {
-		ID   string `json:"id" url:"id,key"`
-		Name string `json:"name" url:"name,key"`
-	} `json:"team" url:"team,key"` // team on which the event happened
-	Type string `json:"type" url:"type,key"` // type of event
-}
-
-// List existing events.
-func (s *Service) EventList(ctx context.Context, enterpriseAccountIdentity string, lr *ListRange) (*Event, error) {
-	var event Event
-	return &event, s.Get(ctx, &event, fmt.Sprintf("/enterprise-accounts/%v/events", enterpriseAccountIdentity), nil, lr)
 }
 
 // Filters are special endpoints to allow for API consumers to specify a
@@ -3531,8 +3605,7 @@ type ReviewApp struct {
 	Pipeline struct {
 		ID string `json:"id" url:"id,key"` // unique identifier of pipeline
 	} `json:"pipeline" url:"pipeline,key"` // the pipeline which this review app belongs to
-	PrNumber *int `json:"pr_number" url:"pr_number,key"` // GitHub Pull Request number if the Review app was created
-	// automatically
+	PrNumber  *int      `json:"pr_number" url:"pr_number,key"`     // pull request number the review app is built for
 	Status    string    `json:"status" url:"status,key"`           // current state of the review app
 	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"`   // when review app was updated
 	WaitForCi bool      `json:"wait_for_ci" url:"wait_for_ci,key"` // wait for ci before building the app
@@ -3542,6 +3615,7 @@ type ReviewAppCreateOpts struct {
 	Environment map[string]*string `json:"environment,omitempty" url:"environment,omitempty,key"`   // hash of config vars
 	ForkRepoID  *int               `json:"fork_repo_id,omitempty" url:"fork_repo_id,omitempty,key"` // repository id of the fork the branch resides in
 	Pipeline    string             `json:"pipeline" url:"pipeline,key"`                             // unique identifier of pipeline
+	PrNumber    *int               `json:"pr_number,omitempty" url:"pr_number,omitempty,key"`       // pull request number the review app is built for
 	SourceBlob  struct {
 		URL *string `json:"url,omitempty" url:"url,omitempty,key"` // URL where gzipped tar archive of source code for build was
 		// downloaded.
@@ -3935,6 +4009,33 @@ func (s *Service) SpaceNATInfo(ctx context.Context, spaceIdentity string) (*Spac
 	return &spaceNAT, s.Get(ctx, &spaceNAT, fmt.Sprintf("/spaces/%v/nat", spaceIdentity), nil, nil)
 }
 
+// Space Topology provides you with a mechanism for viewing all the
+// running dynos, formations and applications for a space. This is the
+// same data thats used to power our DNS Service Discovery.
+type SpaceTopology struct {
+	Apps []struct {
+		Domains   []interface{} `json:"domains" url:"domains,key"`
+		Formation []struct {
+			Dynos []struct {
+				Hostname  string `json:"hostname" url:"hostname,key"`     // localspace hostname of resource
+				ID        string `json:"id" url:"id,key"`                 // unique identifier of this dyno
+				Number    int    `json:"number" url:"number,key"`         // process number, e.g. 1 in web.1
+				PrivateIP string `json:"private_ip" url:"private_ip,key"` // RFC1918 Address of Dyno
+			} `json:"dynos" url:"dynos,key"` // Current dynos for application
+			ID          string `json:"id" url:"id,key"`                     // unique identifier of this process type
+			ProcessType string `json:"process_type" url:"process_type,key"` // Name of process type
+		} `json:"formation" url:"formation,key"` // formations for application
+		ID string `json:"id" url:"id,key"` // unique identifier of app
+	} `json:"apps" url:"apps,key"` // The apps within this space
+	Version int `json:"version" url:"version,key"` // version of the space topology payload
+}
+
+// Current space topology
+func (s *Service) SpaceTopologyTopology(ctx context.Context, spaceIdentity string) (*SpaceTopology, error) {
+	var spaceTopology SpaceTopology
+	return &spaceTopology, s.Get(ctx, &spaceTopology, fmt.Sprintf("/spaces/%v/topology", spaceIdentity), nil, nil)
+}
+
 // Transfer spaces between enterprise teams with the same Enterprise
 // Account.
 type SpaceTransfer struct{}
@@ -3984,9 +4085,21 @@ type SSLEndpoint struct {
 	CertificateChain string    `json:"certificate_chain" url:"certificate_chain,key"` // raw contents of the public certificate chain (eg: .crt or .pem file)
 	CName            string    `json:"cname" url:"cname,key"`                         // canonical name record, the address to point a domain at
 	CreatedAt        time.Time `json:"created_at" url:"created_at,key"`               // when endpoint was created
+	DisplayName      string    `json:"display_name" url:"display_name,key"`           // unique name for SSL endpoint
+	Domains          []string  `json:"domains" url:"domains,key"`                     // domains associated with this endpoint
 	ID               string    `json:"id" url:"id,key"`                               // unique identifier of this SSL endpoint
 	Name             string    `json:"name" url:"name,key"`                           // unique name for SSL endpoint
-	UpdatedAt        time.Time `json:"updated_at" url:"updated_at,key"`               // when endpoint was updated
+	SSLCert          struct {
+		IsCaSigned   bool          `json:"ca_signed?" url:"ca_signed?,key"`
+		CertDomains  []interface{} `json:"cert_domains" url:"cert_domains,key"`
+		ExpiresAt    time.Time     `json:"expires_at" url:"expires_at,key"`
+		ID           string        `json:"id" url:"id,key"` // unique identifier of this SSL certificate
+		Issuer       string        `json:"issuer" url:"issuer,key"`
+		IsSelfSigned bool          `json:"self_signed?" url:"self_signed?,key"`
+		StartsAt     time.Time     `json:"starts_at" url:"starts_at,key"`
+		Subject      string        `json:"subject" url:"subject,key"`
+	} `json:"ssl_cert" url:"ssl_cert,key"` // certificate provided by this endpoint
+	UpdatedAt time.Time `json:"updated_at" url:"updated_at,key"` // when endpoint was updated
 }
 type SSLEndpointCreateOpts struct {
 	CertificateChain string `json:"certificate_chain" url:"certificate_chain,key"`       // raw contents of the public certificate chain (eg: .crt or .pem file)
@@ -4657,6 +4770,8 @@ func (s *Service) TeamMemberListByMember(ctx context.Context, teamIdentity strin
 
 // Tracks a Team's Preferences
 type TeamPreferences struct {
+	AddonsControls *bool `json:"addons-controls" url:"addons-controls,key"` // Whether add-on service rules should be applied to add-on
+	// installations
 	DefaultPermission   *string `json:"default-permission" url:"default-permission,key"`     // The default permission used when adding new members to the team
 	WhitelistingEnabled *bool   `json:"whitelisting-enabled" url:"whitelisting-enabled,key"` // Whether whitelisting rules should be applied to add-on installations
 }
@@ -4668,6 +4783,8 @@ func (s *Service) TeamPreferencesList(ctx context.Context, teamPreferencesIdenti
 }
 
 type TeamPreferencesUpdateOpts struct {
+	AddonsControls *bool `json:"addons-controls,omitempty" url:"addons-controls,omitempty,key"` // Whether add-on service rules should be applied to add-on
+	// installations
 	WhitelistingEnabled *bool `json:"whitelisting-enabled,omitempty" url:"whitelisting-enabled,omitempty,key"` // Whether whitelisting rules should be applied to add-on installations
 }
 
@@ -4853,9 +4970,11 @@ type TestRun struct {
 	Status        string    `json:"status" url:"status,key"`                   // current state of the test run
 	UpdatedAt     time.Time `json:"updated_at" url:"updated_at,key"`           // when test-run was updated
 	User          struct {
-		AllowTracking       bool      `json:"allow_tracking" url:"allow_tracking,key"` // whether to allow third party web activity tracking
-		Beta                bool      `json:"beta" url:"beta,key"`                     // whether allowed to utilize beta Heroku features
-		CreatedAt           time.Time `json:"created_at" url:"created_at,key"`         // when account was created
+		AcknowledgedMsa     bool       `json:"acknowledged_msa" url:"acknowledged_msa,key"`       // whether account has acknowledged the MSA terms of service
+		AcknowledgedMsaAt   *time.Time `json:"acknowledged_msa_at" url:"acknowledged_msa_at,key"` // when account has acknowledged the MSA terms of service
+		AllowTracking       bool       `json:"allow_tracking" url:"allow_tracking,key"`           // whether to allow third party web activity tracking
+		Beta                bool       `json:"beta" url:"beta,key"`                               // whether allowed to utilize beta Heroku features
+		CreatedAt           time.Time  `json:"created_at" url:"created_at,key"`                   // when account was created
 		DefaultOrganization *struct {
 			ID   string `json:"id" url:"id,key"`     // unique identifier of team
 			Name string `json:"name" url:"name,key"` // unique name of team
@@ -4882,6 +5001,10 @@ type TestRun struct {
 				Name string `json:"name" url:"name,key"` // unique name of team
 			} `json:"team" url:"team,key"`
 		} `json:"identity_provider" url:"identity_provider,key"` // Identity Provider details for federated users.
+		ItalianCustomerTerms *string `json:"italian_customer_terms" url:"italian_customer_terms,key"` // whether account has acknowledged the Italian customer terms of
+		// service
+		ItalianPartnerTerms *string `json:"italian_partner_terms" url:"italian_partner_terms,key"` // whether account has acknowledged the Italian provider terms of
+		// service
 		LastLogin               *time.Time `json:"last_login" url:"last_login,key"`                               // when account last authorized with Heroku
 		Name                    *string    `json:"name" url:"name,key"`                                           // full name of the account owner
 		SmsNumber               *string    `json:"sms_number" url:"sms_number,key"`                               // SMS number of account
