@@ -100,7 +100,8 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	addonLock.Lock()
 	defer addonLock.Unlock()
 
-	client := meta.(*Config).Api
+	config := meta.(*Config)
+	client := config.Api
 
 	app := d.Get("app").(string)
 	opts := heroku.AddOnCreateOpts{
@@ -125,22 +126,23 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	d.SetId(a.ID)
-	log.Printf("[INFO] Addon ID: %s", d.Id())
-
 	// Wait for the Addon to be provisioned
-	log.Printf("[DEBUG] Waiting for Addon (%s) to be provisioned", d.Id())
+	log.Printf("[DEBUG] Waiting for Addon (%s) to be provisioned", a.ID)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{"provisioning"},
 		Target:  []string{"provisioned"},
-		Refresh: AddOnStateRefreshFunc(client, app, d.Id()),
-		Timeout: 20 * time.Minute,
+		Refresh: AddOnStateRefreshFunc(client, app, a.ID),
+		Timeout: time.Duration(config.AddonCreateTimeout) * time.Minute,
 	}
 
 	if _, err := stateConf.WaitForState(); err != nil {
 		return fmt.Errorf("Error waiting for Addon (%s) to be provisioned: %s", d.Id(), err)
 	}
 	log.Printf("[INFO] Addon provisioned: %s", d.Id())
+
+	// This should be only set after the addon provisioning has been fully completed.
+	d.SetId(a.ID)
+	log.Printf("[INFO] Addon ID: %s", d.Id())
 
 	return resourceHerokuAddonRead(d, meta)
 }

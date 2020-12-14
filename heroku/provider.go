@@ -24,16 +24,19 @@ func Provider() terraform.ResourceProvider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HEROKU_API_KEY", nil),
 			},
+
 			"headers": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HEROKU_HEADERS", nil),
 			},
+
 			"url": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HEROKU_API_URL", heroku.DefaultURL),
 			},
+
 			"delays": {
 				Type:     schema.TypeList,
 				MaxItems: 1,
@@ -57,6 +60,22 @@ func Provider() terraform.ResourceProvider {
 							Optional:     true,
 							Default:      DefaultPostDomainCreateDelay,
 							ValidateFunc: validation.IntAtLeast(0),
+						},
+					},
+				},
+			},
+
+			"timeouts": {
+				Type:     schema.TypeList,
+				MaxItems: 1,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"addon_create_timeout": {
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Default:      DefaultAddonCreateTimeout,
+							ValidateFunc: validation.IntAtLeast(10),
 						},
 					},
 				},

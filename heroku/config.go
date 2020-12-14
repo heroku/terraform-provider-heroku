@@ -21,6 +21,9 @@ const (
 	DefaultPostAppCreateDelay    = int64(5)
 	DefaultPostSpaceCreateDelay  = int64(5)
 	DefaultPostDomainCreateDelay = int64(5)
+
+	// Default custom timeouts
+	DefaultAddonCreateTimeout = int64(20)
 )
 
 type Config struct {
@@ -33,6 +36,9 @@ type Config struct {
 	PostDomainCreateDelay int64
 	PostSpaceCreateDelay  int64
 	URL                   string
+
+	// Custom Timeouts
+	AddonCreateTimeout int64
 }
 
 func (c Config) String() string {
@@ -46,6 +52,7 @@ func NewConfig() *Config {
 		PostAppCreateDelay:    DefaultPostAppCreateDelay,
 		PostDomainCreateDelay: DefaultPostDomainCreateDelay,
 		PostSpaceCreateDelay:  DefaultPostSpaceCreateDelay,
+		AddonCreateTimeout:    DefaultAddonCreateTimeout,
 	}
 	if logging.IsDebugOrHigher() {
 		config.DebugHTTP = true
@@ -111,6 +118,20 @@ func (c *Config) applySchema(d *schema.ResourceData) (err error) {
 			}
 			if v, ok := delaysConfig["post_domain_create_delay"].(int); ok {
 				c.PostDomainCreateDelay = int64(v)
+			}
+		}
+	}
+
+	if v, ok := d.GetOk("timeouts"); ok {
+		vL := v.([]interface{})
+		if len(vL) > 1 {
+			return fmt.Errorf("provider configuration error: only 1 timeouts config is permitted")
+		}
+
+		for _, v := range vL {
+			timeoutsConfig := v.(map[string]interface{})
+			if v, ok := timeoutsConfig["addon_create_timeout"].(int); ok {
+				c.AddonCreateTimeout = int64(v)
 			}
 		}
 	}

@@ -126,3 +126,10 @@ The following arguments are supported:
 
   * `post_domain_create_delay` - (Optional) The number of seconds to wait after
     a domain is created. Default is to wait 5 seconds.
+
+* `timeouts` - (Optional) Define a max duration the provider will wait for certain resources
+  to be properly modified before proceeding with further action(s). Only a single `timeouts` block may be specified,
+  and it supports the following arguments:
+
+  * `addon_create_timeout` - (Optional) The number of minutes for the provider to wait for an addon to be
+  created/provisioned. Defaults to 20 minutes. Minimum required value is 10 minutes.
