@@ -52,6 +52,7 @@ func NewConfig() *Config {
 		PostAppCreateDelay:    DefaultPostAppCreateDelay,
 		PostDomainCreateDelay: DefaultPostDomainCreateDelay,
 		PostSpaceCreateDelay:  DefaultPostSpaceCreateDelay,
+		AddonCreateTimeout:    DefaultAddonCreateTimeout,
 	}
 	if logging.IsDebugOrHigher() {
 		config.DebugHTTP = true

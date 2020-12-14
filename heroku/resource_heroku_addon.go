@@ -127,11 +127,11 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Wait for the Addon to be provisioned
-	log.Printf("[DEBUG] Waiting for Addon (%s) to be provisioned", d.Id())
+	log.Printf("[DEBUG] Waiting for Addon (%s) to be provisioned", a.ID)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{"provisioning"},
 		Target:  []string{"provisioned"},
-		Refresh: AddOnStateRefreshFunc(client, app, d.Id()),
+		Refresh: AddOnStateRefreshFunc(client, app, a.ID),
 		Timeout: time.Duration(config.AddonCreateTimeout) * time.Minute,
 	}
 
