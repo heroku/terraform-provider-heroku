@@ -55,6 +55,12 @@ func resourceHerokuAddon() *schema.Resource {
 				ValidateFunc: validateCustomAddonName,
 			},
 
+			"attachment_name": {
+				Type:     schema.TypeString,
+				ForceNew: true,
+				Optional: true,
+			},
+
 			"config": {
 				Type:     schema.TypeMap,
 				Optional: true,
@@ -120,6 +126,10 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 		opts.Name = &v
 	}
 
+	if v := d.Get("attachment_name").(string); v != "" {
+		opts.Attachment.Name = &v
+	}
+
 	log.Printf("[DEBUG] Addon create configuration: %#v, %#v", app, opts)
 	a, err := client.AddOnCreate(context.TODO(), app, opts)
 	if err != nil {
@@ -150,9 +160,18 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
+	// Retrieve the addon
 	addon, err := resourceHerokuAddonRetrieve(d.Id(), client)
 	if err != nil {
 		return err
+	}
+
+	// Retrieve the addon's attachments to set the addon.attachment_name.
+	// By default, the addon will always have at least one initial attachment to the app that the addon is tied to.
+	lr := &heroku.ListRange{}
+	addonAttachments, attachmentReadErr := client.AddOnAttachmentListByAddOn(context.TODO(), addon.ID, lr)
+	if attachmentReadErr != nil {
+		return attachmentReadErr
 	}
 
 	// Determine the plan. If we were configured without a specific plan,
@@ -168,12 +187,15 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	d.Set("name", addon.Name)
-	d.Set("app", addon.App.Name)
-	d.Set("plan", plan)
-	d.Set("provider_id", addon.ProviderID)
-	if err := d.Set("config_vars", addon.ConfigVars); err != nil {
-		return err
+	var setErr error
+	setErr = d.Set("name", addon.Name)
+	setErr = d.Set("app", addon.App.Name)
+	setErr = d.Set("plan", plan)
+	setErr = d.Set("provider_id", addon.ProviderID)
+	setErr = d.Set("config_vars", addon.ConfigVars)
+	setErr = d.Set("attachment_name", addonAttachments[0].ID) // I *think* it's safe to just read the zero index attachment.
+	if setErr != nil {
+		return setErr
 	}
 
 	return nil
