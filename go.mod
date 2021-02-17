@@ -10,6 +10,7 @@ require (
 	github.com/heroku/heroku-go/v5 v5.2.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/verybluebot/tarinator-go v0.0.0-20190613183509-5ab4e1193986
+	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 )
 
-go 1.14
+go 1.15
