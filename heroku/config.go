@@ -10,8 +10,8 @@ import (
 	"runtime"
 
 	"github.com/bgentry/go-netrc/netrc"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	heroku "github.com/heroku/heroku-go/v5"
 	"github.com/heroku/terraform-provider-heroku/v3/version"
 	homedir "github.com/mitchellh/go-homedir"

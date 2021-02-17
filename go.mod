@@ -5,12 +5,10 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/go-uuid v1.0.1
-	github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce // indirect
-	github.com/hashicorp/terraform-plugin-sdk v1.15.0
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.3
 	github.com/heroku/heroku-go/v5 v5.2.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/verybluebot/tarinator-go v0.0.0-20190613183509-5ab4e1193986
-	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 )
 
 go 1.15

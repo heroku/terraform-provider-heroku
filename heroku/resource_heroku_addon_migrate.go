@@ -3,7 +3,7 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	heroku "github.com/heroku/heroku-go/v5"
 	"log"
 	"strconv"
