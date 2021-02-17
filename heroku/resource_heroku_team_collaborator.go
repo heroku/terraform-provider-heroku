@@ -134,9 +134,6 @@ func resourceHerokuTeamCollaboratorRead(d *schema.ResourceData, meta interface{}
 }
 
 func resourceHerokuTeamCollaboratorUpdate(d *schema.ResourceData, meta interface{}) error {
-	// Enable Partial state mode to track what was successfully committed
-	d.Partial(true)
-
 	client := meta.(*Config).Api
 	opts := heroku.TeamAppCollaboratorUpdateOpts{}
 
@@ -161,11 +158,7 @@ func resourceHerokuTeamCollaboratorUpdate(d *schema.ResourceData, meta interface
 		return err
 	}
 
-	d.SetPartial("permissions")
-
 	d.SetId(updatedTeamCollaborator.ID)
-
-	d.Partial(false)
 
 	return resourceHerokuTeamCollaboratorRead(d, meta)
 }

@@ -302,7 +302,7 @@ func resourceHerokuBuildDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceHerokuBuildCustomizeDiff(diff *schema.ResourceDiff, v interface{}) error {
+func resourceHerokuBuildCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 	// Detect changes to the content of local source archive.
 	if v, ok := diff.GetOk("source"); ok {
 		source := v.(map[string]interface{})

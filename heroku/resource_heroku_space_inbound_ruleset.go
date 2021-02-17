@@ -36,7 +36,7 @@ func resourceHerokuSpaceInboundRuleset() *schema.Resource {
 						"source": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.CIDRNetwork(0, 32),
+							ValidateFunc: validation.IsCIDRNetwork(0, 32),
 						},
 					},
 				},

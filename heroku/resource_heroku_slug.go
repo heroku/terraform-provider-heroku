@@ -269,7 +269,7 @@ func resourceHerokuSlugDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceHerokuSlugCustomizeDiff(diff *schema.ResourceDiff, v interface{}) error {
+func resourceHerokuSlugCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 	// Detect changes to the content of local slug archive.
 	if v, ok := diff.GetOk("file_path"); ok {
 		filePath := v.(string)
