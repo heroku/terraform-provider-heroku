@@ -308,7 +308,7 @@ func testAccCheckHerokuBuildConfig_localSourceDirectory(appName string) string {
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    source = {
+    source {
       path = "test-fixtures/app/"
     }
 }`, appName)
@@ -321,7 +321,7 @@ func testAccCheckHerokuBuildConfig_localSourceDirectorySelfContained(appName str
 }
  resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    source = {
+    source {
       path = "."
     }
 }`, appName)
@@ -335,7 +335,7 @@ func testAccCheckHerokuBuildConfig_localSourceTarball(appName string) string {
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    source = {
+    source {
       path = "test-fixtures/app.tgz"
     }
 }`, appName)
@@ -349,7 +349,7 @@ func testAccCheckHerokuBuildConfig_localSourceTarball_setChecksum(appName string
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    source = {
+    source {
       checksum = "SHA256:0000000000000000000000000000000000000000000000000000000000000000"
       path = "test-fixtures/app.tgz"
     }
@@ -365,7 +365,7 @@ func testAccCheckHerokuBuildConfig_localSourceTarball_allOpts(appName string) st
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
     buildpacks = ["https://github.com/heroku/heroku-buildpack-ruby"]
-    source = {
+    source {
       path = "test-fixtures/app.tgz"
       version = "v0"
     }
