@@ -91,6 +91,11 @@ func dataSourceHerokuApp() *schema.Resource {
 					},
 				},
 			},
+
+			"uuid": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
