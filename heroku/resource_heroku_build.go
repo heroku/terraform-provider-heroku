@@ -68,6 +68,7 @@ func resourceHerokuBuild() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				MaxItems:     1,
+				ConfigMode:   schema.SchemaConfigModeAttr,
 				ValidateFunc: validateSourceUrl,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
