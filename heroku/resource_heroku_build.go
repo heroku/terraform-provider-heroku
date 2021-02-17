@@ -64,12 +64,11 @@ func resourceHerokuBuild() *schema.Resource {
 			},
 
 			"source": {
-				Type:         schema.TypeList,
-				Required:     true,
-				ForceNew:     true,
-				MaxItems:     1,
-				ConfigMode:   schema.SchemaConfigModeAttr,
-				ValidateFunc: validateSourceUrl,
+				Type:       schema.TypeList,
+				Required:   true,
+				ForceNew:   true,
+				MaxItems:   1,
+				ConfigMode: schema.SchemaConfigModeAttr,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"checksum": {
@@ -81,15 +80,16 @@ func resourceHerokuBuild() *schema.Resource {
 
 						"path": {
 							Type:          schema.TypeString,
-							ConflictsWith: []string{"url"},
+							ConflictsWith: []string{"source.url"},
 							Optional:      true,
 							ForceNew:      true,
 						},
 
 						"url": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
+							Type:         schema.TypeString,
+							Optional:     true,
+							ForceNew:     true,
+							ValidateFunc: validateSourceUrl,
 						},
 
 						"version": {
@@ -311,7 +311,8 @@ func resourceHerokuBuildDelete(d *schema.ResourceData, meta interface{}) error {
 func resourceHerokuBuildCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 	// Detect changes to the content of local source archive.
 	if v, ok := diff.GetOk("source"); ok {
-		source := v.(map[string]interface{})
+		vL := v.([]interface{})
+		source := vL[0].(map[string]interface{})
 		if vv := source["path"]; vv != nil {
 			path := vv.(string)
 			var tarballPath string
@@ -485,13 +486,14 @@ func cleanupSourceFile(filePath string) {
 }
 
 func validateSourceUrl(v interface{}, k string) (ws []string, errors []error) {
-	value := v.(map[string]interface{})["url"]
-	if value == nil {
+	if v == nil {
 		return
 	}
 
+	value := v.(string)
+
 	pattern := `^https://`
-	if !regexp.MustCompile(pattern).MatchString(value.(string)) {
+	if !regexp.MustCompile(pattern).MatchString(value) {
 		errors = append(errors, fmt.Errorf(
 			"%q must be a secure URL, start with `https://`. Value is %q",
 			k, value))

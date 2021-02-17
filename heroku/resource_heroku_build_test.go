@@ -243,7 +243,7 @@ func testAccCheckHerokuBuildConfig_basic(appName string) string {
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    source = {
+    source {
         url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/app.tgz"
     }
 }`, appName)
@@ -257,7 +257,7 @@ func testAccCheckHerokuBuildConfig_insecureUrl(appName string) string {
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    source = {
+    source {
       url = "http://github.com/mars/terraform-provider-heroku/raw/build-resource/heroku/test-fixtures/app.tgz"
     }
 }`, appName)
@@ -271,7 +271,7 @@ func testAccCheckHerokuBuildConfig_noSource(appName string) string {
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    source = {
+    source {
       version = "v0"
     }
 }`, appName)
@@ -292,7 +292,7 @@ resource "heroku_build" "foobar" {
       "https://github.com/heroku/heroku-buildpack-jvm-common",
       "https://github.com/heroku/heroku-buildpack-ruby",
     ]
-    source = {
+    source {
       checksum = "SHA256:14671a3dcf1ba3f4976438bfd4654da5d2b18ccefa59d10187ecc1286f08ee29"
       url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/app.tgz"
       version = "v0"
