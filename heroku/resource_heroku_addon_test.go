@@ -111,7 +111,7 @@ func TestAccHerokuAddon_CustomName_Invalid(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
-				ExpectError: regexp.MustCompile(`config is invalid: invalid value for name`),
+				ExpectError: regexp.MustCompile(`Invalid custom addon name.*`),
 			},
 		},
 	})
@@ -128,7 +128,7 @@ func TestAccHerokuAddon_CustomName_EmptyString(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
-				ExpectError: regexp.MustCompile(`config is invalid: 2 problems:.*`),
+				ExpectError: regexp.MustCompile(`Invalid custom addon name.*`),
 			},
 		},
 	})
@@ -145,7 +145,7 @@ func TestAccHerokuAddon_CustomName_FirstCharNum(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
-				ExpectError: regexp.MustCompile(`config is invalid: invalid value for name`),
+				ExpectError: regexp.MustCompile(`Invalid custom addon name.*`),
 			},
 		},
 	})

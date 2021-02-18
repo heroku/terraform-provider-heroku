@@ -344,15 +344,15 @@ func setTeamDetails(d *schema.ResourceData, app *application) (err error) {
 }
 
 func setAppDetails(d *schema.ResourceData, app *application) (err error) {
-	err = d.Set("name", app.App.Name)
-	err = d.Set("stack", app.App.Stack)
-	err = d.Set("internal_routing", app.App.InternalRouting)
-	err = d.Set("region", app.App.Region)
-	err = d.Set("git_url", app.App.GitURL)
-	err = d.Set("web_url", app.App.WebURL)
-	err = d.Set("acm", app.App.Acm)
-	err = d.Set("uuid", app.App.ID)
-	err = d.Set("heroku_hostname", fmt.Sprintf("%s.herokuapp.com", app.App.Name))
+	d.Set("name", app.App.Name)
+	d.Set("stack", app.App.Stack)
+	d.Set("internal_routing", app.App.InternalRouting)
+	d.Set("region", app.App.Region)
+	d.Set("git_url", app.App.GitURL)
+	d.Set("web_url", app.App.WebURL)
+	d.Set("acm", app.App.Acm)
+	d.Set("uuid", app.App.ID)
+	d.Set("heroku_hostname", fmt.Sprintf("%s.herokuapp.com", app.App.Name))
 
 	return err
 }

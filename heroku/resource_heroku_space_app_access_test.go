@@ -3,6 +3,7 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"github.com/heroku/terraform-provider-heroku/v4/helper/test"
 	"strings"
 	"testing"
 
@@ -29,7 +30,7 @@ func TestAccHerokuSpaceAppAccess_Basic(t *testing.T) {
 				Config: testAccCheckHerokuSpaceAppAccessConfig_basic(spaceName, org, testUser, []string{"create_apps"}),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
-					resource.TestCheckResourceAttr("heroku_space_app_access.foobar", "permissions.3695762012", "create_apps"),
+					test.TestCheckTypeSetElemAttr("heroku_space_app_access.foobar", "permissions.*", "create_apps"),
 				),
 			},
 		},

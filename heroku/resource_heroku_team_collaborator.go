@@ -272,7 +272,13 @@ func resourceHerokuTeamCollaboratorImport(d *schema.ResourceData, meta interface
 	d.SetId(collaborator.ID)
 	d.Set("app", collaborator.App.Name)
 	d.Set("email", collaborator.User.Email)
-	d.Set("permissions", collaborator.Permissions)
+
+	var perms []string
+	for _, p := range collaborator.Permissions {
+		perms = append(perms, p.Name)
+	}
+
+	d.Set("permissions", perms)
 
 	return []*schema.ResourceData{d}, nil
 }

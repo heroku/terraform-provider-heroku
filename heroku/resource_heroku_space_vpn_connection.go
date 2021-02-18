@@ -134,33 +134,21 @@ func resourceHerokuSpaceVPNConnectionCreate(d *schema.ResourceData, meta interfa
 	if err != nil {
 		return fmt.Errorf("Error creating VPN: %v", err)
 	}
-	id := conn.ID
 
-	log.Printf("[DEBUG] Waiting for VPN (%s) to be allocated", id)
-	retryErr := resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		vpn, vpnGetErr := client.VPNConnectionInfo(context.TODO(), space, id)
-
-		// Retry on "not found"
-		if vpnGetErr != nil && strings.Contains(vpnGetErr.Error(), "VPN is not found") {
-			return resource.RetryableError(fmt.Errorf("Waiting for new VPN connection"))
-		}
-
-		// Fail for any remaining error
-		if vpnGetErr != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error fetching VPN connection status: %s", vpnGetErr))
-		}
-
-		if vpn.Status != "active" {
-			return resource.RetryableError(fmt.Errorf("Want VPN connection status 'active', instead got '%s'", vpn.Status))
-		}
-
-		return resource.NonRetryableError(nil)
-	})
-	if retryErr != nil {
-		return fmt.Errorf("Error waiting for VPN to become available: %v", retryErr)
+	log.Printf("[DEBUG] Waiting for VPN (%s) to be allocated", conn.ID)
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{"pending", "provisioning"},
+		Target:       []string{"active"},
+		Refresh:      spaceVPNConnectionStateRefreshFunc(client, space, conn.ID),
+		Timeout:      30 * time.Minute,
+		PollInterval: 20 * time.Second,
 	}
 
-	d.SetId(buildCompositeID(space, id))
+	if _, err := stateConf.WaitForState(); err != nil {
+		return fmt.Errorf("error waiting for VPN to become available: %s", err)
+	}
+
+	d.SetId(buildCompositeID(space, conn.ID))
 
 	return resourceHerokuSpaceVPNConnectionRead(d, meta)
 }
@@ -179,4 +167,26 @@ func resourceHerokuSpaceVPNConnectionDelete(d *schema.ResourceData, meta interfa
 
 	d.SetId("")
 	return nil
+}
+
+func spaceVPNConnectionStateRefreshFunc(client *heroku.Service, space, connectionID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		vpn, vpnGetErr := client.VPNConnectionInfo(context.TODO(), space, connectionID)
+
+		// Retry on "not found"
+		if vpnGetErr != nil && strings.Contains(vpnGetErr.Error(), "VPN is not found") {
+			return vpn, "pending", nil
+		}
+
+		// Fail for any remaining error
+		if vpnGetErr != nil {
+			return nil, "failed", fmt.Errorf("error fetching VPN connection status: %s", vpnGetErr)
+		}
+
+		if vpn.Status != "active" {
+			return vpn, vpn.Status, nil
+		}
+
+		return vpn, vpn.Status, nil
+	}
 }

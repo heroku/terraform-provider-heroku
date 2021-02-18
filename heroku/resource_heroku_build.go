@@ -64,11 +64,10 @@ func resourceHerokuBuild() *schema.Resource {
 			},
 
 			"source": {
-				Type:       schema.TypeList,
-				Required:   true,
-				ForceNew:   true,
-				MaxItems:   1,
-				ConfigMode: schema.SchemaConfigModeAttr,
+				Type:     schema.TypeList,
+				Required: true,
+				ForceNew: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"checksum": {
@@ -194,18 +193,20 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 
 		for _, s := range vL {
 			sourceArg := s.(map[string]interface{})
-			if v := sourceArg["checksum"]; v != nil {
+			if v, ok := sourceArg["checksum"]; ok && v != "" {
 				s := v.(string)
-				if v = sourceArg["path"]; v != nil {
+				if vv, okok := sourceArg["path"]; okok && vv != "" {
 					return fmt.Errorf("source.checksum should be empty when source.path is set (checksum is auto-generated)")
 				}
 				opts.SourceBlob.Checksum = &s
 			}
-			if v = sourceArg["version"]; v != nil {
+
+			if v, ok := sourceArg["version"]; ok && v != "" {
 				s := v.(string)
 				opts.SourceBlob.Version = &s
 			}
-			if v = sourceArg["path"]; v != nil {
+
+			if v, ok := sourceArg["path"]; ok && v != "" {
 				path := v.(string)
 				var tarballPath string
 				fileInfo, err := os.Stat(path)
@@ -240,7 +241,7 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 				}
 				opts.SourceBlob.URL = &newSource.SourceBlob.GetURL
 				opts.SourceBlob.Checksum = &checksum
-			} else if v = sourceArg["url"]; v != nil {
+			} else if v, ok = sourceArg["url"]; ok && v != "" {
 				s := v.(string)
 				opts.SourceBlob.URL = &s
 			} else {
@@ -313,7 +314,7 @@ func resourceHerokuBuildCustomizeDiff(ctx context.Context, diff *schema.Resource
 	if v, ok := diff.GetOk("source"); ok {
 		vL := v.([]interface{})
 		source := vL[0].(map[string]interface{})
-		if vv := source["path"]; vv != nil {
+		if vv, okok := source["path"]; okok && vv != "" {
 			path := vv.(string)
 			var tarballPath string
 			fileInfo, err := os.Stat(path)

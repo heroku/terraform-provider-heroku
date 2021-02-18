@@ -3,6 +3,7 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"github.com/heroku/terraform-provider-heroku/v4/helper/test"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -30,8 +31,7 @@ func TestAccHerokuTeamCollaborator_Org(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuTeamCollaboratorExists("heroku_team_collaborator.foobar-collaborator", &teamCollaborator),
 					testAccCheckHerokuTeamCollaboratorEmailAttribute(&teamCollaborator, testUser),
-					resource.TestCheckResourceAttr(
-						"heroku_team_collaborator.foobar-collaborator", "permissions.1056122515", "deploy"),
+					test.TestCheckTypeSetElemAttr("heroku_team_collaborator.foobar-collaborator", "permissions.*", "deploy"),
 				),
 			},
 		},
@@ -57,8 +57,7 @@ func TestAccHerokuTeamCollaboratorPermsOutOfOrder_Org(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuTeamCollaboratorExists("heroku_team_collaborator.foobar-collaborator", &teamCollaborator),
 					testAccCheckHerokuTeamCollaboratorEmailAttribute(&teamCollaborator, testUser),
-					resource.TestCheckResourceAttr(
-						"heroku_team_collaborator.foobar-collaborator", "permissions.1056122515", "deploy"),
+					test.TestCheckTypeSetElemAttr("heroku_team_collaborator.foobar-collaborator", "permissions.*", "deploy"),
 				),
 			},
 		},

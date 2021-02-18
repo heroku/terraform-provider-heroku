@@ -595,7 +595,7 @@ func testAccCheckHerokuAppAttributesOrg(app *heroku.TeamApp, appName, space, org
 		}
 
 		// This needs to be updated whenever heroku bumps the stack number
-		if app.BuildStack.Name != "heroku-18" {
+		if app.BuildStack.Name != "heroku-20" {
 			return fmt.Errorf("Bad stack: %s", app.BuildStack.Name)
 		}
 
