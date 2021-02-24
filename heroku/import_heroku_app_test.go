@@ -10,7 +10,7 @@ import (
 
 func TestAccHerokuApp_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	appStack := "heroku-16"
+	appStack := "heroku-20"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

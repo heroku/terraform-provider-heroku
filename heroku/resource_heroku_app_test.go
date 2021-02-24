@@ -15,7 +15,7 @@ import (
 func TestAccHerokuApp_Basic(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	appStack := "heroku-16"
+	appStack := "heroku-20"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -26,7 +26,7 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
-					testAccCheckHerokuAppAttributes(&app, appName, "heroku-16"),
+					testAccCheckHerokuAppAttributes(&app, appName, "heroku-20"),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "name", appName),
 					resource.TestCheckResourceAttrSet(
@@ -67,8 +67,8 @@ func TestAccHerokuApp_Change(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	appName2 := fmt.Sprintf("%s-v2", appName)
-	appStack := "heroku-16"
-	appStack2 := "heroku-18"
+	appStack := "heroku-18"
+	appStack2 := "heroku-20"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -110,7 +110,7 @@ func TestAccHerokuApp_Change(t *testing.T) {
 func TestAccHerokuApp_NukeVars(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	appStack := "heroku-16"
+	appStack := "heroku-20"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -121,7 +121,7 @@ func TestAccHerokuApp_NukeVars(t *testing.T) {
 				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
-					testAccCheckHerokuAppAttributes(&app, appName, "heroku-16"),
+					testAccCheckHerokuAppAttributes(&app, appName, "heroku-20"),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "name", appName),
 					resource.TestCheckResourceAttr(
