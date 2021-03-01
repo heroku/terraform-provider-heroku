@@ -31,10 +31,6 @@ func TestProvider(t *testing.T) {
 	}
 }
 
-func TestProvider_impl(t *testing.T) {
-	var _ *schema.Provider = Provider()
-}
-
 func TestProviderConfigureUsesHeadersForClient(t *testing.T) {
 	p := Provider()
 	d := schema.TestResourceDataRaw(t, p.Schema, nil)
