@@ -6,16 +6,16 @@ import (
 	"log"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
 func TestAccHerokuApp_Basic(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	appStack := "heroku-16"
+	appStack := "heroku-20"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -26,7 +26,7 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
-					testAccCheckHerokuAppAttributes(&app, appName, "heroku-16"),
+					testAccCheckHerokuAppAttributes(&app, appName, "heroku-20"),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "name", appName),
 					resource.TestCheckResourceAttrSet(
@@ -67,8 +67,8 @@ func TestAccHerokuApp_Change(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	appName2 := fmt.Sprintf("%s-v2", appName)
-	appStack := "heroku-16"
-	appStack2 := "heroku-18"
+	appStack := "heroku-18"
+	appStack2 := "heroku-20"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -110,7 +110,7 @@ func TestAccHerokuApp_Change(t *testing.T) {
 func TestAccHerokuApp_NukeVars(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	appStack := "heroku-16"
+	appStack := "heroku-20"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -121,7 +121,7 @@ func TestAccHerokuApp_NukeVars(t *testing.T) {
 				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
-					testAccCheckHerokuAppAttributes(&app, appName, "heroku-16"),
+					testAccCheckHerokuAppAttributes(&app, appName, "heroku-20"),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "name", appName),
 					resource.TestCheckResourceAttr(
@@ -595,7 +595,7 @@ func testAccCheckHerokuAppAttributesOrg(app *heroku.TeamApp, appName, space, org
 		}
 
 		// This needs to be updated whenever heroku bumps the stack number
-		if app.BuildStack.Name != "heroku-18" {
+		if app.BuildStack.Name != "heroku-20" {
 			return fmt.Errorf("Bad stack: %s", app.BuildStack.Name)
 		}
 

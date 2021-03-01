@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
@@ -111,7 +111,7 @@ func TestAccHerokuAddon_CustomName_Invalid(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
-				ExpectError: regexp.MustCompile(`config is invalid: invalid value for name`),
+				ExpectError: regexp.MustCompile(`Invalid custom addon name.*`),
 			},
 		},
 	})
@@ -128,7 +128,7 @@ func TestAccHerokuAddon_CustomName_EmptyString(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
-				ExpectError: regexp.MustCompile(`config is invalid: 2 problems:.*`),
+				ExpectError: regexp.MustCompile(`Invalid custom addon name.*`),
 			},
 		},
 	})
@@ -145,7 +145,7 @@ func TestAccHerokuAddon_CustomName_FirstCharNum(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
-				ExpectError: regexp.MustCompile(`config is invalid: invalid value for name`),
+				ExpectError: regexp.MustCompile(`Invalid custom addon name.*`),
 			},
 		},
 	})

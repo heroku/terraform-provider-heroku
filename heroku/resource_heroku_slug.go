@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-uuid"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
@@ -269,7 +269,7 @@ func resourceHerokuSlugDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceHerokuSlugCustomizeDiff(diff *schema.ResourceDiff, v interface{}) error {
+func resourceHerokuSlugCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 	// Detect changes to the content of local slug archive.
 	if v, ok := diff.GetOk("file_path"); ok {
 		filePath := v.(string)

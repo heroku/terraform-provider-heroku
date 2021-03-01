@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
@@ -243,7 +243,7 @@ func testAccCheckHerokuBuildConfig_basic(appName string) string {
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    source = {
+    source {
         url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/app.tgz"
     }
 }`, appName)
@@ -257,7 +257,7 @@ func testAccCheckHerokuBuildConfig_insecureUrl(appName string) string {
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    source = {
+    source {
       url = "http://github.com/mars/terraform-provider-heroku/raw/build-resource/heroku/test-fixtures/app.tgz"
     }
 }`, appName)
@@ -271,7 +271,7 @@ func testAccCheckHerokuBuildConfig_noSource(appName string) string {
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    source = {
+    source {
       version = "v0"
     }
 }`, appName)
@@ -292,7 +292,7 @@ resource "heroku_build" "foobar" {
       "https://github.com/heroku/heroku-buildpack-jvm-common",
       "https://github.com/heroku/heroku-buildpack-ruby",
     ]
-    source = {
+    source {
       checksum = "SHA256:14671a3dcf1ba3f4976438bfd4654da5d2b18ccefa59d10187ecc1286f08ee29"
       url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/app.tgz"
       version = "v0"
@@ -308,7 +308,7 @@ func testAccCheckHerokuBuildConfig_localSourceDirectory(appName string) string {
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    source = {
+    source {
       path = "test-fixtures/app/"
     }
 }`, appName)
@@ -321,7 +321,7 @@ func testAccCheckHerokuBuildConfig_localSourceDirectorySelfContained(appName str
 }
  resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    source = {
+    source {
       path = "."
     }
 }`, appName)
@@ -335,7 +335,7 @@ func testAccCheckHerokuBuildConfig_localSourceTarball(appName string) string {
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    source = {
+    source {
       path = "test-fixtures/app.tgz"
     }
 }`, appName)
@@ -349,7 +349,7 @@ func testAccCheckHerokuBuildConfig_localSourceTarball_setChecksum(appName string
 
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
-    source = {
+    source {
       checksum = "SHA256:0000000000000000000000000000000000000000000000000000000000000000"
       path = "test-fixtures/app.tgz"
     }
@@ -365,7 +365,7 @@ func testAccCheckHerokuBuildConfig_localSourceTarball_allOpts(appName string) st
 resource "heroku_build" "foobar" {
     app = "${heroku_app.foobar.name}"
     buildpacks = ["https://github.com/heroku/heroku-buildpack-ruby"]
-    source = {
+    source {
       path = "test-fixtures/app.tgz"
       version = "v0"
     }

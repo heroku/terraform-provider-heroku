@@ -1,7 +1,7 @@
 package heroku
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceHerokuApp() *schema.Resource {
@@ -90,6 +90,11 @@ func dataSourceHerokuApp() *schema.Resource {
 						},
 					},
 				},
+			},
+
+			"uuid": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		},
 	}

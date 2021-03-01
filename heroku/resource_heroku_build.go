@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	heroku "github.com/heroku/heroku-go/v5"
 	tarinator "github.com/verybluebot/tarinator-go"
 )
@@ -64,10 +64,10 @@ func resourceHerokuBuild() *schema.Resource {
 			},
 
 			"source": {
-				Type:         schema.TypeMap,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validateSourceUrl,
+				Type:     schema.TypeList,
+				Required: true,
+				ForceNew: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"checksum": {
@@ -79,15 +79,16 @@ func resourceHerokuBuild() *schema.Resource {
 
 						"path": {
 							Type:          schema.TypeString,
-							ConflictsWith: []string{"url"},
+							ConflictsWith: []string{"source.url"},
 							Optional:      true,
 							ForceNew:      true,
 						},
 
 						"url": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
+							Type:         schema.TypeString,
+							Optional:     true,
+							ForceNew:     true,
+							ValidateFunc: validateSourceUrl,
 						},
 
 						"version": {
@@ -110,7 +111,7 @@ func resourceHerokuBuild() *schema.Resource {
 			},
 
 			"user": {
-				Type:     schema.TypeMap,
+				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -188,58 +189,64 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if v, ok := d.GetOk("source"); ok {
-		sourceArg := v.(map[string]interface{})
-		if v := sourceArg["checksum"]; v != nil {
-			s := v.(string)
-			if v = sourceArg["path"]; v != nil {
-				return fmt.Errorf("source.checksum should be empty when source.path is set (checksum is auto-generated)")
-			}
-			opts.SourceBlob.Checksum = &s
-		}
-		if v = sourceArg["version"]; v != nil {
-			s := v.(string)
-			opts.SourceBlob.Version = &s
-		}
-		if v = sourceArg["path"]; v != nil {
-			path := v.(string)
-			var tarballPath string
-			fileInfo, err := os.Stat(path)
-			if err != nil {
-				return fmt.Errorf("Error stating build source path %s: %s", path, err)
-			}
+		vL := v.([]interface{})
 
-			if fileInfo.IsDir() {
-				// Generate tarball from the directory
-				tarballPath, err = generateSourceTarball(path)
-				if err != nil {
-					return fmt.Errorf("Error generating build source tarball %s: %s", path, err)
+		for _, s := range vL {
+			sourceArg := s.(map[string]interface{})
+			if v, ok := sourceArg["checksum"]; ok && v != "" {
+				s := v.(string)
+				if vv, okok := sourceArg["path"]; okok && vv != "" {
+					return fmt.Errorf("source.checksum should be empty when source.path is set (checksum is auto-generated)")
 				}
-				defer cleanupSourceFile(tarballPath)
-			} else {
-				// or simply use the path to the file
-				tarballPath = path
+				opts.SourceBlob.Checksum = &s
 			}
 
-			// Checksum, create, & upload source archive
-			checksum, err := checksumSource(tarballPath)
-			if err != nil {
-				return fmt.Errorf("Error calculating checksum for build source %s: %s", tarballPath, err)
+			if v, ok := sourceArg["version"]; ok && v != "" {
+				s := v.(string)
+				opts.SourceBlob.Version = &s
 			}
-			newSource, err := client.SourceCreate(context.TODO())
-			if err != nil {
-				return fmt.Errorf("Error creating source for build: %s", err)
+
+			if v, ok := sourceArg["path"]; ok && v != "" {
+				path := v.(string)
+				var tarballPath string
+				fileInfo, err := os.Stat(path)
+				if err != nil {
+					return fmt.Errorf("Error stating build source path %s: %s", path, err)
+				}
+
+				if fileInfo.IsDir() {
+					// Generate tarball from the directory
+					tarballPath, err = generateSourceTarball(path)
+					if err != nil {
+						return fmt.Errorf("Error generating build source tarball %s: %s", path, err)
+					}
+					defer cleanupSourceFile(tarballPath)
+				} else {
+					// or simply use the path to the file
+					tarballPath = path
+				}
+
+				// Checksum, create, & upload source archive
+				checksum, err := checksumSource(tarballPath)
+				if err != nil {
+					return fmt.Errorf("Error calculating checksum for build source %s: %s", tarballPath, err)
+				}
+				newSource, err := client.SourceCreate(context.TODO())
+				if err != nil {
+					return fmt.Errorf("Error creating source for build: %s", err)
+				}
+				err = uploadSource(tarballPath, "PUT", newSource.SourceBlob.PutURL)
+				if err != nil {
+					return fmt.Errorf("Error uploading source for build to %s: %s", newSource.SourceBlob.PutURL, err)
+				}
+				opts.SourceBlob.URL = &newSource.SourceBlob.GetURL
+				opts.SourceBlob.Checksum = &checksum
+			} else if v, ok = sourceArg["url"]; ok && v != "" {
+				s := v.(string)
+				opts.SourceBlob.URL = &s
+			} else {
+				return fmt.Errorf("Build requires either source.path or source.url")
 			}
-			err = uploadSource(tarballPath, "PUT", newSource.SourceBlob.PutURL)
-			if err != nil {
-				return fmt.Errorf("Error uploading source for build to %s: %s", newSource.SourceBlob.PutURL, err)
-			}
-			opts.SourceBlob.URL = &newSource.SourceBlob.GetURL
-			opts.SourceBlob.Checksum = &checksum
-		} else if v = sourceArg["url"]; v != nil {
-			s := v.(string)
-			opts.SourceBlob.URL = &s
-		} else {
-			return fmt.Errorf("Build requires either source.path or source.url")
 		}
 	}
 
@@ -302,11 +309,12 @@ func resourceHerokuBuildDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceHerokuBuildCustomizeDiff(diff *schema.ResourceDiff, v interface{}) error {
+func resourceHerokuBuildCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
 	// Detect changes to the content of local source archive.
 	if v, ok := diff.GetOk("source"); ok {
-		source := v.(map[string]interface{})
-		if vv := source["path"]; vv != nil {
+		vL := v.([]interface{})
+		source := vL[0].(map[string]interface{})
+		if vv, okok := source["path"]; okok && vv != "" {
 			path := vv.(string)
 			var tarballPath string
 			fileInfo, err := os.Stat(path)
@@ -429,7 +437,8 @@ func setBuildState(d *schema.ResourceData, build *heroku.Build, appName string) 
 	}
 
 	if v, ok := d.GetOk("source"); ok {
-		source := v.(map[string]interface{})
+		vL := v.([]interface{})
+		source := vL[0].(map[string]interface{})
 		// Checksum & URL are autogenerated when path is set.
 		// Do not set them in that case, so state is consistent.
 		if v := source["path"]; v == "" {
@@ -445,7 +454,7 @@ func setBuildState(d *schema.ResourceData, build *heroku.Build, appName string) 
 		if v := build.SourceBlob.Version; v != nil {
 			source["version"] = *v
 		}
-		if err := d.Set("source", source); err != nil {
+		if err := d.Set("source", []map[string]interface{}{source}); err != nil {
 			log.Printf("[WARN] Error setting source: %s", err)
 		}
 	}
@@ -453,9 +462,11 @@ func setBuildState(d *schema.ResourceData, build *heroku.Build, appName string) 
 	d.Set("stack", build.Stack)
 	d.Set("status", build.Status)
 
-	user := map[string]string{
-		"email": build.User.Email,
-		"id":    build.User.ID,
+	user := []map[string]string{
+		{
+			"email": build.User.Email,
+			"id":    build.User.ID,
+		},
 	}
 	if err := d.Set("user", user); err != nil {
 		log.Printf("[WARN] Error setting user: %s", err)
@@ -476,13 +487,14 @@ func cleanupSourceFile(filePath string) {
 }
 
 func validateSourceUrl(v interface{}, k string) (ws []string, errors []error) {
-	value := v.(map[string]interface{})["url"]
-	if value == nil {
+	if v == nil {
 		return
 	}
 
+	value := v.(string)
+
 	pattern := `^https://`
-	if !regexp.MustCompile(pattern).MatchString(value.(string)) {
+	if !regexp.MustCompile(pattern).MatchString(value) {
 		errors = append(errors, fmt.Errorf(
 			"%q must be a secure URL, start with `https://`. Value is %q",
 			k, value))

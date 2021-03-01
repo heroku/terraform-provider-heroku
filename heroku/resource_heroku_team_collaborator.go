@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
@@ -134,9 +134,6 @@ func resourceHerokuTeamCollaboratorRead(d *schema.ResourceData, meta interface{}
 }
 
 func resourceHerokuTeamCollaboratorUpdate(d *schema.ResourceData, meta interface{}) error {
-	// Enable Partial state mode to track what was successfully committed
-	d.Partial(true)
-
 	client := meta.(*Config).Api
 	opts := heroku.TeamAppCollaboratorUpdateOpts{}
 
@@ -161,11 +158,7 @@ func resourceHerokuTeamCollaboratorUpdate(d *schema.ResourceData, meta interface
 		return err
 	}
 
-	d.SetPartial("permissions")
-
 	d.SetId(updatedTeamCollaborator.ID)
-
-	d.Partial(false)
 
 	return resourceHerokuTeamCollaboratorRead(d, meta)
 }
@@ -279,7 +272,13 @@ func resourceHerokuTeamCollaboratorImport(d *schema.ResourceData, meta interface
 	d.SetId(collaborator.ID)
 	d.Set("app", collaborator.App.Name)
 	d.Set("email", collaborator.User.Email)
-	d.Set("permissions", collaborator.Permissions)
+
+	var perms []string
+	for _, p := range collaborator.Permissions {
+		perms = append(perms, p.Name)
+	}
+
+	d.Set("permissions", perms)
 
 	return []*schema.ResourceData{d}, nil
 }
