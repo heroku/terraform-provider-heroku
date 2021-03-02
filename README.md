@@ -13,14 +13,14 @@ Requirements
 ------------
 
 - [Terraform](https://www.terraform.io/downloads.html) 0.12.x
-- [Go](https://golang.org/doc/install) 1.14 (to build the provider plugin)
+- [Go](https://golang.org/doc/install) 1.15 (to build the provider plugin)
 
 Usage
 -----
 
 For Terraform 0.12+ compatibility, the configuration should specifiy version 2 or higher:
 
-```hcl
+```hcl-terraform
 provider "heroku" {
   version = "~> 2.0"
 }
@@ -64,7 +64,7 @@ cp $GOPATH/bin/terraform-provider-heroku ~/.terraform.d/plugins/
 
 Set the Heroku provider without a version constraint:
 
-```hcl
+```hcl-terraform
 provider "heroku" {}
 ```
 
