@@ -18,11 +18,19 @@ Requirements
 Usage
 -----
 
-For Terraform 0.12+ compatibility, the configuration should specifiy version 2 or higher:
+For Terraform 0.11 compatibility, the configuration should specify version 3 or lower:
 
 ```hcl-terraform
 provider "heroku" {
-  version = "~> 2.0"
+  version = "~> 3.0"
+}
+```
+
+Otherwise, the configuration should specify version 4 or higher:
+
+```hcl-terraform
+provider "heroku" {
+  version = "~> 4.0"
 }
 ```
 
@@ -31,7 +39,9 @@ provider "heroku" {
 Development
 -----------
 
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.12+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
+If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine
+(version 1.15+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH),
+as well as adding `$GOPATH/bin` to your `$PATH`.
 
 ### Clone the Provider
 

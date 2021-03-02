@@ -45,11 +45,8 @@ resource "heroku_pipeline_config_var" "configs" {
 The following arguments are supported:
 
 * `pipeline_id` - (Required) The UUID of an existing pipeline.
-
 * `pipeline_stage` - (Required) The pipeline's stage. Supported values are `test` & `review`.
-
 * `vars` - Map of config vars that can be output in plaintext.
-
 * `sensitive_vars` - This is the same as `vars`. The main difference between the two attributes is `sensitive_vars` outputs
 are redacted on-screen and replaced by a `<sensitive>` placeholder, following a terraform `plan` or `apply`.
 It is recommended to put private keys, passwords, etc in this argument.

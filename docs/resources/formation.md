@@ -50,11 +50,8 @@ resource "heroku_formation" "foobar-web" {
 ## Argument Reference
 
 * `app` - (Required) The name of the application
-
 * `type` - (Required) type of process such as "web"
-
 * `quantity` - (Required) number of processes to maintain
-
 * `size` - (Required) dyno size (Example: “standard-1X”). Capitalization does not matter.
 
 ## Attributes Reference

@@ -32,11 +32,8 @@ resource "heroku_addon_attachment" "database_credentials" {
 The following arguments are supported:
 
 * `app_id` - (Required) The ID of the Heroku App to attach to.
-
 * `addon_id` - (Required) The ID of the existing Heroku Addon to attach.
-
 * `name` - (Optional) A friendly name for the Heroku Addon Attachment.
-
 * `namespace` - (Optional) The namespace value for the Heroku Addon Attachment. This can be used to configure the behaviour of the attachment. See [Heroku Platform API Reference](https://devcenter.heroku.com/articles/platform-api-reference#add-on-attachment-create)
 
 ## Attributes Reference

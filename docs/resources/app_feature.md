@@ -32,9 +32,7 @@ resource "heroku_app_feature" "log_runtime_metrics" {
 The following arguments are supported:
 
 * `app` - (Required) The Heroku app to link to.
-
 * `name` - (Required) The name of the App Feature to manage.
-
 * `enabled` - (Optional) Whether to enable or disable the App Feature. The default value is true.
 
 ## Import

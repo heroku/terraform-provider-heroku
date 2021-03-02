@@ -41,11 +41,8 @@ resource "heroku_addon" "webhook" {
 The following arguments are supported:
 
 * `app` - (Required) The Heroku app to add to.
-
 * `plan` - (Required) The addon to add.
-
 * `config` - (Optional) Optional plan configuration.
-
 * `name` - (Optional) Globally unique name of the add-on.
 
 ## Attributes Reference
@@ -53,15 +50,10 @@ The following arguments are supported:
 The following attributes are exported:
 
 * `id` - The ID of the add-on
-
 * `name` - The add-on name
-
 * `plan` - The plan name
-
 * `provider_id` - The ID of the plan provider
-
 * `config_vars` - The Configuration variables of the add-on
-
 
 ## Import
 

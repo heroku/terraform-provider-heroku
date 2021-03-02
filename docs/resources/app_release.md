@@ -37,9 +37,7 @@ resource "heroku_app_release" "foobar-release" {
 The following arguments are supported:
 
 * `app` - (Required) The name of the application
-
 * `slug_id` - unique identifier of slug
-
 * `description` - description of changes in this release
 
 ## Attributes Reference

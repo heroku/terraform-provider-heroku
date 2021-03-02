@@ -34,7 +34,6 @@ resource "heroku_account_feature" "example_metrics" {
 The following arguments are supported:
 
 * `name` - (Required) Name of the account feature
-
 * `enabled` - (Required) Enable or disable the account feature
 
 ## Attributes Reference
@@ -42,9 +41,7 @@ The following arguments are supported:
 The following attributes are exported:
 
 * `id` - Comprised of acount email & feature name
-
 * `description` - Description of account feature
-
 * `state` - State of account feature
 
 ## Import

@@ -60,7 +60,6 @@ resource "heroku_pipeline_coupling" "production" {
 The following arguments are supported:
 
 * `name` - (Required) The name of the pipeline.
-
 * `owner` - (Required) The owner of the pipeline. This block as the following required attributes:
     * `id` - (Required) The unique identifier (UUID) of a pipeline owner.
     * `type` - (Required) The type of pipeline owner. Can be either `user` or `team`.
