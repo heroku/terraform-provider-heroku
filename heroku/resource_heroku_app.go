@@ -358,7 +358,8 @@ func setAppDetails(d *schema.ResourceData, app *application) (err error) {
 }
 
 func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config).Api
+	config := meta.(*Config)
+	client := config.Api
 
 	care := make(map[string]struct{})
 	configVars := make(map[string]string)
@@ -407,8 +408,13 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[WARN] Error setting sensitive config vars: %s", err)
 	}
 
-	if err := d.Set("all_config_vars", app.Vars); err != nil {
-		log.Printf("[WARN] Error setting all_config_vars: %s", err)
+	// Set `all_config_vars` to empty map initially. Only set this attribute
+	// if set_app_all_config_vars_in_state is `true`.
+	d.Set("all_config_vars", map[string]string{})
+	if config.SetAppAllConfigVarsInState {
+		if err := d.Set("all_config_vars", app.Vars); err != nil {
+			log.Printf("[WARN] Error setting all_config_vars: %s", err)
+		}
 	}
 
 	buildpacksErr := d.Set("buildpacks", app.Buildpacks)

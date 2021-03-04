@@ -114,9 +114,16 @@ The following arguments are supported:
   provided, it will be sourced from the `HEROKU_HEADERS` environment variable
   (if set).
 
+* `customizations` - (Optional) Various attributes altering the behavior of certain resources.
+  Only a single `customizations` block may be specified, and it supports the following arguments:
+
+  * `set_app_all_config_vars_in_state` - (Optional) Controls whether the `heroku_app.all_config_vars` attribute
+    is set in the state file. Set to `false` if you'd like not to have non-managed config vars set in state.
+    Defaults to `true`.
+
 * `delays` - (Optional) Delays help mitigate issues that can arise due to
   Heroku's eventually consistent data model. Only a single `delays` block may be
-  specified and it supports the following arguments:
+  specified, and it supports the following arguments:
 
   * `post_app_create_delay` - (Optional) The number of seconds to wait after an
     app is created. Default is to wait 5 seconds.

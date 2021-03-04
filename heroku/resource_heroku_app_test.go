@@ -35,6 +35,39 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 						"heroku_app.foobar", "config_vars.FOO", "bar"),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "internal_routing", "false"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "all_config_vars.%", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccHerokuApp_DontSetAllConfigVars(t *testing.T) {
+	var app heroku.App
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	appStack := "heroku-20"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAppDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
+					testAccCheckHerokuAppAttributes(&app, appName, "heroku-20"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "name", appName),
+					resource.TestCheckResourceAttrSet(
+						"heroku_app.foobar", "uuid"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "config_vars.FOO", "bar"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "internal_routing", "false"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "all_config_vars.%", "0"),
 				),
 			},
 		},

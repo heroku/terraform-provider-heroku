@@ -36,6 +36,21 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("HEROKU_API_URL", heroku.DefaultURL),
 			},
 
+			"customizations": {
+				Type:     schema.TypeList,
+				MaxItems: 1,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"set_app_all_config_vars_in_state": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  DefaultSetAppAllConfigVarsInState,
+						},
+					},
+				},
+			},
+
 			"delays": {
 				Type:     schema.TypeList,
 				MaxItems: 1,
