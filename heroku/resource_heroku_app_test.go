@@ -44,20 +44,16 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 }
 
 func TestAccHerokuApp_DontSetAllConfigVars(t *testing.T) {
-	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	appStack := "heroku-20"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
+				Config: testAccCheckHerokuAppConfig_DontSetConfigVars(appName, appStack),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
-					testAccCheckHerokuAppAttributes(&app, appName, "heroku-20"),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "name", appName),
 					resource.TestCheckResourceAttrSet(
@@ -984,4 +980,23 @@ resource "heroku_app" "foobar" {
 	locked = %s
   }
 }`, appName, org, locked)
+}
+
+func testAccCheckHerokuAppConfig_DontSetConfigVars(appName, appStack string) string {
+	return fmt.Sprintf(`
+provider "heroku" {
+  customizations {
+    set_app_all_config_vars_in_state = false
+  }
+}
+
+resource "heroku_app" "foobar" {
+  name   = "%s"
+  stack = "%s"
+  region = "us"
+
+  config_vars = {
+    FOO = "bar"
+  }
+}`, appName, appStack)
 }

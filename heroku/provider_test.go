@@ -13,15 +13,45 @@ import (
 	helper "github.com/heroku/terraform-provider-heroku/v4/helper/test"
 )
 
+const (
+	ProviderNameHeroku = "heroku"
+)
+
+var providers []*schema.Provider
+var testAccProviderFactories map[string]func() (*schema.Provider, error)
 var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 var testAccConfig *helper.TestConfig
+
+func testAccProviderFactoriesInternal(providers []*schema.Provider) map[string]func() (*schema.Provider, error) {
+	return testAccProviderFactoriesInit(providers, []string{ProviderNameHeroku})
+}
+
+// testAccProviderFactoriesInit creates ProviderFactories for the provider under testing.
+func testAccProviderFactoriesInit(providers []*schema.Provider, providerNames []string) map[string]func() (*schema.Provider, error) {
+	var factories = make(map[string]func() (*schema.Provider, error), len(providerNames))
+
+	for _, name := range providerNames {
+		p := Provider()
+
+		factories[name] = func() (*schema.Provider, error) {
+			return p, nil
+		}
+
+		if providers != nil {
+			providers = append(providers, p)
+		}
+	}
+
+	return factories
+}
 
 func init() {
 	testAccProvider = Provider()
 	testAccProviders = map[string]*schema.Provider{
 		"heroku": testAccProvider,
 	}
+	testAccProviderFactories = testAccProviderFactoriesInit(providers, []string{ProviderNameHeroku})
 	testAccConfig = helper.NewTestConfig()
 }
 
