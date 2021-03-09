@@ -116,8 +116,8 @@ func (c *Config) applySchema(d *schema.ResourceData) (err error) {
 			return fmt.Errorf("Provider configuration error: only one customizations block is permitted")
 		}
 		for _, v := range vL {
-			delaysConfig := v.(map[string]interface{})
-			if v, ok := delaysConfig["set_app_all_config_vars_in_state"].(bool); ok {
+			customizations := v.(map[string]interface{})
+			if v, ok := customizations["set_app_all_config_vars_in_state"].(bool); ok {
 				c.SetAppAllConfigVarsInState = v
 			}
 		}

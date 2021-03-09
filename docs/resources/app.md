@@ -103,10 +103,11 @@ The following attributes are exported:
    at by default.
 * `heroku_hostname` - A hostname for the Heroku application, suitable
    for pointing DNS records.
-* `all_config_vars` - A map of all of the configuration variables that
-    exist for the app, containing both those set by Terraform and those
-    set externally. (These are treated as "sensitive" so that
-    their values are redacted in console output.)
+* `all_config_vars` - A map of all configuration variables that
+  exist for the app, containing both those set by Terraform and those
+  set externally. (These are treated as "sensitive" so that
+  their values are redacted in console output.) This attribute is not set in state if the `provider`
+  attribute `set_app_all_config_vars_in_state` is `false`.
 * `uuid` - The unique UUID of the Heroku app. **NOTE:** Use this for `null_resource` triggers.
 
 ## Import

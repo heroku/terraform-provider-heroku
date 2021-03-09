@@ -118,8 +118,10 @@ The following arguments are supported:
   Only a single `customizations` block may be specified, and it supports the following arguments:
 
   * `set_app_all_config_vars_in_state` - (Optional) Controls whether the `heroku_app.all_config_vars` attribute
-    is set in the state file. Set to `false` if you'd like not to have non-managed config vars set in state.
-    Defaults to `true`.
+    is set in the state file. The aforementioned attribute stores a snapshot of all config vars in Terraform state,
+    even if they are not defined in Terraform. This means sensitive Heroku add-on config vars,
+    such as Postgres' `DATABASE_URL`, are always accessible in the state.
+    Set to `false` to only track managed config vars in the state. Defaults to `true`.
 
 * `delays` - (Optional) Delays help mitigate issues that can arise due to
   Heroku's eventually consistent data model. Only a single `delays` block may be
