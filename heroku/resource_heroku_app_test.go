@@ -35,6 +35,35 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 						"heroku_app.foobar", "config_vars.FOO", "bar"),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "internal_routing", "false"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "all_config_vars.%", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccHerokuApp_DontSetAllConfigVars(t *testing.T) {
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	appStack := "heroku-20"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAppConfig_DontSetConfigVars(appName, appStack),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "name", appName),
+					resource.TestCheckResourceAttrSet(
+						"heroku_app.foobar", "uuid"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "config_vars.FOO", "bar"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "internal_routing", "false"),
+					resource.TestCheckResourceAttr(
+						"heroku_app.foobar", "all_config_vars.%", "0"),
 				),
 			},
 		},
@@ -951,4 +980,23 @@ resource "heroku_app" "foobar" {
 	locked = %s
   }
 }`, appName, org, locked)
+}
+
+func testAccCheckHerokuAppConfig_DontSetConfigVars(appName, appStack string) string {
+	return fmt.Sprintf(`
+provider "heroku" {
+  customizations {
+    set_app_all_config_vars_in_state = false
+  }
+}
+
+resource "heroku_app" "foobar" {
+  name   = "%s"
+  stack = "%s"
+  region = "us"
+
+  config_vars = {
+    FOO = "bar"
+  }
+}`, appName, appStack)
 }

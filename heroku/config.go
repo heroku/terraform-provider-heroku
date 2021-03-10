@@ -23,22 +23,28 @@ const (
 	DefaultPostDomainCreateDelay = int64(5)
 
 	// Default custom timeouts
-	DefaultAddonCreateTimeout = int64(20)
+	DefaultAddonCreateTimeout         = int64(20)
+	DefaultSetAppAllConfigVarsInState = true
 )
 
 type Config struct {
-	Api                   *heroku.Service
-	APIKey                string
-	DebugHTTP             bool
-	Email                 string
-	Headers               http.Header
+	Api       *heroku.Service
+	APIKey    string
+	DebugHTTP bool
+	Email     string
+	Headers   http.Header
+	URL       string
+
+	// Delays
 	PostAppCreateDelay    int64
 	PostDomainCreateDelay int64
 	PostSpaceCreateDelay  int64
-	URL                   string
 
-	// Custom Timeouts
+	// Timeouts
 	AddonCreateTimeout int64
+
+	// Customization
+	SetAppAllConfigVarsInState bool
 }
 
 func (c Config) String() string {
@@ -48,11 +54,12 @@ func (c Config) String() string {
 
 func NewConfig() *Config {
 	config := &Config{
-		Headers:               make(http.Header),
-		PostAppCreateDelay:    DefaultPostAppCreateDelay,
-		PostDomainCreateDelay: DefaultPostDomainCreateDelay,
-		PostSpaceCreateDelay:  DefaultPostSpaceCreateDelay,
-		AddonCreateTimeout:    DefaultAddonCreateTimeout,
+		Headers:                    make(http.Header),
+		PostAppCreateDelay:         DefaultPostAppCreateDelay,
+		PostDomainCreateDelay:      DefaultPostDomainCreateDelay,
+		PostSpaceCreateDelay:       DefaultPostSpaceCreateDelay,
+		AddonCreateTimeout:         DefaultAddonCreateTimeout,
+		SetAppAllConfigVarsInState: DefaultSetAppAllConfigVarsInState,
 	}
 	if logging.IsDebugOrHigher() {
 		config.DebugHTTP = true
@@ -103,10 +110,23 @@ func (c *Config) applySchema(d *schema.ResourceData) (err error) {
 		c.URL = url.(string)
 	}
 
+	if v, ok := d.GetOk("customizations"); ok {
+		vL := v.([]interface{})
+		if len(vL) > 1 {
+			return fmt.Errorf("Provider configuration error: only one customizations block is permitted")
+		}
+		for _, v := range vL {
+			customizations := v.(map[string]interface{})
+			if v, ok := customizations["set_app_all_config_vars_in_state"].(bool); ok {
+				c.SetAppAllConfigVarsInState = v
+			}
+		}
+	}
+
 	if v, ok := d.GetOk("delays"); ok {
 		vL := v.([]interface{})
 		if len(vL) > 1 {
-			return fmt.Errorf("Provider configuration error: only 1 delays config is permitted")
+			return fmt.Errorf("Provider configuration error: only one delays block is permitted")
 		}
 		for _, v := range vL {
 			delaysConfig := v.(map[string]interface{})
@@ -125,7 +145,7 @@ func (c *Config) applySchema(d *schema.ResourceData) (err error) {
 	if v, ok := d.GetOk("timeouts"); ok {
 		vL := v.([]interface{})
 		if len(vL) > 1 {
-			return fmt.Errorf("provider configuration error: only 1 timeouts config is permitted")
+			return fmt.Errorf("provider configuration error: only one timeouts block is permitted")
 		}
 
 		for _, v := range vL {

@@ -114,9 +114,18 @@ The following arguments are supported:
   provided, it will be sourced from the `HEROKU_HEADERS` environment variable
   (if set).
 
+* `customizations` - (Optional) Various attributes altering the behavior of certain resources.
+  Only a single `customizations` block may be specified, and it supports the following arguments:
+
+  * `set_app_all_config_vars_in_state` - (Optional) Controls whether the `heroku_app.all_config_vars` attribute
+    is set in the state file. The aforementioned attribute stores a snapshot of all config vars in Terraform state,
+    even if they are not defined in Terraform. This means sensitive Heroku add-on config vars,
+    such as Postgres' `DATABASE_URL`, are always accessible in the state.
+    Set to `false` to only track managed config vars in the state. Defaults to `true`.
+
 * `delays` - (Optional) Delays help mitigate issues that can arise due to
   Heroku's eventually consistent data model. Only a single `delays` block may be
-  specified and it supports the following arguments:
+  specified, and it supports the following arguments:
 
   * `post_app_create_delay` - (Optional) The number of seconds to wait after an
     app is created. Default is to wait 5 seconds.
