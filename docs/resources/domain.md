@@ -44,8 +44,10 @@ The following attributes are exported:
 
 ## Importing
 
-When importing a Heroku domain resource, the ID must be built using the app name colon the unique ID from the Heroku API. For an app named `production-api` with a domain ID of `b85d9224-310b-409b-891e-c903f5a40568`, you would import it as: 
+When importing a Heroku domain resource, the ID is specified `APP_NAME:DOMAIN_IDENTIFIER`, where the domain can be identified either with the UUID from the Heroku API or the domain name.
+
+For an app named `test-app` with a domain name of `terraform.example.com`, you could import it with:
 
 ```
-$ terraform import heroku_domain.production_api production-api:b85d9224-310b-409b-891e-c903f5a40568
+$ terraform import heroku_domain.default test-app:terraform.example.com
 ```
