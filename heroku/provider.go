@@ -115,6 +115,7 @@ func Provider() *schema.Provider {
 			"heroku_pipeline":                          resourceHerokuPipeline(),
 			"heroku_pipeline_config_var":               resourceHerokuPipelineConfigVar(),
 			"heroku_pipeline_coupling":                 resourceHerokuPipelineCoupling(),
+			"heroku_review_app_config":                 resourceHerokuReviewAppConfig(),
 			"heroku_slug":                              resourceHerokuSlug(),
 			"heroku_space":                             resourceHerokuSpace(),
 			"heroku_space_inbound_ruleset":             resourceHerokuSpaceInboundRuleset(),

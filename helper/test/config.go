@@ -21,6 +21,7 @@ const (
 	TestConfigEmail
 	TestConfigTeam
 	TestConfigUserID
+	TestConfigPipelineID
 )
 
 var testConfigKeyToEnvName = map[TestConfigKey]string{
@@ -33,6 +34,7 @@ var testConfigKeyToEnvName = map[TestConfigKey]string{
 	TestConfigEmail:                "HEROKU_EMAIL",
 	TestConfigTeam:                 "HEROKU_TEAM",
 	TestConfigUserID:               "HEROKU_USER_ID",
+	TestConfigPipelineID:           "HEROKU_PIPELINE_ID",
 	TestConfigAcceptanceTestKey:    resource.TestEnvVar,
 }
 
@@ -130,4 +132,8 @@ func (t *TestConfig) GetTeamOrSkip(testing *testing.T) (val string) {
 
 func (t *TestConfig) GetUserIDOrSkip(testing *testing.T) (val string) {
 	return t.GetOrSkip(testing, TestConfigUserID)
+}
+
+func (t *TestConfig) GetPipelineIDorSkip(testing *testing.T) (val string) {
+	return t.GetOrSkip(testing, TestConfigPipelineID)
 }

@@ -47,6 +47,17 @@ func getEmail(d *schema.ResourceData) string {
 	return email
 }
 
+func getPipelineID(d *schema.ResourceData) string {
+	var pipelineID string
+	if v, ok := d.GetOk("pipeline_id"); ok {
+		vs := v.(string)
+		log.Printf("[DEBUG] pipeline ID: %s", vs)
+		pipelineID = vs
+	}
+
+	return pipelineID
+}
+
 func doesHerokuAppExist(appName string, client *heroku.Service) (*heroku.App, error) {
 	app, err := client.AppInfo(context.TODO(), appName)
 
