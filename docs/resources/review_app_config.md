@@ -74,8 +74,9 @@ The following attributes are exported:
 
 ## Import
 
-Existing review app config can be imported using the pipeline UUID.
+An Existing review app config using the combination of the pipeline UUID and the Github organization/repository
+separated by a colon.
 
 ```shell
-$ terraform import heroku_review_app_config.foobar afd193fb-7c5a-4d8f-afad-2388f4e6049d
+$ terraform import heroku_review_app_config.foobar afd193fb-7c5a-4d8f-afad-2388f4e6049d:heroku/homebrew-brew
 ```

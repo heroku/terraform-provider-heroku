@@ -113,7 +113,21 @@ func validateDeployTargetID(v interface{}, k string) (ws []string, errors []erro
 }
 
 func resourceHerokuReviewAppConfigImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	return nil, nil
+	var pipelineID, orgRepo string
+	pipelineID, orgRepo, resultErr := parseCompositeID(d.Id())
+	if resultErr != nil {
+		return nil, fmt.Errorf("unable to parse import ID for pipeline ID and Github org/repo")
+	}
+
+	d.SetId(pipelineID)
+	d.Set("org_repo", orgRepo)
+
+	readErr := resourceHerokuReviewAppConfigRead(ctx, d, meta)
+	if readErr.HasError() {
+		return nil, fmt.Errorf("unable to import review app configs")
+	}
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceHerokuReviewAppConfigCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
