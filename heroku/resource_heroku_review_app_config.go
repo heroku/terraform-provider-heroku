@@ -36,22 +36,10 @@ func resourceHerokuReviewAppConfig() *schema.Resource {
 				ForceNew: true,
 			},
 
-			"automatic_review_apps": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
-			},
-
-			"base_name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
-
 			"deploy_target": {
 				Type:     schema.TypeList,
 				MaxItems: 1,
-				Optional: true,
+				Required: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -69,6 +57,18 @@ func resourceHerokuReviewAppConfig() *schema.Resource {
 				},
 			},
 
+			"automatic_review_apps": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
+
+			"base_name": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
 			"destroy_stale_apps": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -76,15 +76,17 @@ func resourceHerokuReviewAppConfig() *schema.Resource {
 			},
 
 			"stale_days": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Computed: true,
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				RequiredWith: []string{"destroy_stale_apps"},
+				ValidateFunc: validation.IntBetween(1, 30),
 			},
 
 			"wait_for_ci": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  true,
+				Default:  false,
 			},
 
 			"repo_id": {
@@ -130,6 +132,14 @@ func resourceHerokuReviewAppConfigCreate(ctx context.Context, d *schema.Resource
 	opts.AutomaticReviewApps = &automaticReviewApps
 	log.Printf("[DEBUG] review app enable - automatic_review_apps: %v", automaticReviewApps)
 
+	destroyStaleApps := d.Get("destroy_stale_apps").(bool)
+	opts.DestroyStaleApps = &destroyStaleApps
+	log.Printf("[DEBUG] review app enable - destroy_stale_apps: %v", *opts.DestroyStaleApps)
+
+	waitForCI := d.Get("wait_for_ci").(bool)
+	opts.WaitForCi = &waitForCI
+	log.Printf("[DEBUG] review app enable - wait_for_ci: %v", *opts.WaitForCi)
+
 	if v, ok := d.GetOk("base_name"); ok {
 		vs := v.(string)
 		log.Printf("[DEBUG] review app enable - base_name: %s", vs)
@@ -171,19 +181,11 @@ func resourceHerokuReviewAppConfigCreate(ctx context.Context, d *schema.Resource
 		})(&deployTargetData)
 	}
 
-	destroyStaleApps := d.Get("destroy_stale_apps").(bool)
-	opts.DestroyStaleApps = &destroyStaleApps
-	log.Printf("[DEBUG] review app enable - destroy_stale_apps: %v", destroyStaleApps)
-
 	if v, ok := d.GetOk("stale_days"); ok {
 		vi := v.(int)
 		log.Printf("[DEBUG] review app enable - stale_days: %d", vi)
 		opts.StaleDays = &vi
 	}
-
-	waitForCI := d.Get("wait_for_ci").(bool)
-	opts.DestroyStaleApps = &waitForCI
-	log.Printf("[DEBUG] review app enable - wait_for_ci: %v", waitForCI)
 
 	log.Printf("[DEBUG] Enabling review apps config on pipeline %s", pipelineID)
 
@@ -310,8 +312,20 @@ func resourceHerokuReviewAppConfigRead(ctx context.Context, d *schema.ResourceDa
 
 	deployTarget := make([]map[string]interface{}, 0)
 	if reviewAppConfig.DeployTarget != nil {
+		// Lookup region info as the /review-app-config endpoint returns the region UUID
+		// for the deploy target ID instead of the name (ex. 'us').
+		region, regionGetErr := client.RegionInfo(ctx, reviewAppConfig.DeployTarget.ID)
+		if regionGetErr != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("Unable to retrieve region %s", reviewAppConfig.DeployTarget.ID),
+				Detail:   regionGetErr.Error(),
+			})
+			return diags
+		}
+
 		deployTarget = append(deployTarget, map[string]interface{}{
-			"id":   reviewAppConfig.DeployTarget.ID,
+			"id":   region.Name,
 			"type": reviewAppConfig.DeployTarget.Type,
 		})
 	}
