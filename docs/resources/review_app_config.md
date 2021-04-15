@@ -10,34 +10,26 @@ Provides a resource for configuring review apps.
 
 Provides a resource for configuring review apps. Using this resource also enables review apps for a pipeline.
 
-This resource can only be used after the pipeline has been connected to Github repository.
+-> **IMPORTANT!**
+This resource can only be used after you create a pipeline, and the pipeline has been connected to a Github repository.
 Please visit this [help article](https://devcenter.heroku.com/articles/github-integration-review-apps#setup)
 for more information.
 
-## Example Usage.
+## Example Usage
 
 ```hcl-terraform
-// Create a new Heroku pipeline
-resource "heroku_pipeline" "test-pipeline" {
-  name = "test-pipeline"
-
-  owner {
-    id = "00b4aef3-073c-425b-92ab-274e483d19db"
-    type = "user"
-  }
+data "heroku_pipeline" "test-pipeline" {
+  name = "test pipeline"
 }
 
-// Enable Github integration and connect pipeline to a Github repository.
-
-// Configure review apps
 resource "heroku_review_app_config" "foobar" {
-  pipeline_id = heroku_pipeline.test-pipeline.id
+  pipeline_id = data.heroku_pipeline.test-pipeline.id
   org_repo = "yourcompany/yourrepo"
   automatic_review_apps = true
   base_name = "yourcompany"
 
   deploy_target {
-    id = "us"
+    id   = "us"
     type = "region"
   }
 
