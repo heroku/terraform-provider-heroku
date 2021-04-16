@@ -32,11 +32,11 @@ resource "heroku_app" "production" {
 }
 
 # Create a Heroku pipeline
-resource "heroku_pipeline" "test-app" {
-  name = "test-app"
+resource "heroku_pipeline" "test-pipeline" {
+  name = "test-pipeline"
 
   owner {
-	id = "16d1c25f-d879-4f4d-ad1b-d807169aaa1c"
+	id = "00b4aef3-073c-425b-92ab-274e483d19db"
 	type = "user"
   }
 }
@@ -44,13 +44,13 @@ resource "heroku_pipeline" "test-app" {
 # Couple apps to different pipeline stages
 resource "heroku_pipeline_coupling" "staging" {
   app      = heroku_app.staging.name
-  pipeline = heroku_pipeline.test-app.id
+  pipeline = heroku_pipeline.test-pipeline.id
   stage    = "staging"
 }
 
 resource "heroku_pipeline_coupling" "production" {
   app      = heroku_app.production.name
-  pipeline = heroku_pipeline.test-app.id
+  pipeline = heroku_pipeline.test-pipeline.id
   stage    = "production"
 }
 ```

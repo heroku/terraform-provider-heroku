@@ -201,17 +201,6 @@ func updatePipelineConfigVars(client *heroku.Service, pipelineID, pipelineStage 
 	return nil
 }
 
-func getPipelineID(d *schema.ResourceData) string {
-	var pipelineID string
-	if v, ok := d.GetOk("pipeline_id"); ok {
-		vs := v.(string)
-		log.Printf("[DEBUG] pipeline ID: %s", vs)
-		pipelineID = vs
-	}
-
-	return pipelineID
-}
-
 func getPipelineStage(d *schema.ResourceData) string {
 	var stage string
 	if v, ok := d.GetOk("pipeline_stage"); ok {
