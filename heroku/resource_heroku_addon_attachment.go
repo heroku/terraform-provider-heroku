@@ -47,6 +47,7 @@ func resourceHerokuAddonAttachment() *schema.Resource {
 				Type:     schema.TypeString,
 				ForceNew: true,
 				Optional: true,
+				Computed: true,
 			},
 		},
 	}
