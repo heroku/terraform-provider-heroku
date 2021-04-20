@@ -5,7 +5,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/go-uuid v1.0.1
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.4.3
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.5.0
 	github.com/heroku/heroku-go/v5 v5.3.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/verybluebot/tarinator-go v0.0.0-20190613183509-5ab4e1193986
