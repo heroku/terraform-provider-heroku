@@ -56,14 +56,6 @@ func dataSourceHerokuSpace() *schema.Resource {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-
-			"trusted_ip_ranges": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
 		},
 	}
 }
@@ -77,7 +69,7 @@ func dataSourceHerokuSpaceRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	space := spaceRaw.(*spaceWithRanges)
+	space := spaceRaw.(*spaceWithNAT)
 
 	d.SetId(name)
 	d.Set("state", space.State)

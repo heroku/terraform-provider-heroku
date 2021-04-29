@@ -128,7 +128,6 @@ resource "heroku_space" "foobar" {
   name = "%s"
   organization = "%s"
 	region = "virginia"
-	trusted_ip_ranges = [ "0.0.0.0/0" ]
 }
 
 resource "heroku_app" "foobar" {
@@ -148,7 +147,6 @@ resource "heroku_space" "foobar" {
   name = "%s"
   organization = "%s"
 	region = "virginia"
-	trusted_ip_ranges = [ "0.0.0.0/0" ]
 }
 
 resource "heroku_app" "foobar" {
