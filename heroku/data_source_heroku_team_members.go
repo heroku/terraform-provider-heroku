@@ -3,18 +3,19 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
-const (
-	RoleAll = "all"
+var (
+	TeamMemberRoles = []string{"admin", "member", "viewer", "collaborator", "owner"}
 )
 
 func dataSourceHerokuTeamMembers() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceHerokuTeamMembersRead,
+		ReadContext: dataSourceHerokuTeamMembersRead,
 		Schema: map[string]*schema.Schema{
 			"team": {
 				Type:     schema.TypeString,
@@ -26,12 +27,10 @@ func dataSourceHerokuTeamMembers() *schema.Resource {
 				Required: true,
 				MinItems: 1,
 				Elem: &schema.Schema{
-					Type:      schema.TypeString,
-					Sensitive: true,
-					ValidateFunc: validation.StringInSlice(
-						[]string{"admin", "member", "viewer", "collaborator", RoleAll}, false),
+					Type:         schema.TypeString,
+					Sensitive:    true,
+					ValidateFunc: validation.StringInSlice(TeamMemberRoles, false),
 				},
-				ValidateFunc: validateTeamMemberRoles,
 			},
 
 			"members": {
@@ -55,7 +54,7 @@ func dataSourceHerokuTeamMembers() *schema.Resource {
 						},
 
 						"role": {
-							Type:     schema.TypeBool,
+							Type:     schema.TypeString,
 							Computed: true,
 						},
 
@@ -75,56 +74,58 @@ func dataSourceHerokuTeamMembers() *schema.Resource {
 	}
 }
 
-func validateTeamMemberRoles(v interface{}, k string) (ws []string, errors []error) {
-	// Check if 'all' is set as a role along with other ones. If this is the case,
-	// return an error to set just 'all' or one or more of the other roles.
-	isAllRoleSet := false
-	rolesRaw := v.([]interface{})
-
-	for _, r := range rolesRaw {
-		if r.(string) == RoleAll {
-			isAllRoleSet = true
-			continue
-		}
-
-		if isAllRoleSet {
-			errors = append(errors, fmt.Errorf("please set the roles attribute to either 'all' or one or more other roles"))
-		}
-	}
-
-	return ws, errors
-}
-
-func dataSourceHerokuTeamMembersRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Config).Api
+func dataSourceHerokuTeamMembersRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+	client := meta.(*Config).Api
 	roles := make([]string, 0)
 
-	teamName := d.Get("name").(string)
+	teamName := d.Get("team").(string)
 	rolesRaw := d.Get("roles").([]interface{})
 
 	for _, r := range rolesRaw {
 		roles = append(roles, r.(string))
 	}
 
-	teamMembers, err := client.TeamMemberList(context.TODO(), teamName,
-		&heroku.ListRange{Max: 1000, Descending: false},
+	teamMembers, listErr := client.TeamMemberList(context.TODO(), teamName,
+		&heroku.ListRange{
+			Field:      "id",
+			Max:        1000,
+			Descending: false,
+		},
 	)
-	if err != nil {
-		return err
+	if listErr != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Unable to retrieve members for team %s", teamName),
+			Detail:   listErr.Error(),
+		})
+		return diags
+	}
+
+	if len(teamMembers) == 0 {
+		return diag.Errorf("no members found for team %s", teamName)
 	}
 
 	d.SetId(teamName)
 
+	members := make([]map[string]interface{}, 0)
+
 	for _, m := range teamMembers {
-		m.User
+		if SliceContainsString(TeamMemberRoles, *m.Role) {
+			member := make(map[string]interface{})
+			member["team_member_id"] = m.ID
+			member["user_id"] = m.User.ID
+			member["email"] = m.User.Email
+			member["role"] = *m.Role
+			member["federated"] = m.Federated
+			member["two_factor_authentication"] = m.TwoFactorAuthentication
+			members = append(members, member)
+		}
 	}
 
-	var setErr error
-	setErr = d.Set("name", team.Name)
-	setErr = d.Set("default", team.Default)
-	setErr = d.Set("membership_limit", team.MembershipLimit)
-	setErr = d.Set("provisioned_licenses", team.ProvisionedLicenses)
-	setErr = d.Set("type", team.Type)
+	d.Set("team", teamName)
+	d.Set("roles", roles)
+	d.Set("members", members)
 
-	return setErr
+	return diags
 }

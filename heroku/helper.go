@@ -86,3 +86,12 @@ func parseCompositeID(id string) (p1 string, p2 string, err error) {
 func providerVersion() string {
 	return version.ProviderVersion
 }
+
+func SliceContainsString(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
