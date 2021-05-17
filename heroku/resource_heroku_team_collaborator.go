@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
@@ -123,6 +124,11 @@ func resourceHerokuTeamCollaboratorRead(d *schema.ResourceData, meta interface{}
 	teamCollaborator, err := resourceHerokuTeamCollaboratorRetrieve(d.Id(), d.Get("app").(string), client)
 
 	if err != nil {
+		if strings.Contains(err.Error(), "Couldn't find that user") {
+			// If user cannot be found, remove the resource from state.
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
