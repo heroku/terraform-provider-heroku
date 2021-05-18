@@ -133,6 +133,7 @@ func Provider() *schema.Provider {
 			"heroku_space":              dataSourceHerokuSpace(),
 			"heroku_space_peering_info": dataSourceHerokuSpacePeeringInfo(),
 			"heroku_team":               dataSourceHerokuTeam(),
+			"heroku_team_members":       dataSourceHerokuTeamMembers(),
 		},
 
 		ConfigureFunc: providerConfigure,

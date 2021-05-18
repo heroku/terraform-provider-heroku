@@ -28,7 +28,6 @@ func TestAccDatasourceHerokuTeam_Basic(t *testing.T) {
 
 func testAccCheckHerokuTeamWithDataSource_Basic(teamName string) string {
 	return fmt.Sprintf(`
-
 data "heroku_team" "foobar" {
   name = "%s"
 }

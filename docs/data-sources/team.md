@@ -8,7 +8,7 @@ description: |-
 
 # Data Source: heroku_team
 
-Use this data source to get information about a Heroku Team or Heroku Enterprise team.
+Use this data source to get information about a Heroku Team.
 
 ## Example Usage
 
@@ -40,13 +40,8 @@ The following arguments are supported:
 The following attributes are exported:
 
 * `id` - The ID of the team
-
 * `default` - Whether to use this team when none is specified
-
 * `credit_card_collections` - Whether charges incurred by the team are paid by credit card
-
 * `membership_limit` - Upper limit of members allowed in a team
-
 * `provisioned_licenses` - Whether the team is provisioned licenses by Salesforce
-
 * `type` - type of team Will likely be either "enterprise" or "team"
