@@ -111,7 +111,7 @@ func dataSourceHerokuTeamMembersRead(ctx context.Context, d *schema.ResourceData
 	members := make([]map[string]interface{}, 0)
 
 	for _, m := range teamMembers {
-		if SliceContainsString(TeamMemberRoles, *m.Role) {
+		if SliceContainsString(roles, *m.Role) {
 			member := make(map[string]interface{})
 			member["team_member_id"] = m.ID
 			member["user_id"] = m.User.ID
