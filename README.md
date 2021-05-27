@@ -66,7 +66,22 @@ $ $GOPATH/bin/terraform-provider-heroku
 
 ### Using the Provider
 
-To use the dev provider with local Terraform, copy the freshly built plugin into Terraform's local plugins directory:
+To use the dev provider with local Terraform, configure a dev override pointing to the directory where `terraform-provider-heroku` can be found:
+
+```
+cat << TRC >> ~/.terraformrc
+provider_installation {
+  dev_overrides {
+    "heroku/heroku" = "$GOPATH/bin"
+  }
+  direct {}
+}
+TRC
+```
+
+#### Terraform Versions Prior to 0.13
+
+Copy the freshly built plugin into Terraform's local plugins directory:
 
 ```sh
 cp $GOPATH/bin/terraform-provider-heroku ~/.terraform.d/plugins/
