@@ -15,6 +15,7 @@ func TestAccHerokuCert_importBasic(t *testing.T) {
 	wd, _ := os.Getwd()
 	certFile := wd + "/test-fixtures/terraform.cert"
 	keyFile := wd + "/test-fixtures/terraform.key"
+	slugID := testAccConfig.GetSlugIDOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -22,7 +23,7 @@ func TestAccHerokuCert_importBasic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuCertDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuCertUSConfig(appName, certFile, keyFile),
+				Config: testAccCheckHerokuCertUSConfig(appName, slugID, certFile, keyFile),
 			},
 			{
 				ResourceName:        "heroku_cert.ssl_certificate",

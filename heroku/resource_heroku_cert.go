@@ -59,7 +59,7 @@ func resourceHerokuCertImport(d *schema.ResourceData, meta interface{}) ([]*sche
 		return nil, err
 	}
 
-	ep, err := client.SSLEndpointInfo(context.Background(), app, id)
+	ep, err := client.SniEndpointInfo(context.Background(), app, id)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func resourceHerokuCertCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] SSL Certificate create configuration: %#v, %#v", app, opts)
 	a, err := client.SniEndpointCreate(context.TODO(), app, opts)
 	if err != nil {
-		return fmt.Errorf("Error creating SSL endpoint: %s", err)
+		return fmt.Errorf("Error creating SniEndpoint: %s", err)
 	}
 
 	d.SetId(a.ID)
@@ -112,18 +112,16 @@ func resourceHerokuCertUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
 	app := d.Get("app").(string)
-	preprocess := true
-	opts := heroku.SSLEndpointUpdateOpts{
-		CertificateChain: heroku.String(d.Get("certificate_chain").(string)),
-		Preprocess:       &preprocess,
-		PrivateKey:       heroku.String(d.Get("private_key").(string)),
+	opts := heroku.SniEndpointUpdateOpts{
+		CertificateChain: d.Get("certificate_chain").(string),
+		PrivateKey:       d.Get("private_key").(string),
 	}
 
 	if d.HasChange("certificate_chain") || d.HasChange("private_key") {
 		log.Printf("[DEBUG] SSL Certificate update configuration: %#v, %#v", app, opts)
-		_, err := client.SSLEndpointUpdate(context.TODO(), app, d.Id(), opts)
+		_, err := client.SniEndpointUpdate(context.TODO(), app, d.Id(), opts)
 		if err != nil {
-			return fmt.Errorf("Error updating SSL endpoint: %s", err)
+			return fmt.Errorf("Error updating Sni endpoint: %s", err)
 		}
 	}
 
@@ -135,8 +133,8 @@ func resourceHerokuCertDelete(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[INFO] Deleting SSL Cert: %s", d.Id())
 
-	// Destroy the app
-	_, err := client.SSLEndpointDelete(context.TODO(), d.Get("app").(string), d.Id())
+	// Destroy the endpoint
+	_, err := client.SniEndpointDelete(context.TODO(), d.Get("app").(string), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting SSL Cert: %s", err)
 	}

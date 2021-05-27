@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -29,7 +28,7 @@ import (
 // on update seems to allow the test to run smoothly; in real life, this test
 // case is definitely an extreme edge case.
 func TestAccHerokuCert_EU(t *testing.T) {
-	var endpoint heroku.SSLEndpoint
+	var endpoint heroku.SniEndpoint
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	wd, _ := os.Getwd()
@@ -53,9 +52,6 @@ func TestAccHerokuCert_EU(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuCertificateChain(&endpoint, certificateChain),
-					resource.TestMatchResourceAttr(
-						"heroku_cert.ssl_certificate",
-						"cname", regexp.MustCompile(`^[^\.]+.ssl.herokudns.com$`)),
 				),
 			},
 			{
@@ -64,9 +60,6 @@ func TestAccHerokuCert_EU(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuCertificateChain(&endpoint, certificateChain2),
-					resource.TestMatchResourceAttr(
-						"heroku_cert.ssl_certificate",
-						"cname", regexp.MustCompile(`^[^\.]+.ssl.herokudns.com$`)),
 				),
 			},
 		},
@@ -74,7 +67,7 @@ func TestAccHerokuCert_EU(t *testing.T) {
 }
 
 func TestAccHerokuCert_US(t *testing.T) {
-	var endpoint heroku.SSLEndpoint
+	var endpoint heroku.SniEndpoint
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	wd, _ := os.Getwd()
@@ -88,30 +81,26 @@ func TestAccHerokuCert_US(t *testing.T) {
 	certificateChain2Bytes, _ := ioutil.ReadFile(certFile2)
 	certificateChain2 := string(certificateChain2Bytes)
 
+	slugID := testAccConfig.GetSlugIDOrSkip(t)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuCertDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuCertUSConfig(appName, certFile2, keyFile2),
+				Config: testAccCheckHerokuCertUSConfig(appName, slugID, certFile2, keyFile2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuCertificateChain(&endpoint, certificateChain2),
-					resource.TestMatchResourceAttr(
-						"heroku_cert.ssl_certificate",
-						"cname", regexp.MustCompile(`^[^\.]+.ssl.herokudns.com$`)),
 				),
 			},
 			{
 				PreConfig: sleep(t, 15),
-				Config:    testAccCheckHerokuCertUSConfig(appName, certFile, keyFile),
+				Config:    testAccCheckHerokuCertUSConfig(appName, slugID, certFile, keyFile),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuCertificateChain(&endpoint, certificateChain),
-					resource.TestMatchResourceAttr(
-						"heroku_cert.ssl_certificate",
-						"cname", regexp.MustCompile(`^[^\.]+.ssl.herokudns.com$`)),
 				),
 			},
 		},
@@ -138,24 +127,31 @@ resource "heroku_cert" "ssl_certificate" {
 }`, appName, certFile, keyFile))
 }
 
-func testAccCheckHerokuCertUSConfig(appName, certFile, keyFile string) string {
+func testAccCheckHerokuCertUSConfig(appName, slugID, certFile, keyFile string) string {
 	return strings.TrimSpace(fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name = "%s"
   region = "us"
 }
 
-resource "heroku_addon" "ssl" {
+resource "heroku_app_release" "foobar-release" {
   app = "${heroku_app.foobar.name}"
-  plan = "ssl:endpoint"
+  slug_id = "%s"
+}
+
+resource "heroku_formation" "foobar-web" {
+  app = "${heroku_app.foobar.name}"
+  type = "web"
+  size = "standard-1x"
+  quantity = 1
 }
 
 resource "heroku_cert" "ssl_certificate" {
   app = "${heroku_app.foobar.name}"
-  depends_on = ["heroku_addon.ssl"]
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
-}`, appName, certFile, keyFile))
+  depends_on = ["heroku_formation.foobar-web"]
+}`, appName, slugID, certFile, keyFile))
 }
 
 func sleep(t *testing.T, amount time.Duration) func() {
@@ -182,7 +178,7 @@ func testAccCheckHerokuCertDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckHerokuCertificateChain(endpoint *heroku.SSLEndpoint, chain string) resource.TestCheckFunc {
+func testAccCheckHerokuCertificateChain(endpoint *heroku.SniEndpoint, chain string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		if endpoint.CertificateChain != chain {
@@ -193,7 +189,7 @@ func testAccCheckHerokuCertificateChain(endpoint *heroku.SSLEndpoint, chain stri
 	}
 }
 
-func testAccCheckHerokuCertExists(n string, endpoint *heroku.SSLEndpoint) resource.TestCheckFunc {
+func testAccCheckHerokuCertExists(n string, endpoint *heroku.SniEndpoint) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 
@@ -202,19 +198,19 @@ func testAccCheckHerokuCertExists(n string, endpoint *heroku.SSLEndpoint) resour
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No SSL endpoint ID is set")
+			return fmt.Errorf("No SNI endpoint ID is set")
 		}
 
 		client := testAccProvider.Meta().(*Config).Api
 
-		foundEndpoint, err := client.SSLEndpointInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundEndpoint, err := client.SniEndpointInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
 		if err != nil {
 			return err
 		}
 
 		if foundEndpoint.ID != rs.Primary.ID {
-			return fmt.Errorf("SSL endpoint not found")
+			return fmt.Errorf("SNI endpoint not found")
 		}
 
 		*endpoint = *foundEndpoint
