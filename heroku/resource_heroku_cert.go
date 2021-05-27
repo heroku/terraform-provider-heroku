@@ -77,14 +77,12 @@ func resourceHerokuCertCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
 	app := d.Get("app").(string)
-	preprocess := true
-	opts := heroku.SSLEndpointCreateOpts{
+	opts := heroku.SniEndpointCreateOpts{
 		CertificateChain: d.Get("certificate_chain").(string),
-		Preprocess:       &preprocess,
 		PrivateKey:       d.Get("private_key").(string)}
 
 	log.Printf("[DEBUG] SSL Certificate create configuration: %#v, %#v", app, opts)
-	a, err := client.SSLEndpointCreate(context.TODO(), app, opts)
+	a, err := client.SniEndpointCreate(context.TODO(), app, opts)
 	if err != nil {
 		return fmt.Errorf("Error creating SSL endpoint: %s", err)
 	}
@@ -106,7 +104,6 @@ func resourceHerokuCertRead(d *schema.ResourceData, meta interface{}) error {
 
 	d.Set("certificate_chain", cert.CertificateChain)
 	d.Set("name", cert.Name)
-	d.Set("cname", cert.CName)
 
 	return nil
 }
@@ -148,12 +145,12 @@ func resourceHerokuCertDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceHerokuSSLCertRetrieve(app string, id string, client *heroku.Service) (*heroku.SSLEndpoint, error) {
-	addon, err := client.SSLEndpointInfo(context.TODO(), app, id)
+func resourceHerokuSSLCertRetrieve(app string, id string, client *heroku.Service) (*heroku.SniEndpoint, error) {
+	endpoint, err := client.SniEndpointInfo(context.TODO(), app, id)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error retrieving SSL Cert: %s", err)
 	}
 
-	return addon, nil
+	return endpoint, nil
 }
