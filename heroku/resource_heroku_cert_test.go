@@ -42,13 +42,15 @@ func TestAccHerokuCert_EU(t *testing.T) {
 	certificateChain2Bytes, _ := ioutil.ReadFile(certFile2)
 	certificateChain2 := string(certificateChain2Bytes)
 
+	slugID := testAccConfig.GetSlugIDOrSkip(t)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuCertDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuCertEUConfig(appName, certFile, keyFile),
+				Config: testAccCheckHerokuCertConfig(appName, "eu", slugID, certFile, keyFile),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuCertificateChain(&endpoint, certificateChain),
@@ -56,7 +58,7 @@ func TestAccHerokuCert_EU(t *testing.T) {
 			},
 			{
 				PreConfig: sleep(t, 15),
-				Config:    testAccCheckHerokuCertEUConfig(appName, certFile2, keyFile2),
+				Config:    testAccCheckHerokuCertConfig(appName, "eu", slugID, certFile2, keyFile2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuCertificateChain(&endpoint, certificateChain2),
@@ -89,7 +91,7 @@ func TestAccHerokuCert_US(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuCertDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuCertUSConfig(appName, slugID, certFile2, keyFile2),
+				Config: testAccCheckHerokuCertConfig(appName, "us", slugID, certFile2, keyFile2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuCertificateChain(&endpoint, certificateChain2),
@@ -97,7 +99,7 @@ func TestAccHerokuCert_US(t *testing.T) {
 			},
 			{
 				PreConfig: sleep(t, 15),
-				Config:    testAccCheckHerokuCertUSConfig(appName, slugID, certFile, keyFile),
+				Config:    testAccCheckHerokuCertConfig(appName, "us", slugID, certFile, keyFile),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuCertificateChain(&endpoint, certificateChain),
@@ -107,31 +109,11 @@ func TestAccHerokuCert_US(t *testing.T) {
 	})
 }
 
-func testAccCheckHerokuCertEUConfig(appName, certFile, keyFile string) string {
+func testAccCheckHerokuCertConfig(appName, region, slugID, certFile, keyFile string) string {
 	return strings.TrimSpace(fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name = "%s"
-  region = "eu"
-}
-
-resource "heroku_addon" "ssl" {
-  app = "${heroku_app.foobar.name}"
-  plan = "ssl:endpoint"
-}
-
-resource "heroku_cert" "ssl_certificate" {
-  app = "${heroku_app.foobar.name}"
-  depends_on = ["heroku_addon.ssl"]
-  certificate_chain="${file("%s")}"
-  private_key="${file("%s")}"
-}`, appName, certFile, keyFile))
-}
-
-func testAccCheckHerokuCertUSConfig(appName, slugID, certFile, keyFile string) string {
-	return strings.TrimSpace(fmt.Sprintf(`
-resource "heroku_app" "foobar" {
-  name = "%s"
-  region = "us"
+  region = "%s"
 }
 
 resource "heroku_app_release" "foobar-release" {
@@ -151,7 +133,7 @@ resource "heroku_cert" "ssl_certificate" {
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
   depends_on = ["heroku_formation.foobar-web"]
-}`, appName, slugID, certFile, keyFile))
+}`, appName, region, slugID, certFile, keyFile))
 }
 
 func sleep(t *testing.T, amount time.Duration) func() {

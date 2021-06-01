@@ -23,7 +23,7 @@ func TestAccHerokuCert_importBasic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuCertDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuCertUSConfig(appName, slugID, certFile, keyFile),
+				Config: testAccCheckHerokuCertConfig(appName, "us", slugID, certFile, keyFile),
 			},
 			{
 				ResourceName:        "heroku_cert.ssl_certificate",
