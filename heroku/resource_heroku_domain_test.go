@@ -156,7 +156,7 @@ resource "heroku_app_release" "foobar-release" {
 resource "heroku_formation" "foobar-web" {
   app = "${heroku_app.foobar.name}"
   type = "web"
-  size = "standard-1x"
+  size = "hobby"
   quantity = 1
 }
 
