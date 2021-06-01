@@ -164,6 +164,7 @@ resource "heroku_cert" "ssl_certificate" {
   app = "${heroku_app.foobar.name}"
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
+  depends_on = ["heroku_formation.foobar-web"]
 }
 
 resource "heroku_domain" "foobar" {
