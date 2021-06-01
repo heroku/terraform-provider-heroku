@@ -19,10 +19,21 @@ resource "heroku_app" "default" {
   region = "us"
 }
 
-# Add-on SSL to application
-resource "heroku_addon" "ssl" {
-  app  = heroku_app.default.name
-  plan = "ssl"
+# Build a slug that we can scale
+resource "heroku_build" "default" {
+  app        = heroku_app.default.name
+  source {
+    url     = "https://github.com/mikehale/ruby-puma-getting-started/archive/v1.0.tar.gz"
+    version = "1.0"
+  }
+}
+
+# Scale the app to a tier that supports Heroku SSL
+resource "heroku_formation" "foobar-web" {
+  app = heroku_app.default.name
+  type = "web"
+  size = "hobby"
+  quantity = 1
 }
 
 # Establish certificate for a given application
@@ -47,7 +58,6 @@ The following arguments are supported:
 The following attributes are exported:
 
 * `id` - The ID of the add-on
-* `cname` - The CNAME for the SSL endpoint
 * `name` - The name of the SSL certificate
 
 ## Importing

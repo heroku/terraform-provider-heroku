@@ -92,7 +92,7 @@ func testAccCheckHerokuCertDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := client.SSLEndpointInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		_, err := client.SniEndpointInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Cerfificate still exists")

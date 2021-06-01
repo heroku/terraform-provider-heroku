@@ -54,8 +54,7 @@ func resourceHerokuAppWebhook() *schema.Resource {
 						"api:dyno",
 						"api:formation",
 						"api:release",
-						"api:sni-endpoint",
-						"api:ssl-endpoint"}, true),
+						"api:sni-endpoint"}, true),
 				},
 			},
 
