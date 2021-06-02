@@ -21,10 +21,9 @@ resource "heroku_app" "default" {
 
 # Build a slug that we can scale
 resource "heroku_build" "default" {
-  app        = heroku_app.default.name
+  app = heroku_app.default.name
   source {
-    url     = "https://github.com/mikehale/ruby-puma-getting-started/archive/v1.0.tar.gz"
-    version = "1.0"
+    url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/app.tgz"
   }
 }
 
