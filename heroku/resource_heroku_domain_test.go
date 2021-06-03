@@ -15,6 +15,7 @@ import (
 
 func TestAccHerokuDomain_Basic(t *testing.T) {
 	var domain heroku.Domain
+	var endpoint heroku.SniEndpoint
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
 
@@ -27,7 +28,7 @@ func TestAccHerokuDomain_Basic(t *testing.T) {
 				Config: testAccCheckHerokuDomainConfig_basic(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
-					testAccCheckHerokuDomainAttributes(&domain),
+					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "app", appName),
 				),
@@ -53,7 +54,7 @@ func TestAccHerokuDomain_No_SSL_Change(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
-					testAccCheckHerokuDomainAttributes_ssl(&domain, &endpoint),
+					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
 					resource.TestCheckNoResourceAttr("heroku_domain.foobar", "sni_endpoint"),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "app", appName),
@@ -64,7 +65,7 @@ func TestAccHerokuDomain_No_SSL_Change(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
-					testAccCheckHerokuDomainAttributes_ssl(&domain, &endpoint),
+					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
 					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint", &endpoint.ID),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "app", appName),
@@ -91,7 +92,7 @@ func TestAccHerokuDomain_SSL(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
-					testAccCheckHerokuDomainAttributes_ssl(&domain, &endpoint),
+					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
 					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint", &endpoint.ID),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "app", appName),
@@ -102,7 +103,7 @@ func TestAccHerokuDomain_SSL(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate2", &endpoint),
-					testAccCheckHerokuDomainAttributes_ssl(&domain, &endpoint),
+					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
 					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint", &endpoint.ID),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "app", appName),
@@ -130,21 +131,7 @@ func testAccCheckHerokuDomainDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckHerokuDomainAttributes(Domain *heroku.Domain) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		if !strings.HasPrefix(Domain.Hostname, "terraform-") && !strings.HasSuffix(Domain.Hostname, ".example.com") {
-			return fmt.Errorf("Bad hostname: %s", Domain.Hostname)
-		}
-
-		if !strings.Contains(*Domain.CName, ".herokudns.com") {
-			return fmt.Errorf("Expected cname to be [*.herokudns.com] but got: [%s]", *Domain.CName)
-		}
-
-		return nil
-	}
-}
-
-func testAccCheckHerokuDomainAttributes_ssl(Domain *heroku.Domain, endpoint *heroku.SniEndpoint) resource.TestCheckFunc {
+func testAccCheckHerokuDomainAttributes(Domain *heroku.Domain, endpoint *heroku.SniEndpoint) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if !strings.HasPrefix(Domain.Hostname, "terraform-") && !strings.HasSuffix(Domain.Hostname, ".example.com") {
 			return fmt.Errorf("Bad hostname: %s", Domain.Hostname)
