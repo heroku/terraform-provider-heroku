@@ -14,6 +14,7 @@ func resourceHerokuDomain() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceHerokuDomainCreate,
 		Read:   resourceHerokuDomainRead,
+		Update: resourceHerokuDomainUpdate,
 		Delete: resourceHerokuDomainDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -41,7 +42,6 @@ func resourceHerokuDomain() *schema.Resource {
 			"sni_endpoint": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 			},
 		},
 	}
@@ -60,9 +60,8 @@ func resourceHerokuDomainImport(d *schema.ResourceData, meta interface{}) ([]*sc
 		return nil, err
 	}
 
-	d.SetId(do.ID)
-	d.Set("app", app)
-	d.Set("sni_endpoint", do.SniEndpoint.ID)
+	log.Printf("[INFO] Importing Domain: %s", d.Id())
+	read(d, do)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -84,14 +83,31 @@ func resourceHerokuDomainCreate(d *schema.ResourceData, meta interface{}) error 
 	if err != nil {
 		return err
 	}
+	read(d, do)
 
-	d.SetId(do.ID)
-	d.Set("hostname", do.Hostname)
-	d.Set("cname", do.CName)
-
-	log.Printf("[INFO] Domain ID: %s", d.Id())
 	config := meta.(*Config)
 	time.Sleep(time.Duration(config.PostDomainCreateDelay) * time.Second)
+
+	return nil
+}
+
+func resourceHerokuDomainUpdate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*Config).Api
+	app := d.Get("app").(string)
+	opts := heroku.DomainUpdateOpts{}
+
+	if d.HasChange("sni_endpoint") {
+		v := d.Get("sni_endpoint").(string)
+		opts.SniEndpoint = &v
+	}
+
+	do, err := client.DomainUpdate(context.TODO(), app, d.Id(), opts)
+	if err != nil {
+		return err
+	}
+
+	read(d, do)
+
 	return nil
 }
 
@@ -118,11 +134,17 @@ func resourceHerokuDomainRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error retrieving domain: %s", err)
 	}
 
+	log.Printf("[INFO] Reading Domain: %s", d.Id())
+	read(d, do)
+
+	return nil
+}
+
+func read(d *schema.ResourceData, do *heroku.Domain) {
+	d.SetId(do.ID)
 	d.Set("hostname", do.Hostname)
 	d.Set("cname", do.CName)
 	if v := do.SniEndpoint; v != nil {
 		d.Set("sni_endpoint", v.ID)
 	}
-
-	return nil
 }

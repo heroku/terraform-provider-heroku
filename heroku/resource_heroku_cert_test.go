@@ -74,6 +74,7 @@ resource "heroku_formation" "foobar-web" {
   type = "web"
   size = "hobby"
   quantity = 1
+  depends_on = ["heroku_app_release.foobar-release"]
 }
 
 resource "heroku_cert" "ssl_certificate" {
