@@ -61,7 +61,7 @@ func resourceHerokuDomainImport(d *schema.ResourceData, meta interface{}) ([]*sc
 		return nil, err
 	}
 
-	read(d, do)
+	populateResource(d, do)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -83,7 +83,7 @@ func resourceHerokuDomainCreate(d *schema.ResourceData, meta interface{}) error 
 	if err != nil {
 		return err
 	}
-	read(d, do)
+	populateResource(d, do)
 
 	config := meta.(*Config)
 	time.Sleep(time.Duration(config.PostDomainCreateDelay) * time.Second)
@@ -106,7 +106,7 @@ func resourceHerokuDomainUpdate(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 
-	read(d, do)
+	populateResource(d, do)
 
 	return nil
 }
@@ -135,12 +135,12 @@ func resourceHerokuDomainRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[INFO] Reading Domain: %s", d.Id())
-	read(d, do)
+	populateResource(d, do)
 
 	return nil
 }
 
-func read(d *schema.ResourceData, do *heroku.Domain) {
+func populateResource(d *schema.ResourceData, do *heroku.Domain) {
 	d.SetId(do.ID)
 	d.Set("app", do.App.Name)
 	d.Set("hostname", do.Hostname)
