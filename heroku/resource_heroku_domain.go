@@ -54,13 +54,13 @@ func resourceHerokuDomainImport(d *schema.ResourceData, meta interface{}) ([]*sc
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("[INFO] Importing Domain: %s on App: %s", id, app)
 
 	do, err := client.DomainInfo(context.Background(), app, id)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("[INFO] Importing Domain: %s", d.Id())
 	read(d, do)
 
 	return []*schema.ResourceData{d}, nil
@@ -142,6 +142,7 @@ func resourceHerokuDomainRead(d *schema.ResourceData, meta interface{}) error {
 
 func read(d *schema.ResourceData, do *heroku.Domain) {
 	d.SetId(do.ID)
+	d.Set("app", do.App.Name)
 	d.Set("hostname", do.Hostname)
 	d.Set("cname", do.CName)
 	if v := do.SniEndpoint; v != nil {
