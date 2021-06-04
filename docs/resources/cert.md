@@ -28,11 +28,13 @@ resource "heroku_build" "default" {
 }
 
 # Scale the app to a tier that supports Heroku SSL
-resource "heroku_formation" "foobar-web" {
+resource "heroku_formation" "web" {
   app = heroku_app.default.name
   type = "web"
   size = "hobby"
   quantity = 1
+  # Wait until the build has completed before attempting to scale
+  depends_on = ["heroku_build.default"]
 }
 
 # Establish certificate for a given application
@@ -40,7 +42,8 @@ resource "heroku_cert" "ssl_certificate" {
   app               = heroku_app.default.name
   certificate_chain = file("server.crt")
   private_key       = file("server.key")
-  depends_on        = ["heroku_addon.ssl"]
+  # Wait until the process_tier changes to hobby before attempting to create a cert
+  depends_on        = ["heroku_formation.web"]
 }
 ```
 

@@ -201,6 +201,7 @@ resource "heroku_formation" "foobar-web" {
   type = "web"
   size = "hobby"
   quantity = 1
+  # Wait until the build has completed before attempting to scale
   depends_on = ["heroku_app_release.foobar-release"]
 }
 
@@ -208,13 +209,14 @@ resource "heroku_cert" "ssl_certificate" {
   app = "${heroku_app.foobar.name}"
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
+  # Wait until the process_tier changes to hobby before attempting to create a cert
   depends_on = ["heroku_formation.foobar-web"]
 }
 
-# TODO if we create the domain before the cert the domain will be auto associated via the cert create
 resource "heroku_domain" "foobar" {
   app = "${heroku_app.foobar.name}"
   hostname = "terraform-%s.example.com"
+  # Wait until the certificate has been created before adding domains to avoid auto-association. Once auto-association has been sunset we no longer need to do this. See https://devcenter.heroku.com/changelog-items/1938.
   depends_on = ["heroku_cert.ssl_certificate"]
 }`, appName, slugID, certFile, keyFile, appName)
 }
