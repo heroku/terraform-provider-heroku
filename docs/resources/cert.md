@@ -3,12 +3,12 @@ layout: "heroku"
 page_title: "Heroku: heroku_cert"
 sidebar_current: "docs-heroku-resource-cert"
 description: |-
-  Provides a Heroku SSL certificate resource. It allows to set a given certificate for a Heroku app.
+  Provides a Heroku SSL certificate resource. It allows to set a given certificate for a domain on a Heroku app.
 ---
 
 # heroku\_cert
 
-Provides a Heroku SSL certificate resource. It allows to set a given certificate for a Heroku app.
+Provides a Heroku SSL certificate resource. It allows to set a given certificate for a domain on a Heroku app.
 
 ## Example Usage
 
@@ -37,13 +37,20 @@ resource "heroku_formation" "web" {
   depends_on = ["heroku_build.default"]
 }
 
-# Establish certificate for a given application
+# Create the certificate
 resource "heroku_cert" "ssl_certificate" {
-  app               = heroku_app.default.name
+  app = heroku_app.default.name
   certificate_chain = file("server.crt")
-  private_key       = file("server.key")
+  private_key = file("server.key")
   # Wait until the process_tier changes to hobby before attempting to create a cert
-  depends_on        = ["heroku_formation.web"]
+  depends_on = ["heroku_formation.web"]
+}
+
+# Associate it with a domain
+resource "heroku_domain" "foobar" {
+  app = heroku_app.default.name
+  hostname = "terraform-123.example.com"
+  sni_endpoint = heroku_cert.ssl_certificate.id
 }
 ```
 
@@ -59,7 +66,7 @@ The following arguments are supported:
 
 The following attributes are exported:
 
-* `id` - The ID of the add-on
+* `id` - The ID of the SSL certificate
 * `name` - The name of the SSL certificate
 
 ## Importing
