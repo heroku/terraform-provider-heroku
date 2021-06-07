@@ -29,22 +29,20 @@ func TestAccHerokuCert(t *testing.T) {
 	certificateChain2Bytes, _ := ioutil.ReadFile(certFile2)
 	certificateChain2 := string(certificateChain2Bytes)
 
-	slugID := testAccConfig.GetSlugIDOrSkip(t)
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuCertDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuCertConfig(appName, slugID, certFile2, keyFile2),
+				Config: testAccCheckHerokuCertConfig(appName, certFile2, keyFile2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuCertificateChain(&endpoint, certificateChain2),
 				),
 			},
 			{
-				Config: testAccCheckHerokuCertConfig(appName, slugID, certFile, keyFile),
+				Config: testAccCheckHerokuCertConfig(appName, certFile, keyFile),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuCertificateChain(&endpoint, certificateChain),
@@ -54,19 +52,24 @@ func TestAccHerokuCert(t *testing.T) {
 	})
 }
 
-func testAccCheckHerokuCertConfig(appName, slugID, certFile, keyFile string) string {
+func testAccCheckHerokuCertConfig(appName, certFile, keyFile string) string {
 	return strings.TrimSpace(fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name = "%s"
   region = "us"
 }
 
-# Unfortunately the only way to set the process tier to one compatible with
-# Heroku SSL is to scale the app, and we can only scale it if there is a
-# release.
+resource "heroku_slug" "foobar" {
+    app = "${heroku_app.foobar.name}"
+    file_path = "test-fixtures/slug.tgz"
+    process_types = {
+      web = "ruby server.rb"
+    }
+}
+
 resource "heroku_app_release" "foobar-release" {
   app = "${heroku_app.foobar.name}"
-  slug_id = "%s"
+  slug_id = "${heroku_slug.foobar.id}"
 }
 
 resource "heroku_formation" "foobar-web" {
@@ -82,7 +85,7 @@ resource "heroku_cert" "ssl_certificate" {
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
   depends_on = ["heroku_formation.foobar-web"]
-}`, appName, slugID, certFile, keyFile))
+}`, appName, certFile, keyFile))
 }
 
 func testAccCheckHerokuCertDestroy(s *terraform.State) error {
