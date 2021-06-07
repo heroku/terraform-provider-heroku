@@ -55,7 +55,7 @@ func TestAccHerokuDomain_No_SSL_Change(t *testing.T) {
 					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
-					resource.TestCheckNoResourceAttr("heroku_domain.foobar", "sni_endpoint"),
+					resource.TestCheckNoResourceAttr("heroku_domain.foobar", "sni_endpoint_id"),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "app", appName),
 				),
@@ -66,7 +66,7 @@ func TestAccHerokuDomain_No_SSL_Change(t *testing.T) {
 					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
-					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint", &endpoint.ID),
+					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint_id", &endpoint.ID),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "app", appName),
 				),
@@ -93,7 +93,7 @@ func TestAccHerokuDomain_SSL(t *testing.T) {
 					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
-					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint", &endpoint.ID),
+					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint_id", &endpoint.ID),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "app", appName),
 				),
@@ -104,7 +104,7 @@ func TestAccHerokuDomain_SSL(t *testing.T) {
 					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate2", &endpoint),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
-					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint", &endpoint.ID),
+					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint_id", &endpoint.ID),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "app", appName),
 				),
@@ -143,7 +143,7 @@ func testAccCheckHerokuDomainAttributes(Domain *heroku.Domain, endpoint *heroku.
 
 		if v := Domain.SniEndpoint; v != nil {
 			if v.ID != endpoint.ID {
-				return fmt.Errorf("Expected sni_endpoint to be: %s but got: [%s]", v.ID, endpoint.ID)
+				return fmt.Errorf("Expected sni_endpoint_id to be: %s but got: [%s]", v.ID, endpoint.ID)
 			}
 		}
 
@@ -261,7 +261,7 @@ resource "heroku_cert" "ssl_certificate2" {
 resource "heroku_domain" "foobar" {
   app = "${heroku_app.foobar.name}"
   hostname = "terraform-%s.example.com"
-  sni_endpoint = "${heroku_cert.ssl_certificate2.id}"
+  sni_endpoint_id = "${heroku_cert.ssl_certificate2.id}"
   depends_on = ["heroku_cert.ssl_certificate2"]
 }`, appName, slugID, certFile, keyFile, certFile, keyFile, appName)
 }
@@ -299,7 +299,7 @@ resource "heroku_cert" "ssl_certificate" {
 resource "heroku_domain" "foobar" {
   app = "${heroku_app.foobar.name}"
   hostname = "terraform-%s.example.com"
-  sni_endpoint = "${heroku_cert.ssl_certificate.id}"
+  sni_endpoint_id = "${heroku_cert.ssl_certificate.id}"
   depends_on = ["heroku_cert.ssl_certificate"]
 }`, appName, slugID, certFile, keyFile, appName)
 }

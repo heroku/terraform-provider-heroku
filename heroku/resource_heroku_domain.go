@@ -39,7 +39,7 @@ func resourceHerokuDomain() *schema.Resource {
 				Computed: true,
 			},
 
-			"sni_endpoint": {
+			"sni_endpoint_id": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -73,7 +73,7 @@ func resourceHerokuDomainCreate(d *schema.ResourceData, meta interface{}) error 
 		Hostname: d.Get("hostname").(string),
 	}
 
-	if v := d.Get("sni_endpoint").(string); v != "" {
+	if v := d.Get("sni_endpoint_id").(string); v != "" {
 		opts.SniEndpoint = &v
 	}
 
@@ -96,8 +96,8 @@ func resourceHerokuDomainUpdate(d *schema.ResourceData, meta interface{}) error 
 	app := d.Get("app").(string)
 	opts := heroku.DomainUpdateOpts{}
 
-	if d.HasChange("sni_endpoint") {
-		v := d.Get("sni_endpoint").(string)
+	if d.HasChange("sni_endpoint_id") {
+		v := d.Get("sni_endpoint_id").(string)
 		opts.SniEndpoint = &v
 	}
 
@@ -146,6 +146,6 @@ func populateResource(d *schema.ResourceData, do *heroku.Domain) {
 	d.Set("hostname", do.Hostname)
 	d.Set("cname", do.CName)
 	if v := do.SniEndpoint; v != nil {
-		d.Set("sni_endpoint", v.ID)
+		d.Set("sni_endpoint_id", v.ID)
 	}
 }
