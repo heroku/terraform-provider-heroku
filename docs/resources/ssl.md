@@ -34,7 +34,7 @@ resource "heroku_formation" "web" {
   size = "hobby"
   quantity = 1
   # Wait until the build has completed before attempting to scale
-  depends_on = ["heroku_build.default"]
+  depends_on = [heroku_build.default]
 }
 
 # Create the certificate
@@ -43,14 +43,30 @@ resource "heroku_ssl" "one" {
   certificate_chain = file("server.crt")
   private_key = file("server.key")
   # Wait until the process_tier changes to hobby before attempting to create a cert
-  depends_on = ["heroku_formation.web"]
+  depends_on = [heroku_formation.web]
 }
 
 # Associate it with a domain
-resource "heroku_domain" "foobar" {
+resource "heroku_domain" "one" {
   app = heroku_app.default.name
   hostname = "terraform-123.example.com"
-  sni_endpoint = heroku_ssl.one.id
+  sni_endpoint_id = heroku_ssl.one.id
+}
+
+# Create another certificate
+resource "heroku_ssl" "two" {
+  app = heroku_app.default.name
+  certificate_chain = file("server.crt")
+  private_key = file("server.key")
+  # Wait until the process_tier changes to hobby before attempting to create a cert
+  depends_on = [heroku_formation.web]
+}
+
+# Associate it with a second domain
+resource "heroku_domain" "two" {
+  app = heroku_app.default.name
+  hostname = "terraform-456.example.com"
+  sni_endpoint_id = heroku_ssl.two.id
 }
 ```
 
