@@ -2,9 +2,12 @@ package test
 
 import (
 	"fmt"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"strings"
 )
 
 const (
@@ -101,4 +104,10 @@ func testCheckTypeSetElem(is *terraform.InstanceState, attr, value string) error
 	}
 
 	return fmt.Errorf("no TypeSet element %q, with value %q in state: %#v", attr, value, is.Attributes)
+}
+
+func Sleep(t *testing.T, amount time.Duration) func() {
+	return func() {
+		time.Sleep(amount * time.Second)
+	}
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccHerokuCert_importBasic(t *testing.T) {
+func TestAccHerokuSSL_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	wd, _ := os.Getwd()
@@ -19,13 +19,13 @@ func TestAccHerokuCert_importBasic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuCertDestroy,
+		CheckDestroy: testAccCheckHerokuSSLDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuCertUSConfig(appName, certFile, keyFile),
+				Config: testAccCheckHerokuSSLConfig(appName, certFile, keyFile),
 			},
 			{
-				ResourceName:        "heroku_cert.ssl_certificate",
+				ResourceName:        "heroku_ssl.ssl_certificate",
 				ImportStateIdPrefix: appName + ":",
 				ImportState:         true,
 			},

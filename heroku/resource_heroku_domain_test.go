@@ -52,7 +52,7 @@ func TestAccHerokuDomain_No_SSL_Change(t *testing.T) {
 				Config: testAccCheckHerokuDomainConfig_ssl_no_association(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
-					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
+					testAccCheckHerokuSSLExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
 					resource.TestCheckNoResourceAttr("heroku_domain.foobar", "sni_endpoint_id"),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
@@ -63,7 +63,7 @@ func TestAccHerokuDomain_No_SSL_Change(t *testing.T) {
 				Config: testAccCheckHerokuDomainConfig_ssl(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
-					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
+					testAccCheckHerokuSSLExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
 					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint_id", &endpoint.ID),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
@@ -89,7 +89,7 @@ func TestAccHerokuDomain_SSL(t *testing.T) {
 				Config: testAccCheckHerokuDomainConfig_ssl(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
-					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
+					testAccCheckHerokuSSLExists("heroku_cert.ssl_certificate", &endpoint),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
 					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint_id", &endpoint.ID),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
@@ -100,7 +100,7 @@ func TestAccHerokuDomain_SSL(t *testing.T) {
 				Config: testAccCheckHerokuDomainConfig_ssl_change(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
-					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate2", &endpoint),
+					testAccCheckHerokuSSLExists("heroku_cert.ssl_certificate2", &endpoint),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
 					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint_id", &endpoint.ID),
 					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
