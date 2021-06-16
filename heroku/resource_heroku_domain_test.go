@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	heroku "github.com/heroku/heroku-go/v5"
+	"github.com/heroku/terraform-provider-heroku/v4/helper/test"
 )
 
 func TestAccHerokuDomain_Basic(t *testing.T) {
@@ -27,10 +28,10 @@ func TestAccHerokuDomain_Basic(t *testing.T) {
 			{
 				Config: testAccCheckHerokuDomainConfig_basic(appName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
+					testAccCheckHerokuDomainExists("heroku_domain.one", &domain),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
-					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
-					resource.TestCheckResourceAttr("heroku_domain.foobar", "app", appName),
+					resource.TestCheckResourceAttr("heroku_domain.one", "hostname", "terraform-tftest-"+randString+".example.com"),
+					resource.TestCheckResourceAttr("heroku_domain.one", "app", appName),
 				),
 			},
 		},
@@ -51,23 +52,24 @@ func TestAccHerokuDomain_No_SSL_Change(t *testing.T) {
 			{
 				Config: testAccCheckHerokuDomainConfig_ssl_no_association(appName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
-					testAccCheckHerokuSSLExists("heroku_cert.ssl_certificate", &endpoint),
+					testAccCheckHerokuDomainExists("heroku_domain.one", &domain),
+					testAccCheckHerokuSSLExists("heroku_ssl.one", &endpoint),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
-					resource.TestCheckNoResourceAttr("heroku_domain.foobar", "sni_endpoint_id"),
-					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
-					resource.TestCheckResourceAttr("heroku_domain.foobar", "app", appName),
+					resource.TestCheckNoResourceAttr("heroku_domain.one", "sni_endpoint_id"),
+					resource.TestCheckResourceAttr("heroku_domain.one", "hostname", "terraform-tftest-"+randString+".example.com"),
+					resource.TestCheckResourceAttr("heroku_domain.one", "app", appName),
 				),
 			},
 			{
-				Config: testAccCheckHerokuDomainConfig_ssl(appName),
+				PreConfig: test.Sleep(t, 15),
+				Config:    testAccCheckHerokuDomainConfig_ssl(appName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
-					testAccCheckHerokuSSLExists("heroku_cert.ssl_certificate", &endpoint),
+					testAccCheckHerokuDomainExists("heroku_domain.one", &domain),
+					testAccCheckHerokuSSLExists("heroku_ssl.one", &endpoint),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
-					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint_id", &endpoint.ID),
-					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
-					resource.TestCheckResourceAttr("heroku_domain.foobar", "app", appName),
+					resource.TestCheckResourceAttrPtr("heroku_domain.one", "sni_endpoint_id", &endpoint.ID),
+					resource.TestCheckResourceAttr("heroku_domain.one", "hostname", "terraform-tftest-"+randString+".example.com"),
+					resource.TestCheckResourceAttr("heroku_domain.one", "app", appName),
 				),
 			},
 		},
@@ -88,23 +90,24 @@ func TestAccHerokuDomain_SSL(t *testing.T) {
 			{
 				Config: testAccCheckHerokuDomainConfig_ssl(appName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
-					testAccCheckHerokuSSLExists("heroku_cert.ssl_certificate", &endpoint),
+					testAccCheckHerokuDomainExists("heroku_domain.one", &domain),
+					testAccCheckHerokuSSLExists("heroku_ssl.one", &endpoint),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
-					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint_id", &endpoint.ID),
-					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
-					resource.TestCheckResourceAttr("heroku_domain.foobar", "app", appName),
+					resource.TestCheckResourceAttrPtr("heroku_domain.one", "sni_endpoint_id", &endpoint.ID),
+					resource.TestCheckResourceAttr("heroku_domain.one", "hostname", "terraform-tftest-"+randString+".example.com"),
+					resource.TestCheckResourceAttr("heroku_domain.one", "app", appName),
 				),
 			},
 			{
-				Config: testAccCheckHerokuDomainConfig_ssl_change(appName),
+				PreConfig: test.Sleep(t, 15),
+				Config:    testAccCheckHerokuDomainConfig_ssl_change(appName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuDomainExists("heroku_domain.foobar", &domain),
-					testAccCheckHerokuSSLExists("heroku_cert.ssl_certificate2", &endpoint),
+					testAccCheckHerokuDomainExists("heroku_domain.one", &domain),
+					testAccCheckHerokuSSLExists("heroku_ssl.two", &endpoint),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
-					resource.TestCheckResourceAttrPtr("heroku_domain.foobar", "sni_endpoint_id", &endpoint.ID),
-					resource.TestCheckResourceAttr("heroku_domain.foobar", "hostname", "terraform-tftest-"+randString+".example.com"),
-					resource.TestCheckResourceAttr("heroku_domain.foobar", "app", appName),
+					resource.TestCheckResourceAttrPtr("heroku_domain.one", "sni_endpoint_id", &endpoint.ID),
+					resource.TestCheckResourceAttr("heroku_domain.one", "hostname", "terraform-tftest-"+randString+".example.com"),
+					resource.TestCheckResourceAttr("heroku_domain.one", "app", appName),
 				),
 			},
 		},
@@ -184,46 +187,46 @@ func testAccCheckHerokuDomainConfig_ssl_no_association(appName string) string {
 	certFile := wd + "/test-fixtures/terraform.cert"
 	keyFile := wd + "/test-fixtures/terraform.key"
 
-	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+	return fmt.Sprintf(`resource "heroku_app" "one" {
     name = "%s"
     region = "us"
 }
 
-resource "heroku_slug" "foobar" {
-    app = "${heroku_app.foobar.name}"
+resource "heroku_slug" "one" {
+    app = "${heroku_app.one.id}"
     file_path = "test-fixtures/slug.tgz"
     process_types = {
       web = "ruby server.rb"
     }
 }
 
-resource "heroku_app_release" "foobar-release" {
-  app = "${heroku_app.foobar.name}"
-  slug_id = "${heroku_slug.foobar.id}"
+resource "heroku_app_release" "one" {
+  app = "${heroku_app.one.id}"
+  slug_id = "${heroku_slug.one.id}"
 }
 
-resource "heroku_formation" "foobar-web" {
-  app = "${heroku_app.foobar.name}"
+resource "heroku_formation" "web" {
+  app = "${heroku_app.one.id}"
   type = "web"
   size = "hobby"
   quantity = 1
   # Wait until the build has completed before attempting to scale
-  depends_on = ["heroku_app_release.foobar-release"]
+  depends_on = [heroku_app_release.one]
 }
 
-resource "heroku_cert" "ssl_certificate" {
-  app = "${heroku_app.foobar.name}"
+resource "heroku_ssl" "one" {
+  app = "${heroku_app.one.id}"
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
   # Wait until the process_tier changes to hobby before attempting to create a cert
-  depends_on = ["heroku_formation.foobar-web"]
+  depends_on = [heroku_formation.web]
 }
 
-resource "heroku_domain" "foobar" {
-  app = "${heroku_app.foobar.name}"
+resource "heroku_domain" "one" {
+  app = "${heroku_app.one.id}"
   hostname = "terraform-%s.example.com"
   # Wait until the certificate has been created before adding domains to avoid auto-association. Once auto-association has been sunset we no longer need to do this. See https://devcenter.heroku.com/changelog-items/1938.
-  depends_on = ["heroku_cert.ssl_certificate"]
+  depends_on = [heroku_ssl.one]
 }`, appName, certFile, keyFile, appName)
 }
 
@@ -232,51 +235,50 @@ func testAccCheckHerokuDomainConfig_ssl_change(appName string) string {
 	certFile := wd + "/test-fixtures/terraform.cert"
 	keyFile := wd + "/test-fixtures/terraform.key"
 
-	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+	return fmt.Sprintf(`resource "heroku_app" "one" {
     name = "%s"
     region = "us"
 }
 
-resource "heroku_slug" "foobar" {
-    app = "${heroku_app.foobar.name}"
+resource "heroku_slug" "one" {
+    app = "${heroku_app.one.id}"
     file_path = "test-fixtures/slug.tgz"
     process_types = {
       web = "ruby server.rb"
     }
 }
 
-resource "heroku_app_release" "foobar-release" {
-  app = "${heroku_app.foobar.name}"
-  slug_id = "${heroku_slug.foobar.id}"
+resource "heroku_app_release" "one" {
+  app = "${heroku_app.one.id}"
+  slug_id = "${heroku_slug.one.id}"
 }
 
-resource "heroku_formation" "foobar-web" {
-  app = "${heroku_app.foobar.name}"
+resource "heroku_formation" "web" {
+  app = "${heroku_app.one.id}"
   type = "web"
   size = "hobby"
   quantity = 1
-  depends_on = ["heroku_app_release.foobar-release"]
+  depends_on = [heroku_app_release.one]
 }
 
-resource "heroku_cert" "ssl_certificate" {
-  app = "${heroku_app.foobar.name}"
+resource "heroku_ssl" "one" {
+  app = "${heroku_app.one.id}"
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
-  depends_on = ["heroku_formation.foobar-web"]
+  depends_on = [heroku_formation.web]
 }
 
-resource "heroku_cert" "ssl_certificate2" {
-  app = "${heroku_app.foobar.name}"
+resource "heroku_ssl" "two" {
+  app = "${heroku_app.one.id}"
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
-  depends_on = ["heroku_formation.foobar-web"]
+  depends_on = [heroku_formation.web]
 }
 
-resource "heroku_domain" "foobar" {
-  app = "${heroku_app.foobar.name}"
+resource "heroku_domain" "one" {
+  app = "${heroku_app.one.id}"
   hostname = "terraform-%s.example.com"
-  sni_endpoint_id = "${heroku_cert.ssl_certificate2.id}"
-  depends_on = ["heroku_cert.ssl_certificate2"]
+  sni_endpoint_id = "${heroku_ssl.two.id}"
 }`, appName, certFile, keyFile, certFile, keyFile, appName)
 }
 
@@ -285,55 +287,54 @@ func testAccCheckHerokuDomainConfig_ssl(appName string) string {
 	certFile := wd + "/test-fixtures/terraform.cert"
 	keyFile := wd + "/test-fixtures/terraform.key"
 
-	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+	return fmt.Sprintf(`resource "heroku_app" "one" {
     name = "%s"
     region = "us"
 }
 
-resource "heroku_slug" "foobar" {
-    app = "${heroku_app.foobar.name}"
+resource "heroku_slug" "one" {
+    app = "${heroku_app.one.id}"
     file_path = "test-fixtures/slug.tgz"
     process_types = {
       web = "ruby server.rb"
     }
 }
 
-resource "heroku_app_release" "foobar-release" {
-  app = "${heroku_app.foobar.name}"
-  slug_id = "${heroku_slug.foobar.id}"
+resource "heroku_app_release" "one" {
+  app = "${heroku_app.one.id}"
+  slug_id = "${heroku_slug.one.id}"
 }
 
-resource "heroku_formation" "foobar-web" {
-  app = "${heroku_app.foobar.name}"
+resource "heroku_formation" "web" {
+  app = "${heroku_app.one.id}"
   type = "web"
   size = "hobby"
   quantity = 1
-  depends_on = ["heroku_app_release.foobar-release"]
+  depends_on = [heroku_app_release.one]
 }
 
-resource "heroku_cert" "ssl_certificate" {
-  app = "${heroku_app.foobar.name}"
+resource "heroku_ssl" "one" {
+  app = "${heroku_app.one.id}"
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
-  depends_on = ["heroku_formation.foobar-web"]
+  depends_on = [heroku_formation.web]
 }
 
-resource "heroku_domain" "foobar" {
-  app = "${heroku_app.foobar.name}"
+resource "heroku_domain" "one" {
+  app = "${heroku_app.one.id}"
   hostname = "terraform-%s.example.com"
-  sni_endpoint_id = "${heroku_cert.ssl_certificate.id}"
-  depends_on = ["heroku_cert.ssl_certificate"]
+  sni_endpoint_id = "${heroku_ssl.one.id}"
 }`, appName, certFile, keyFile, appName)
 }
 
 func testAccCheckHerokuDomainConfig_basic(appName string) string {
-	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+	return fmt.Sprintf(`resource "heroku_app" "one" {
     name = "%s"
     region = "us"
 }
 
-resource "heroku_domain" "foobar" {
-  app = "${heroku_app.foobar.name}"
+resource "heroku_domain" "one" {
+  app = "${heroku_app.one.id}"
   hostname = "terraform-%s.example.com"
 }`, appName, appName)
 }

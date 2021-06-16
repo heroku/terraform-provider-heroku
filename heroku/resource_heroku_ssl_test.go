@@ -38,7 +38,7 @@ func TestAccHerokuSSL(t *testing.T) {
 			{
 				Config: testAccCheckHerokuSSLConfig(appName, certFile2, keyFile2),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuSSLExists("heroku_ssl.ssl_certificate", &endpoint),
+					testAccCheckHerokuSSLExists("heroku_ssl.one", &endpoint),
 					testAccCheckHerokuSSLCertificateChain(&endpoint, certificateChain2),
 				),
 			},
@@ -46,7 +46,7 @@ func TestAccHerokuSSL(t *testing.T) {
 				PreConfig: test.Sleep(t, 15),
 				Config:    testAccCheckHerokuSSLConfig(appName, certFile, keyFile),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuSSLExists("heroku_ssl.ssl_certificate", &endpoint),
+					testAccCheckHerokuSSLExists("heroku_ssl.one", &endpoint),
 					testAccCheckHerokuSSLCertificateChain(&endpoint, certificateChain),
 				),
 			},
@@ -56,37 +56,37 @@ func TestAccHerokuSSL(t *testing.T) {
 
 func testAccCheckHerokuSSLConfig(appName, certFile, keyFile string) string {
 	return strings.TrimSpace(fmt.Sprintf(`
-resource "heroku_app" "foobar" {
+resource "heroku_app" "one" {
   name = "%s"
   region = "us"
 }
 
-resource "heroku_slug" "foobar" {
-    app = "${heroku_app.foobar.name}"
+resource "heroku_slug" "one" {
+    app = "${heroku_app.one.id}"
     file_path = "test-fixtures/slug.tgz"
     process_types = {
       web = "ruby server.rb"
     }
 }
 
-resource "heroku_app_release" "foobar-release" {
-  app = "${heroku_app.foobar.name}"
-  slug_id = "${heroku_slug.foobar.id}"
+resource "heroku_app_release" "one" {
+  app = "${heroku_app.one.id}"
+  slug_id = "${heroku_slug.one.id}"
 }
 
-resource "heroku_formation" "foobar-web" {
-  app = "${heroku_app.foobar.name}"
+resource "heroku_formation" "web" {
+  app = "${heroku_app.one.id}"
   type = "web"
   size = "hobby"
   quantity = 1
-  depends_on = ["heroku_app_release.foobar-release"]
+  depends_on = [heroku_app_release.one]
 }
 
-resource "heroku_ssl" "ssl_certificate" {
-  app = "${heroku_app.foobar.name}"
+resource "heroku_ssl" "one" {
+  app = "${heroku_app.one.id}"
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
-  depends_on = ["heroku_formation.foobar-web"]
+  depends_on = [heroku_formation.web]
 }`, appName, certFile, keyFile))
 }
 
