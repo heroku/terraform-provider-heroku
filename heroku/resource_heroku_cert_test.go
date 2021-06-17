@@ -8,12 +8,12 @@ import (
 	"regexp"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	heroku "github.com/heroku/heroku-go/v5"
+	"github.com/heroku/terraform-provider-heroku/v4/helper/test"
 )
 
 // We break apart testing for EU and US because at present, Heroku deals with
@@ -59,7 +59,7 @@ func TestAccHerokuCert_EU(t *testing.T) {
 				),
 			},
 			{
-				PreConfig: sleep(t, 15),
+				PreConfig: test.Sleep(t, 15),
 				Config:    testAccCheckHerokuCertEUConfig(appName, certFile2, keyFile2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
@@ -104,7 +104,7 @@ func TestAccHerokuCert_US(t *testing.T) {
 				),
 			},
 			{
-				PreConfig: sleep(t, 15),
+				PreConfig: test.Sleep(t, 15),
 				Config:    testAccCheckHerokuCertUSConfig(appName, certFile, keyFile),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCertExists("heroku_cert.ssl_certificate", &endpoint),
@@ -156,12 +156,6 @@ resource "heroku_cert" "ssl_certificate" {
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
 }`, appName, certFile, keyFile))
-}
-
-func sleep(t *testing.T, amount time.Duration) func() {
-	return func() {
-		time.Sleep(amount * time.Second)
-	}
 }
 
 func testAccCheckHerokuCertDestroy(s *terraform.State) error {

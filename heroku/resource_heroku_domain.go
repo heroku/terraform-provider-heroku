@@ -14,6 +14,7 @@ func resourceHerokuDomain() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceHerokuDomainCreate,
 		Read:   resourceHerokuDomainRead,
+		Update: resourceHerokuDomainUpdate,
 		Delete: resourceHerokuDomainDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -37,6 +38,11 @@ func resourceHerokuDomain() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+
+			"sni_endpoint_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -48,38 +54,60 @@ func resourceHerokuDomainImport(d *schema.ResourceData, meta interface{}) ([]*sc
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("[INFO] Importing Domain: %s on App: %s", id, app)
 
 	do, err := client.DomainInfo(context.Background(), app, id)
 	if err != nil {
 		return nil, err
 	}
 
-	d.SetId(do.ID)
-	d.Set("app", app)
+	populateResource(d, do)
 
 	return []*schema.ResourceData{d}, nil
 }
 
 func resourceHerokuDomainCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
-
 	app := d.Get("app").(string)
-	hostname := d.Get("hostname").(string)
+	opts := heroku.DomainCreateOpts{
+		Hostname: d.Get("hostname").(string),
+	}
 
-	log.Printf("[DEBUG] Domain create configuration: %#v, %#v", app, hostname)
+	if v := d.Get("sni_endpoint_id").(string); v != "" {
+		opts.SniEndpoint = &v
+	}
 
-	do, err := client.DomainCreate(context.TODO(), app, heroku.DomainCreateOpts{Hostname: hostname})
+	log.Printf("[DEBUG] Domain create configuration: %#v, %#v", app, opts)
+
+	do, err := client.DomainCreate(context.TODO(), app, opts)
+	if err != nil {
+		return err
+	}
+	populateResource(d, do)
+
+	config := meta.(*Config)
+	time.Sleep(time.Duration(config.PostDomainCreateDelay) * time.Second)
+
+	return nil
+}
+
+func resourceHerokuDomainUpdate(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*Config).Api
+	app := d.Get("app").(string)
+	opts := heroku.DomainUpdateOpts{}
+
+	if d.HasChange("sni_endpoint_id") {
+		v := d.Get("sni_endpoint_id").(string)
+		opts.SniEndpoint = &v
+	}
+
+	do, err := client.DomainUpdate(context.TODO(), app, d.Id(), opts)
 	if err != nil {
 		return err
 	}
 
-	d.SetId(do.ID)
-	d.Set("hostname", do.Hostname)
-	d.Set("cname", do.CName)
+	populateResource(d, do)
 
-	log.Printf("[INFO] Domain ID: %s", d.Id())
-	config := meta.(*Config)
-	time.Sleep(time.Duration(config.PostDomainCreateDelay) * time.Second)
 	return nil
 }
 
@@ -106,8 +134,18 @@ func resourceHerokuDomainRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error retrieving domain: %s", err)
 	}
 
-	d.Set("hostname", do.Hostname)
-	d.Set("cname", do.CName)
+	log.Printf("[INFO] Reading Domain: %s", d.Id())
+	populateResource(d, do)
 
 	return nil
+}
+
+func populateResource(d *schema.ResourceData, do *heroku.Domain) {
+	d.SetId(do.ID)
+	d.Set("app", do.App.Name)
+	d.Set("hostname", do.Hostname)
+	d.Set("cname", do.CName)
+	if v := do.SniEndpoint; v != nil {
+		d.Set("sni_endpoint_id", v.ID)
+	}
 }

@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	heroku "github.com/heroku/heroku-go/v5"
-	"log"
-	"time"
 )
 
 func resourceHerokuAppRelease() *schema.Resource {
@@ -124,7 +125,7 @@ func resourceHerokuAppReleaseUpdate(d *schema.ResourceData, meta interface{}) er
 // resourceHerokuAppReleaseDelete will be a no-op method as there is no DELETE endpoint for the release resource
 // in the Heroku Platform APIs.
 func resourceHerokuAppReleaseDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[INFO] There is no DELETE for releease resource so this is a no-op. Resource will be removed from state.")
+	log.Printf("[INFO] There is no DELETE for release resource so this is a no-op. Resource will be removed from state.")
 	return nil
 }
 
