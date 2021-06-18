@@ -2,7 +2,7 @@ package heroku
 
 import (
 	"context"
-	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -11,17 +11,19 @@ import (
 
 func resourceHerokuSSL() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceHerokuSSLCreate,
-		Read:   resourceHerokuSSLRead,
-		Update: resourceHerokuSSLUpdate,
-		Delete: resourceHerokuSSLDelete,
+		DeprecationMessage: "This resource is deprecated in favor of `heroku_ssl`.",
+
+		CreateContext: resourceHerokuSSLCreate,
+		ReadContext:   resourceHerokuSSLRead,
+		UpdateContext: resourceHerokuSSLUpdate,
+		DeleteContext: resourceHerokuSSLDelete,
 
 		Importer: &schema.ResourceImporter{
 			State: resourceHerokuSSLImport,
 		},
 
 		Schema: map[string]*schema.Schema{
-			"app": {
+			"app_id": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
@@ -49,64 +51,68 @@ func resourceHerokuSSL() *schema.Resource {
 func resourceHerokuSSLImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client := meta.(*Config).Api
 
-	app, id, err := parseCompositeID(d.Id())
+	app, certID, err := parseCompositeID(d.Id())
 	if err != nil {
 		return nil, err
 	}
 
-	ep, err := client.SniEndpointInfo(context.Background(), app, id)
+	ep, err := client.SniEndpointInfo(context.Background(), app, certID)
 	if err != nil {
 		return nil, err
 	}
 
 	d.SetId(ep.ID)
-	setErr := d.Set("app", app)
-	if setErr != nil {
-		return nil, setErr
-	}
+	d.Set("app_id", ep.App.ID)
+	d.Set("certificate_chain", ep.CertificateChain)
+	d.Set("name", ep.Name)
+	// TODO: need to add d.Set("private_key")
 
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceHerokuSSLCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceHerokuSSLCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*Config).Api
-	app := d.Get("app").(string)
+	appID := getAppId(d)
 
 	opts := heroku.SniEndpointCreateOpts{
 		CertificateChain: d.Get("certificate_chain").(string),
 		PrivateKey:       d.Get("private_key").(string),
 	}
 
-	log.Printf("[DEBUG] SSL Certificate create configuration: %#v, %#v", app, opts)
-	a, err := client.SniEndpointCreate(context.TODO(), app, opts)
+	log.Printf("[DEBUG] Creating SSL certificate for app %#v", appID)
+
+	ep, err := client.SniEndpointCreate(context.TODO(), appID, opts)
 	if err != nil {
-		return fmt.Errorf("Error creating SniEndpoint: %s", err)
+		return diag.Errorf("Error creating SSL certificate for app %s: %v", appID, err.Error())
 	}
 
-	d.SetId(a.ID)
-	log.Printf("[INFO] SSL Certificate ID: %s", d.Id())
+	log.Printf("[DEBUG] Created SSL Certificate %s", ep.ID)
 
-	return resourceHerokuSSLRead(d, meta)
+	d.SetId(ep.ID)
+
+	return resourceHerokuSSLRead(ctx, d, meta)
 }
 
-func resourceHerokuSSLRead(d *schema.ResourceData, meta interface{}) error {
+func resourceHerokuSSLRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*Config).Api
 
-	cert, err := resourceHerokuSSLRetrieve(d.Get("app").(string), d.Id(), client)
+	ep, err := client.SniEndpointInfo(context.Background(), getAppId(d), d.Id())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	d.Set("certificate_chain", cert.CertificateChain)
-	d.Set("name", cert.Name)
+	d.Set("app_id", ep.App.ID)
+	d.Set("certificate_chain", ep.CertificateChain)
+	d.Set("name", ep.Name)
+	// TODO: need to add d.Set("private_key")
 
 	return nil
 }
 
-func resourceHerokuSSLUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceHerokuSSLUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*Config).Api
 
-	app := d.Get("app").(string)
+	appID := getAppId(d)
 
 	if d.HasChange("certificate_chain") || d.HasChange("private_key") {
 		opts := heroku.SniEndpointUpdateOpts{
@@ -114,36 +120,32 @@ func resourceHerokuSSLUpdate(d *schema.ResourceData, meta interface{}) error {
 			PrivateKey:       d.Get("private_key").(string),
 		}
 
-		log.Printf("[DEBUG] SSL Certificate update configuration: %#v, %#v", app, opts)
-		_, err := client.SniEndpointUpdate(context.TODO(), app, d.Id(), opts)
+		log.Printf("[DEBUG] Updating SSL Certificate configuration: %#v, %#v", appID, opts)
+
+		_, err := client.SniEndpointUpdate(context.TODO(), appID, d.Id(), opts)
 		if err != nil {
-			return fmt.Errorf("Error updating Sni endpoint: %s", err)
+			return diag.Errorf("Error updating Sni endpoint: %s", err)
 		}
+
+		log.Printf("[DEBUG] Updated SSL Certificate configuration: %#v, %#v", appID, opts)
 	}
 
-	return resourceHerokuSSLRead(d, meta)
+	return resourceHerokuSSLRead(ctx, d, meta)
 }
 
-func resourceHerokuSSLDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceHerokuSSLDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting SSL Cert: %s", d.Id())
 
-	_, err := client.SniEndpointDelete(context.TODO(), d.Get("app").(string), d.Id())
+	_, err := client.SniEndpointDelete(context.TODO(), getAppId(d), d.Id())
 	if err != nil {
-		return fmt.Errorf("Error deleting SSL Cert: %s", err)
+		return diag.Errorf("Error deleting SSL Cert: %s", err)
 	}
+
+	log.Printf("[INFO] Deleted SSL Cert: %s", d.Id())
 
 	d.SetId("")
+
 	return nil
-}
-
-func resourceHerokuSSLRetrieve(app string, id string, client *heroku.Service) (*heroku.SniEndpoint, error) {
-	endpoint, err := client.SniEndpointInfo(context.TODO(), app, id)
-
-	if err != nil {
-		return nil, fmt.Errorf("Error retrieving SSL Cert: %s", err)
-	}
-
-	return endpoint, nil
 }
