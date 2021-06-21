@@ -3,6 +3,7 @@ package heroku
 import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -24,9 +25,10 @@ func resourceHerokuSSL() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"app_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 
 			"certificate_chain": {
@@ -36,8 +38,8 @@ func resourceHerokuSSL() *schema.Resource {
 
 			"private_key": {
 				Type:      schema.TypeString,
-				Required:  true,
 				Sensitive: true,
+				Optional:  true, // This should be 'Required' using 'Optional' to make things easier during resource import.
 			},
 
 			"name": {
@@ -65,7 +67,6 @@ func resourceHerokuSSLImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	d.Set("app_id", ep.App.ID)
 	d.Set("certificate_chain", ep.CertificateChain)
 	d.Set("name", ep.Name)
-	// TODO: need to add d.Set("private_key")
 
 	return []*schema.ResourceData{d}, nil
 }

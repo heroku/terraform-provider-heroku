@@ -40,6 +40,8 @@ func TestAccHerokuSSL_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSSLExists("heroku_ssl.one", &endpoint),
 					testAccCheckHerokuSSLCertificateChain(&endpoint, certificateChain2),
+					resource.TestCheckResourceAttr("heroku_ssl.one", "certificate_chain", certificateChain2),
+					resource.TestCheckResourceAttrSet("heroku_ssl.one", "name"),
 				),
 			},
 			{
@@ -48,6 +50,8 @@ func TestAccHerokuSSL_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSSLExists("heroku_ssl.one", &endpoint),
 					testAccCheckHerokuSSLCertificateChain(&endpoint, certificateChain),
+					resource.TestCheckResourceAttr("heroku_ssl.one", "certificate_chain", certificateChain),
+					resource.TestCheckResourceAttrSet("heroku_ssl.one", "name"),
 				),
 			},
 		},

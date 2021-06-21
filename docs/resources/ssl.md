@@ -82,8 +82,9 @@ The following arguments are supported:
 
 * `app_id` - (Required) The Heroku app UUID to add to.
 * `certificate_chain` - (Required) The certificate chain to add.
-* `private_key` - (Required) The private key for a given certificate chain.
-  This attribute value does not get displayed in logs or regular output.
+* `private_key` - (Optional) The private key for a given certificate chain. You **must** set this attribute when creating or
+  updating an SSL resource. However, **do not** set a value for this attribute if you are initially importing an existing
+  SSL resource. The attribute value does not get displayed in logs or regular output.
 
 ## Attributes Reference
 
