@@ -25,9 +25,11 @@ func TestAccHerokuSSL_importBasic(t *testing.T) {
 				Config: testAccCheckHerokuSSLConfig(appName, certFile, keyFile),
 			},
 			{
-				ResourceName:        "heroku_ssl.one",
-				ImportStateIdPrefix: appName + ":",
-				ImportState:         true,
+				ResourceName:            "heroku_ssl.one",
+				ImportStateIdPrefix:     appName + ":",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"private_key"},
 			},
 		},
 	})

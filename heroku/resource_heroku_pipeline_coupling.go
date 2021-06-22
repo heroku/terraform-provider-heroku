@@ -34,7 +34,7 @@ func resourceHerokuPipelineCoupling() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validateUUID,
+				ValidateFunc: validation.IsUUID,
 			},
 			"stage": {
 				Type:     schema.TypeString,

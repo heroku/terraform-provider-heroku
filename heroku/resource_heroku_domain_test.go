@@ -215,7 +215,7 @@ resource "heroku_formation" "web" {
 }
 
 resource "heroku_ssl" "one" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.uuid
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
   # Wait until the process_tier changes to hobby before attempting to create a cert
@@ -262,14 +262,14 @@ resource "heroku_formation" "web" {
 }
 
 resource "heroku_ssl" "one" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.uuid
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
   depends_on = [heroku_formation.web]
 }
 
 resource "heroku_ssl" "two" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.uuid
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
   depends_on = [heroku_formation.web]
@@ -314,7 +314,7 @@ resource "heroku_formation" "web" {
 }
 
 resource "heroku_ssl" "one" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.uuid
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
   depends_on = [heroku_formation.web]

@@ -25,7 +25,7 @@ func resourceHerokuPipelineConfigVar() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validateUUID,
+				ValidateFunc: validation.IsUUID,
 			},
 
 			"pipeline_stage": {

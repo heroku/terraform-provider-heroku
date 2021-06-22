@@ -3,12 +3,16 @@ layout: "heroku"
 page_title: "Heroku: heroku_ssl"
 sidebar_current: "docs-heroku-resource-ssl"
 description: |-
-  Provides a Heroku SSL certificate resource. It allows to set a given certificate for a domain on a Heroku app.
+  Provides a Heroku SSL certificate resource to manage a certificate for a Heroku app.
 ---
 
 # heroku\_ssl
 
-Provides a Heroku SSL certificate resource. It allows to set a given certificate for a domain on a Heroku app.
+This resource manages an SSL certificate for a Heroku app.
+
+-> **IMPORTANT!**
+This resource renders the "private_key" attribute in plain-text in your state file.
+Please ensure that your state file is properly secured and encrypted at rest.
 
 ## Example Usage
 
@@ -33,15 +37,17 @@ resource "heroku_formation" "web" {
   type = "web"
   size = "hobby"
   quantity = 1
+
   # Wait until the build has completed before attempting to scale
   depends_on = [heroku_build.default]
 }
 
 # Create the certificate
 resource "heroku_ssl" "one" {
-  app = heroku_app.default.name
+  app_id = heroku_app.default.uuid
   certificate_chain = file("server.crt")
   private_key = file("server.key")
+
   # Wait until the process_tier changes to hobby before attempting to create a cert
   depends_on = [heroku_formation.web]
 }
@@ -55,7 +61,7 @@ resource "heroku_domain" "one" {
 
 # Create another certificate
 resource "heroku_ssl" "two" {
-  app = heroku_app.default.name
+  app_id = heroku_app.default.uuid
   certificate_chain = file("server.crt")
   private_key = file("server.key")
   # Wait until the process_tier changes to hobby before attempting to create a cert
@@ -74,9 +80,11 @@ resource "heroku_domain" "two" {
 
 The following arguments are supported:
 
-* `app` - (Required) The Heroku app to add to.
-* `certificate_chain` - (Required) The certificate chain to add
-* `private_key` - (Required) The private key for a given certificate chain
+* `app_id` - (Required) The Heroku app UUID to add to.
+* `certificate_chain` - (Required) The certificate chain to add.
+* `private_key` - (Optional) The private key for a given certificate chain. You **must** set this attribute when creating or
+  updating an SSL resource. However, **do not** set a value for this attribute if you are initially importing an existing
+  SSL resource. The attribute value does not get displayed in logs or regular output.
 
 ## Attributes Reference
 
@@ -87,7 +95,9 @@ The following attributes are exported:
 
 ## Importing
 
-When importing a Heroku ssl resource, the ID must be built using the app name colon the unique ID from the Heroku API. For an app named `production-api` with a certificate ID of `b85d9224-310b-409b-891e-c903f5a40568`, you would import it as:
+An existing SSL resource can be imported using a composite value of the app name and certificate UUID separated by a colon.
+
+For example:
 
 ```
 $ terraform import heroku_ssl.production_api production-api:b85d9224-310b-409b-891e-c903f5a40568

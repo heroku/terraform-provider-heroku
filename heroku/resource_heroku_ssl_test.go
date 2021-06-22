@@ -15,7 +15,7 @@ import (
 	"github.com/heroku/terraform-provider-heroku/v4/helper/test"
 )
 
-func TestAccHerokuSSL(t *testing.T) {
+func TestAccHerokuSSL_basic(t *testing.T) {
 	var endpoint heroku.SniEndpoint
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
@@ -40,6 +40,8 @@ func TestAccHerokuSSL(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSSLExists("heroku_ssl.one", &endpoint),
 					testAccCheckHerokuSSLCertificateChain(&endpoint, certificateChain2),
+					resource.TestCheckResourceAttr("heroku_ssl.one", "certificate_chain", certificateChain2),
+					resource.TestCheckResourceAttrSet("heroku_ssl.one", "name"),
 				),
 			},
 			{
@@ -48,6 +50,8 @@ func TestAccHerokuSSL(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSSLExists("heroku_ssl.one", &endpoint),
 					testAccCheckHerokuSSLCertificateChain(&endpoint, certificateChain),
+					resource.TestCheckResourceAttr("heroku_ssl.one", "certificate_chain", certificateChain),
+					resource.TestCheckResourceAttrSet("heroku_ssl.one", "name"),
 				),
 			},
 		},
@@ -62,20 +66,20 @@ resource "heroku_app" "one" {
 }
 
 resource "heroku_slug" "one" {
-    app = "${heroku_app.one.id}"
-    file_path = "test-fixtures/slug.tgz"
-    process_types = {
-      web = "ruby server.rb"
-    }
+  app = heroku_app.one.id
+  file_path = "test-fixtures/slug.tgz"
+  process_types = {
+    web = "ruby server.rb"
+  }
 }
 
 resource "heroku_app_release" "one" {
-  app = "${heroku_app.one.id}"
-  slug_id = "${heroku_slug.one.id}"
+  app = heroku_app.one.id
+  slug_id = heroku_slug.one.id
 }
 
 resource "heroku_formation" "web" {
-  app = "${heroku_app.one.id}"
+  app = heroku_app.one.id
   type = "web"
   size = "hobby"
   quantity = 1
@@ -83,9 +87,9 @@ resource "heroku_formation" "web" {
 }
 
 resource "heroku_ssl" "one" {
-  app = "${heroku_app.one.id}"
-  certificate_chain="${file("%s")}"
-  private_key="${file("%s")}"
+  app_id = heroku_app.one.uuid
+  certificate_chain = file("%s")
+  private_key = file("%s")
   depends_on = [heroku_formation.web]
 }`, appName, certFile, keyFile))
 }
@@ -133,7 +137,7 @@ func testAccCheckHerokuSSLExists(n string, endpoint *heroku.SniEndpoint) resourc
 
 		client := testAccProvider.Meta().(*Config).Api
 
-		foundEndpoint, err := client.SniEndpointInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundEndpoint, err := client.SniEndpointInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err != nil {
 			return err

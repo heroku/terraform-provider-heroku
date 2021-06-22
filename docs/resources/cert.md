@@ -3,12 +3,14 @@ layout: "heroku"
 page_title: "Heroku: heroku_cert"
 sidebar_current: "docs-heroku-resource-cert"
 description: |-
-  Provides a Heroku SSL certificate resource. It allows to set a given certificate for a Heroku app. This resource is deprecated in favor of `heroku_ssl`.
+  Provides a Heroku SSL certificate resource to manage a certificate for a Heroku app.
 ---
 
 # heroku\_cert
 
-Provides a Heroku SSL certificate resource. It allows to set a given certificate for a Heroku app.This resource is deprecated in favor of `heroku_ssl`.
+This resource manages an SSL certificate for a Heroku app.
+
+!> **WARNING:** This resource is deprecated in favor of `heroku_ssl`.
 
 ## Example Usage
 
