@@ -42,6 +42,7 @@ func resourceHerokuDomain() *schema.Resource {
 			"sni_endpoint_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 		},
 	}
