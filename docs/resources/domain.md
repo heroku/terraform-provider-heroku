@@ -41,6 +41,7 @@ The following attributes are exported:
 * `id` - The ID of the domain record.
 * `hostname` - The hostname traffic will be served as.
 * `cname` - The CNAME traffic should route to.
+* `sni_endpoint_id` - The ID of the heroku_ssl resource to associate the domain with.
 
 ## Importing
 
