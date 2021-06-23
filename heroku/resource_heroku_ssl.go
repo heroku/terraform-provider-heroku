@@ -12,8 +12,6 @@ import (
 
 func resourceHerokuSSL() *schema.Resource {
 	return &schema.Resource{
-		DeprecationMessage: "This resource is deprecated in favor of `heroku_ssl`.",
-
 		CreateContext: resourceHerokuSSLCreate,
 		ReadContext:   resourceHerokuSSLRead,
 		UpdateContext: resourceHerokuSSLUpdate,
