@@ -52,6 +52,13 @@ resource "heroku_ssl" "one" {
   depends_on = [heroku_formation.web]
 }
 
+resource "heroku_domain" "no-ssl" {
+  app = heroku_app.default.name
+  hostname = "terraform-123-no-ssl.example.com"
+  # Until November 2021 if you have an ssl resource, but do not want to associate it with a domain, you must ensure the domain is created after the ssl resource. See https://devcenter.heroku.com/changelog-items/2192 for more details. We do this by adding a depends_on for the ssl resources.
+  depends_on = [heroku_ssl.one]
+}
+
 # Associate it with a domain
 resource "heroku_domain" "one" {
   app = heroku_app.default.name
