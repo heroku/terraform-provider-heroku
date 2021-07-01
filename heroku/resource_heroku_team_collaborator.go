@@ -107,12 +107,33 @@ func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface
 	}
 
 	log.Printf("[DEBUG] Creating Heroku Team Collaborator: [%s]", opts.User)
-	collaborator, err := client.TeamAppCollaboratorCreate(context.TODO(), appName, opts)
-	if err != nil {
-		return err
+
+	var resourceID string
+	collaborator, createErr := client.TeamAppCollaboratorCreate(context.TODO(), appName, opts)
+	if createErr != nil {
+		// Handle scenario when user has already been granted access to the app.
+		if strings.Contains(strings.ToLower(createErr.Error()), "is already a collaborator on app") {
+			// Loop through all collaborators on the app to get the collaborator ID
+			collaborators, listErr := client.TeamAppCollaboratorList(context.TODO(), appName,
+				&heroku.ListRange{Max: 1000, Descending: true})
+			if listErr != nil {
+				return listErr
+			}
+
+			for _, c := range collaborators {
+				if c.User.Email == opts.User {
+					resourceID = c.ID
+					break
+				}
+			}
+		} else {
+			return createErr
+		}
+	} else {
+		resourceID = collaborator.ID
 	}
 
-	d.SetId(collaborator.ID)
+	d.SetId(resourceID)
 	log.Printf("[INFO] New Collaborator ID: %s", d.Id())
 
 	return resourceHerokuTeamCollaboratorRead(d, meta)
