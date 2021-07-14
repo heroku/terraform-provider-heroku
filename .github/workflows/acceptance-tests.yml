@@ -24,6 +24,25 @@ jobs:
         go-version: 1.16
       id: go
 
+    - name: Install Terraform
+      run: |
+        set -eu
+        curl -s -L "https://releases.hashicorp.com/terraform/1.0.2/terraform_1.0.2_linux_amd64.zip" > "terraform-bin.zip"
+
+        bin_dir="$GITHUB_WORKSPACE/bin"
+        terraform_bin="$bin_dir/terraform"
+        new_path="PATH=$bin_dir:$PATH"
+        echo "$new_path" >> $GITHUB_ENV
+        echo "Updated PATH: $new_path"
+
+        mkdir -p "$bin_dir"
+        unzip -p "terraform-bin.zip" > "$terraform_bin"
+        chmod +x "$terraform_bin"
+        rm "terraform-bin.zip"
+
+        echo "Installed: $(eval "$terraform_bin version")"
+
+
     - uses: actions/checkout@master
 
     - name: Run make fmt
