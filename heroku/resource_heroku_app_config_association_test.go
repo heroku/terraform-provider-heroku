@@ -113,8 +113,8 @@ resource "heroku_app_config_association" "foobar-config" {
 func testAccCheckHerokuAppConfigAssociation_Advanced(org, appName string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
-    name = "%s"
-    region = "us"
+  name = "%s"
+  region = "us"
   organization {
     name = "%s"
   }
@@ -133,9 +133,9 @@ resource "heroku_config" "config" {
 }
 
 resource "heroku_app_config_association" "foobar-config" {
-    app_id = "${heroku_app.foobar.id}"
+    app_id = heroku_app.foobar.id
 
-    vars = "${heroku_config.config.vars}"
-    sensitive_vars = "${heroku_config.config.sensitive_vars}"
+    vars = heroku_config.config.vars
+    sensitive_vars = heroku_config.config.sensitive_vars
 }`, appName, org)
 }
