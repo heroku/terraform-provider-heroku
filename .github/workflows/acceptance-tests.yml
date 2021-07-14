@@ -29,16 +29,12 @@ jobs:
         set -eu
         curl -s -L "https://releases.hashicorp.com/terraform/1.0.2/terraform_1.0.2_linux_amd64.zip" > "terraform-bin.zip"
 
-        bin_dir="$GITHUB_WORKSPACE/bin"
-        terraform_bin="$bin_dir/terraform"
-        new_path="PATH=$bin_dir:$PATH"
-        echo "$new_path" >> $GITHUB_ENV
-        echo "Set env: $new_path"
-
-        mkdir -p "$bin_dir"
-        unzip -p "terraform-bin.zip" > "$terraform_bin"
-        chmod +x "$terraform_bin"
-        rm "terraform-bin.zip"
+        # overwrite existing Terraform binary
+        terraform_bin="$(which terraform)"
+        unzip -p terraform-bin.zip > terraform-bin
+        sudo mv terraform-bin "$terraform_bin"
+        sudo chmod +x "$terraform_bin"
+        rm terraform-bin.zip
 
         echo "Installed: $(eval "$terraform_bin version") ($terraform_bin)"
 
