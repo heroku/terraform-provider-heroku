@@ -33,15 +33,14 @@ jobs:
         terraform_bin="$bin_dir/terraform"
         new_path="PATH=$bin_dir:$PATH"
         echo "$new_path" >> $GITHUB_ENV
-        echo "Updated PATH: $new_path"
+        echo "Set env: $new_path"
 
         mkdir -p "$bin_dir"
         unzip -p "terraform-bin.zip" > "$terraform_bin"
         chmod +x "$terraform_bin"
         rm "terraform-bin.zip"
 
-        echo "Installed: $(eval "$terraform_bin version")"
-
+        echo "Installed: $(eval "$terraform_bin version") ($terraform_bin)"
 
     - uses: actions/checkout@master
 
@@ -56,6 +55,7 @@ jobs:
 
     - name: Run tests
       run: |
+        echo "Using: $(terraform version) ($(which terraform))"
         make testacc TEST="./heroku/"
       env:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
