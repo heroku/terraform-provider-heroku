@@ -153,7 +153,7 @@ func TestAccHerokuBuild_LocalSourceTarball_AllOpts(t *testing.T) {
 	})
 }
 
-func TestAccHerokuBuild_LocalSourceDirectory(t *testing.T) {
+func TestAccHerokuBuild_LocalSourceDirectoryDiff(t *testing.T) {
 	var build, build2 heroku.Build
 	var originalSourceChecksum string
 	randString := acctest.RandString(10)
