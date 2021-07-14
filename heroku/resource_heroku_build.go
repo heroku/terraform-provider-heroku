@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -188,6 +189,7 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 		opts.Buildpacks = buildpacks
 	}
 
+	var checksum string
 	if v, ok := d.GetOk("source"); ok {
 		vL := v.([]interface{})
 
@@ -213,24 +215,31 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 				if err != nil {
 					return fmt.Errorf("Error stating build source path %s: %s", path, err)
 				}
-
-				if fileInfo.IsDir() {
+				// The checksum is "relaxed" for source directories, and not performed on the tarball, but instead purely filenames & contents.
+				// This allows empemeral runtimes like Terraform Cloud to have a "stable" checksum for a source directory that will be cloned fresh each time.
+				// The trade-off, is that the checksum is non-standard, and should not be passed to Heroku as a build parameter.
+				useRelaxedChecksum := fileInfo.IsDir()
+				if useRelaxedChecksum {
 					// Generate tarball from the directory
 					tarballPath, err = generateSourceTarball(path)
 					if err != nil {
 						return fmt.Errorf("Error generating build source tarball %s: %s", path, err)
 					}
 					defer cleanupSourceFile(tarballPath)
+					checksum, err = checksumSourceRelaxed(path)
+					if err != nil {
+						return fmt.Errorf("Error calculating relaxed checksum for directory source %s: %s", path, err)
+					}
 				} else {
 					// or simply use the path to the file
 					tarballPath = path
+					checksum, err = checksumSource(tarballPath)
+					if err != nil {
+						return fmt.Errorf("Error calculating checksum for tarball source %s: %s", tarballPath, err)
+					}
 				}
 
 				// Checksum, create, & upload source archive
-				checksum, err := checksumSource(tarballPath)
-				if err != nil {
-					return fmt.Errorf("Error calculating checksum for build source %s: %s", tarballPath, err)
-				}
 				newSource, err := client.SourceCreate(context.TODO())
 				if err != nil {
 					return fmt.Errorf("Error creating source for build: %s", err)
@@ -240,7 +249,9 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 					return fmt.Errorf("Error uploading source for build to %s: %s", newSource.SourceBlob.PutURL, err)
 				}
 				opts.SourceBlob.URL = &newSource.SourceBlob.GetURL
-				opts.SourceBlob.Checksum = &checksum
+				if !useRelaxedChecksum {
+					opts.SourceBlob.Checksum = &checksum
+				}
 			} else if v, ok = sourceArg["url"]; ok && v != "" {
 				s := v.(string)
 				opts.SourceBlob.URL = &s
@@ -271,6 +282,8 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(build.ID)
+	// Capture the checksum, to diff changes in the local source directory.
+	d.Set("local_checksum", checksum)
 
 	build, err = client.BuildInfo(context.TODO(), app, build.ID)
 	if err != nil {
@@ -321,31 +334,30 @@ func resourceHerokuBuildCustomizeDiff(ctx context.Context, diff *schema.Resource
 			if err != nil {
 				return fmt.Errorf("Error stating build source path %s: %s", path, err)
 			}
-
-			if fileInfo.IsDir() {
-				// To diff this generates a tarball of the source directory for calculating the current "local_checksum", same function call as in resourceHerokuBuildCreate
-				tarballPath, err = generateSourceTarball(path)
+			useRelaxedChecksum := fileInfo.IsDir()
+			var realChecksum string
+			if useRelaxedChecksum {
+				realChecksum, err = checksumSourceRelaxed(path)
 				if err != nil {
-					return fmt.Errorf("Error generating build source tarball %s: %s", path, err)
+					return fmt.Errorf("Error calculating relaxed checksum for directory source %s: %s", path, err)
 				}
-				defer cleanupSourceFile(tarballPath)
 			} else {
 				// or simply use the path to the file
 				tarballPath = path
+				realChecksum, err = checksumSource(tarballPath)
+				if err != nil {
+					return fmt.Errorf("Error calculating checksum for tarball source %s: %s", tarballPath, err)
+				}
 			}
 
-			// Calculate & diff the "local_checksum" SHA256
-			realChecksum, err := checksumSource(tarballPath)
-			if err == nil {
-				oldChecksum, newChecksum := diff.GetChange("local_checksum")
-				log.Printf("[DEBUG] Diffing source: old '%s', new '%s', real '%s'", oldChecksum, newChecksum, realChecksum)
-				if newChecksum != realChecksum {
-					if err := diff.SetNew("local_checksum", realChecksum); err != nil {
-						return fmt.Errorf("Error updating source archive checksum: %s", err)
-					}
-					if err := diff.ForceNew("local_checksum"); err != nil {
-						return fmt.Errorf("Error forcing new source resource: %s", err)
-					}
+			oldChecksum, newChecksum := diff.GetChange("local_checksum")
+			log.Printf("[DEBUG] Diffing source: old '%s', new '%s', real '%s'", oldChecksum, newChecksum, realChecksum)
+			if newChecksum != realChecksum {
+				if err := diff.SetNew("local_checksum", realChecksum); err != nil {
+					return fmt.Errorf("Error updating source archive checksum: %s", err)
+				}
+				if err := diff.ForceNew("local_checksum"); err != nil {
+					return fmt.Errorf("Error forcing new source resource: %s", err)
 				}
 			}
 		}
@@ -414,6 +426,63 @@ func checksumSource(filePath string) (string, error) {
 	return checksum, nil
 }
 
+func checksumSourceRelaxed(sourcePath string) (string, error) {
+	hash := sha256.New()
+
+	info, err := os.Stat(sourcePath)
+	if err != nil {
+		return "", fmt.Errorf("Error stating source path '%s' for checksum %w", sourcePath, err)
+	}
+
+	var baseDir string
+	if info.IsDir() {
+		baseDir = filepath.Base(sourcePath)
+	}
+
+	err = filepath.Walk(sourcePath, func(path string, info os.FileInfo, walkErr error) error {
+		var walkPath string
+		if baseDir != "" {
+			walkPath = filepath.ToSlash(filepath.Join(baseDir, strings.TrimPrefix(path, sourcePath)))
+		} else {
+			walkPath = info.Name()
+		}
+
+		if walkErr != nil {
+			return fmt.Errorf("Error walking '%s' for checksum: %w", walkPath, walkErr)
+		}
+
+		// Write each path name to the hash, so that if things are renamed, they're ensured to change checksum.
+		fmt.Fprint(hash, walkPath+"\n")
+		log.Printf("[DEBUG] hash ← %s (name)", walkPath)
+
+		// Skip checksumming unless the file has data/contents.
+		if info.IsDir() || !info.Mode().IsRegular() {
+			return nil
+		}
+
+		// Read the file into the hasher.
+		file, err := os.Open(path)
+		if err != nil {
+			return fmt.Errorf("Error opening file '%s' for checksum: %w", info.Name(), err)
+		}
+		defer file.Close()
+		b, err := io.Copy(hash, file)
+		if err != nil {
+			return fmt.Errorf("Error reading file '%s' for checksum: %w", info.Name(), err)
+		}
+		log.Printf("[DEBUG] hash ← %v (bytes)", b)
+
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	checksum := fmt.Sprintf("SHA256:%x", hash.Sum(nil))
+	log.Printf("[DEBUG] hash sum → %v", checksum)
+	return checksum, nil
+}
+
 func setBuildState(d *schema.ResourceData, build *heroku.Build, appName string) error {
 	d.Set("app", appName)
 
@@ -448,8 +517,6 @@ func setBuildState(d *schema.ResourceData, build *heroku.Build, appName string) 
 			if v := build.SourceBlob.URL; v != "" {
 				source["url"] = v
 			}
-		} else {
-			d.Set("local_checksum", build.SourceBlob.Checksum)
 		}
 		if v := build.SourceBlob.Version; v != nil {
 			source["version"] = *v

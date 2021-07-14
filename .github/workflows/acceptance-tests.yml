@@ -24,6 +24,20 @@ jobs:
         go-version: 1.16
       id: go
 
+    - name: Install Terraform
+      run: |
+        set -eu
+        curl -s -L "https://releases.hashicorp.com/terraform/1.0.2/terraform_1.0.2_linux_amd64.zip" > "terraform-bin.zip"
+
+        # overwrite existing Terraform binary
+        terraform_bin="$(which terraform)"
+        unzip -p terraform-bin.zip > terraform-bin
+        sudo mv terraform-bin "$terraform_bin"
+        sudo chmod +x "$terraform_bin"
+        rm terraform-bin.zip
+
+        echo "Installed: $(eval "$terraform_bin version") ($terraform_bin)"
+
     - uses: actions/checkout@master
 
     - name: Run make fmt
@@ -37,6 +51,7 @@ jobs:
 
     - name: Run tests
       run: |
+        echo "Using: $(terraform version) ($(which terraform))"
         make testacc TEST="./heroku/"
       env:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
