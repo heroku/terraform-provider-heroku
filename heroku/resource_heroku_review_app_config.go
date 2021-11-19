@@ -216,7 +216,7 @@ func resourceHerokuReviewAppConfigCreate(ctx context.Context, d *schema.Resource
 	log.Printf("[DEBUG] Enabled review apps config on pipeline %s", pipelineID)
 
 	// Set resource ID to the pipeline ID
-	d.SetId(config.Pipeline.ID)
+	d.SetId(config.PipelineID)
 
 	return resourceHerokuReviewAppConfigRead(ctx, d, meta)
 }
@@ -316,7 +316,7 @@ func resourceHerokuReviewAppConfigRead(ctx context.Context, d *schema.ResourceDa
 		return diags
 	}
 
-	d.Set("pipeline_id", reviewAppConfig.Pipeline.ID)
+	d.Set("pipeline_id", reviewAppConfig.PipelineID)
 	d.Set("automatic_review_apps", reviewAppConfig.AutomaticReviewApps)
 	d.Set("base_name", reviewAppConfig.BaseName)
 	d.Set("destroy_stale_apps", reviewAppConfig.DestroyStaleApps)
