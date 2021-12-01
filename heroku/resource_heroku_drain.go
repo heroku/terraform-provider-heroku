@@ -24,10 +24,9 @@ func resourceHerokuDrain() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"app": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				AtLeastOneOf: []string{"url", "sensitive_url"},
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
 			},
 
 			"url": {
@@ -71,8 +70,11 @@ func resourceHerokuDrainImport(d *schema.ResourceData, meta interface{}) ([]*sch
 		app = result[0]
 		id = result[1]
 
-		if result[3] == "sensitive" {
+		if result[2] == "sensitive" {
 			isSensitive = true
+		} else {
+			return nil, fmt.Errorf("to import a heroku_drain with a sensitive url, please use 'sensitive', not '%s'",
+				result[2])
 		}
 	default:
 		return nil, fmt.Errorf("the heroku_drain import ID should consist of 2 or 3 strings separated by a colon")

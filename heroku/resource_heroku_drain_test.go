@@ -35,6 +35,30 @@ func TestAccHerokuDrain_Basic(t *testing.T) {
 	})
 }
 
+func TestAccHerokuDrain_BasicWithSensitiveURL(t *testing.T) {
+	var drain heroku.LogDrain
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuDrainDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuDrainConfig_basicWithSensitiveURL(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuDrainExists("heroku_drain.foobar", &drain),
+					testAccCheckHerokuDrainAttributes(&drain),
+					resource.TestCheckResourceAttr(
+						"heroku_drain.foobar", "sensitive_url", "syslog://terraform.example.com:1234"),
+					resource.TestCheckResourceAttr(
+						"heroku_drain.foobar", "app", appName),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckHerokuDrainDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*Config).Api
 
@@ -106,7 +130,20 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_drain" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app = heroku_app.foobar.name
     url = "syslog://terraform.example.com:1234"
+}`, appName)
+}
+
+func testAccCheckHerokuDrainConfig_basicWithSensitiveURL(appName string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_drain" "foobar" {
+    app = heroku_app.foobar.name
+    sensitive_url = "syslog://terraform.example.com:1234"
 }`, appName)
 }
