@@ -23,16 +23,25 @@ func resourceHerokuDrain() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"url": {
+			"app": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"app": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"url": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"sensitive_url"},
+			},
+
+			"sensitive_url": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				Sensitive:     true,
+				ConflictsWith: []string{"url"},
 			},
 
 			"token": {
@@ -48,9 +57,27 @@ const retryableError = `App hasn't yet been assigned a log channel. Please try a
 func resourceHerokuDrainImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	client := meta.(*Config).Api
 
-	app, id, err := parseCompositeID(d.Id())
-	if err != nil {
-		return nil, err
+	result := strings.Split(d.Id(), ":")
+
+	var app, id string
+	var isSensitive bool
+	switch len(result) {
+	case 2:
+		app = result[0]
+		id = result[1]
+		isSensitive = false
+	case 3:
+		app = result[0]
+		id = result[1]
+
+		if result[2] == "sensitive" {
+			isSensitive = true
+		} else {
+			return nil, fmt.Errorf("to import a heroku_drain with a sensitive url, please use 'sensitive', not '%s'",
+				result[2])
+		}
+	default:
+		return nil, fmt.Errorf("the heroku_drain import ID should consist of 2 or 3 strings separated by a colon")
 	}
 
 	dr, err := client.LogDrainInfo(context.Background(), app, id)
@@ -59,7 +86,15 @@ func resourceHerokuDrainImport(d *schema.ResourceData, meta interface{}) ([]*sch
 	}
 
 	d.SetId(dr.ID)
+
+	if isSensitive {
+		d.Set("sensitive_url", dr.URL)
+	} else {
+		d.Set("url", dr.URL)
+	}
+
 	d.Set("app", app)
+	d.Set("token", dr.Token)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -68,7 +103,19 @@ func resourceHerokuDrainCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
 	app := d.Get("app").(string)
-	url := d.Get("url").(string)
+
+	var url string
+	if v, ok := d.GetOk("url"); ok {
+		vs := v.(string)
+		log.Printf("[DEBUG] drain url: %s", vs)
+		url = vs
+	}
+
+	if v, ok := d.GetOk("sensitive_url"); ok {
+		vs := v.(string)
+		log.Printf("[DEBUG] drain sensitive_url: %s", vs)
+		url = vs
+	}
 
 	log.Printf("[DEBUG] Drain create configuration: %#v, %#v", app, url)
 
@@ -88,12 +135,12 @@ func resourceHerokuDrainCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	d.SetId(dr.ID)
-	d.Set("url", dr.URL)
-	d.Set("token", dr.Token)
-
 	log.Printf("[INFO] Drain ID: %s", d.Id())
-	return nil
+
+	d.SetId(dr.ID)
+	d.Set("app", app)
+
+	return resourceHerokuDrainRead(d, meta)
 }
 
 func resourceHerokuDrainDelete(d *schema.ResourceData, meta interface{}) error {
@@ -107,6 +154,10 @@ func resourceHerokuDrainDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error deleting drain: %s", err)
 	}
 
+	log.Printf("[INFO] Deleted drain: %s", d.Id())
+
+	d.SetId("")
+
 	return nil
 }
 
@@ -118,8 +169,15 @@ func resourceHerokuDrainRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error retrieving drain: %s", err)
 	}
 
-	d.Set("url", dr.URL)
 	d.Set("token", dr.Token)
+
+	if _, ok := d.GetOk("url"); ok {
+		d.Set("url", dr.URL)
+	}
+
+	if _, ok := d.GetOk("sensitive_url"); ok {
+		d.Set("sensitive_url", dr.URL)
+	}
 
 	return nil
 }
