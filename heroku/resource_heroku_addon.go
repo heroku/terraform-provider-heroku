@@ -3,13 +3,14 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
 	"net/url"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -185,18 +186,40 @@ func resourceHerokuAddonUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	app := d.Get("app").(string)
 
+	plan := d.Get("plan").(string)
 	if d.HasChange("plan") {
-		opts.Plan = d.Get("plan").(string)
+		opts.Plan = plan
 	}
 
 	if d.HasChange("name") {
-		n := d.Get("name").(string)
-		opts.Name = &n
+		name := d.Get("name").(string)
+		opts.Name = &name
 	}
 
-	ad, updateErr := client.AddOnUpdate(context.TODO(), app, d.Id(), opts)
-	if updateErr != nil {
-		return updateErr
+	ad, err := client.AddOnUpdate(context.TODO(), app, d.Id(), opts)
+	if err != nil {
+		return fmt.Errorf("Error updating Addon (%s, %s): %w", plan, d.Id(), err)
+	}
+
+	configOpts := heroku.AddOnConfigUpdateOpts{}
+	if d.HasChange("config") {
+		if c, ok := d.GetOk("config"); ok {
+			for n, v := range c.(map[string]interface{}) {
+				vs := v.(string)
+				configOpts.Config = append(configOpts.Config, &struct {
+					Name  *string `json:"name,omitempty" url:"name,omitempty,key"`   // unique name of the config
+					Value *string `json:"value,omitempty" url:"value,omitempty,key"` // value of the config
+				}{
+					Name:  &n,
+					Value: &vs,
+				})
+			}
+		}
+	}
+
+	_, err = client.AddOnConfigUpdate(context.TODO(), d.Id(), configOpts)
+	if err != nil {
+		return fmt.Errorf("Error updating Addon config (%s, %s): %w", plan, d.Id(), err)
 	}
 
 	// Store the new addon id if applicable

@@ -38,6 +38,53 @@ func TestAccHerokuAddon_Basic(t *testing.T) {
 	})
 }
 
+func TestAccHerokuAddon_UpdatePlan(t *testing.T) {
+	var addon heroku.AddOn
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAddonConfig_basic(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
+					testAccCheckHerokuAddonAttributes(&addon, "deployhooks:http"),
+					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "config.url", "http://google.com"),
+					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "app", appName),
+					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "plan", "deployhooks:http"),
+				),
+			},
+			{
+				Config: testAccCheckHerokuAddonConfig_basicUpdate(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
+					testAccCheckHerokuAddonAttributes(&addon, "deployhooks:irc"),
+					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "config.server", "irc.example.com"),
+					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "config.room", "dev-status"),
+					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "config.nick", "deploybot"),
+					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "config.password", "xxxxx"),
+					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "config.message", "{{user}} deployed app"),
+					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "app", appName),
+					resource.TestCheckResourceAttr(
+						"heroku_addon.foobar", "plan", "deployhooks:irc"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccHerokuAddon_noPlan(t *testing.T) {
 	var addon heroku.AddOn
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
@@ -253,6 +300,26 @@ resource "heroku_addon" "foobar" {
     config = {
         url = "http://google.com"
 	}
+}`, appName)
+}
+
+func testAccCheckHerokuAddonConfig_basicUpdate(appName string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_addon" "foobar" {
+    app = "${heroku_app.foobar.name}"
+    plan = "deployhooks:irc"
+    config = {
+    	server = "irc.example.com"
+    	room = "dev-status"
+    	nick = "deploybot"
+    	password = "xxxxx"
+    	message = "{{user}} deployed app"
+    }
 }`, appName)
 }
 
