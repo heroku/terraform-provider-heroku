@@ -3,13 +3,14 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
 	"net/url"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -72,6 +73,17 @@ func resourceHerokuAddon() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+
+			"config_var_values": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type:      schema.TypeString,
+					Sensitive: true,
+				},
+				Sensitive: true,
 			},
 		},
 	}
@@ -176,6 +188,15 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	configVarValues, err := retrieveSpecificConfigVars(client, addon.App.Name, addon.ConfigVars)
+	if err != nil {
+		return err
+	}
+	err = d.Set("config_var_values", configVarValues)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -268,4 +289,27 @@ func AddOnStateRefreshFunc(client *heroku.Service, appID, addOnID string) resour
 		// heroku-go is updated.
 		return (*heroku.AddOn)(addon), addon.State, nil
 	}
+}
+
+func retrieveSpecificConfigVars(client *heroku.Service, appID string, varNames []string) (map[string]string, error) {
+	vars, err := client.ConfigVarInfoForApp(context.TODO(), appID)
+	if err != nil {
+		return nil, err
+	}
+
+	nonNullVars := map[string]string{}
+	for k, v := range vars {
+		isSpecified := false
+		for _, specifiedVar := range varNames {
+			if k == specifiedVar {
+				isSpecified = true
+				break
+			}
+		}
+		if isSpecified && v != nil {
+			nonNullVars[k] = *v
+		}
+	}
+
+	return nonNullVars, nil
 }
