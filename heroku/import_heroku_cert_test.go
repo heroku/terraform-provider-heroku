@@ -10,6 +10,8 @@ import (
 )
 
 func TestAccHerokuCert_importBasic(t *testing.T) {
+	t.Skip("SSL Endpoint shutdown: https://devcenter.heroku.com/changelog-items/2280")
+
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	wd, _ := os.Getwd()
