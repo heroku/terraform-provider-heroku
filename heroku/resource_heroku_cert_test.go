@@ -29,6 +29,8 @@ import (
 // on update seems to allow the test to run smoothly; in real life, this test
 // case is definitely an extreme edge case.
 func TestAccHerokuCert_EU(t *testing.T) {
+	t.Skip("SSL Endpoint shutdown: https://devcenter.heroku.com/changelog-items/2280")
+
 	var endpoint heroku.SSLEndpoint
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
@@ -74,6 +76,8 @@ func TestAccHerokuCert_EU(t *testing.T) {
 }
 
 func TestAccHerokuCert_US(t *testing.T) {
+	t.Skip("SSL Endpoint shutdown: https://devcenter.heroku.com/changelog-items/2280")
+
 	var endpoint heroku.SSLEndpoint
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 

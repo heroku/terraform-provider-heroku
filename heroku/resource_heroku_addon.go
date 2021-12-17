@@ -3,13 +3,14 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
 	"net/url"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -73,6 +74,17 @@ func resourceHerokuAddon() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+
+			"config_var_values": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type:      schema.TypeString,
+					Sensitive: true,
+				},
+				Sensitive: true,
+			},
 		},
 	}
 }
@@ -121,28 +133,43 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[DEBUG] Addon create configuration: %#v, %#v", app, opts)
-	a, err := client.AddOnCreate(context.TODO(), app, opts)
+	addon, err := client.AddOnCreate(context.TODO(), app, opts)
 	if err != nil {
 		return err
 	}
 
 	// Wait for the Addon to be provisioned
-	log.Printf("[DEBUG] Waiting for Addon (%s) to be provisioned", a.ID)
+	log.Printf("[DEBUG] Waiting for Addon (%s) to be provisioned", addon.ID)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{"provisioning"},
 		Target:  []string{"provisioned"},
-		Refresh: AddOnStateRefreshFunc(client, app, a.ID),
+		Refresh: AddOnStateRefreshFunc(client, app, addon.ID),
 		Timeout: time.Duration(config.AddonCreateTimeout) * time.Minute,
 	}
 
 	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf("Error waiting for Addon (%s) to be provisioned: %s", d.Id(), err)
+		return fmt.Errorf("Error waiting for Addon (%s) to be provisioned: %s", addon.ID, err)
 	}
-	log.Printf("[INFO] Addon provisioned: %s", d.Id())
+	log.Printf("[INFO] Addon provisioned: %s", addon.ID)
 
 	// This should be only set after the addon provisioning has been fully completed.
-	d.SetId(a.ID)
+	d.SetId(addon.ID)
 	log.Printf("[INFO] Addon ID: %s", d.Id())
+
+	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		configVarValues, err := retrieveSpecificConfigVars(client, addon.App.Name, addon.ConfigVars)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+		if len(configVarValues) != len(addon.ConfigVars) {
+			return resource.RetryableError(fmt.Errorf("Got %d add-on config vars from the app, but expected %d", len(configVarValues), len(addon.ConfigVars)))
+		}
+		log.Printf("[INFO] Addon config vars are set: %v", addon.ConfigVars)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
 
 	return resourceHerokuAddonRead(d, meta)
 }
@@ -173,6 +200,15 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("plan", plan)
 	d.Set("provider_id", addon.ProviderID)
 	if err := d.Set("config_vars", addon.ConfigVars); err != nil {
+		return err
+	}
+
+	configVarValues, err := retrieveSpecificConfigVars(client, addon.App.Name, addon.ConfigVars)
+	if err != nil {
+		return err
+	}
+	err = d.Set("config_var_values", configVarValues)
+	if err != nil {
 		return err
 	}
 
@@ -268,4 +304,20 @@ func AddOnStateRefreshFunc(client *heroku.Service, appID, addOnID string) resour
 		// heroku-go is updated.
 		return (*heroku.AddOn)(addon), addon.State, nil
 	}
+}
+
+func retrieveSpecificConfigVars(client *heroku.Service, appID string, varNames []string) (map[string]string, error) {
+	vars, err := client.ConfigVarInfoForApp(context.TODO(), appID)
+	if err != nil {
+		return nil, err
+	}
+
+	nonNullVars := map[string]string{}
+	for k, v := range vars {
+		if SliceContainsString(varNames, k) && v != nil {
+			nonNullVars[k] = *v
+		}
+	}
+
+	return nonNullVars, nil
 }
