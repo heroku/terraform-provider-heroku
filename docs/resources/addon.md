@@ -54,7 +54,7 @@ The following attributes are exported:
 * `plan` - The plan name
 * `provider_id` - The ID of the plan provider
 * `config_vars` - The Configuration variables of the add-on
-* `config_var_values` - A map of the configuration variable's values queried from the app. Upon add-on creation, these values will be up-to-date, while the app's own `config_vars` require another Terraform refresh cycle to be updated. Useful when an output is set to an add-on config var value, or when a configuration needs to operate on a new add-on during an apply.
+* `config_var_values` - A sensitive map of the add-on's configuration variables. Upon add-on creation, these values will be up-to-date, while the app's own `config_vars` require another Terraform refresh cycle to be updated. Useful when an output contains an add-on config var value, or when a configuration needs to operate on a new add-on during an apply.
 
 ## Import
 

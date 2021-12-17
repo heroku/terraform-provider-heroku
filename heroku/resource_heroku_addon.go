@@ -188,10 +188,21 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	configVarValues, err := retrieveSpecificConfigVars(client, addon.App.Name, addon.ConfigVars)
+	var configVarValues map[string]string
+	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		configVarValues, err = retrieveSpecificConfigVars(client, addon.App.Name, addon.ConfigVars)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+		if len(configVarValues) != len(addon.ConfigVars) {
+			return resource.RetryableError(fmt.Errorf("Got %d add-on config vars from the app, but expected %d", len(configVarValues), len(addon.ConfigVars)))
+		}
+		return nil
+	})
 	if err != nil {
 		return err
 	}
+
 	err = d.Set("config_var_values", configVarValues)
 	if err != nil {
 		return err
@@ -299,14 +310,7 @@ func retrieveSpecificConfigVars(client *heroku.Service, appID string, varNames [
 
 	nonNullVars := map[string]string{}
 	for k, v := range vars {
-		isSpecified := false
-		for _, specifiedVar := range varNames {
-			if k == specifiedVar {
-				isSpecified = true
-				break
-			}
-		}
-		if isSpecified && v != nil {
+		if SliceContainsString(varNames, k) && v != nil {
 			nonNullVars[k] = *v
 		}
 	}
