@@ -133,28 +133,43 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[DEBUG] Addon create configuration: %#v, %#v", app, opts)
-	a, err := client.AddOnCreate(context.TODO(), app, opts)
+	addon, err := client.AddOnCreate(context.TODO(), app, opts)
 	if err != nil {
 		return err
 	}
 
 	// Wait for the Addon to be provisioned
-	log.Printf("[DEBUG] Waiting for Addon (%s) to be provisioned", a.ID)
+	log.Printf("[DEBUG] Waiting for Addon (%s) to be provisioned", addon.ID)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{"provisioning"},
 		Target:  []string{"provisioned"},
-		Refresh: AddOnStateRefreshFunc(client, app, a.ID),
+		Refresh: AddOnStateRefreshFunc(client, app, addon.ID),
 		Timeout: time.Duration(config.AddonCreateTimeout) * time.Minute,
 	}
 
 	if _, err := stateConf.WaitForState(); err != nil {
-		return fmt.Errorf("Error waiting for Addon (%s) to be provisioned: %s", d.Id(), err)
+		return fmt.Errorf("Error waiting for Addon (%s) to be provisioned: %s", addon.ID, err)
 	}
-	log.Printf("[INFO] Addon provisioned: %s", d.Id())
+	log.Printf("[INFO] Addon provisioned: %s", addon.ID)
 
 	// This should be only set after the addon provisioning has been fully completed.
-	d.SetId(a.ID)
+	d.SetId(addon.ID)
 	log.Printf("[INFO] Addon ID: %s", d.Id())
+
+	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		configVarValues, err := retrieveSpecificConfigVars(client, addon.App.Name, addon.ConfigVars)
+		if err != nil {
+			return resource.NonRetryableError(err)
+		}
+		if len(configVarValues) != len(addon.ConfigVars) {
+			return resource.RetryableError(fmt.Errorf("Got %d add-on config vars from the app, but expected %d", len(configVarValues), len(addon.ConfigVars)))
+		}
+		log.Printf("[INFO] Addon config vars are set: %v", addon.ConfigVars)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
 
 	return resourceHerokuAddonRead(d, meta)
 }
@@ -188,21 +203,10 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	var configVarValues map[string]string
-	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		configVarValues, err = retrieveSpecificConfigVars(client, addon.App.Name, addon.ConfigVars)
-		if err != nil {
-			return resource.NonRetryableError(err)
-		}
-		if len(configVarValues) != len(addon.ConfigVars) {
-			return resource.RetryableError(fmt.Errorf("Got %d add-on config vars from the app, but expected %d", len(configVarValues), len(addon.ConfigVars)))
-		}
-		return nil
-	})
+	configVarValues, err := retrieveSpecificConfigVars(client, addon.App.Name, addon.ConfigVars)
 	if err != nil {
 		return err
 	}
-
 	err = d.Set("config_var_values", configVarValues)
 	if err != nil {
 		return err
