@@ -22,7 +22,7 @@ func resourceHerokuSpacePeeringConnectionAccepter() *schema.Resource {
 		Delete: resourceHerokuSpacePeeringConnectionAccepterDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: resourceHerokuSpacePeeringConnectionAccepterImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -49,6 +49,24 @@ func resourceHerokuSpacePeeringConnectionAccepter() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceHerokuSpacePeeringConnectionAccepterImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	client := meta.(*Config).Api
+	spaceIdentity, peeringPcxID, err := parseCompositeID(d.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	peeringConn, err := client.PeeringInfo(ctx, spaceIdentity, peeringPcxID)
+	if err != nil {
+		return nil, err
+	}
+
+	d.SetId(peeringConn.PcxID)
+	d.Set("space", spaceIdentity)
+	setPeeringConnectionAccepterProperties(d, peeringConn)
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceHerokuSpacePeeringConnectionAccepterCreate(d *schema.ResourceData, meta interface{}) error {
@@ -101,6 +119,12 @@ func resourceHerokuSpacePeeringConnectionAccepterCreate(d *schema.ResourceData, 
 	return nil
 }
 
+func setPeeringConnectionAccepterProperties(d *schema.ResourceData, peeringConn *heroku.Peering) {
+	d.Set("status", peeringConn.Status)
+	d.Set("type", peeringConn.Type)
+	d.Set("vpc_peering_connection_id", peeringConn.PcxID)
+}
+
 func resourceHerokuSpacePeeringConnectionAccepterRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
@@ -112,9 +136,7 @@ func resourceHerokuSpacePeeringConnectionAccepterRead(d *schema.ResourceData, me
 	}
 
 	d.SetId(peeringConn.PcxID)
-	d.Set("status", peeringConn.Status)
-	d.Set("type", peeringConn.Type)
-	d.Set("vpc_peering_connection_id", peeringConn.PcxID)
+	setPeeringConnectionAccepterProperties(d, peeringConn)
 
 	return nil
 }
