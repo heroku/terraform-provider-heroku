@@ -100,6 +100,8 @@ machine api.heroku.com
 ...
 ```
 
+The directory containing the `.netrc` file can be overridden by the `NETRC` environment variable as described [here](https://www.gnu.org/software/inetutils/manual/html_node/The-_002enetrc-file.html).
+
 ## Argument Reference
 
 The following arguments are supported:
