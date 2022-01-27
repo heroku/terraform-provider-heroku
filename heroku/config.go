@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/bgentry/go-netrc/netrc"
@@ -175,7 +176,7 @@ func (c *Config) applyNetrcFile() error {
 		}
 
 		var err error
-		path, err = homedir.Expand(fmt.Sprintf("%s/", dir) + filename)
+		path, err = homedir.Expand(filepath.Join(dir, filename))
 		if err != nil {
 			return err
 		}
