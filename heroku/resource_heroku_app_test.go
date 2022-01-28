@@ -300,52 +300,36 @@ func TestAccHerokuApp_Organization(t *testing.T) {
 	})
 }
 
-func TestAccHerokuApp_Space(t *testing.T) {
+// Generates a "test step" not a whole test, so that it can reuse the space.
+// See: resource_heroku_space_test.go, where this is used.
+func testStep_AccHerokuApp_Space(t *testing.T, spaceConfig, spaceName string) resource.TestStep {
 	var app heroku.TeamApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	spaceName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	org := testAccConfig.GetSpaceOrganizationOrSkip(t)
 
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckHerokuAppConfig_space(appName, spaceName, org),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
-					testAccCheckHerokuAppAttributesOrg(&app, appName, spaceName, org, false),
-				),
-			},
-		},
-	})
+	return resource.TestStep{
+		Config: testAccCheckHerokuAppConfig_space(spaceConfig, appName, org),
+		Check: resource.ComposeTestCheckFunc(
+			testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
+			testAccCheckHerokuAppAttributesOrg(&app, appName, spaceName, org, false),
+		),
+	}
 }
 
-func TestAccHerokuApp_Space_Internal(t *testing.T) {
+// Generates a "test step" not a whole test, so that it can reuse the space.
+// See: resource_heroku_space_test.go, where this is used.
+func testStep_AccHerokuApp_Space_Internal(t *testing.T, spaceConfig, spaceName string) resource.TestStep {
 	var app heroku.TeamApp
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	org := testAccConfig.GetSpaceOrganizationOrSkip(t)
-	spaceName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckHerokuAppConfig_space_internal(appName, spaceName, org),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
-					testAccCheckHerokuAppAttributesOrg(&app, appName, spaceName, org, true),
-				),
-			},
-		},
-	})
+	return resource.TestStep{
+		Config: testAccCheckHerokuAppConfig_space_internal(spaceConfig, appName, org),
+		Check: resource.ComposeTestCheckFunc(
+			testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
+			testAccCheckHerokuAppAttributesOrg(&app, appName, spaceName, org, true),
+		),
+	}
 }
 
 // https://github.com/heroku/terraform-provider-heroku/issues/2
@@ -823,16 +807,14 @@ resource "heroku_app" "foobar" {
 }`, appName, org)
 }
 
-func testAccCheckHerokuAppConfig_space(appName, spaceName, org string) string {
+func testAccCheckHerokuAppConfig_space(spaceConfig, appName, org string) string {
 	return fmt.Sprintf(`
-resource "heroku_space" "foobar" {
-  name = "%s"
-	organization = "%s"
-	region = "virginia"
-}
+# heroku_space.foobar config inherited from previous steps
+%s
+
 resource "heroku_app" "foobar" {
   name   = "%s"
-  space  = "${heroku_space.foobar.name}"
+  space  = heroku_space.foobar.name
   region = "virginia"
 
   organization {
@@ -842,19 +824,17 @@ resource "heroku_app" "foobar" {
   config_vars = {
     FOO = "bar"
   }
-}`, spaceName, org, appName, org)
+}`, spaceConfig, appName, org)
 }
 
-func testAccCheckHerokuAppConfig_space_internal(appName, spaceName, org string) string {
+func testAccCheckHerokuAppConfig_space_internal(spaceConfig, appName, org string) string {
 	return fmt.Sprintf(`
-resource "heroku_space" "foobar" {
-  name = "%s"
-	organization = "%s"
-	region = "virginia"
-}
+# heroku_space.foobar config inherited from previous steps
+%s
+
 resource "heroku_app" "foobar" {
   name             = "%s"
-  space            = "${heroku_space.foobar.name}"
+  space            = heroku_space.foobar.name
   region           = "virginia"
 	internal_routing = true
 
@@ -865,7 +845,7 @@ resource "heroku_app" "foobar" {
   config_vars = {
     FOO = "bar"
   }
-}`, spaceName, org, appName, org)
+}`, spaceConfig, appName, org)
 }
 
 func testAccCheckHerokuAppConfig_EmptyConfigVars(appName string) string {

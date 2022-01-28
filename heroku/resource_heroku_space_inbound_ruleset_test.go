@@ -4,46 +4,29 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	heroku "github.com/heroku/heroku-go/v5"
 )
 
-func TestAccHerokuSpaceInboundRuleset_Basic(t *testing.T) {
-	var space heroku.Space
-	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
-	org := testAccConfig.GetAnyOrganizationOrSkip(t)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuSpaceDestroy,
-		Steps: []resource.TestStep{
-			{
-				ResourceName: "heroku_space_inbound_ruleset.foobar",
-				Config:       testAccCheckHerokuSpaceInboundRulesetConfig_basic(spaceName, org),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
-					resource.TestCheckResourceAttr(
-						"heroku_space_inbound_ruleset.foobar", "rule.#", "2"),
-				),
-			},
-		},
-	})
+// Generates a "test step" not a whole test, so that it can reuse the space.
+// See: resource_heroku_space_test.go, where this is used.
+func testStep_AccHerokuSpaceInboundRuleset_Basic(t *testing.T, spaceConfig string) resource.TestStep {
+	return resource.TestStep{
+		ResourceName: "heroku_space_inbound_ruleset.foobar",
+		Config:       testAccCheckHerokuSpaceInboundRulesetConfig_basic(spaceConfig),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(
+				"heroku_space_inbound_ruleset.foobar", "rule.#", "2"),
+		),
+	}
 }
 
-func testAccCheckHerokuSpaceInboundRulesetConfig_basic(spaceName, orgName string) string {
+func testAccCheckHerokuSpaceInboundRulesetConfig_basic(spaceConfig string) string {
 	return fmt.Sprintf(`
-resource "heroku_space" "foobar" {
-  name         = "%s"
-  organization = "%s"
-  region       = "virginia"
-}
+# heroku_space.foobar config inherited from previous steps
+%s
 
 resource "heroku_space_inbound_ruleset" "foobar" {
-  space = "${heroku_space.foobar.name}"
+  space = heroku_space.foobar.name
 
   rule { 
     action = "allow"
@@ -55,5 +38,5 @@ resource "heroku_space_inbound_ruleset" "foobar" {
     source = "8.8.8.0/24"
   }
 }
-`, spaceName, orgName)
+`, spaceConfig)
 }

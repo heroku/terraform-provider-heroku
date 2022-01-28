@@ -8,14 +8,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	heroku "github.com/heroku/heroku-go/v5"
 )
 
-func TestAccHerokuSpace_Basic(t *testing.T) {
-	var space heroku.Space
+func TestAccHerokuSpace(t *testing.T) {
+	var space spaceWithNAT
 	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
-	spaceName2 := fmt.Sprintf("tftest2-%s", acctest.RandString(10))
 	org := testAccConfig.GetAnyOrganizationOrSkip(t)
+	spaceConfig := testAccCheckHerokuSpaceConfig_basic(spaceName, org, "10.0.0.0/16", "10.1.0.0/20")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -26,127 +25,48 @@ func TestAccHerokuSpace_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				ResourceName: "heroku_space.foobar",
-				Config:       testAccCheckHerokuSpaceConfig_basic(spaceName, org),
+				Config:       spaceConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
-					testAccCheckHerokuSpaceAttributes(&space, spaceName),
-					resource.TestCheckResourceAttrSet(
-						"heroku_space.foobar", "outbound_ips.#"),
-				),
-			},
-			{
-				ResourceName: "heroku_space.foobar",
-				Config:       testAccCheckHerokuSpaceConfig_basic(spaceName2, org),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
-					testAccCheckHerokuSpaceAttributes(&space, spaceName2),
-				),
-			},
-		},
-	})
-}
-
-func TestAccHerokuSpace_Shield(t *testing.T) {
-	var space heroku.Space
-	spaceName := fmt.Sprintf("tfshieldtest-%s", acctest.RandString(10))
-	org := testAccConfig.GetAnyOrganizationOrSkip(t)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuSpaceDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckHerokuSpaceConfig_shield(spaceName, org),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
-					testAccCheckHerokuSpaceAttributes(&space, spaceName),
-					resource.TestCheckResourceAttr(
-						"heroku_space.foobar", "shield", "true"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccHerokuSpace_CIDRs(t *testing.T) {
-	var space heroku.Space
-	spaceName := fmt.Sprintf("tfcidrtest-%s", acctest.RandString(10))
-	org := testAccConfig.GetAnyOrganizationOrSkip(t)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuSpaceDestroy,
-		Steps: []resource.TestStep{
-			{
-				ResourceName: "heroku_space.foobar",
-				Config:       testAccCheckHerokuSpaceConfig_cidr(spaceName, org, "10.0.0.0/16"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
+					resource.TestCheckResourceAttrSet("heroku_space.foobar", "outbound_ips.#"),
 					resource.TestCheckResourceAttr("heroku_space.foobar", "cidr", "10.0.0.0/16"),
-				),
-			},
-			{
-				ResourceName: "heroku_space.foobar",
-				Config:       testAccCheckHerokuSpaceConfig_data_cidr(spaceName, org, "10.1.0.0/20"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
 					resource.TestCheckResourceAttr("heroku_space.foobar", "data_cidr", "10.1.0.0/20"),
 				),
 			},
+			// append space test Steps, sharing the space, instead of recreating for each test
+			testStep_AccDatasourceHerokuSpace_Basic(t, spaceConfig),
+			testStep_AccDatasourceHerokuSpacePeeringInfo_Basic(t, spaceConfig),
+			testStep_AccHerokuApp_Space(t, spaceConfig, spaceName),
+			testStep_AccHerokuApp_Space_Internal(t, spaceConfig, spaceName),
+			testStep_AccHerokuSlug_WithFile_InPrivateSpace(t, spaceConfig),
+			testStep_AccHerokuSpaceAppAccess_Basic(t, spaceConfig),
+			testStep_AccHerokuSpaceAppAccess_importBasic(t, spaceName),
+			testStep_AccHerokuSpaceInboundRuleset_Basic(t, spaceConfig),
+			testStep_AccHerokuVPNConnection_Basic(t, spaceConfig),
 		},
 	})
 }
 
-func testAccCheckHerokuSpaceConfig_basic(spaceName, orgName string) string {
+// Permanently skipping Space_Shield test, as this is little more than an attribute test that takes at least 8-minutes to run.
+// It's really just testing Shield space provisioning, which this Terraform provider is not responsible for validating.
+//
+// func TestAccHerokuSpace_Shield(t *testing.T) {
+//  …
+// }
+
+func testAccCheckHerokuSpaceConfig_basic(spaceName, orgName, cidr, dataCidr string) string {
 	return fmt.Sprintf(`
 resource "heroku_space" "foobar" {
   name = "%s"
   organization = "%s"
   region = "virginia"
-}
-`, spaceName, orgName)
-}
-
-func testAccCheckHerokuSpaceConfig_shield(spaceName, orgName string) string {
-	return fmt.Sprintf(`
-resource "heroku_space" "foobar" {
-  name         = "%s"
-  organization = "%s"
-  region       = "virginia"
-  shield       = true
-}
-`, spaceName, orgName)
-}
-
-func testAccCheckHerokuSpaceConfig_cidr(spaceName, orgName string, cidr string) string {
-	return fmt.Sprintf(`
-resource "heroku_space" "foobar" {
-  name         = "%s"
-  organization = "%s"
   cidr         = "%s"
-  region       = "virginia"
-}
-`, spaceName, orgName, cidr)
-}
-
-func testAccCheckHerokuSpaceConfig_data_cidr(spaceName, orgName string, dataCidr string) string {
-	return fmt.Sprintf(`
-resource "heroku_space" "foobar" {
-  name         = "%s"
-  organization = "%s"
   data_cidr    = "%s"
-  region       = "virginia"
 }
-`, spaceName, orgName, dataCidr)
+`, spaceName, orgName, cidr, dataCidr)
 }
 
-func testAccCheckHerokuSpaceExists(n string, space *heroku.Space) resource.TestCheckFunc {
+func testAccCheckHerokuSpaceExists(n string, space *spaceWithNAT) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 
@@ -165,21 +85,21 @@ func testAccCheckHerokuSpaceExists(n string, space *heroku.Space) resource.TestC
 			return err
 		}
 
+		foundSpaceWithNAT := spaceWithNAT{
+			Space: *foundSpace,
+		}
+
+		nat, err := client.SpaceNATInfo(context.TODO(), rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+		foundSpaceWithNAT.NAT = *nat
+
 		if foundSpace.ID != rs.Primary.ID {
 			return fmt.Errorf("Space not found")
 		}
 
-		*space = *foundSpace
-
-		return nil
-	}
-}
-
-func testAccCheckHerokuSpaceAttributes(space *heroku.Space, spaceName string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		if space.Name != spaceName {
-			return fmt.Errorf("Bad name: %s", space.Name)
-		}
+		*space = foundSpaceWithNAT
 
 		return nil
 	}
