@@ -49,9 +49,8 @@ func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 	})
 }
 
-func TestAccDatasourceHerokuApp_Advanced(t *testing.T) {
+func TestAccDatasourceHerokuApp_Organization(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	spaceName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	org := os.Getenv("HEROKU_SPACES_ORGANIZATION")
 
 	resource.Test(t, resource.TestCase{
@@ -64,17 +63,15 @@ func TestAccDatasourceHerokuApp_Advanced(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuApp_advanced(appName, spaceName, org),
+				Config: testAccCheckHerokuApp_organization(appName, org),
 			},
 			{
-				Config: testAccCheckHerokuAppWithDatasource_advanced(appName, spaceName, org),
+				Config: testAccCheckHerokuAppWithDatasource_organization(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "name", appName),
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "organization.0.name", org),
-					resource.TestCheckResourceAttr(
-						"data.heroku_app.foobar", "space", spaceName),
 				),
 			},
 		},
@@ -122,44 +119,30 @@ data "heroku_app" "foobar" {
 `, appName, stack)
 }
 
-func testAccCheckHerokuApp_advanced(appName, spaceName, orgName string) string {
+func testAccCheckHerokuApp_organization(appName, orgName string) string {
 	return fmt.Sprintf(`
-resource "heroku_space" "foobar" {
-  name = "%s"
-  organization = "%s"
-	region = "virginia"
-}
-
 resource "heroku_app" "foobar" {
   name   = "%s"
-  space  = "${heroku_space.foobar.name}"
   organization {
     name = "%s"
   }
-  region = "virginia"
+  region = "us"
 }
-`, spaceName, orgName, appName, orgName)
+`, appName, orgName)
 }
 
-func testAccCheckHerokuAppWithDatasource_advanced(appName, spaceName, orgName string) string {
+func testAccCheckHerokuAppWithDatasource_organization(appName, orgName string) string {
 	return fmt.Sprintf(`
-resource "heroku_space" "foobar" {
-  name = "%s"
-  organization = "%s"
-	region = "virginia"
-}
-
 resource "heroku_app" "foobar" {
   name   = "%s"
-  space  = "${heroku_space.foobar.name}"
   organization {
     name = "%s"
   }
-  region = "virginia"
+  region = "us"
 }
 
 data "heroku_app" "foobar" {
   name = "${heroku_app.foobar.name}"
 }
-`, spaceName, orgName, appName, orgName)
+`, appName, orgName)
 }

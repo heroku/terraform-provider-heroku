@@ -140,29 +140,24 @@ func TestAccHerokuSlug_WithInsecureRemoteFile(t *testing.T) {
 	})
 }
 
-func TestAccHerokuSlug_WithFile_InPrivateSpace(t *testing.T) {
+// Generates a "test step" not a whole test, so that it can reuse the space.
+// See: resource_heroku_space_test.go, where this is used.
+func testStep_AccHerokuSlug_WithFile_InPrivateSpace(t *testing.T, spaceConfig string) resource.TestStep {
 	var slug heroku.Slug
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
 	orgName := testAccConfig.GetSpaceOrganizationOrSkip(t)
-	spaceName := fmt.Sprintf("tftest-%s", randString)
 	// Manually generated using `shasum --algorithm 256 slug.tgz`
 	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
 	slugChecksum := "SHA256:6731cb5caea2cda97c6177216373360a0733aa8e7a21801de879fa8d22f740cf"
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckHerokuSlugConfig_withFile_inPrivateSpace(spaceName, orgName, appName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuSlugExists("heroku_slug.foobar", &slug),
-					resource.TestCheckResourceAttr("heroku_slug.foobar", "checksum", slugChecksum),
-				),
-			},
-		},
-	})
+	return resource.TestStep{
+		Config: testAccCheckHerokuSlugConfig_withFile_inPrivateSpace(spaceConfig, appName, orgName),
+		Check: resource.ComposeTestCheckFunc(
+			testAccCheckHerokuSlugExists("heroku_slug.foobar", &slug),
+			resource.TestCheckResourceAttr("heroku_slug.foobar", "checksum", slugChecksum),
+		),
+	}
 }
 
 func testAccCheckHerokuSlugExists(n string, Slug *heroku.Slug) resource.TestCheckFunc {
@@ -294,17 +289,14 @@ resource "heroku_slug" "foobar" {
 }`, appName)
 }
 
-func testAccCheckHerokuSlugConfig_withFile_inPrivateSpace(spaceName, orgName, appName string) string {
+func testAccCheckHerokuSlugConfig_withFile_inPrivateSpace(spaceConfig, appName, orgName string) string {
 	return fmt.Sprintf(`
-resource "heroku_space" "foobar" {
-  name = "%s"
-  organization = "%s"
-  region = "virginia"
-}
+# heroku_space.foobar config inherited from previous steps
+%s
 
 resource "heroku_app" "foobar" {
   name = "%s"
-  space = "${heroku_space.foobar.name}"
+  space = heroku_space.foobar.name
   region = "virginia"
 
   organization {
@@ -319,7 +311,7 @@ resource "heroku_slug" "foobar" {
   process_types = {
     web = "ruby server.rb"
   }
-}`, spaceName, orgName, appName, orgName)
+}`, spaceConfig, appName, orgName)
 }
 
 func switchSlugFiles() (bool, error) {

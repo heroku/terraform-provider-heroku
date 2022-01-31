@@ -6,40 +6,29 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
-func TestAccHerokuVPNConnection_basic(t *testing.T) {
+// Generates a "test step" not a whole test, so that it can reuse the space.
+// See: resource_heroku_space_test.go, where this is used.
+func testStep_AccHerokuVPNConnection_Basic(t *testing.T, spaceConfig string) resource.TestStep {
 	var vpnConnection heroku.VPNConnection
-	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
-	org := testAccConfig.GetSpaceOrganizationOrSkip(t)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuVPNConnectionDestroy,
-		Steps: []resource.TestStep{
-			{
-				ResourceName: "heroku_space_vpn_connection.foobar",
-				Config:       testAccCheckHerokuVPNConnectionConfig_basic(spaceName, org),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuVPNConnectionExists("heroku_space_vpn_connection.foobar", &vpnConnection),
-					testAccCheckHerokuVPNConnectionAttributes(&vpnConnection),
-					resource.TestCheckResourceAttr(
-						"heroku_space_vpn_connection.foobar", "space_cidr_block", "10.0.0.0/16"),
-					resource.TestCheckResourceAttr(
-						"heroku_space_vpn_connection.foobar", "ike_version", "1"),
-					resource.TestCheckResourceAttr(
-						"heroku_space_vpn_connection.foobar", "tunnels.#", "2"),
-				),
-			},
-		},
-	})
+	return resource.TestStep{
+		ResourceName: "heroku_space_vpn_connection.foobar",
+		Config:       testAccCheckHerokuVPNConnectionConfig_basic(spaceConfig),
+		Check: resource.ComposeTestCheckFunc(
+			testAccCheckHerokuVPNConnectionExists("heroku_space_vpn_connection.foobar", &vpnConnection),
+			testAccCheckHerokuVPNConnectionAttributes(&vpnConnection),
+			resource.TestCheckResourceAttr(
+				"heroku_space_vpn_connection.foobar", "space_cidr_block", "10.0.0.0/16"),
+			resource.TestCheckResourceAttr(
+				"heroku_space_vpn_connection.foobar", "ike_version", "1"),
+			resource.TestCheckResourceAttr(
+				"heroku_space_vpn_connection.foobar", "tunnels.#", "2"),
+		),
+	}
 }
 
 func testAccCheckHerokuVPNConnectionExists(n string, vpnConnection *heroku.VPNConnection) resource.TestCheckFunc {
@@ -84,37 +73,16 @@ func testAccCheckHerokuVPNConnectionAttributes(vpnConnection *heroku.VPNConnecti
 	}
 }
 
-func testAccCheckHerokuVPNConnectionDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config).Api
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "heroku_space_vpn_connection" {
-			continue
-		}
-
-		space, id, _ := parseCompositeID(rs.Primary.ID)
-		_, err := client.VPNConnectionInfo(context.TODO(), space, id)
-		if err == nil {
-			return fmt.Errorf("VPN connection still exists")
-		}
-	}
-
-	return nil
-}
-
-func testAccCheckHerokuVPNConnectionConfig_basic(spaceName string, orgName string) string {
+func testAccCheckHerokuVPNConnectionConfig_basic(spaceConfig string) string {
 	return fmt.Sprintf(`
-resource "heroku_space" "foobar" {
-  name         = "%s"
-  organization = "%s"
-  region       = "virginia"
-}
+# heroku_space.foobar config inherited from previous steps
+%s
 
 resource "heroku_space_vpn_connection" "foobar" {
-	space          = "${heroku_space.foobar.name}"
+	space          = heroku_space.foobar.name
 	name           = "foobar"
-	public_ip      = "${element(heroku_space.foobar.outbound_ips, 0)}"
+	public_ip      = element(heroku_space.foobar.outbound_ips, 0)
 	routable_cidrs = ["10.100.0.0/16"]
 }
-`, spaceName, orgName)
+`, spaceConfig)
 }

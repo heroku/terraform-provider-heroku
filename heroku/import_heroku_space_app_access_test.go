@@ -1,34 +1,20 @@
 package heroku
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccHerokuSpaceAppAccess_importBasic(t *testing.T) {
-	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
-	org := testAccConfig.GetAnyOrganizationOrSkip(t)
+// Generates a "test step" not a whole test, so that it can reuse the space.
+// See: resource_heroku_space_test.go, where this is used.
+func testStep_AccHerokuSpaceAppAccess_importBasic(t *testing.T, spaceName string) resource.TestStep {
 	testUser := testAccConfig.GetNonAdminUserOrAbort(t)
 
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuSpaceDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckHerokuSpaceAppAccessConfig_basic(spaceName, org, testUser, []string{"create_apps"}),
-			},
-			{
-				ResourceName:      "heroku_space_app_access.foobar",
-				ImportStateId:     buildCompositeID(spaceName, testUser),
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
+	return resource.TestStep{
+		ResourceName:      "heroku_space_app_access.foobar",
+		ImportStateId:     buildCompositeID(spaceName, testUser),
+		ImportState:       true,
+		ImportStateVerify: true,
+	}
 }

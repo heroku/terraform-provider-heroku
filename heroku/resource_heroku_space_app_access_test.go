@@ -1,74 +1,41 @@
 package heroku
 
 import (
-	"context"
 	"fmt"
-	"github.com/heroku/terraform-provider-heroku/v4/helper/test"
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/heroku/terraform-provider-heroku/v4/helper/test"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	heroku "github.com/heroku/heroku-go/v5"
 )
 
-func TestAccHerokuSpaceAppAccess_Basic(t *testing.T) {
-	var space heroku.Space
-	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
-	org := testAccConfig.GetAnyOrganizationOrSkip(t)
+// Generates a "test step" not a whole test, so that it can reuse the space.
+// See: resource_heroku_space_test.go, where this is used.
+func testStep_AccHerokuSpaceAppAccess_Basic(t *testing.T, spaceConfig string) resource.TestStep {
 	testUser := testAccConfig.GetNonAdminUserOrAbort(t)
 
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuSpaceAppAccessDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckHerokuSpaceAppAccessConfig_basic(spaceName, org, testUser, []string{"create_apps"}),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
-					test.TestCheckTypeSetElemAttr("heroku_space_app_access.foobar", "permissions.*", "create_apps"),
-				),
-			},
-		},
-	})
+	return resource.TestStep{
+		Config: testAccCheckHerokuSpaceAppAccessConfig_basic(spaceConfig, testUser, []string{"create_apps"}),
+		Check: resource.ComposeTestCheckFunc(
+			test.TestCheckTypeSetElemAttr("heroku_space_app_access.foobar", "permissions.*", "create_apps"),
+		),
+	}
 }
 
-func testAccCheckHerokuSpaceAppAccessConfig_basic(spaceName, orgName, testUser string, permissions []string) string {
+func testAccCheckHerokuSpaceAppAccessConfig_basic(spaceConfig, testUser string, permissions []string) string {
 	hclPermissionsList := "[]"
 	if len(permissions) > 0 {
 		hclPermissionsList = fmt.Sprintf("[\"%s\"]", strings.Join(permissions, "\",\""))
 	}
 	return fmt.Sprintf(`
-resource "heroku_space" "foobar" {
-  name         = "%s"
-  organization = "%s"
-  region       = "virginia"
-}
+# heroku_space.foobar config inherited from previous steps
+%s
 
 resource "heroku_space_app_access" "foobar" {
-  space = "${heroku_space.foobar.name}"
+  space = heroku_space.foobar.name
   email = "%s"
   permissions = %s
 }
-`, spaceName, orgName, testUser, hclPermissionsList)
-}
-
-func testAccCheckHerokuSpaceAppAccessDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config).Api
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "heroku_space_app_access" {
-			continue
-		}
-		_, err := client.SpaceAppAccessInfo(context.TODO(), rs.Primary.Attributes["space"], rs.Primary.ID)
-		if err == nil {
-			return fmt.Errorf("heroku_space_app_access still exists")
-		}
-	}
-
-	return nil
+`, spaceConfig, testUser, hclPermissionsList)
 }
