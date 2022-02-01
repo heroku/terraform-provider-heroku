@@ -7,7 +7,7 @@ This provider is used to configure resources supported by the [Heroku Platform A
 
 See the [official documentation](https://www.terraform.io/docs/providers/heroku/index.html) to use this provider in a Terraform configuration.
 
-<img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" width="600px">
+<img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/public/img/logo-hashicorp.svg" width="600px">
 
 Requirements
 ------------
