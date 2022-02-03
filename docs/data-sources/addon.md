@@ -22,7 +22,7 @@ output "heroku_addon_data_basic" {
     "Addon from another app",
     "id: ${data.heroku_addon.from_another_app.id}",
     "name: ${data.heroku_addon.from_another_app.name}",
-    "app: ${data.heroku_addon.from_another_app.app}",
+    "app_id: ${data.heroku_addon.from_another_app.app_id}",
     "plan: ${data.heroku_addon.from_another_app.plan}",
     "provider_id: ${data.heroku_addon.from_another_app.provider_id}",
     "config_vars: ${join(", ", data.heroku_addon.from_another_app.config_vars)}",
@@ -42,6 +42,7 @@ The following attributes are exported:
 
 * `id` - The ID of the add-on
 * `name` - The add-on name
+* `app_id` - Heroku app ID
 * `plan` - The plan name
 * `provider_id` - The ID of the plan provider
 * `config_vars` - The Configuration variables of the add-on

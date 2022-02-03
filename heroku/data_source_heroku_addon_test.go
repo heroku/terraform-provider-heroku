@@ -24,7 +24,7 @@ func TestAccDatasourceHerokuAddon_Basic(t *testing.T) {
 				Config: testAccCheckHerokuAddonWithDatasourceBasic(appName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(
-						"data.heroku_addon.test_data", "app"),
+						"data.heroku_addon.test_data", "app_id"),
 					resource.TestCheckResourceAttr(
 						"data.heroku_addon.test_data", "plan", "deployhooks:http"),
 				),
