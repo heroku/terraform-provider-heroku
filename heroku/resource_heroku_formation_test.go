@@ -118,7 +118,7 @@ resource "heroku_app" "foobar" {
   }
 }
 resource "heroku_app_release" "foobar-release" {
-	app = "${heroku_app.foobar.id}"
+	app_id = heroku_app.foobar.id
 	slug_id = "%s"
 }
 resource "heroku_formation" "foobar-web" {
@@ -137,7 +137,7 @@ resource "heroku_app" "foobar" {
     region = "us"
 }
 resource "heroku_app_release" "foobar-release" {
-	app = "${heroku_app.foobar.id}"
+	app_id = heroku_app.foobar.id
 	slug_id = "%s"
 }
 resource "heroku_formation" "foobar-web" {

@@ -201,7 +201,7 @@ resource "heroku_slug" "one" {
 }
 
 resource "heroku_app_release" "one" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.id
   slug_id = "${heroku_slug.one.id}"
 }
 
@@ -249,7 +249,7 @@ resource "heroku_slug" "one" {
 }
 
 resource "heroku_app_release" "one" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.id
   slug_id = "${heroku_slug.one.id}"
 }
 
@@ -301,7 +301,7 @@ resource "heroku_slug" "one" {
 }
 
 resource "heroku_app_release" "one" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.id
   slug_id = "${heroku_slug.one.id}"
 }
 

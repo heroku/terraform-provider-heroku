@@ -71,7 +71,7 @@ resource "heroku_slug" "foobar" {
 
 # Deploy a release to the app with the slug
 resource "heroku_app_release" "foobar" {
-  app     = heroku_app.foobar.id
+  app_id  = heroku_app.foobar.id
   slug_id = heroku_slug.foobar.id
 }
 
