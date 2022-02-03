@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
@@ -20,10 +21,11 @@ func resourceHerokuAppFeature() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"app": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"app_id": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 
 			"name": {
@@ -63,7 +65,7 @@ func resourceHerokuAppFeatureRead(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	d.Set("app", app)
+	d.Set("app_id", app)
 	d.Set("name", feature.Name)
 	d.Set("enabled", feature.Enabled)
 
@@ -73,7 +75,7 @@ func resourceHerokuAppFeatureRead(d *schema.ResourceData, meta interface{}) erro
 func resourceHerokuAppFeatureCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	app := d.Get("app").(string)
+	app := d.Get("app_id").(string)
 	featureName := d.Get("name").(string)
 	enabled := d.Get("enabled").(bool)
 

@@ -27,7 +27,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_app_feature" "log_runtime_metrics" {
-  app = heroku_app.foobar.id
+  app_id = heroku_app.foobar.id
   name = "log-runtime-metrics"
 }
 ```
@@ -36,7 +36,7 @@ resource "heroku_app_feature" "log_runtime_metrics" {
 
 The following arguments are supported:
 
-* `app` - (Required) Heroku app ID (do not use app name)
+* `app_id` - (Required) Heroku app ID (do not use app name)
 * `name` - (Required) The name of the App Feature to manage.
 * `enabled` - (Optional) Whether to enable or disable the App Feature. The default value is true.
 

@@ -52,7 +52,7 @@ func testAccCheckHerokuFeatureDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := client.AppFeatureInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		_, err := client.AppFeatureInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Feature still exists")
@@ -75,7 +75,7 @@ func testAccCheckHerokuFeatureExists(n string, feature *heroku.AppFeature) resou
 		}
 
 		app, id, _ := parseCompositeID(rs.Primary.ID)
-		if app != rs.Primary.Attributes["app"] {
+		if app != rs.Primary.Attributes["app_id"] {
 			return fmt.Errorf("Bad app: %s", app)
 		}
 
@@ -113,7 +113,7 @@ resource "heroku_app" "example" {
 }
 
 resource "heroku_app_feature" "runtime_metrics" {
-	app = "${heroku_app.example.name}"
+	app_id = heroku_app.example.id
 	name = "log-runtime-metrics"
 }
 `, appName)
@@ -127,7 +127,7 @@ resource "heroku_app" "example" {
 }
 
 resource "heroku_app_feature" "runtime_metrics" {
-	app = "${heroku_app.example.name}"
+	app_id = heroku_app.example.id
 	name = "log-runtime-metrics"
 	enabled = false
 }
