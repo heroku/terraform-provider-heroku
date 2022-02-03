@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
@@ -23,10 +24,11 @@ func resourceHerokuDrain() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"app": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"app_id": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 
 			"url": {
@@ -93,7 +95,12 @@ func resourceHerokuDrainImport(d *schema.ResourceData, meta interface{}) ([]*sch
 		d.Set("url", dr.URL)
 	}
 
-	d.Set("app", app)
+	foundApp, err := resourceHerokuAppRetrieve(app, client)
+	if err != nil {
+		return nil, err
+	}
+
+	d.Set("app_id", foundApp.App.ID)
 	d.Set("token", dr.Token)
 
 	return []*schema.ResourceData{d}, nil
@@ -102,7 +109,7 @@ func resourceHerokuDrainImport(d *schema.ResourceData, meta interface{}) ([]*sch
 func resourceHerokuDrainCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	app := d.Get("app").(string)
+	appID := d.Get("app_id").(string)
 
 	var url string
 	if v, ok := d.GetOk("url"); ok {
@@ -117,11 +124,11 @@ func resourceHerokuDrainCreate(d *schema.ResourceData, meta interface{}) error {
 		url = vs
 	}
 
-	log.Printf("[DEBUG] Drain create configuration: %#v, %#v", app, url)
+	log.Printf("[DEBUG] Drain create configuration: %#v, %#v", appID, url)
 
 	var dr *heroku.LogDrain
 	err := resource.Retry(2*time.Minute, func() *resource.RetryError {
-		d, err := client.LogDrainCreate(context.TODO(), app, heroku.LogDrainCreateOpts{URL: url})
+		d, err := client.LogDrainCreate(context.TODO(), appID, heroku.LogDrainCreateOpts{URL: url})
 		if err != nil {
 			if strings.Contains(err.Error(), retryableError) {
 				return resource.RetryableError(err)
@@ -138,7 +145,6 @@ func resourceHerokuDrainCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Drain ID: %s", d.Id())
 
 	d.SetId(dr.ID)
-	d.Set("app", app)
 
 	return resourceHerokuDrainRead(d, meta)
 }
@@ -149,7 +155,7 @@ func resourceHerokuDrainDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Deleting drain: %s", d.Id())
 
 	// Destroy the drain
-	_, err := client.LogDrainDelete(context.TODO(), d.Get("app").(string), d.Id())
+	_, err := client.LogDrainDelete(context.TODO(), d.Get("app_id").(string), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting drain: %s", err)
 	}
@@ -164,7 +170,7 @@ func resourceHerokuDrainDelete(d *schema.ResourceData, meta interface{}) error {
 func resourceHerokuDrainRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	dr, err := client.LogDrainInfo(context.TODO(), d.Get("app").(string), d.Id())
+	dr, err := client.LogDrainInfo(context.TODO(), d.Get("app_id").(string), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving drain: %s", err)
 	}
