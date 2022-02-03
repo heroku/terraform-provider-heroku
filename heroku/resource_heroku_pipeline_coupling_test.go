@@ -50,8 +50,8 @@ resource "heroku_pipeline" "default" {
 }
 
 resource "heroku_pipeline_coupling" "default" {
-  app      = "${heroku_app.default.id}"
-  pipeline = "${heroku_pipeline.default.id}"
+  app_id   = heroku_app.default.id
+  pipeline = heroku_pipeline.default.id
   stage    = "%s"
 }
 `, appName, pipelineName, stageName)

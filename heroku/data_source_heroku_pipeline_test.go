@@ -2,9 +2,10 @@ package heroku
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"testing"
 )
 
 func TestAccDatasourceHerokuPipeline_Basic(t *testing.T) {
@@ -46,13 +47,13 @@ resource "heroku_pipeline" "foobar" {
 }
 
 resource "heroku_pipeline_coupling" "staging" {
-  app      = "${heroku_app.staging.id}"
-  pipeline = "${heroku_pipeline.foobar.id}"
+  app_id   = heroku_app.staging.id
+  pipeline = heroku_pipeline.foobar.id
   stage    = "staging"
 }
 
 data "heroku_pipeline" "foobar" {
-  name = "${heroku_pipeline_coupling.staging.pipeline}"
+  name = heroku_pipeline_coupling.staging.pipeline
 }
 `, appName, pipelineName)
 }

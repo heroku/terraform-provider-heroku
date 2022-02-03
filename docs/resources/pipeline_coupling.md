@@ -37,13 +37,13 @@ resource "heroku_pipeline" "test-app" {
 
 # Couple apps to different pipeline stages
 resource "heroku_pipeline_coupling" "staging" {
-  app      = heroku_app.staging.id
+  app_id   = heroku_app.staging.id
   pipeline = heroku_pipeline.test-app.id
   stage    = "staging"
 }
 
 resource "heroku_pipeline_coupling" "production" {
-  app      = heroku_app.production.id
+  app_id   = heroku_app.production.id
   pipeline = heroku_pipeline.test-app.id
   stage    = "production"
 }
@@ -53,7 +53,7 @@ resource "heroku_pipeline_coupling" "production" {
 
 The following arguments are supported:
 
-* `app` - (Required) Heroku app ID (do not use app name)
+* `app_id` - (Required) Heroku app ID (do not use app name)
 * `pipeline` - (Required) The ID of the pipeline to add this app to.
 * `stage` - (Required) The stage to couple this app to. Must be one of
 `review`, `development`, `staging`, or `production`.
@@ -63,10 +63,6 @@ The following arguments are supported:
 The following attributes are exported:
 
 * `id` - The UUID of this pipeline coupling.
-* `app` - The ID of the application (no longer the app name)
-* `app_id` - The ID of the application.
-* `pipeline` - The UUID of the pipeline.
-* `stage` - The stage for this coupling.
 
 ## Import
 
