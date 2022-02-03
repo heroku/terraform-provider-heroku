@@ -81,7 +81,7 @@ func testAccCheckHerokuFormationExists(n string, formation *heroku.Formation) re
 
 		client := testAccProvider.Meta().(*Config).Api
 
-		foundFormation, err := client.FormationInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundFormation, err := client.FormationInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -122,7 +122,7 @@ resource "heroku_app_release" "foobar-release" {
 	slug_id = "%s"
 }
 resource "heroku_formation" "foobar-web" {
-	app = "${heroku_app.foobar.id}"
+	app_id = heroku_app.foobar.id
 	type = "web"
 	size = "%s"
 	quantity = %d
@@ -141,7 +141,7 @@ resource "heroku_app_release" "foobar-release" {
 	slug_id = "%s"
 }
 resource "heroku_formation" "foobar-web" {
-	app = "${heroku_app.foobar.id}"
+	app_id = heroku_app.foobar.id
 	type = "web"
 	size = "%s"
 	quantity = %d

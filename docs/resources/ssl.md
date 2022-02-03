@@ -33,7 +33,7 @@ resource "heroku_build" "default" {
 
 # Scale the app to a tier that supports Heroku SSL
 resource "heroku_formation" "web" {
-  app = heroku_app.default.id
+  app_id = heroku_app.default.id
   type = "web"
   size = "hobby"
   quantity = 1

@@ -77,7 +77,7 @@ resource "heroku_app_release" "foobar" {
 
 # Launch the app's web process by scaling-up
 resource "heroku_formation" "foobar" {
-  app        = heroku_app.foobar.id
+  app_id     = heroku_app.foobar.id
   type       = "web"
   quantity   = 1
   size       = "Standard-1x"

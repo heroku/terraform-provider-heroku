@@ -37,7 +37,7 @@ resource "heroku_app_release" "foobar-release" {
 
 # Update the web formation for the foobar application's web
 resource "heroku_formation" "foobar-web" {
-    app = heroku_app.foobar.id
+    app_id = heroku_app.foobar.id
     type = "web"
     quantity = 2
     size = "standard-2x"
@@ -49,7 +49,7 @@ resource "heroku_formation" "foobar-web" {
 
 ## Argument Reference
 
-* `app` - (Required) Heroku app ID (do not use app name)
+* `app_id` - (Required) Heroku app ID (do not use app name)
 * `type` - (Required) type of process such as "web"
 * `quantity` - (Required) number of processes to maintain
 * `size` - (Required) dyno size (Example: “standard-1X”). Capitalization does not matter.

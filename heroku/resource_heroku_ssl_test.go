@@ -79,7 +79,7 @@ resource "heroku_app_release" "one" {
 }
 
 resource "heroku_formation" "web" {
-  app = heroku_app.one.id
+  app_id = heroku_app.one.id
   type = "web"
   size = "hobby"
   quantity = 1
