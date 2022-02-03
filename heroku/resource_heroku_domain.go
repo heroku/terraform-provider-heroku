@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
@@ -28,10 +29,11 @@ func resourceHerokuDomain() *schema.Resource {
 				ForceNew: true,
 			},
 
-			"app": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"app_id": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 
 			"cname": {
@@ -69,7 +71,7 @@ func resourceHerokuDomainImport(d *schema.ResourceData, meta interface{}) ([]*sc
 
 func resourceHerokuDomainCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
-	app := d.Get("app").(string)
+	appID := d.Get("app_id").(string)
 	opts := heroku.DomainCreateOpts{
 		Hostname: d.Get("hostname").(string),
 	}
@@ -78,9 +80,9 @@ func resourceHerokuDomainCreate(d *schema.ResourceData, meta interface{}) error 
 		opts.SniEndpoint = &v
 	}
 
-	log.Printf("[DEBUG] Domain create configuration: %#v, %#v", app, opts)
+	log.Printf("[DEBUG] Domain create configuration: %#v, %#v", appID, opts)
 
-	do, err := client.DomainCreate(context.TODO(), app, opts)
+	do, err := client.DomainCreate(context.TODO(), appID, opts)
 	if err != nil {
 		return err
 	}
@@ -94,7 +96,7 @@ func resourceHerokuDomainCreate(d *schema.ResourceData, meta interface{}) error 
 
 func resourceHerokuDomainUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
-	app := d.Get("app").(string)
+	appID := d.Get("app_id").(string)
 	opts := heroku.DomainUpdateOpts{}
 
 	if d.HasChange("sni_endpoint_id") {
@@ -102,7 +104,7 @@ func resourceHerokuDomainUpdate(d *schema.ResourceData, meta interface{}) error 
 		opts.SniEndpoint = &v
 	}
 
-	do, err := client.DomainUpdate(context.TODO(), app, d.Id(), opts)
+	do, err := client.DomainUpdate(context.TODO(), appID, d.Id(), opts)
 	if err != nil {
 		return err
 	}
@@ -118,7 +120,7 @@ func resourceHerokuDomainDelete(d *schema.ResourceData, meta interface{}) error 
 	log.Printf("[INFO] Deleting Domain: %s", d.Id())
 
 	// Destroy the domain
-	_, err := client.DomainDelete(context.TODO(), d.Get("app").(string), d.Id())
+	_, err := client.DomainDelete(context.TODO(), d.Get("app_id").(string), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting domain: %s", err)
 	}
@@ -129,8 +131,8 @@ func resourceHerokuDomainDelete(d *schema.ResourceData, meta interface{}) error 
 func resourceHerokuDomainRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	app := d.Get("app").(string)
-	do, err := client.DomainInfo(context.TODO(), app, d.Id())
+	appID := d.Get("app_id").(string)
+	do, err := client.DomainInfo(context.TODO(), appID, d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving domain: %s", err)
 	}
@@ -143,7 +145,7 @@ func resourceHerokuDomainRead(d *schema.ResourceData, meta interface{}) error {
 
 func populateResource(d *schema.ResourceData, do *heroku.Domain) {
 	d.SetId(do.ID)
-	d.Set("app", do.App.ID)
+	d.Set("app_id", do.App.ID)
 	d.Set("hostname", do.Hostname)
 	d.Set("cname", do.CName)
 	if v := do.SniEndpoint; v != nil {
