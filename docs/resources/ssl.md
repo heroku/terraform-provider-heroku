@@ -25,7 +25,7 @@ resource "heroku_app" "default" {
 
 # Build a slug that we can scale
 resource "heroku_build" "default" {
-  app = heroku_app.default.id
+  app_id = heroku_app.default.id
   source {
     url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/app.tgz"
   }

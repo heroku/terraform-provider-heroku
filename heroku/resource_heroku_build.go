@@ -17,6 +17,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
 	tarinator "github.com/verybluebot/tarinator-go"
 )
@@ -33,10 +34,11 @@ func resourceHerokuBuild() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"app": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"app_id": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 
 			"buildpacks": {
@@ -155,7 +157,7 @@ func resourceHerokuBuildImport(d *schema.ResourceData, meta interface{}) ([]*sch
 	}
 
 	d.SetId(build.ID)
-	setErr := setBuildState(d, build, app)
+	setErr := setBuildState(d, build, build.App.ID)
 	if setErr != nil {
 		return nil, setErr
 	}
@@ -166,7 +168,7 @@ func resourceHerokuBuildImport(d *schema.ResourceData, meta interface{}) ([]*sch
 func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	app := getAppName(d)
+	appID := getAppId(d)
 
 	// Build up our creation options
 	opts := heroku.BuildCreateOpts{}
@@ -261,17 +263,17 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	build, err := client.BuildCreate(context.TODO(), app, opts)
+	build, err := client.BuildCreate(context.TODO(), appID, opts)
 	if err != nil {
 		return fmt.Errorf("Error creating build: %s opts %+v", err, opts)
 	}
 
 	// Wait for the Build to be complete
-	log.Printf("[DEBUG] Waiting for Build (%s:%s) to complete", app, build.ID)
+	log.Printf("[DEBUG] Waiting for Build (%s:%s) to complete", appID, build.ID)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{"pending"},
 		Target:  []string{"succeeded"},
-		Refresh: BuildStateRefreshFunc(client, app, build.ID),
+		Refresh: BuildStateRefreshFunc(client, appID, build.ID),
 		// Builds are allowed to take a very long time,
 		// basically until the build dyno cycles (22-26 hours).
 		Timeout: 26 * time.Hour,
@@ -285,11 +287,11 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 	// Capture the checksum, to diff changes in the local source directory.
 	d.Set("local_checksum", checksum)
 
-	build, err = client.BuildInfo(context.TODO(), app, build.ID)
+	build, err = client.BuildInfo(context.TODO(), appID, build.ID)
 	if err != nil {
 		return fmt.Errorf("Error refreshing the completed build: %s", err)
 	}
-	setErr := setBuildState(d, build, app)
+	setErr := setBuildState(d, build, appID)
 	if setErr != nil {
 		return setErr
 	}
@@ -302,13 +304,13 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceHerokuBuildRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	app := getAppName(d)
-	build, err := client.BuildInfo(context.TODO(), app, d.Id())
+	appID := getAppId(d)
+	build, err := client.BuildInfo(context.TODO(), appID, d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving build: %s", err)
 	}
 
-	setErr := setBuildState(d, build, app)
+	setErr := setBuildState(d, build, appID)
 	if setErr != nil {
 		return setErr
 	}
@@ -483,8 +485,8 @@ func checksumSourceRelaxed(sourcePath string) (string, error) {
 	return checksum, nil
 }
 
-func setBuildState(d *schema.ResourceData, build *heroku.Build, appName string) error {
-	d.Set("app", appName)
+func setBuildState(d *schema.ResourceData, build *heroku.Build, appID string) error {
+	d.Set("app_id", appID)
 
 	var buildpacks []interface{}
 	for _, buildpack := range build.Buildpacks {
