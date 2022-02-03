@@ -79,7 +79,7 @@ func testAccCheckHerokuTeamCollaboratorExists(n string, teamCollaborator *heroku
 
 		client := testAccProvider.Meta().(*Config).Api
 
-		foundTeamCollaborator, err := client.TeamAppCollaboratorInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundTeamCollaborator, err := client.TeamAppCollaboratorInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -116,7 +116,7 @@ resource "heroku_app" "foobar" {
     }
 }
 resource "heroku_team_collaborator" "foobar-collaborator" {
-	app = heroku_app.foobar.id
+	app_id = heroku_app.foobar.id
 	email = "%s"
 	permissions = %s
 }
