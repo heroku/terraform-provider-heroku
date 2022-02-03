@@ -23,8 +23,8 @@ resource "heroku_app" "default" {
 
 # Add-on SSL to application
 resource "heroku_addon" "ssl" {
-  app  = heroku_app.default.id
-  plan = "ssl"
+  app_id = heroku_app.default.id
+  plan  = "ssl"
 }
 
 # Establish certificate for a given application

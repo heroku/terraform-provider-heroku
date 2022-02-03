@@ -30,7 +30,7 @@ func TestAccHerokuAddon_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "config.url", "http://google.com"),
 					resource.TestCheckResourceAttrSet(
-						"heroku_addon.foobar", "app"),
+						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "plan", "deployhooks:http"),
 				),
@@ -54,7 +54,7 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
 					testAccCheckHerokuAddonPlan(&addon, "memcachier:dev"),
 					resource.TestCheckResourceAttrSet(
-						"heroku_addon.foobar", "app"),
+						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "plan", "memcachier"),
 				),
@@ -65,7 +65,7 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
 					testAccCheckHerokuAddonPlan(&addon, "memcachier:dev"),
 					resource.TestCheckResourceAttrSet(
-						"heroku_addon.foobar", "app"),
+						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "plan", "memcachier"),
 				),
@@ -111,7 +111,7 @@ func TestAccHerokuAddon_CustomName(t *testing.T) {
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
 					testAccCheckHerokuAddonPlan(&addon, "memcachier:dev"),
 					resource.TestCheckResourceAttrSet(
-						"heroku_addon.foobar", "app"),
+						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "plan", "memcachier"),
 					resource.TestCheckResourceAttr(
@@ -202,7 +202,7 @@ func testAccCheckHerokuAddonDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := client.Api.AddOnInfoByApp(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		_, err := client.Api.AddOnInfoByApp(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Addon still exists")
@@ -261,7 +261,7 @@ func testAccCheckHerokuAddonExists(n string, addon *heroku.AddOn) resource.TestC
 
 		client := testAccProvider.Meta().(*Config)
 
-		foundAddon, err := client.Api.AddOnInfoByApp(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundAddon, err := client.Api.AddOnInfoByApp(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -294,7 +294,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "foobar" {
-    app = "${heroku_app.foobar.id}"
+    app_id = heroku_app.foobar.id
     plan = "deployhooks:http"
     config = {
         url = "http://google.com"
@@ -310,7 +310,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "pg" {
-    app = "${heroku_app.foobar.id}"
+    app_id = heroku_app.foobar.id
     plan = "heroku-postgresql:hobby-dev"
 }`, appName)
 }
@@ -323,7 +323,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "foobar" {
-    app = "${heroku_app.foobar.id}"
+    app_id = heroku_app.foobar.id
     plan = "memcachier"
 }`, appName)
 }
@@ -336,7 +336,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "foobar" {
-    app = "${heroku_app.foobar.id}"
+    app_id = heroku_app.foobar.id
     plan = "memcachier"
     name = "%s"
 }`, appName, customAddonName)

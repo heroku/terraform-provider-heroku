@@ -54,7 +54,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "foobar" {
-    app = "${heroku_app.foobar.id}"
+    app_id = heroku_app.foobar.id
     plan = "heroku-postgresql:hobby-dev"
 }
 
@@ -73,7 +73,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "foobar" {
-    app = "${heroku_app.foobar.id}"
+    app_id = heroku_app.foobar.id
     plan = "heroku-postgresql:hobby-dev"
 }
 
