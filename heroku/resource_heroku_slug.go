@@ -14,6 +14,7 @@ import (
 
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
@@ -29,10 +30,11 @@ func resourceHerokuSlug() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"app": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"app_id": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 
 			// Local tarball to be uploaded after slug creation
@@ -136,7 +138,13 @@ func resourceHerokuSlugImport(d *schema.ResourceData, meta interface{}) ([]*sche
 	}
 
 	d.SetId(slug.ID)
-	d.Set("app", app)
+
+	foundApp, err := resourceHerokuAppRetrieve(app, client)
+	if err != nil {
+		return nil, err
+	}
+
+	d.Set("app_id", foundApp.App.ID)
 
 	setErr := setSlugState(d, slug)
 	if setErr != nil {
@@ -149,7 +157,7 @@ func resourceHerokuSlugImport(d *schema.ResourceData, meta interface{}) ([]*sche
 func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	app := getAppName(d)
+	appID := getAppId(d)
 
 	// Build up our creation options
 	opts := heroku.SlugCreateOpts{}
@@ -221,7 +229,7 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 		opts.Stack = heroku.String(v.(string))
 	}
 
-	slug, err := client.SlugCreate(context.TODO(), app, opts)
+	slug, err := client.SlugCreate(context.TODO(), appID, opts)
 	if err != nil {
 		return fmt.Errorf("Error creating slug: %s opts %+v", err, opts)
 	}
@@ -249,8 +257,8 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceHerokuSlugRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	app := getAppName(d)
-	slug, err := client.SlugInfo(context.TODO(), app, d.Id())
+	appID := getAppId(d)
+	slug, err := client.SlugInfo(context.TODO(), appID, d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving slug: %s", err)
 	}

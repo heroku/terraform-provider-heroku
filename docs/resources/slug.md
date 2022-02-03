@@ -38,7 +38,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_slug" "foobar" {
-  app      = heroku_app.foobar.id
+  app_id   = heroku_app.foobar.id
   file_url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/slug.tgz"
 
   process_types = {
@@ -59,7 +59,7 @@ resource "heroku_app" "foobar" {
 
 # Create a slug for the app with a local slug archive file
 resource "heroku_slug" "foobar" {
-  app                            = heroku_app.foobar.id
+  app_id                         = heroku_app.foobar.id
   buildpack_provided_description = "Ruby"
   // The slug archive file must already exist
   file_path                      = "slug.tgz"
@@ -89,7 +89,7 @@ resource "heroku_formation" "foobar" {
 
 The following arguments are supported:
 
-* `app` - (Required) Heroku app ID (do not use app name)
+* `app_id` - (Required) Heroku app ID (do not use app name)
 * `buildpack_provided_description` - Description of language or app framework, `"Ruby/Rack"`;
   displayed as the app's language in the Heroku Dashboard
 * `checksum` - Hash of the slug for verifying its integrity, auto-generated from contents of `file_path` or `file_url`,

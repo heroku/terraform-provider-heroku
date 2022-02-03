@@ -193,7 +193,7 @@ func testAccCheckHerokuDomainConfig_ssl_no_association(appName string) string {
 }
 
 resource "heroku_slug" "one" {
-    app = "${heroku_app.one.id}"
+    app_id = heroku_app.one.id
     file_path = "test-fixtures/slug.tgz"
     process_types = {
       web = "ruby server.rb"
@@ -241,7 +241,7 @@ func testAccCheckHerokuDomainConfig_ssl_change(appName string) string {
 }
 
 resource "heroku_slug" "one" {
-    app = "${heroku_app.one.id}"
+    app_id = heroku_app.one.id
     file_path = "test-fixtures/slug.tgz"
     process_types = {
       web = "ruby server.rb"
@@ -293,7 +293,7 @@ func testAccCheckHerokuDomainConfig_ssl(appName string) string {
 }
 
 resource "heroku_slug" "one" {
-    app = "${heroku_app.one.id}"
+    app_id = heroku_app.one.id
     file_path = "test-fixtures/slug.tgz"
     process_types = {
       web = "ruby server.rb"

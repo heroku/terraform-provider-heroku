@@ -66,7 +66,7 @@ resource "heroku_app" "one" {
 }
 
 resource "heroku_slug" "one" {
-  app = heroku_app.one.id
+  app_id = heroku_app.one.id
   file_path = "test-fixtures/slug.tgz"
   process_types = {
     web = "ruby server.rb"

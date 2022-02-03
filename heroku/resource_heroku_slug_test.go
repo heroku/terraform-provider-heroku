@@ -174,7 +174,7 @@ func testAccCheckHerokuSlugExists(n string, Slug *heroku.Slug) resource.TestChec
 
 		client := testAccProvider.Meta().(*Config).Api
 
-		foundSlug, err := client.SlugInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundSlug, err := client.SlugInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -197,7 +197,7 @@ func testAccCheckHerokuSlugConfig_basic(appName string) string {
 }
 
 resource "heroku_slug" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     file_path = "test-fixtures/slug.tgz"
     process_types = {
     	test = "echo 'Just a test'"
@@ -213,7 +213,7 @@ func testAccCheckHerokuSlugConfig_noFile(appName string) string {
 }
 
 resource "heroku_slug" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     process_types = {
       test = "echo 'Just a test'"
       diag = "echo 'Just diagnosis'"
@@ -228,7 +228,7 @@ func testAccCheckHerokuSlugConfig_allOpts(appName string) string {
 }
 
 resource "heroku_slug" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     buildpack_provided_description = "Test Language"
     file_path = "test-fixtures/slug.tgz"
     commit = "abcde"
@@ -248,7 +248,7 @@ func testAccCheckHerokuSlugConfig_withFile(appName string) string {
 }
 
 resource "heroku_slug" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     buildpack_provided_description = "Ruby"
     file_path = "test-fixtures/slug.tgz"
     process_types = {
@@ -264,7 +264,7 @@ func testAccCheckHerokuSlugConfig_withRemoteFile(appName string) string {
 }
 
 resource "heroku_slug" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     buildpack_provided_description = "Ruby"
     file_url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/slug.tgz"
     process_types = {
@@ -280,7 +280,7 @@ func testAccCheckHerokuSlugConfig_withInsecureRemoteFile(appName string) string 
 }
 
 resource "heroku_slug" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     buildpack_provided_description = "Ruby"
     file_url = "http://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/slug.tgz"
     process_types = {
@@ -305,7 +305,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_slug" "foobar" {
-  app = "${heroku_app.foobar.name}"
+  app_id = heroku_app.foobar.id
   buildpack_provided_description = "Ruby"
   file_path = "test-fixtures/slug.tgz"
   process_types = {
