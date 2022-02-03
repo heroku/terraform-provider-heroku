@@ -102,7 +102,7 @@ resource "heroku_app" "foobar" {
 	region = "us"
 }
 resource "heroku_app_release" "foobar-release" {
-	app = "${heroku_app.foobar.name}"
+	app = "${heroku_app.foobar.id}"
 	slug_id = "%s"
 }
 `, appName, slugId)
@@ -118,7 +118,7 @@ resource "heroku_app" "foobar" {
 	}
 }
 resource "heroku_app_release" "foobar-release" {
-	app = "${heroku_app.foobar.name}"
+	app = "${heroku_app.foobar.id}"
 	slug_id = "%s"
 	description = "%s"
 }

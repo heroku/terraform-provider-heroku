@@ -91,7 +91,7 @@ func resourceHerokuAddonAttachmentRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error retrieving addon attachment: %s", err)
 	}
 
-	d.Set("app_id", addonattachment.App.Name)
+	d.Set("app_id", addonattachment.App.ID)
 	d.Set("addon_id", addonattachment.Addon.ID)
 	d.Set("name", addonattachment.Name)
 	d.Set("namespace", addonattachment.Namespace)

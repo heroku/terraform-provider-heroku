@@ -143,7 +143,7 @@ func resourceHerokuDomainRead(d *schema.ResourceData, meta interface{}) error {
 
 func populateResource(d *schema.ResourceData, do *heroku.Domain) {
 	d.SetId(do.ID)
-	d.Set("app", do.App.Name)
+	d.Set("app", do.App.ID)
 	d.Set("hostname", do.Hostname)
 	d.Set("cname", do.CName)
 	if v := do.SniEndpoint; v != nil {

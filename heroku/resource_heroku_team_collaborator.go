@@ -34,6 +34,7 @@ type teamCollaborator struct {
 	Id string // Id of the resource
 
 	AppName          string // the app the collaborator belongs to
+	AppID            string // the app the collaborator belongs to
 	TeamCollaborator *herokuTeamCollaborator
 	Client           *heroku.Service
 	Permissions      []string // can be a combo or all of ["view", "deploy", "operate", "manage"]
@@ -153,7 +154,7 @@ func resourceHerokuTeamCollaboratorRead(d *schema.ResourceData, meta interface{}
 		return err
 	}
 
-	d.Set("app", teamCollaborator.AppName)
+	d.Set("app", teamCollaborator.AppID)
 	d.Set("email", teamCollaborator.TeamCollaborator.Email)
 	d.Set("permissions", teamCollaborator.Permissions)
 
@@ -234,8 +235,8 @@ func resourceHerokuTeamCollaboratorDelete(d *schema.ResourceData, meta interface
 	return nil
 }
 
-func resourceHerokuTeamCollaboratorRetrieve(id string, appName string, client *heroku.Service) (*teamCollaborator, error) {
-	teamCollaborator := teamCollaborator{Id: id, AppName: appName, Client: client}
+func resourceHerokuTeamCollaboratorRetrieve(id string, appID string, client *heroku.Service) (*teamCollaborator, error) {
+	teamCollaborator := teamCollaborator{Id: id, AppID: appID, Client: client}
 
 	err := teamCollaborator.Update()
 
@@ -251,7 +252,7 @@ func (tc *teamCollaborator) Update() error {
 
 	log.Printf("[INFO] tc.Id is %s", tc.Id)
 
-	teamCollaborator, err := tc.Client.TeamAppCollaboratorInfo(context.TODO(), tc.AppName, tc.Id)
+	teamCollaborator, err := tc.Client.TeamAppCollaboratorInfo(context.TODO(), tc.AppID, tc.Id)
 
 	if err != nil {
 		errs = append(errs, err)
@@ -259,11 +260,12 @@ func (tc *teamCollaborator) Update() error {
 		tc.TeamCollaborator = &herokuTeamCollaborator{}
 		tc.TeamCollaborator.Email = teamCollaborator.User.Email
 		tc.AppName = teamCollaborator.App.Name
+		tc.AppID = teamCollaborator.App.ID
 	}
 
 	// The underlying go client does not return permission info on the collaborator when calling
 	// 'TeamAppCollaboratorInfo'. Instead that is returned via calling 'CollaboratorInfo'
-	collaborator, collaboratorErr := tc.Client.CollaboratorInfo(context.TODO(), tc.AppName, tc.Id)
+	collaborator, collaboratorErr := tc.Client.CollaboratorInfo(context.TODO(), tc.AppID, tc.Id)
 	if collaboratorErr != nil {
 		errs = append(errs, collaboratorErr)
 	} else {
@@ -297,7 +299,7 @@ func resourceHerokuTeamCollaboratorImport(d *schema.ResourceData, meta interface
 	}
 
 	d.SetId(collaborator.ID)
-	d.Set("app", collaborator.App.Name)
+	d.Set("app", collaborator.App.ID)
 	d.Set("email", collaborator.User.Email)
 
 	var perms []string

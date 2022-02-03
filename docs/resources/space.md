@@ -27,7 +27,7 @@ resource "heroku_space" "default" {
 resource "heroku_app" "default" {
   name = "test-app"
   region = "us"
-  space = heroku_space.default.name
+  space = heroku_space.default.id
   organization = {
     name = "my-company"
   }
@@ -51,7 +51,7 @@ The following arguments are supported:
 
 The following attributes are exported:
 
-* `id` - The ID of the space.
+* `id` - The ID (UUID) of the space.
 * `name` - The space's name.
 * `organization` - The space's Heroku Team.
 * `region` - The space's region.

@@ -89,7 +89,7 @@ resource "heroku_formation" "foobar" {
 
 The following arguments are supported:
 
-* `app` - (Required) The ID of the Heroku app
+* `app` - (Required) Heroku app ID (do not use app name)
 * `buildpack_provided_description` - Description of language or app framework, `"Ruby/Rack"`;
   displayed as the app's language in the Heroku Dashboard
 * `checksum` - Hash of the slug for verifying its integrity, auto-generated from contents of `file_path` or `file_url`,

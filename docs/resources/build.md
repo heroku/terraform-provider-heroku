@@ -135,7 +135,7 @@ resource "heroku_formation" "foobar" {
 
 The following arguments are supported:
 
-* `app` - (Required) The ID of the Heroku app
+* `app` - (Required) Heroku app ID (do not use app name)
 * `buildpacks` - List of buildpack GitHub URLs
 * `source` - (Required) A block that specifies the source code to build & release:
   * `checksum` - SHA256 hash of the tarball archive to verify its integrity, example:

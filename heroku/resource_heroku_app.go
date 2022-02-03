@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
 	"net/url"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -198,7 +199,7 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	// of heroku_app such as heroku_addon where the `app` attribute is often set to ForceNew.
 	// As the app's name can change, its UUID does not. Therefore the heroku_app.id should be set to the UUID - DJ
 	// Punting this change for now.
-	d.SetId(app.Name)
+	d.SetId(app.ID)
 
 	readErr := resourceHerokuAppRead(d, m)
 
@@ -246,7 +247,7 @@ func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	d.SetId(a.Name)
+	d.SetId(a.ID)
 	log.Printf("[INFO] App ID: %s", d.Id())
 
 	if err := performAppPostCreateTasks(d, client); err != nil {
@@ -318,7 +319,7 @@ func resourceHerokuTeamAppCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	d.SetId(a.Name)
+	d.SetId(a.ID)
 	log.Printf("[INFO] App ID: %s", d.Id())
 
 	if err := performAppPostCreateTasks(d, client); err != nil {
@@ -456,7 +457,7 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.SetId(updatedApp.Name)
+	d.Set("name", updatedApp.Name)
 
 	// Make changes (if any) to the app's buildpack.
 	if d.HasChange("buildpacks") {
@@ -550,7 +551,6 @@ func resourceHerokuAppDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error deleting App: %s", err)
 	}
 
-	d.SetId("")
 	return nil
 }
 

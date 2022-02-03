@@ -53,7 +53,7 @@ resource "heroku_pipeline_coupling" "production" {
 
 The following arguments are supported:
 
-* `app` - (Required) A Heroku app's `UUID`. Can also be the name of the Heroku app but `UUID` is preferred as it is idempotent.
+* `app` - (Required) Heroku app ID (do not use app name)
 * `pipeline` - (Required) The ID of the pipeline to add this app to.
 * `stage` - (Required) The stage to couple this app to. Must be one of
 `review`, `development`, `staging`, or `production`.
@@ -63,7 +63,7 @@ The following arguments are supported:
 The following attributes are exported:
 
 * `id` - The UUID of this pipeline coupling.
-* `app` - The name of the application.
+* `app` - The ID of the application (no longer the app name)
 * `app_id` - The ID of the application.
 * `pipeline` - The UUID of the pipeline.
 * `stage` - The stage for this coupling.

@@ -22,7 +22,7 @@ resource "heroku_app" "default" {
 
 # Associate a custom domain
 resource "heroku_domain" "default" {
-  app      = heroku_app.default.name
+  app      = heroku_app.default.id
   hostname = "terraform.example.com"
 }
 ```
@@ -32,7 +32,7 @@ resource "heroku_domain" "default" {
 The following arguments are supported:
 
 * `hostname` - (Required) The hostname to serve requests from.
-* `app` - (Required) The Heroku app to link to.
+* `app` - (Required) Heroku app ID (do not use app name)
 
 ## Attributes Reference
 

@@ -118,11 +118,11 @@ resource "heroku_app" "foobar" {
   }
 }
 resource "heroku_app_release" "foobar-release" {
-	app = "${heroku_app.foobar.name}"
+	app = "${heroku_app.foobar.id}"
 	slug_id = "%s"
 }
 resource "heroku_formation" "foobar-web" {
-	app = "${heroku_app.foobar.name}"
+	app = "${heroku_app.foobar.id}"
 	type = "web"
 	size = "%s"
 	quantity = %d
@@ -137,11 +137,11 @@ resource "heroku_app" "foobar" {
     region = "us"
 }
 resource "heroku_app_release" "foobar-release" {
-	app = "${heroku_app.foobar.name}"
+	app = "${heroku_app.foobar.id}"
 	slug_id = "%s"
 }
 resource "heroku_formation" "foobar-web" {
-	app = "${heroku_app.foobar.name}"
+	app = "${heroku_app.foobar.id}"
 	type = "web"
 	size = "%s"
 	quantity = %d

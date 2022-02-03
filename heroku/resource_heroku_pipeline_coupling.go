@@ -98,7 +98,7 @@ func resourceHerokuPipelineCouplingRead(d *schema.ResourceData, meta interface{}
 	if err != nil {
 		log.Printf("[WARN] Error looking up addional App info for pipeline coupling (%s): %s", d.Id(), err)
 	} else {
-		d.Set("app", app.Name)
+		d.Set("app", app.ID)
 	}
 
 	d.Set("app_id", p.App.ID)

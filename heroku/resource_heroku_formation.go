@@ -13,6 +13,7 @@ import (
 // herokuFormation is a value type used to hold the details of a formation
 type herokuFormation struct {
 	AppName  string
+	AppID    string
 	Command  string
 	Quantity int
 	Size     string
@@ -73,7 +74,7 @@ func resourceHerokuFormationRead(d *schema.ResourceData, meta interface{}) (err 
 		return err
 	}
 
-	err = d.Set("app", formation.Formation.AppName)
+	err = d.Set("app", formation.Formation.AppID)
 	err = d.Set("type", formation.Formation.Type)
 	err = d.Set("quantity", formation.Formation.Quantity)
 	err = d.Set("size", formation.Formation.Size)
@@ -202,6 +203,7 @@ func (f *formation) GetInfo(appName string) error {
 	} else {
 		f.Formation = &herokuFormation{}
 		f.Formation.AppName = formation.App.Name
+		f.Formation.AppID = formation.App.ID
 		f.Formation.Command = formation.Command
 		f.Formation.Quantity = formation.Quantity
 		f.Formation.Size = formation.Size
@@ -225,7 +227,7 @@ func resourceHerokuFormationImport(d *schema.ResourceData, meta interface{}) ([]
 	}
 
 	d.SetId(formation.ID)
-	d.Set("app", formation.App.Name)
+	d.Set("app", formation.App.ID)
 	d.Set("type", formation.Type)
 	d.Set("quantity", formation.Quantity)
 	d.Set("size", formation.Size)

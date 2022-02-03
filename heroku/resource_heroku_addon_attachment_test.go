@@ -17,8 +17,8 @@ func TestAccHerokuAddonAttachment_Basic(t *testing.T) {
 			{
 				Config: testAccCheckHerokuAddonAttachmentConfig_basic(appName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"heroku_addon_attachment.foobar", "app_id", appName),
+					resource.TestCheckResourceAttrSet(
+						"heroku_addon_attachment.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon_attachment.foobar", "namespace", "TEST_NAMESPACE"),
 				),
@@ -36,8 +36,8 @@ func TestAccHerokuAddonAttachment_Named(t *testing.T) {
 			{
 				Config: testAccCheckHerokuAddonAttachmentConfig_named(appName, "TEST_ADDON"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"heroku_addon_attachment.foobar", "app_id", appName),
+					resource.TestCheckResourceAttrSet(
+						"heroku_addon_attachment.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon_attachment.foobar", "name", "TEST_ADDON"),
 				),
@@ -46,7 +46,7 @@ func TestAccHerokuAddonAttachment_Named(t *testing.T) {
 	})
 }
 
-func testAccCheckHerokuAddonAttachmentConfig_basic(appName string) string {
+func testAccCheckHerokuAddonAttachmentConfig_basic(appID string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
 	name   = "%s"
@@ -54,7 +54,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app = "${heroku_app.foobar.id}"
     plan = "heroku-postgresql:hobby-dev"
 }
 
@@ -62,10 +62,10 @@ resource "heroku_addon_attachment" "foobar" {
     app_id    = "${heroku_app.foobar.id}"
     addon_id  = "${heroku_addon.foobar.id}"
     namespace = "TEST_NAMESPACE"
-}`, appName)
+}`, appID)
 }
 
-func testAccCheckHerokuAddonAttachmentConfig_named(appName string, name string) string {
+func testAccCheckHerokuAddonAttachmentConfig_named(appID string, name string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
 	name   = "%s"
@@ -73,7 +73,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app = "${heroku_app.foobar.id}"
     plan = "heroku-postgresql:hobby-dev"
 }
 
@@ -81,5 +81,5 @@ resource "heroku_addon_attachment" "foobar" {
     app_id   = "${heroku_app.foobar.id}"
     addon_id = "${heroku_addon.foobar.id}"
     name     = "%s"
-}`, appName, name)
+}`, appID, name)
 }

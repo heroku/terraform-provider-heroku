@@ -41,7 +41,7 @@ resource "heroku_drain" "default" {
 
 The following arguments are supported:
 
-* `app` - (Required) The Heroku app to link to.
+* `app` - (Required) Heroku app ID (do not use app name)
 * `url` - (Optional) The URL for Heroku to drain your logs to. Either `url` or `sensitive_url` must be defined.
 * `sensitive_url` - (Optional) The URL for Heroku to drain your logs to. The main difference between `sensitive_url` and `url`
 is `sensitive_url` outputs are redacted, with <sensitive> displayed in place of their value during a `terraform apply`

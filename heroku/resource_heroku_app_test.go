@@ -661,7 +661,7 @@ func testAccCheckHerokuAppExists(n string, app *heroku.App) resource.TestCheckFu
 			return err
 		}
 
-		if foundApp.Name != rs.Primary.ID {
+		if foundApp.ID != rs.Primary.ID {
 			return fmt.Errorf("App not found")
 		}
 
@@ -691,7 +691,7 @@ func testAccCheckHerokuAppExistsOrg(n string, app *heroku.TeamApp) resource.Test
 			return err
 		}
 
-		if foundApp.Name != rs.Primary.ID {
+		if foundApp.ID != rs.Primary.ID {
 			return fmt.Errorf("App not found")
 		}
 

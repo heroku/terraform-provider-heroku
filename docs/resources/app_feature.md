@@ -21,8 +21,13 @@ If you need to manage User Features, use the [`heroku_account_feature` resource]
 ## Example Usage
 
 ```hcl-terraform
+resource "heroku_app" "foobar" {
+    name = "foobar"
+    region = "us"
+}
+
 resource "heroku_app_feature" "log_runtime_metrics" {
-  app = "test-app"
+  app = heroku_app.foobar.id
   name = "log-runtime-metrics"
 }
 ```
@@ -31,7 +36,7 @@ resource "heroku_app_feature" "log_runtime_metrics" {
 
 The following arguments are supported:
 
-* `app` - (Required) The Heroku app to link to.
+* `app` - (Required) Heroku app ID (do not use app name)
 * `name` - (Required) The name of the App Feature to manage.
 * `enabled` - (Optional) Whether to enable or disable the App Feature. The default value is true.
 

@@ -21,13 +21,13 @@ resource "heroku_app" "default" {
 
 # Create a database, and configure the app to use it
 resource "heroku_addon" "database" {
-  app  = heroku_app.default.name
+  app  = heroku_app.default.id
   plan = "heroku-postgresql:hobby-basic"
 }
 
 # Add a web-hook addon for the app
 resource "heroku_addon" "webhook" {
-  app  = heroku_app.default.name
+  app  = heroku_app.default.id
   plan = "deployhooks:http"
 
   config = {
@@ -40,7 +40,7 @@ resource "heroku_addon" "webhook" {
 
 The following arguments are supported:
 
-* `app` - (Required) The Heroku app to add to.
+* `app` - (Required) Heroku app ID (do not use app name)
 * `plan` - (Required) The addon to add.
 * `config` - (Optional) Optional plan configuration.
 * `name` - (Optional) Globally unique name of the add-on.

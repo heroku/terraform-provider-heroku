@@ -157,7 +157,7 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Addon ID: %s", d.Id())
 
 	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		configVarValues, err := retrieveSpecificConfigVars(client, addon.App.Name, addon.ConfigVars)
+		configVarValues, err := retrieveSpecificConfigVars(client, addon.App.ID, addon.ConfigVars)
 		if err != nil {
 			return resource.NonRetryableError(err)
 		}
@@ -196,14 +196,14 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("name", addon.Name)
-	d.Set("app", addon.App.Name)
+	d.Set("app", addon.App.ID)
 	d.Set("plan", plan)
 	d.Set("provider_id", addon.ProviderID)
 	if err := d.Set("config_vars", addon.ConfigVars); err != nil {
 		return err
 	}
 
-	configVarValues, err := retrieveSpecificConfigVars(client, addon.App.Name, addon.ConfigVars)
+	configVarValues, err := retrieveSpecificConfigVars(client, addon.App.ID, addon.ConfigVars)
 	if err != nil {
 		return err
 	}

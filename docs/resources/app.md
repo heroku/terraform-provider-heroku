@@ -10,6 +10,8 @@ description: |-
 
 Provides a Heroku App resource. This can be used to create and manage applications on Heroku.
 
+**Always reference apps by ID (UUID) in Terraform configuration**, even though the Heroku API allows Heroku app name & ID to be interchanged as identifiers in API requests. Referencing apps by name will result in configuration churn (recreation of resources), because this provider always sets & expects apps to be identified by ID.
+
 ## Example Usage
 
 ```hcl-terraform
@@ -91,8 +93,8 @@ config vars to `heroku_app_config_association` resource.
 
 The following attributes are exported:
 
-* `id` - The ID of the app. This is also the name of the app.
-* `name` - The name of the application.
+* `id` - The ID (UUID) of the app.
+* `name` - The name of the app.
 * `stack` - The application stack is what platform to run the application in.
 * `space` - The private space the app should run in.
 * `internal_routing` - Whether internal routing is enabled the private space app.

@@ -3,8 +3,9 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"github.com/heroku/terraform-provider-heroku/v4/helper/test"
 	"testing"
+
+	"github.com/heroku/terraform-provider-heroku/v4/helper/test"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -115,7 +116,7 @@ resource "heroku_app" "foobar" {
     }
 }
 resource "heroku_team_collaborator" "foobar-collaborator" {
-	app = "${heroku_app.foobar.name}"
+	app = heroku_app.foobar.id
 	email = "%s"
 	permissions = %s
 }

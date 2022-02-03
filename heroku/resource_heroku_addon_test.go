@@ -29,8 +29,8 @@ func TestAccHerokuAddon_Basic(t *testing.T) {
 					testAccCheckHerokuAddonPlan(&addon, "deployhooks:http"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "config.url", "http://google.com"),
-					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "app", appName),
+					resource.TestCheckResourceAttrSet(
+						"heroku_addon.foobar", "app"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "plan", "deployhooks:http"),
 				),
@@ -53,8 +53,8 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
 					testAccCheckHerokuAddonPlan(&addon, "memcachier:dev"),
-					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "app", appName),
+					resource.TestCheckResourceAttrSet(
+						"heroku_addon.foobar", "app"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "plan", "memcachier"),
 				),
@@ -64,8 +64,8 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
 					testAccCheckHerokuAddonPlan(&addon, "memcachier:dev"),
-					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "app", appName),
+					resource.TestCheckResourceAttrSet(
+						"heroku_addon.foobar", "app"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "plan", "memcachier"),
 				),
@@ -110,8 +110,8 @@ func TestAccHerokuAddon_CustomName(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
 					testAccCheckHerokuAddonPlan(&addon, "memcachier:dev"),
-					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "app", appName),
+					resource.TestCheckResourceAttrSet(
+						"heroku_addon.foobar", "app"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "plan", "memcachier"),
 					resource.TestCheckResourceAttr(
@@ -294,7 +294,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app = "${heroku_app.foobar.id}"
     plan = "deployhooks:http"
     config = {
         url = "http://google.com"
@@ -310,7 +310,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "pg" {
-    app = "${heroku_app.foobar.name}"
+    app = "${heroku_app.foobar.id}"
     plan = "heroku-postgresql:hobby-dev"
 }`, appName)
 }
@@ -323,7 +323,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app = "${heroku_app.foobar.id}"
     plan = "memcachier"
 }`, appName)
 }
@@ -336,7 +336,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app = "${heroku_app.foobar.id}"
     plan = "memcachier"
     name = "%s"
 }`, appName, customAddonName)

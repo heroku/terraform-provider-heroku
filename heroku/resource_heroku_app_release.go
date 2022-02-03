@@ -102,7 +102,7 @@ func resourceHerokuAppReleaseRead(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("[ERROR] error retrieving app release: %s", err)
 	}
 
-	d.Set("app", appRelease.App.Name)
+	d.Set("app", appRelease.App.ID)
 	d.Set("slug_id", appRelease.Slug.ID)
 	d.Set("description", appRelease.Description)
 
@@ -151,7 +151,7 @@ func resourceHerokuAppReleaseImport(d *schema.ResourceData, meta interface{}) ([
 	}
 
 	d.SetId(appRelease.ID)
-	d.Set("app", appRelease.App.Name)
+	d.Set("app", appRelease.App.ID)
 	d.Set("slug_id", appRelease.Slug.ID)
 	d.Set("description", appRelease.Description)
 

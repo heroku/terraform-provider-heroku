@@ -56,7 +56,7 @@ func dataSourceHerokuAddonRead(d *schema.ResourceData, m interface{}) error {
 
 	d.SetId(addon.ID)
 	d.Set("name", addon.Name)
-	d.Set("app", addon.App.Name)
+	d.Set("app", addon.App.ID)
 	d.Set("plan", addon.Plan.Name)
 	d.Set("provider_id", addon.ProviderID)
 	d.Set("config_vars", addon.ConfigVars)
