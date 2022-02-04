@@ -59,8 +59,8 @@ resource "heroku_addon" "foobar" {
 }
 
 resource "heroku_addon_attachment" "foobar" {
-    app_id    = "${heroku_app.foobar.id}"
-    addon_id  = "${heroku_addon.foobar.id}"
+    app_id    = heroku_app.foobar.id
+    addon_id  = heroku_addon.foobar.id
     namespace = "TEST_NAMESPACE"
 }`, appID)
 }
@@ -78,8 +78,8 @@ resource "heroku_addon" "foobar" {
 }
 
 resource "heroku_addon_attachment" "foobar" {
-    app_id   = "${heroku_app.foobar.id}"
-    addon_id = "${heroku_addon.foobar.id}"
+    app_id   = heroku_app.foobar.id
+    addon_id = heroku_addon.foobar.id
     name     = "%s"
 }`, appID, name)
 }
