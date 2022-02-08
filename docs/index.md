@@ -20,6 +20,10 @@ simplest path to delivering apps quickly:
 * [Platform API reference](https://devcenter.heroku.com/articles/platform-api-reference)
 * [Command Line Interface (CLI)](https://devcenter.heroku.com/articles/heroku-cli)
 
+## Guides
+
+* [Upgrading](guides/upgrading.html)
+
 ## Contributing
 
 Development happens in the [GitHub repo](https://github.com/heroku/terraform-provider-heroku):

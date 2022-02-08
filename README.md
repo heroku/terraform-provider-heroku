@@ -34,7 +34,7 @@ provider "heroku" {
 }
 ```
 
-See [UPGRADING][UPGRADING.md] for major version migration help.
+See [Upgrading guide][docs/guides/upgrading.md] for major version migration help.
 
 👓📚 For more usage info, see [Heroku Provider docs](https://www.terraform.io/docs/providers/heroku/index.html).
 

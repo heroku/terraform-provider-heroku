@@ -10,7 +10,8 @@ description: |-
 
 Provides a Heroku App resource. This can be used to create and manage applications on Heroku.
 
-**Always reference apps by ID (UUID) in Terraform configuration**, even though the Heroku API allows Heroku app name & ID to be interchanged as identifiers in API requests. Referencing apps by name will result in configuration churn (recreation of resources), because this provider always sets & expects apps to be identified by ID.
+-> **Always reference apps by ID (UUID) in Terraform configuration**
+Starting with v5.0 of this provider, all HCL app references are by ID. Read more details in [Upgrading](guides/upgrading.html).
 
 ## Example Usage
 

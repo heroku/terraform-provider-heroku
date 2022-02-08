@@ -1,6 +1,14 @@
+---
+layout: "heroku"
+page_title: "Heroku: Upgrading the Provider"
+sidebar_current: "docs-heroku-guides-upgrading"
+description: |-
+  Guide to upgrading through major versions.
+---
+
 # Upgrading v4 to v5
 
-⚠️  Major upgrades should be tested with non-critical infrastructure.
+~> **Major upgrades should be tested with non-critical infrastructure.**
 
 ## Summary of changes
 
