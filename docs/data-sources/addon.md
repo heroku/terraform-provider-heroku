@@ -13,20 +13,9 @@ Use this data source to get information about a Heroku Addon.
 ## Example Usage
 
 ```hcl-terraform
-data "heroku_addon" "from_another_app" {
-  name = "addon-from-another-app"
-}
-
-output "heroku_addon_data_basic" {
-  value = [
-    "Addon from another app",
-    "id: ${data.heroku_addon.from_another_app.id}",
-    "name: ${data.heroku_addon.from_another_app.name}",
-    "app_id: ${data.heroku_addon.from_another_app.app_id}",
-    "plan: ${data.heroku_addon.from_another_app.plan}",
-    "provider_id: ${data.heroku_addon.from_another_app.provider_id}",
-    "config_vars: ${join(", ", data.heroku_addon.from_another_app.config_vars)}",
-  ]
+# Lookup an existing Heroku add-on
+data "heroku_addon" "example" {
+  name = "example-addon-name"
 }
 ```
 
