@@ -76,6 +76,14 @@ func resourceHerokuTeamCollaborator() *schema.Resource {
 				},
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuTeamCollaboratorV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -312,4 +320,32 @@ func resourceHerokuTeamCollaboratorImport(d *schema.ResourceData, meta interface
 	d.Set("permissions", perms)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceHerokuTeamCollaboratorV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"email": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"permissions": {
+				Type:     schema.TypeSet, // We are using TypeSet type here as the order for permissions is not important.
+				Required: true,
+				MinItems: 1,
+				MaxItems: 4,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+		},
+	}
 }

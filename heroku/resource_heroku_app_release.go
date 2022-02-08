@@ -44,6 +44,14 @@ func resourceHerokuAppRelease() *schema.Resource {
 				Computed: true,
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuAppReleaseV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -158,4 +166,28 @@ func resourceHerokuAppReleaseImport(d *schema.ResourceData, meta interface{}) ([
 	d.Set("description", appRelease.Description)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceHerokuAppReleaseV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"slug_id": { // An existing Heroku release cannot be updated so ForceNew is required
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+		},
+	}
 }

@@ -26,13 +26,15 @@ provider "heroku" {
 }
 ```
 
-Otherwise, the configuration should specify version 4 or higher:
+Otherwise, the configuration should specify version 5:
 
 ```hcl-terraform
 provider "heroku" {
-  version = "~> 4.0"
+  version = "~> 5.0"
 }
 ```
+
+See [UPGRADING][UPGRADING.md] for major version migration help.
 
 👓📚 For more usage info, see [Heroku Provider docs](https://www.terraform.io/docs/providers/heroku/index.html).
 

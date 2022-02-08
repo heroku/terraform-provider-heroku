@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	multierror "github.com/hashicorp/go-multierror"
@@ -177,6 +178,14 @@ func resourceHerokuApp() *schema.Resource {
 			"uuid": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuAppV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: resourceHerokuAppStateUpgradeV0,
+				Version: 0,
 			},
 		},
 	}
@@ -867,4 +876,150 @@ func checkIfDupeConfigVars(d *schema.ResourceData) error {
 	}
 
 	return nil
+}
+
+func resourceHerokuAppV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+
+			"space": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
+			"region": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"stack": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
+			"internal_routing": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
+
+			"buildpacks": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+
+			"config_vars": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Computed: true,
+			},
+
+			"sensitive_config_vars": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type:      schema.TypeString,
+					Sensitive: true,
+				},
+				Sensitive: true,
+			},
+
+			"all_config_vars": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				// These are marked Sensitive so that "sensitive_config_vars" do not
+				// leak in the console/logs and also avoids unnecessary disclosure of
+				// add-on secrets in logs.
+				Sensitive: true,
+			},
+
+			"git_url": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"web_url": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"acm": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
+
+			"heroku_hostname": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"organization": {
+				Type:     schema.TypeList,
+				MinItems: 0,
+				MaxItems: 1,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:         schema.TypeString,
+							ForceNew:     true,
+							Required:     true,
+							ValidateFunc: validation.StringIsNotEmpty,
+						},
+
+						"locked": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Computed: true,
+						},
+
+						"personal": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							ForceNew: true,
+							Computed: true,
+						},
+					},
+				},
+			},
+
+			"uuid": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+		},
+	}
+}
+
+func resourceHerokuAppStateUpgradeV0(_ context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+	appIdentifier := rawState["id"].(string)
+
+	_, err := uuid.ParseUUID(appIdentifier)
+	if err == nil {
+		// id is already a valid UUID
+		return rawState, nil
+	}
+
+	client := meta.(*Config).Api
+	foundApp, err := resourceHerokuAppRetrieve(appIdentifier, client)
+	if err != nil {
+		return nil, fmt.Errorf("resourceHerokuAppStateUpgradeV0 error retrieving app '%s': %w", rawState["id"], err)
+	}
+	rawState["id"] = foundApp.App.ID
+
+	return rawState, nil
 }

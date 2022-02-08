@@ -140,6 +140,14 @@ func resourceHerokuBuild() *schema.Resource {
 				Computed: true,
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuBuildV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -606,5 +614,116 @@ func BuildStateRefreshFunc(client *heroku.Service, app, id string) resource.Stat
 		}
 
 		return &build, build.Status, nil
+	}
+}
+
+func resourceHerokuBuildV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"buildpacks": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Optional: true,
+				ForceNew: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+
+			"output_stream_url": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"release_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"slug_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"source": {
+				Type:     schema.TypeList,
+				Required: true,
+				ForceNew: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"checksum": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Optional: true,
+							ForceNew: true,
+						},
+
+						"path": {
+							Type:          schema.TypeString,
+							ConflictsWith: []string{"source.url"},
+							Optional:      true,
+							ForceNew:      true,
+						},
+
+						"url": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ForceNew:     true,
+							ValidateFunc: validateSourceUrl,
+						},
+
+						"version": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+					},
+				},
+			},
+
+			"stack": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"status": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"user": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"email": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"id": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
+
+			"uuid": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"local_checksum": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+		},
 	}
 }

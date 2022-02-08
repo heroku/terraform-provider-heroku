@@ -51,6 +51,14 @@ func resourceHerokuDrain() *schema.Resource {
 				Computed: true,
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuDrainV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -186,4 +194,36 @@ func resourceHerokuDrainRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	return nil
+}
+
+func resourceHerokuDrainV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"url": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"sensitive_url"},
+			},
+
+			"sensitive_url": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				Sensitive:     true,
+				ConflictsWith: []string{"url"},
+			},
+
+			"token": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+		},
+	}
 }

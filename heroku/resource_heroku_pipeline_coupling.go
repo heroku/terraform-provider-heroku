@@ -43,6 +43,14 @@ func resourceHerokuPipelineCoupling() *schema.Resource {
 				),
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuPipelineCouplingV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -95,4 +103,31 @@ func resourceHerokuPipelineCouplingRead(d *schema.ResourceData, meta interface{}
 	d.Set("pipeline", p.Pipeline.ID)
 
 	return nil
+}
+
+func resourceHerokuPipelineCouplingV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			"pipeline": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
+			},
+			"stage": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+				ValidateFunc: validation.StringInSlice(
+					[]string{"review", "development", "staging", "production"},
+					false,
+				),
+			},
+		},
+	}
 }

@@ -121,6 +121,14 @@ func resourceHerokuSlug() *schema.Resource {
 				Computed: true,
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuSlugV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -441,4 +449,100 @@ func validateFileUrl(v interface{}, k string) (ws []string, errors []error) {
 	}
 
 	return
+}
+
+func resourceHerokuSlugV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			// Local tarball to be uploaded after slug creation
+			"file_path": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
+			// https:// URL of tarball to upload into slug
+			"file_url": {
+				Type:          schema.TypeString,
+				ConflictsWith: []string{"file_path"},
+				Optional:      true,
+				ForceNew:      true,
+				ValidateFunc:  validateFileUrl,
+			},
+
+			"blob": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"method": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
+						"url": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
+
+			"buildpack_provided_description": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
+			"checksum": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Computed: true,
+			},
+
+			"commit": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
+			"commit_description": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
+			"process_types": {
+				Type:     schema.TypeMap,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"size": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+
+			// Create/argument: either a name or UUID.
+			// Read/attribute: name of the stack.
+			"stack": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Computed: true,
+			},
+
+			"stack_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+		},
+	}
 }

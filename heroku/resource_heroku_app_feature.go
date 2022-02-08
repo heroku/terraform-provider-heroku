@@ -40,6 +40,14 @@ func resourceHerokuAppFeature() *schema.Resource {
 				Default:  true,
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuAppFeatureV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeHerokuAppFeatureV1,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -119,4 +127,44 @@ func resourceHerokuAppFeatureDelete(d *schema.ResourceData, meta interface{}) er
 
 	d.SetId("")
 	return nil
+}
+
+func resourceHerokuAppFeatureV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"name": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"enabled": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
+			},
+		},
+	}
+}
+
+func upgradeHerokuAppFeatureV1(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+	upgradedState, err := upgradeAppToAppID(ctx, rawState, meta)
+	if err != nil {
+		return nil, err
+	}
+
+	// Replace special composite ID's app name with app ID.
+	_, featureID, err := parseCompositeID(upgradedState["id"].(string))
+	if err != nil {
+		return nil, err
+	}
+	upgradedState["id"] = buildCompositeID(upgradedState["app_id"].(string), featureID)
+
+	return upgradedState, nil
 }

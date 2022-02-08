@@ -63,6 +63,14 @@ func resourceHerokuFormation() *schema.Resource {
 				StateFunc: formatSize,
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuFormationV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -275,4 +283,32 @@ func formatSize(quant interface{}) string {
 	}
 
 	return strings.Join(formattedSlice, "-")
+}
+
+func resourceHerokuFormationV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"type": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+
+			"quantity": {
+				Type:     schema.TypeInt,
+				Required: true,
+			},
+
+			"size": {
+				Type:      schema.TypeString,
+				Required:  true,
+				StateFunc: formatSize,
+			},
+		},
+	}
 }

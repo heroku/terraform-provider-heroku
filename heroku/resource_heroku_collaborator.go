@@ -56,6 +56,14 @@ func resourceHerokuCollaborator() *schema.Resource {
 				ForceNew: true,
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuCollaboratorV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -201,4 +209,22 @@ func resourceHerokuCollaboratorImport(d *schema.ResourceData, meta interface{}) 
 	d.Set("email", collaboratorInfo.User.Email)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceHerokuCollaboratorV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"email": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+		},
+	}
 }

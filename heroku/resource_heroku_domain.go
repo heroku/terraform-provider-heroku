@@ -47,6 +47,14 @@ func resourceHerokuDomain() *schema.Resource {
 				Optional: true,
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuDomainV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -150,5 +158,34 @@ func populateResource(d *schema.ResourceData, do *heroku.Domain) {
 	d.Set("cname", do.CName)
 	if v := do.SniEndpoint; v != nil {
 		d.Set("sni_endpoint_id", v.ID)
+	}
+}
+
+func resourceHerokuDomainV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"hostname": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"cname": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"sni_endpoint_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+			},
+		},
 	}
 }
