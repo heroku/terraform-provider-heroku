@@ -118,18 +118,18 @@ func migrateAppToAppID(is *terraform.InstanceState, client *heroku.Service) (*te
 	if err == nil {
 		is.Attributes["app_id"] = appFuzzyID
 	} else {
-		foundApp, err := resourceHerokuAppRetrieve(appFuzzyID, client)
+		foundApp, err := client.AppInfo(context.Background(), appFuzzyID)
 		if err != nil {
 			return nil, fmt.Errorf("migrateAppToAppID error retrieving app '%s': %w", appFuzzyID, err)
 		}
-		is.Attributes["app_id"] = foundApp.App.ID
+		is.Attributes["app_id"] = foundApp.ID
 	}
 
 	return is, nil
 }
 
 // upgradeAppToAppID is the newer (v0.12+) StateUpgrade helper.
-func upgradeAppToAppID(_ context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func upgradeAppToAppID(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	appFuzzyID, _ := rawState["app"].(string)
 	appID, _ := rawState["app_id"].(string)
 
@@ -144,11 +144,11 @@ func upgradeAppToAppID(_ context.Context, rawState map[string]interface{}, meta 
 		rawState["app_id"] = appFuzzyID
 	} else {
 		client := meta.(*Config).Api
-		foundApp, err := resourceHerokuAppRetrieve(appFuzzyID, client)
+		foundApp, err := client.AppInfo(ctx, appFuzzyID)
 		if err != nil {
 			return nil, fmt.Errorf("upgradeAppToAppID error retrieving app '%s': %w", appFuzzyID, err)
 		}
-		rawState["app_id"] = foundApp.App.ID
+		rawState["app_id"] = foundApp.ID
 	}
 
 	return rawState, nil

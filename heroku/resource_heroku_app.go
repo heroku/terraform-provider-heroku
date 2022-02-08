@@ -1005,7 +1005,7 @@ func resourceHerokuAppV0() *schema.Resource {
 	}
 }
 
-func resourceHerokuAppStateUpgradeV0(_ context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func resourceHerokuAppStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	appIdentifier := rawState["id"].(string)
 
 	_, err := uuid.ParseUUID(appIdentifier)
@@ -1015,11 +1015,11 @@ func resourceHerokuAppStateUpgradeV0(_ context.Context, rawState map[string]inte
 	}
 
 	client := meta.(*Config).Api
-	foundApp, err := resourceHerokuAppRetrieve(appIdentifier, client)
+	foundApp, err := client.AppInfo(ctx, appIdentifier)
 	if err != nil {
-		return nil, fmt.Errorf("resourceHerokuAppStateUpgradeV0 error retrieving app '%s': %w", rawState["id"], err)
+		return nil, fmt.Errorf("resourceHerokuAppStateUpgradeV0 error retrieving app '%s': %w", appIdentifier, err)
 	}
-	rawState["id"] = foundApp.App.ID
+	rawState["id"] = foundApp.ID
 
 	return rawState, nil
 }

@@ -4,10 +4,14 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
+	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	heroku "github.com/heroku/heroku-go/v5"
 )
@@ -432,6 +436,43 @@ func TestAccHerokuApp_Organization_Locked(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestResourceHerokuAppStateUpgradeV0(t *testing.T) {
+	p := Provider()
+	d := schema.TestResourceDataRaw(t, p.Schema, nil)
+
+	client, err := providerConfigure(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedID := "5278d60a-bb29-4f72-8936-41991e01d71e"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, writeErr := w.Write([]byte(`{"id":"` + expectedID + `"}`))
+		if writeErr != nil {
+			t.Fatal(writeErr)
+		}
+	}))
+	defer srv.Close()
+
+	c := client.(*Config).Api
+	c.URL = srv.URL
+
+	existing := map[string]interface{}{
+		"id": "test-app",
+	}
+	expected := map[string]interface{}{
+		"id": expectedID,
+	}
+	actual, err := resourceHerokuAppStateUpgradeV0(context.Background(), existing, client)
+	if err != nil {
+		t.Fatalf("error migrating state: %s", err)
+	}
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
+	}
 }
 
 func testAccCheckHerokuAppDestroy(s *terraform.State) error {
