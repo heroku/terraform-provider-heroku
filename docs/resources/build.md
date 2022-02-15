@@ -73,7 +73,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_build" "foobar" {
-  app        = heroku_app.foobar.id
+  app_id     = heroku_app.foobar.id
   buildpacks = ["https://github.com/mars/create-react-app-buildpack"]
 
   source {
@@ -84,7 +84,7 @@ resource "heroku_build" "foobar" {
 }
 
 resource "heroku_formation" "foobar" {
-  app        = heroku_app.foobar.id
+  app_id     = heroku_app.foobar.id
   type       = "web"
   quantity   = 1
   size       = "Standard-1x"
@@ -113,7 +113,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_build" "foobar" {
-  app = heroku_app.foobar.id
+  app_id = heroku_app.foobar.id
 
   source {
     # A local directory, changing its contents will
@@ -123,7 +123,7 @@ resource "heroku_build" "foobar" {
 }
 
 resource "heroku_formation" "foobar" {
-  app        = heroku_app.foobar.id
+  app_id     = heroku_app.foobar.id
   type       = "web"
   quantity   = 1
   size       = "Standard-1x"
@@ -135,7 +135,7 @@ resource "heroku_formation" "foobar" {
 
 The following arguments are supported:
 
-* `app` - (Required) The ID of the Heroku app
+* `app_id` - (Required) Heroku app ID (do not use app name)
 * `buildpacks` - List of buildpack GitHub URLs
 * `source` - (Required) A block that specifies the source code to build & release:
   * `checksum` - SHA256 hash of the tarball archive to verify its integrity, example:

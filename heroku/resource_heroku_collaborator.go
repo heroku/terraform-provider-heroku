@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
@@ -26,6 +27,7 @@ type collaborator struct {
 	Id string // Id of the resource
 
 	AppName      string // the app the collaborator belongs to
+	AppID        string // the app the collaborator belongs to
 	Collaborator *herokuCollaborator
 	Client       *heroku.Service
 }
@@ -41,16 +43,25 @@ func resourceHerokuCollaborator() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"app": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"app_id": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 
 			"email": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+			},
+		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuCollaboratorV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
 			},
 		},
 	}
@@ -61,7 +72,7 @@ func resourceHerokuCollaboratorCreate(d *schema.ResourceData, meta interface{}) 
 
 	opts := heroku.CollaboratorCreateOpts{}
 
-	appName := getAppName(d)
+	appID := getAppId(d)
 
 	opts.User = getEmail(d)
 
@@ -73,7 +84,7 @@ func resourceHerokuCollaboratorCreate(d *schema.ResourceData, meta interface{}) 
 	opts.Silent = &vs
 
 	log.Printf("[DEBUG] Creating Heroku Collaborator: [%s]", opts.User)
-	createdCollaborator, err := client.CollaboratorCreate(context.TODO(), appName, opts)
+	createdCollaborator, err := client.CollaboratorCreate(context.TODO(), appID, opts)
 	if err != nil {
 		return err
 	}
@@ -87,13 +98,13 @@ func resourceHerokuCollaboratorCreate(d *schema.ResourceData, meta interface{}) 
 func resourceHerokuCollaboratorRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	collaborator, err := resourceHerokuCollaboratorRetrieve(d.Id(), d.Get("app").(string), client)
+	collaborator, err := resourceHerokuCollaboratorRetrieve(d.Id(), d.Get("app_id").(string), client)
 
 	if err != nil {
 		return err
 	}
 
-	d.Set("app", collaborator.AppName)
+	d.Set("app_id", collaborator.AppID)
 	d.Set("email", collaborator.Collaborator.Email)
 
 	return nil
@@ -103,7 +114,7 @@ func resourceHerokuCollaboratorDelete(d *schema.ResourceData, meta interface{}) 
 	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting Heroku Collaborator: [%s]", d.Id())
-	_, err := client.CollaboratorDelete(context.TODO(), getAppName(d), getEmail(d))
+	_, err := client.CollaboratorDelete(context.TODO(), getAppId(d), getEmail(d))
 
 	if err != nil {
 		return fmt.Errorf("error deleting Collaborator: %s", err)
@@ -121,7 +132,7 @@ func resourceHerokuCollaboratorDelete(d *schema.ResourceData, meta interface{}) 
 	*/
 	log.Printf("[INFO] Begin checking if [%s] has been deleted", getEmail(d))
 	retryError := resource.Retry(10*time.Second, func() *resource.RetryError {
-		_, err := client.CollaboratorInfo(context.TODO(), getAppName(d), d.Id())
+		_, err := client.CollaboratorInfo(context.TODO(), getAppId(d), d.Id())
 
 		// Debug log to check
 		log.Printf("[INFO] Is error nil when GET#show collaborator? %t", err == nil)
@@ -139,14 +150,14 @@ func resourceHerokuCollaboratorDelete(d *schema.ResourceData, meta interface{}) 
 	})
 
 	if retryError != nil {
-		return fmt.Errorf("[ERROR] Collaborator [%s] still exists on [%s] after checking several times", getEmail(d), getAppName(d))
+		return fmt.Errorf("[ERROR] Collaborator [%s] still exists on [%s] after checking several times", getEmail(d), getAppId(d))
 	}
 
 	return nil
 }
 
-func resourceHerokuCollaboratorRetrieve(id string, appName string, client *heroku.Service) (*collaborator, error) {
-	collaborator := collaborator{Id: id, AppName: appName, Client: client}
+func resourceHerokuCollaboratorRetrieve(id string, appID string, client *heroku.Service) (*collaborator, error) {
+	collaborator := collaborator{Id: id, AppID: appID, Client: client}
 
 	err := collaborator.Update()
 
@@ -162,7 +173,7 @@ func (c *collaborator) Update() error {
 
 	log.Printf("[INFO] c.Id is %s", c.Id)
 
-	collaboratorInfo, err := c.Client.CollaboratorInfo(context.TODO(), c.AppName, c.Id)
+	collaboratorInfo, err := c.Client.CollaboratorInfo(context.TODO(), c.AppID, c.Id)
 
 	if err != nil {
 		errs = append(errs, err)
@@ -170,6 +181,7 @@ func (c *collaborator) Update() error {
 		c.Collaborator = &herokuCollaborator{}
 		c.Collaborator.Email = collaboratorInfo.User.Email
 		c.AppName = collaboratorInfo.App.Name
+		c.AppID = collaboratorInfo.App.ID
 	}
 
 	if len(errs) > 0 {
@@ -193,8 +205,26 @@ func resourceHerokuCollaboratorImport(d *schema.ResourceData, meta interface{}) 
 	}
 
 	d.SetId(collaboratorInfo.ID)
-	d.Set("app", collaboratorInfo.App.Name)
+	d.Set("app_id", collaboratorInfo.App.ID)
 	d.Set("email", collaboratorInfo.User.Email)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceHerokuCollaboratorV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"email": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+		},
+	}
 }

@@ -31,7 +31,7 @@ func TestAccHerokuDomain_Basic(t *testing.T) {
 					testAccCheckHerokuDomainExists("heroku_domain.one", &domain),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
 					resource.TestCheckResourceAttr("heroku_domain.one", "hostname", "terraform-tftest-"+randString+".example.com"),
-					resource.TestCheckResourceAttr("heroku_domain.one", "app", appName),
+					resource.TestCheckResourceAttrSet("heroku_domain.one", "app_id"),
 				),
 			},
 		},
@@ -57,7 +57,7 @@ func TestAccHerokuDomain_No_SSL_Change(t *testing.T) {
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
 					resource.TestCheckNoResourceAttr("heroku_domain.one", "sni_endpoint_id"),
 					resource.TestCheckResourceAttr("heroku_domain.one", "hostname", "terraform-tftest-"+randString+".example.com"),
-					resource.TestCheckResourceAttr("heroku_domain.one", "app", appName),
+					resource.TestCheckResourceAttrSet("heroku_domain.one", "app_id"),
 				),
 			},
 			{
@@ -69,7 +69,7 @@ func TestAccHerokuDomain_No_SSL_Change(t *testing.T) {
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
 					resource.TestCheckResourceAttrPtr("heroku_domain.one", "sni_endpoint_id", &endpoint.ID),
 					resource.TestCheckResourceAttr("heroku_domain.one", "hostname", "terraform-tftest-"+randString+".example.com"),
-					resource.TestCheckResourceAttr("heroku_domain.one", "app", appName),
+					resource.TestCheckResourceAttrSet("heroku_domain.one", "app_id"),
 				),
 			},
 		},
@@ -95,7 +95,7 @@ func TestAccHerokuDomain_SSL(t *testing.T) {
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
 					resource.TestCheckResourceAttrPtr("heroku_domain.one", "sni_endpoint_id", &endpoint.ID),
 					resource.TestCheckResourceAttr("heroku_domain.one", "hostname", "terraform-tftest-"+randString+".example.com"),
-					resource.TestCheckResourceAttr("heroku_domain.one", "app", appName),
+					resource.TestCheckResourceAttrSet("heroku_domain.one", "app_id"),
 				),
 			},
 			{
@@ -107,7 +107,7 @@ func TestAccHerokuDomain_SSL(t *testing.T) {
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
 					resource.TestCheckResourceAttrPtr("heroku_domain.one", "sni_endpoint_id", &endpoint.ID),
 					resource.TestCheckResourceAttr("heroku_domain.one", "hostname", "terraform-tftest-"+randString+".example.com"),
-					resource.TestCheckResourceAttr("heroku_domain.one", "app", appName),
+					resource.TestCheckResourceAttrSet("heroku_domain.one", "app_id"),
 				),
 			},
 		},
@@ -122,7 +122,7 @@ func testAccCheckHerokuDomainDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := client.DomainInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		_, err := client.DomainInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Domain still exists")
@@ -166,7 +166,7 @@ func testAccCheckHerokuDomainExists(n string, Domain *heroku.Domain) resource.Te
 
 		client := testAccProvider.Meta().(*Config).Api
 
-		foundDomain, err := client.DomainInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundDomain, err := client.DomainInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -193,7 +193,7 @@ func testAccCheckHerokuDomainConfig_ssl_no_association(appName string) string {
 }
 
 resource "heroku_slug" "one" {
-    app = "${heroku_app.one.id}"
+    app_id = heroku_app.one.id
     file_path = "test-fixtures/slug.tgz"
     process_types = {
       web = "ruby server.rb"
@@ -201,12 +201,12 @@ resource "heroku_slug" "one" {
 }
 
 resource "heroku_app_release" "one" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.id
   slug_id = "${heroku_slug.one.id}"
 }
 
 resource "heroku_formation" "web" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.id
   type = "web"
   size = "hobby"
   quantity = 1
@@ -223,7 +223,7 @@ resource "heroku_ssl" "one" {
 }
 
 resource "heroku_domain" "one" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.id
   hostname = "terraform-%s.example.com"
   # Wait until the certificate has been created before adding domains to avoid auto-association. Once auto-association has been sunset we no longer need to do this. See https://devcenter.heroku.com/changelog-items/1938.
   depends_on = [heroku_ssl.one]
@@ -241,7 +241,7 @@ func testAccCheckHerokuDomainConfig_ssl_change(appName string) string {
 }
 
 resource "heroku_slug" "one" {
-    app = "${heroku_app.one.id}"
+    app_id = heroku_app.one.id
     file_path = "test-fixtures/slug.tgz"
     process_types = {
       web = "ruby server.rb"
@@ -249,12 +249,12 @@ resource "heroku_slug" "one" {
 }
 
 resource "heroku_app_release" "one" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.id
   slug_id = "${heroku_slug.one.id}"
 }
 
 resource "heroku_formation" "web" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.id
   type = "web"
   size = "hobby"
   quantity = 1
@@ -276,7 +276,7 @@ resource "heroku_ssl" "two" {
 }
 
 resource "heroku_domain" "one" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.id
   hostname = "terraform-%s.example.com"
   sni_endpoint_id = "${heroku_ssl.two.id}"
 }`, appName, certFile, keyFile, certFile, keyFile, appName)
@@ -293,7 +293,7 @@ func testAccCheckHerokuDomainConfig_ssl(appName string) string {
 }
 
 resource "heroku_slug" "one" {
-    app = "${heroku_app.one.id}"
+    app_id = heroku_app.one.id
     file_path = "test-fixtures/slug.tgz"
     process_types = {
       web = "ruby server.rb"
@@ -301,12 +301,12 @@ resource "heroku_slug" "one" {
 }
 
 resource "heroku_app_release" "one" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.id
   slug_id = "${heroku_slug.one.id}"
 }
 
 resource "heroku_formation" "web" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.id
   type = "web"
   size = "hobby"
   quantity = 1
@@ -321,7 +321,7 @@ resource "heroku_ssl" "one" {
 }
 
 resource "heroku_domain" "one" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.id
   hostname = "terraform-%s.example.com"
   sni_endpoint_id = "${heroku_ssl.one.id}"
 }`, appName, certFile, keyFile, appName)
@@ -334,7 +334,7 @@ func testAccCheckHerokuDomainConfig_basic(appName string) string {
 }
 
 resource "heroku_domain" "one" {
-  app = "${heroku_app.one.id}"
+  app_id = heroku_app.one.id
   hostname = "terraform-%s.example.com"
 }`, appName, appName)
 }

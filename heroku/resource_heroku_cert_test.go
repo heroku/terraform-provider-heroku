@@ -130,7 +130,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "ssl" {
-  app = "${heroku_app.foobar.name}"
+  app_id = heroku_app.foobar.id
   plan = "ssl:endpoint"
 }
 
@@ -150,7 +150,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "ssl" {
-  app = "${heroku_app.foobar.name}"
+  app_id = heroku_app.foobar.id
   plan = "ssl:endpoint"
 }
 

@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	heroku "github.com/heroku/heroku-go/v5"
 	"log"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	heroku "github.com/heroku/heroku-go/v5"
 )
 
 func resourceHerokuAppConfigAssociation() *schema.Resource {
@@ -24,8 +26,9 @@ func resourceHerokuAppConfigAssociation() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"app_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 
 			"vars": {

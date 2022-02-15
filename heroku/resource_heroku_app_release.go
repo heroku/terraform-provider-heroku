@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
@@ -24,10 +25,11 @@ func resourceHerokuAppRelease() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"app": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"app_id": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 
 			"slug_id": { // An existing Heroku release cannot be updated so ForceNew is required
@@ -42,6 +44,14 @@ func resourceHerokuAppRelease() *schema.Resource {
 				Computed: true,
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuAppReleaseV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -50,7 +60,7 @@ func resourceHerokuAppReleaseCreate(d *schema.ResourceData, meta interface{}) er
 
 	opts := heroku.ReleaseCreateOpts{}
 
-	appName := getAppName(d)
+	appName := getAppId(d)
 
 	if v, ok := d.GetOk("slug_id"); ok {
 		vs := v.(string)
@@ -94,7 +104,7 @@ func resourceHerokuAppReleaseCreate(d *schema.ResourceData, meta interface{}) er
 func resourceHerokuAppReleaseRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	appName := getAppName(d)
+	appName := getAppId(d)
 
 	appRelease, err := client.ReleaseInfo(context.TODO(), appName, d.Id())
 
@@ -102,7 +112,7 @@ func resourceHerokuAppReleaseRead(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("[ERROR] error retrieving app release: %s", err)
 	}
 
-	d.Set("app", appRelease.App.Name)
+	d.Set("app_id", appRelease.App.ID)
 	d.Set("slug_id", appRelease.Slug.ID)
 	d.Set("description", appRelease.Description)
 
@@ -151,9 +161,33 @@ func resourceHerokuAppReleaseImport(d *schema.ResourceData, meta interface{}) ([
 	}
 
 	d.SetId(appRelease.ID)
-	d.Set("app", appRelease.App.Name)
+	d.Set("app_id", appRelease.App.ID)
 	d.Set("slug_id", appRelease.Slug.ID)
 	d.Set("description", appRelease.Description)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceHerokuAppReleaseV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"slug_id": { // An existing Heroku release cannot be updated so ForceNew is required
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+		},
+	}
 }

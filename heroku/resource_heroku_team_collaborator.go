@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
@@ -34,6 +35,7 @@ type teamCollaborator struct {
 	Id string // Id of the resource
 
 	AppName          string // the app the collaborator belongs to
+	AppID            string // the app the collaborator belongs to
 	TeamCollaborator *herokuTeamCollaborator
 	Client           *heroku.Service
 	Permissions      []string // can be a combo or all of ["view", "deploy", "operate", "manage"]
@@ -51,10 +53,11 @@ func resourceHerokuTeamCollaborator() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"app": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"app_id": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 
 			"email": {
@@ -73,6 +76,14 @@ func resourceHerokuTeamCollaborator() *schema.Resource {
 				},
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuTeamCollaboratorV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -81,7 +92,7 @@ func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface
 
 	opts := heroku.TeamAppCollaboratorCreateOpts{}
 
-	appName := getAppName(d)
+	appID := getAppId(d)
 
 	opts.User = getEmail(d)
 
@@ -109,12 +120,12 @@ func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface
 	log.Printf("[DEBUG] Creating Heroku Team Collaborator: [%s]", opts.User)
 
 	var resourceID string
-	collaborator, createErr := client.TeamAppCollaboratorCreate(context.TODO(), appName, opts)
+	collaborator, createErr := client.TeamAppCollaboratorCreate(context.TODO(), appID, opts)
 	if createErr != nil {
 		// Handle scenario when user has already been granted access to the app.
 		if strings.Contains(strings.ToLower(createErr.Error()), "is already a collaborator on app") {
 			// Loop through all collaborators on the app to get the collaborator ID
-			collaborators, listErr := client.TeamAppCollaboratorList(context.TODO(), appName,
+			collaborators, listErr := client.TeamAppCollaboratorList(context.TODO(), appID,
 				&heroku.ListRange{Max: 1000, Descending: true})
 			if listErr != nil {
 				return listErr
@@ -142,7 +153,7 @@ func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface
 func resourceHerokuTeamCollaboratorRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	teamCollaborator, err := resourceHerokuTeamCollaboratorRetrieve(d.Id(), d.Get("app").(string), client)
+	teamCollaborator, err := resourceHerokuTeamCollaboratorRetrieve(d.Id(), d.Get("app_id").(string), client)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "Couldn't find that user") {
@@ -153,7 +164,7 @@ func resourceHerokuTeamCollaboratorRead(d *schema.ResourceData, meta interface{}
 		return err
 	}
 
-	d.Set("app", teamCollaborator.AppName)
+	d.Set("app_id", teamCollaborator.AppID)
 	d.Set("email", teamCollaborator.TeamCollaborator.Email)
 	d.Set("permissions", teamCollaborator.Permissions)
 
@@ -176,11 +187,11 @@ func resourceHerokuTeamCollaboratorUpdate(d *schema.ResourceData, meta interface
 		opts.Permissions = perms
 	}
 
-	appName := getAppName(d)
+	appID := getAppId(d)
 	email := getEmail(d)
 
 	log.Printf("[DEBUG] Updating Heroku Team Collaborator: [%s]", email)
-	updatedTeamCollaborator, err := client.TeamAppCollaboratorUpdate(context.TODO(), appName, email, opts)
+	updatedTeamCollaborator, err := client.TeamAppCollaboratorUpdate(context.TODO(), appID, email, opts)
 	if err != nil {
 		return err
 	}
@@ -194,7 +205,7 @@ func resourceHerokuTeamCollaboratorDelete(d *schema.ResourceData, meta interface
 	client := meta.(*Config).Api
 
 	log.Printf("[INFO] Deleting Heroku Team Collaborator: [%s]", d.Id())
-	_, err := client.TeamAppCollaboratorDelete(context.TODO(), getAppName(d), getEmail(d))
+	_, err := client.TeamAppCollaboratorDelete(context.TODO(), getAppId(d), getEmail(d))
 
 	if err != nil {
 		return fmt.Errorf("error deleting Team Collaborator: %s", err)
@@ -210,7 +221,7 @@ func resourceHerokuTeamCollaboratorDelete(d *schema.ResourceData, meta interface
 	*/
 	log.Printf("[INFO] Begin checking if [%s] has been deleted", getEmail(d))
 	retryError := resource.Retry(10*time.Second, func() *resource.RetryError {
-		_, err := client.TeamAppCollaboratorInfo(context.TODO(), getAppName(d), d.Id())
+		_, err := client.TeamAppCollaboratorInfo(context.TODO(), getAppId(d), d.Id())
 
 		// Debug log to check
 		log.Printf("[INFO] Is error nil when GET#show team collaborator? %t", err == nil)
@@ -228,14 +239,14 @@ func resourceHerokuTeamCollaboratorDelete(d *schema.ResourceData, meta interface
 	})
 
 	if retryError != nil {
-		return fmt.Errorf("[ERROR] Team collaborator [%s] still exists on [%s] after checking several times", getEmail(d), getAppName(d))
+		return fmt.Errorf("[ERROR] Team collaborator [%s] still exists on [%s] after checking several times", getEmail(d), getAppId(d))
 	}
 
 	return nil
 }
 
-func resourceHerokuTeamCollaboratorRetrieve(id string, appName string, client *heroku.Service) (*teamCollaborator, error) {
-	teamCollaborator := teamCollaborator{Id: id, AppName: appName, Client: client}
+func resourceHerokuTeamCollaboratorRetrieve(id string, appID string, client *heroku.Service) (*teamCollaborator, error) {
+	teamCollaborator := teamCollaborator{Id: id, AppID: appID, Client: client}
 
 	err := teamCollaborator.Update()
 
@@ -251,7 +262,7 @@ func (tc *teamCollaborator) Update() error {
 
 	log.Printf("[INFO] tc.Id is %s", tc.Id)
 
-	teamCollaborator, err := tc.Client.TeamAppCollaboratorInfo(context.TODO(), tc.AppName, tc.Id)
+	teamCollaborator, err := tc.Client.TeamAppCollaboratorInfo(context.TODO(), tc.AppID, tc.Id)
 
 	if err != nil {
 		errs = append(errs, err)
@@ -259,11 +270,12 @@ func (tc *teamCollaborator) Update() error {
 		tc.TeamCollaborator = &herokuTeamCollaborator{}
 		tc.TeamCollaborator.Email = teamCollaborator.User.Email
 		tc.AppName = teamCollaborator.App.Name
+		tc.AppID = teamCollaborator.App.ID
 	}
 
 	// The underlying go client does not return permission info on the collaborator when calling
 	// 'TeamAppCollaboratorInfo'. Instead that is returned via calling 'CollaboratorInfo'
-	collaborator, collaboratorErr := tc.Client.CollaboratorInfo(context.TODO(), tc.AppName, tc.Id)
+	collaborator, collaboratorErr := tc.Client.CollaboratorInfo(context.TODO(), tc.AppID, tc.Id)
 	if collaboratorErr != nil {
 		errs = append(errs, collaboratorErr)
 	} else {
@@ -297,7 +309,7 @@ func resourceHerokuTeamCollaboratorImport(d *schema.ResourceData, meta interface
 	}
 
 	d.SetId(collaborator.ID)
-	d.Set("app", collaborator.App.Name)
+	d.Set("app_id", collaborator.App.ID)
 	d.Set("email", collaborator.User.Email)
 
 	var perms []string
@@ -308,4 +320,32 @@ func resourceHerokuTeamCollaboratorImport(d *schema.ResourceData, meta interface
 	d.Set("permissions", perms)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceHerokuTeamCollaboratorV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"email": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"permissions": {
+				Type:     schema.TypeSet, // We are using TypeSet type here as the order for permissions is not important.
+				Required: true,
+				MinItems: 1,
+				MaxItems: 4,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+		},
+	}
 }

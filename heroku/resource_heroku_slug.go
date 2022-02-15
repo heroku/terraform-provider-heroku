@@ -14,6 +14,7 @@ import (
 
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
@@ -29,10 +30,11 @@ func resourceHerokuSlug() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"app": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"app_id": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 
 			// Local tarball to be uploaded after slug creation
@@ -119,6 +121,14 @@ func resourceHerokuSlug() *schema.Resource {
 				Computed: true,
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuSlugV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -136,7 +146,13 @@ func resourceHerokuSlugImport(d *schema.ResourceData, meta interface{}) ([]*sche
 	}
 
 	d.SetId(slug.ID)
-	d.Set("app", app)
+
+	foundApp, err := resourceHerokuAppRetrieve(app, client)
+	if err != nil {
+		return nil, err
+	}
+
+	d.Set("app_id", foundApp.App.ID)
 
 	setErr := setSlugState(d, slug)
 	if setErr != nil {
@@ -149,7 +165,7 @@ func resourceHerokuSlugImport(d *schema.ResourceData, meta interface{}) ([]*sche
 func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	app := getAppName(d)
+	appID := getAppId(d)
 
 	// Build up our creation options
 	opts := heroku.SlugCreateOpts{}
@@ -221,7 +237,7 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 		opts.Stack = heroku.String(v.(string))
 	}
 
-	slug, err := client.SlugCreate(context.TODO(), app, opts)
+	slug, err := client.SlugCreate(context.TODO(), appID, opts)
 	if err != nil {
 		return fmt.Errorf("Error creating slug: %s opts %+v", err, opts)
 	}
@@ -249,8 +265,8 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceHerokuSlugRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 
-	app := getAppName(d)
-	slug, err := client.SlugInfo(context.TODO(), app, d.Id())
+	appID := getAppId(d)
+	slug, err := client.SlugInfo(context.TODO(), appID, d.Id())
 	if err != nil {
 		return fmt.Errorf("Error retrieving slug: %s", err)
 	}
@@ -433,4 +449,100 @@ func validateFileUrl(v interface{}, k string) (ws []string, errors []error) {
 	}
 
 	return
+}
+
+func resourceHerokuSlugV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			// Local tarball to be uploaded after slug creation
+			"file_path": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
+			// https:// URL of tarball to upload into slug
+			"file_url": {
+				Type:          schema.TypeString,
+				ConflictsWith: []string{"file_path"},
+				Optional:      true,
+				ForceNew:      true,
+				ValidateFunc:  validateFileUrl,
+			},
+
+			"blob": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"method": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+
+						"url": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
+
+			"buildpack_provided_description": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
+			"checksum": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Computed: true,
+			},
+
+			"commit": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
+			"commit_description": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
+			"process_types": {
+				Type:     schema.TypeMap,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"size": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+
+			// Create/argument: either a name or UUID.
+			// Read/attribute: name of the stack.
+			"stack": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Computed: true,
+			},
+
+			"stack_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+		},
+	}
 }

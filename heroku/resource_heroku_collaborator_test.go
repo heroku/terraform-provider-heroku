@@ -48,7 +48,7 @@ func testAccCheckHerokuCollaboratorExists(n string, collaborator *heroku.Collabo
 
 		client := testAccProvider.Meta().(*Config).Api
 
-		foundCollaborator, err := client.CollaboratorInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundCollaborator, err := client.CollaboratorInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -82,7 +82,7 @@ resource "heroku_app" "foobar" {
     region = "us"
 }
 resource "heroku_collaborator" "foobar-collaborator" {
-	app = "${heroku_app.foobar.name}"
+	app_id = heroku_app.foobar.id
 	email = "%s"
 }
 `, appName, testUser)

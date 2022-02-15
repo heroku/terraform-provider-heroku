@@ -20,7 +20,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_drain" "default" {
-  app = heroku_app.foobar.id
+  app_id = heroku_app.foobar.id
   url = "syslog://terraform.example.com:1234"
 }
 ```
@@ -32,7 +32,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_drain" "default" {
-  app = heroku_app.foobar.id
+  app_id = heroku_app.foobar.id
   sensitive_url = "https://user:pass@terraform.example.com"
 }
 ```
@@ -41,7 +41,7 @@ resource "heroku_drain" "default" {
 
 The following arguments are supported:
 
-* `app` - (Required) The Heroku app to link to.
+* `app_id` - (Required) Heroku app ID (do not use app name)
 * `url` - (Optional) The URL for Heroku to drain your logs to. Either `url` or `sensitive_url` must be defined.
 * `sensitive_url` - (Optional) The URL for Heroku to drain your logs to. The main difference between `sensitive_url` and `url`
 is `sensitive_url` outputs are redacted, with <sensitive> displayed in place of their value during a `terraform apply`

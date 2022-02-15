@@ -3,10 +3,11 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"testing"
 )
 
 func TestAccHerokuAppConfigAssociation_Basic(t *testing.T) {
@@ -96,7 +97,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_app_config_association" "foobar-config" {
-    app_id = "${heroku_app.foobar.id}"
+    app_id = heroku_app.foobar.id
 
     vars = {
        RAILS_ENV = "PROD"

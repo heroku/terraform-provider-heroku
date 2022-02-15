@@ -24,13 +24,13 @@ resource "heroku_app" "foobar" {
 
 # Create a new collaborator for the foobar application
 resource "heroku_collaborator" "foobar-collaborator" {
-	app = heroku_app.foobar.name
+	app_id = heroku_app.foobar.id
 	email = "collaborator@foobar.com"
 }
 ```
 
 ## Argument Reference
-* `app` - (Required) The name of the app that the collaborator will be added to.
+* `app_id` - (Required) Heroku app ID (do not use app name)
 * `email` - (Required) Email address of the collaborator
 
 ## Attributes Reference

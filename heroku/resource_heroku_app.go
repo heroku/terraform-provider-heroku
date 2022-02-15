@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
 	"net/url"
 	"time"
+
+	"github.com/hashicorp/go-uuid"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -178,6 +180,14 @@ func resourceHerokuApp() *schema.Resource {
 				Computed: true,
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuAppV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: resourceHerokuAppStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -198,7 +208,7 @@ func resourceHerokuAppImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	// of heroku_app such as heroku_addon where the `app` attribute is often set to ForceNew.
 	// As the app's name can change, its UUID does not. Therefore the heroku_app.id should be set to the UUID - DJ
 	// Punting this change for now.
-	d.SetId(app.Name)
+	d.SetId(app.ID)
 
 	readErr := resourceHerokuAppRead(d, m)
 
@@ -246,7 +256,7 @@ func resourceHerokuAppCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	d.SetId(a.Name)
+	d.SetId(a.ID)
 	log.Printf("[INFO] App ID: %s", d.Id())
 
 	if err := performAppPostCreateTasks(d, client); err != nil {
@@ -318,7 +328,7 @@ func resourceHerokuTeamAppCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	d.SetId(a.Name)
+	d.SetId(a.ID)
 	log.Printf("[INFO] App ID: %s", d.Id())
 
 	if err := performAppPostCreateTasks(d, client); err != nil {
@@ -456,7 +466,7 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.SetId(updatedApp.Name)
+	d.Set("name", updatedApp.Name)
 
 	// Make changes (if any) to the app's buildpack.
 	if d.HasChange("buildpacks") {
@@ -550,7 +560,6 @@ func resourceHerokuAppDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error deleting App: %s", err)
 	}
 
-	d.SetId("")
 	return nil
 }
 
@@ -867,4 +876,150 @@ func checkIfDupeConfigVars(d *schema.ResourceData) error {
 	}
 
 	return nil
+}
+
+func resourceHerokuAppV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+
+			"space": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
+
+			"region": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"stack": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+
+			"internal_routing": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+			},
+
+			"buildpacks": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+
+			"config_vars": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Computed: true,
+			},
+
+			"sensitive_config_vars": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type:      schema.TypeString,
+					Sensitive: true,
+				},
+				Sensitive: true,
+			},
+
+			"all_config_vars": {
+				Type:     schema.TypeMap,
+				Computed: true,
+				// These are marked Sensitive so that "sensitive_config_vars" do not
+				// leak in the console/logs and also avoids unnecessary disclosure of
+				// add-on secrets in logs.
+				Sensitive: true,
+			},
+
+			"git_url": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"web_url": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"acm": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
+
+			"heroku_hostname": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"organization": {
+				Type:     schema.TypeList,
+				MinItems: 0,
+				MaxItems: 1,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:         schema.TypeString,
+							ForceNew:     true,
+							Required:     true,
+							ValidateFunc: validation.StringIsNotEmpty,
+						},
+
+						"locked": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Computed: true,
+						},
+
+						"personal": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							ForceNew: true,
+							Computed: true,
+						},
+					},
+				},
+			},
+
+			"uuid": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+		},
+	}
+}
+
+func resourceHerokuAppStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+	appIdentifier := rawState["id"].(string)
+
+	_, err := uuid.ParseUUID(appIdentifier)
+	if err == nil {
+		// id is already a valid UUID
+		return rawState, nil
+	}
+
+	client := meta.(*Config).Api
+	foundApp, err := client.AppInfo(ctx, appIdentifier)
+	if err != nil {
+		return nil, fmt.Errorf("resourceHerokuAppStateUpgradeV0 error retrieving app '%s': %w", appIdentifier, err)
+	}
+	rawState["id"] = foundApp.ID
+
+	return rawState, nil
 }

@@ -6,7 +6,9 @@ import (
 	"log"
 	"strings"
 
+	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	heroku "github.com/heroku/heroku-go/v5"
 	"github.com/heroku/terraform-provider-heroku/v4/version"
 )
@@ -94,4 +96,60 @@ func SliceContainsString(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+// migrateAppToAppID is the older (v0.11) MigrateState helper.
+func migrateAppToAppID(is *terraform.InstanceState, client *heroku.Service) (*terraform.InstanceState, error) {
+	if is.Empty() || is.Attributes == nil {
+		log.Println("[DEBUG] Empty state; nothing to migrate.")
+		return is, nil
+	}
+
+	appFuzzyID := is.Attributes["app"]
+	appID := is.Attributes["app_id"]
+
+	_, err := uuid.ParseUUID(appID)
+	if err == nil {
+		// app_id is already a valid UUID
+		return is, nil
+	}
+
+	_, err = uuid.ParseUUID(appFuzzyID)
+	if err == nil {
+		is.Attributes["app_id"] = appFuzzyID
+	} else {
+		foundApp, err := client.AppInfo(context.Background(), appFuzzyID)
+		if err != nil {
+			return nil, fmt.Errorf("migrateAppToAppID error retrieving app '%s': %w", appFuzzyID, err)
+		}
+		is.Attributes["app_id"] = foundApp.ID
+	}
+
+	return is, nil
+}
+
+// upgradeAppToAppID is the newer (v0.12+) StateUpgrade helper.
+func upgradeAppToAppID(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+	appFuzzyID, _ := rawState["app"].(string)
+	appID, _ := rawState["app_id"].(string)
+
+	_, err := uuid.ParseUUID(appID)
+	if err == nil {
+		// app_id is already a valid UUID
+		return rawState, nil
+	}
+
+	_, err = uuid.ParseUUID(appFuzzyID)
+	if err == nil {
+		rawState["app_id"] = appFuzzyID
+	} else {
+		client := meta.(*Config).Api
+		foundApp, err := client.AppInfo(ctx, appFuzzyID)
+		if err != nil {
+			return nil, fmt.Errorf("upgradeAppToAppID error retrieving app '%s': %w", appFuzzyID, err)
+		}
+		rawState["app_id"] = foundApp.ID
+	}
+
+	return rawState, nil
 }

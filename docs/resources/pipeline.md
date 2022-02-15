@@ -43,13 +43,13 @@ resource "heroku_pipeline" "test-pipeline" {
 
 # Couple apps to different pipeline stages
 resource "heroku_pipeline_coupling" "staging" {
-  app      = heroku_app.staging.name
+  app_id   = heroku_app.staging.id
   pipeline = heroku_pipeline.test-pipeline.id
   stage    = "staging"
 }
 
 resource "heroku_pipeline_coupling" "production" {
-  app      = heroku_app.production.name
+  app_id   = heroku_app.production.id
   pipeline = heroku_pipeline.test-pipeline.id
   stage    = "production"
 }

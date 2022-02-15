@@ -22,13 +22,10 @@ func resourceHerokuPipelineCoupling() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"app_id": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"app": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 			"pipeline": {
 				Type:         schema.TypeString,
@@ -46,6 +43,14 @@ func resourceHerokuPipelineCoupling() *schema.Resource {
 				),
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuPipelineCouplingV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
+			},
+		},
 	}
 }
 
@@ -53,7 +58,7 @@ func resourceHerokuPipelineCouplingCreate(d *schema.ResourceData, meta interface
 	client := meta.(*Config).Api
 
 	opts := heroku.PipelineCouplingCreateOpts{
-		App:      d.Get("app").(string),
+		App:      d.Get("app_id").(string),
 		Pipeline: d.Get("pipeline").(string),
 		Stage:    d.Get("stage").(string),
 	}
@@ -93,17 +98,36 @@ func resourceHerokuPipelineCouplingRead(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("Error retrieving pipeline: %s", err)
 	}
 
-	// grab App info
-	app, err := client.AppInfo(context.TODO(), p.App.ID)
-	if err != nil {
-		log.Printf("[WARN] Error looking up addional App info for pipeline coupling (%s): %s", d.Id(), err)
-	} else {
-		d.Set("app", app.Name)
-	}
-
 	d.Set("app_id", p.App.ID)
 	d.Set("stage", p.Stage)
 	d.Set("pipeline", p.Pipeline.ID)
 
 	return nil
+}
+
+func resourceHerokuPipelineCouplingV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			"pipeline": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
+			},
+			"stage": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+				ValidateFunc: validation.StringInSlice(
+					[]string{"review", "development", "staging", "production"},
+					false,
+				),
+			},
+		},
+	}
 }

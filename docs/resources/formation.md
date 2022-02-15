@@ -31,13 +31,13 @@ resource "heroku_app" "foobar" {
 
 # Creates a new release for application foobar using a slug id
 resource "heroku_app_release" "foobar-release" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     slug_id = "01234567-89ab-cdef-0123-456789abcdef"
 }
 
 # Update the web formation for the foobar application's web
 resource "heroku_formation" "foobar-web" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     type = "web"
     quantity = 2
     size = "standard-2x"
@@ -49,7 +49,7 @@ resource "heroku_formation" "foobar-web" {
 
 ## Argument Reference
 
-* `app` - (Required) The name of the application
+* `app_id` - (Required) Heroku app ID (do not use app name)
 * `type` - (Required) type of process such as "web"
 * `quantity` - (Required) number of processes to maintain
 * `size` - (Required) dyno size (Example: “standard-1X”). Capitalization does not matter.

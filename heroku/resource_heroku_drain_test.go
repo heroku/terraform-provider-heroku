@@ -27,8 +27,8 @@ func TestAccHerokuDrain_Basic(t *testing.T) {
 					testAccCheckHerokuDrainAttributes(&drain),
 					resource.TestCheckResourceAttr(
 						"heroku_drain.foobar", "url", "syslog://terraform.example.com:1234"),
-					resource.TestCheckResourceAttr(
-						"heroku_drain.foobar", "app", appName),
+					resource.TestCheckResourceAttrSet(
+						"heroku_drain.foobar", "app_id"),
 				),
 			},
 		},
@@ -51,8 +51,8 @@ func TestAccHerokuDrain_BasicWithSensitiveURL(t *testing.T) {
 					testAccCheckHerokuDrainAttributes(&drain),
 					resource.TestCheckResourceAttr(
 						"heroku_drain.foobar", "sensitive_url", "syslog://terraform.example.com:1234"),
-					resource.TestCheckResourceAttr(
-						"heroku_drain.foobar", "app", appName),
+					resource.TestCheckResourceAttrSet(
+						"heroku_drain.foobar", "app_id"),
 				),
 			},
 		},
@@ -67,7 +67,7 @@ func testAccCheckHerokuDrainDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := client.LogDrainInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		_, err := client.LogDrainInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Drain still exists")
@@ -106,7 +106,7 @@ func testAccCheckHerokuDrainExists(n string, Drain *heroku.LogDrain) resource.Te
 
 		client := testAccProvider.Meta().(*Config).Api
 
-		foundDrain, err := client.LogDrainInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundDrain, err := client.LogDrainInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -130,7 +130,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_drain" "foobar" {
-    app = heroku_app.foobar.name
+    app_id = heroku_app.foobar.id
     url = "syslog://terraform.example.com:1234"
 }`, appName)
 }
@@ -143,7 +143,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_drain" "foobar" {
-    app = heroku_app.foobar.name
+    app_id = heroku_app.foobar.id
     sensitive_url = "syslog://terraform.example.com:1234"
 }`, appName)
 }

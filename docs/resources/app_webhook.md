@@ -32,7 +32,7 @@ resource "heroku_app_webhook" "foobar_release" {
 
 The following arguments are supported:
 
-* `app_id` - (Required) The Heroku app to add to.
+* `app_id` - (Required) Heroku app ID (do not use app name)
 * `level` - (Required) The webhook level (either `notify` or `sync`)
 * `url` - (Required) Optional plan configuration.
 * `include` - (Required) List of events to deliver to the webhook.

@@ -66,7 +66,7 @@ resource "heroku_app" "one" {
 }
 
 resource "heroku_slug" "one" {
-  app = heroku_app.one.id
+  app_id = heroku_app.one.id
   file_path = "test-fixtures/slug.tgz"
   process_types = {
     web = "ruby server.rb"
@@ -74,12 +74,12 @@ resource "heroku_slug" "one" {
 }
 
 resource "heroku_app_release" "one" {
-  app = heroku_app.one.id
+  app_id = heroku_app.one.id
   slug_id = heroku_slug.one.id
 }
 
 resource "heroku_formation" "web" {
-  app = heroku_app.one.id
+  app_id = heroku_app.one.id
   type = "web"
   size = "hobby"
   quantity = 1

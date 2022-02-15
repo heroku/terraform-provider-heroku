@@ -7,12 +7,14 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
 // herokuFormation is a value type used to hold the details of a formation
 type herokuFormation struct {
 	AppName  string
+	AppID    string
 	Command  string
 	Quantity int
 	Size     string
@@ -38,10 +40,11 @@ func resourceHerokuFormation() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"app": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"app_id": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 
 			"type": {
@@ -60,20 +63,28 @@ func resourceHerokuFormation() *schema.Resource {
 				StateFunc: formatSize,
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceHerokuFormationV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: upgradeAppToAppID,
+				Version: 0,
+			},
+		},
 	}
 }
 
 func resourceHerokuFormationRead(d *schema.ResourceData, meta interface{}) (err error) {
 	client := meta.(*Config).Api
 
-	appName := getAppName(d)
+	appID := getAppId(d)
 
-	formation, err := resourceHerokuFormationRetrieve(d.Id(), appName, client)
+	formation, err := resourceHerokuFormationRetrieve(d.Id(), appID, client)
 	if err != nil {
 		return err
 	}
 
-	err = d.Set("app", formation.Formation.AppName)
+	err = d.Set("app_id", formation.Formation.AppID)
 	err = d.Set("type", formation.Formation.Type)
 	err = d.Set("quantity", formation.Formation.Quantity)
 	err = d.Set("size", formation.Formation.Size)
@@ -88,10 +99,10 @@ func resourceHerokuFormationCreate(d *schema.ResourceData, meta interface{}) err
 
 	opts := heroku.FormationUpdateOpts{}
 
-	appName := getAppName(d)
+	appID := getAppId(d)
 
-	// check if appName is valid
-	_, err := doesHerokuAppExist(appName, client)
+	// check if appID is valid
+	_, err := doesHerokuAppExist(appID, client)
 	if err != nil {
 		return err
 	}
@@ -108,8 +119,8 @@ func resourceHerokuFormationCreate(d *schema.ResourceData, meta interface{}) err
 		opts.Quantity = &vs
 	}
 
-	log.Printf(fmt.Sprintf("[DEBUG] Updating %s formation...", appName))
-	f, err := client.FormationUpdate(context.TODO(), appName, getFormationType(d), opts)
+	log.Printf(fmt.Sprintf("[DEBUG] Updating %s formation...", appID))
+	f, err := client.FormationUpdate(context.TODO(), appID, getFormationType(d), opts)
 	if err != nil {
 		return err
 	}
@@ -139,17 +150,17 @@ func resourceHerokuFormationUpdate(d *schema.ResourceData, meta interface{}) err
 		opts.Quantity = &v
 	}
 
-	appName := getAppName(d)
+	appID := getAppId(d)
 
-	// check if appName is valid
-	_, err := doesHerokuAppExist(appName, client)
+	// check if appID is valid
+	_, err := doesHerokuAppExist(appID, client)
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Updating Heroku formation...")
 	updatedFormation, err := client.FormationUpdate(context.TODO(),
-		appName, getFormationType(d), opts)
+		appID, getFormationType(d), opts)
 
 	if err != nil {
 		return err
@@ -178,10 +189,10 @@ func getFormationType(d *schema.ResourceData) string {
 	return formationType
 }
 
-func resourceHerokuFormationRetrieve(id string, appName string, client *heroku.Service) (*formation, error) {
+func resourceHerokuFormationRetrieve(id string, appID string, client *heroku.Service) (*formation, error) {
 	formation := formation{Id: id, Client: client}
 
-	err := formation.GetInfo(appName)
+	err := formation.GetInfo(appID)
 
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving formation: %s", err)
@@ -190,18 +201,19 @@ func resourceHerokuFormationRetrieve(id string, appName string, client *heroku.S
 	return &formation, nil
 }
 
-func (f *formation) GetInfo(appName string) error {
+func (f *formation) GetInfo(appID string) error {
 	var err error
 
-	log.Printf("[INFO] The formation's app name is %s", appName)
+	log.Printf("[INFO] The formation's app is %s", appID)
 	log.Printf("[INFO] f.Id is %s", f.Id)
 
-	formation, err := f.Client.FormationInfo(context.TODO(), appName, f.Id)
+	formation, err := f.Client.FormationInfo(context.TODO(), appID, f.Id)
 	if err != nil {
 		return err
 	} else {
 		f.Formation = &herokuFormation{}
 		f.Formation.AppName = formation.App.Name
+		f.Formation.AppID = formation.App.ID
 		f.Formation.Command = formation.Command
 		f.Formation.Quantity = formation.Quantity
 		f.Formation.Size = formation.Size
@@ -225,7 +237,7 @@ func resourceHerokuFormationImport(d *schema.ResourceData, meta interface{}) ([]
 	}
 
 	d.SetId(formation.ID)
-	d.Set("app", formation.App.Name)
+	d.Set("app_id", formation.App.ID)
 	d.Set("type", formation.Type)
 	d.Set("quantity", formation.Quantity)
 	d.Set("size", formation.Size)
@@ -271,4 +283,32 @@ func formatSize(quant interface{}) string {
 	}
 
 	return strings.Join(formattedSlice, "-")
+}
+
+func resourceHerokuFormationV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"app": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+
+			"type": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+
+			"quantity": {
+				Type:     schema.TypeInt,
+				Required: true,
+			},
+
+			"size": {
+				Type:      schema.TypeString,
+				Required:  true,
+				StateFunc: formatSize,
+			},
+		},
+	}
 }

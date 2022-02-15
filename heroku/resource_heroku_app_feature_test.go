@@ -3,10 +3,14 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	heroku "github.com/heroku/heroku-go/v5"
 )
@@ -44,6 +48,46 @@ func TestAccHerokuAppFeature(t *testing.T) {
 	})
 }
 
+func TestResourceHerokuAppFeatureStateUpgradeV0(t *testing.T) {
+	p := Provider()
+	d := schema.TestResourceDataRaw(t, p.Schema, nil)
+
+	client, err := providerConfigure(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedID := "5278d60a-bb29-4f72-8936-41991e01d71e"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, writeErr := w.Write([]byte(`{"id":"` + expectedID + `"}`))
+		if writeErr != nil {
+			t.Fatal(writeErr)
+		}
+	}))
+	defer srv.Close()
+
+	c := client.(*Config).Api
+	c.URL = srv.URL
+
+	existing := map[string]interface{}{
+		"id":  "test-app:45b2b2df-2094-40d2-b099-986d0d6d8444",
+		"app": "test-app",
+	}
+	expected := map[string]interface{}{
+		"id":     expectedID + ":45b2b2df-2094-40d2-b099-986d0d6d8444",
+		"app":    "test-app",
+		"app_id": expectedID,
+	}
+	actual, err := upgradeHerokuAppFeatureV1(context.Background(), existing, client)
+	if err != nil {
+		t.Fatalf("error migrating state: %s", err)
+	}
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
+	}
+}
+
 func testAccCheckHerokuFeatureDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(*Config).Api
 
@@ -52,7 +96,7 @@ func testAccCheckHerokuFeatureDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := client.AppFeatureInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		_, err := client.AppFeatureInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Feature still exists")
@@ -75,7 +119,7 @@ func testAccCheckHerokuFeatureExists(n string, feature *heroku.AppFeature) resou
 		}
 
 		app, id, _ := parseCompositeID(rs.Primary.ID)
-		if app != rs.Primary.Attributes["app"] {
+		if app != rs.Primary.Attributes["app_id"] {
 			return fmt.Errorf("Bad app: %s", app)
 		}
 
@@ -113,7 +157,7 @@ resource "heroku_app" "example" {
 }
 
 resource "heroku_app_feature" "runtime_metrics" {
-	app = "${heroku_app.example.name}"
+	app_id = heroku_app.example.id
 	name = "log-runtime-metrics"
 }
 `, appName)
@@ -127,7 +171,7 @@ resource "heroku_app" "example" {
 }
 
 resource "heroku_app_feature" "runtime_metrics" {
-	app = "${heroku_app.example.name}"
+	app_id = heroku_app.example.id
 	name = "log-runtime-metrics"
 	enabled = false
 }

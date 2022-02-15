@@ -219,7 +219,7 @@ func testAccCheckHerokuBuildExists(n string, Build *heroku.Build) resource.TestC
 
 		client := testAccProvider.Meta().(*Config).Api
 
-		foundBuild, err := client.BuildInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundBuild, err := client.BuildInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -242,7 +242,7 @@ func testAccCheckHerokuBuildConfig_basic(appName string) string {
 }
 
 resource "heroku_build" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     source {
         url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/app.tgz"
     }
@@ -256,7 +256,7 @@ func testAccCheckHerokuBuildConfig_insecureUrl(appName string) string {
 }
 
 resource "heroku_build" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     source {
       url = "http://github.com/mars/terraform-provider-heroku/raw/build-resource/heroku/test-fixtures/app.tgz"
     }
@@ -270,7 +270,7 @@ func testAccCheckHerokuBuildConfig_noSource(appName string) string {
 }
 
 resource "heroku_build" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     source {
       version = "v0"
     }
@@ -287,7 +287,7 @@ func testAccCheckHerokuBuildConfig_allOpts(appName string) string {
 }
 
 resource "heroku_build" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     buildpacks = [
       "https://github.com/heroku/heroku-buildpack-jvm-common",
       "https://github.com/heroku/heroku-buildpack-ruby",
@@ -307,7 +307,7 @@ func testAccCheckHerokuBuildConfig_localSourceDirectory(appName string) string {
 }
 
 resource "heroku_build" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     source {
       path = "test-fixtures/app/"
     }
@@ -320,7 +320,7 @@ func testAccCheckHerokuBuildConfig_localSourceDirectorySelfContained(appName str
     region = "us"
 }
  resource "heroku_build" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     source {
       path = "."
     }
@@ -334,7 +334,7 @@ func testAccCheckHerokuBuildConfig_localSourceTarball(appName string) string {
 }
 
 resource "heroku_build" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     source {
       path = "test-fixtures/app.tgz"
     }
@@ -348,7 +348,7 @@ func testAccCheckHerokuBuildConfig_localSourceTarball_setChecksum(appName string
 }
 
 resource "heroku_build" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     source {
       checksum = "SHA256:0000000000000000000000000000000000000000000000000000000000000000"
       path = "test-fixtures/app.tgz"
@@ -363,7 +363,7 @@ func testAccCheckHerokuBuildConfig_localSourceTarball_allOpts(appName string) st
 }
 
 resource "heroku_build" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     buildpacks = ["https://github.com/heroku/heroku-buildpack-ruby"]
     source {
       path = "test-fixtures/app.tgz"

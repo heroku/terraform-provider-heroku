@@ -3,11 +3,12 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	heroku "github.com/heroku/heroku-go/v5"
 	"log"
 	"strconv"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	heroku "github.com/heroku/heroku-go/v5"
 )
 
 func resourceHerokuAddonMigrate(v int, is *terraform.InstanceState, meta interface{}) (*terraform.InstanceState, error) {
@@ -22,6 +23,9 @@ func resourceHerokuAddonMigrate(v int, is *terraform.InstanceState, meta interfa
 	case 1:
 		log.Println("[INFO] Found Heroku Addon state v1; migrating to v2")
 		return migrateAddonConfigFromListSetToSet(is, client)
+	case 2:
+		log.Println("[INFO] Found Heroku Addon state v2; migrating to v3")
+		return migrateAppToAppID(is, client)
 	default:
 		return is, fmt.Errorf("unexpected schema version: %d", v)
 	}

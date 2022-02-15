@@ -23,8 +23,8 @@ func TestAccDatasourceHerokuAddon_Basic(t *testing.T) {
 			{
 				Config: testAccCheckHerokuAddonWithDatasourceBasic(appName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"data.heroku_addon.test_data", "app", appName),
+					resource.TestCheckResourceAttrSet(
+						"data.heroku_addon.test_data", "app_id"),
 					resource.TestCheckResourceAttr(
 						"data.heroku_addon.test_data", "plan", "deployhooks:http"),
 				),
@@ -41,7 +41,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = "${heroku_app.foobar.id}"
     plan = "deployhooks:http"
     config = {
 		url = "http://google.com"
@@ -58,7 +58,7 @@ resource "heroku_app" "foobar" {
 }
 
 resource "heroku_addon" "foobar" {
-    app = "${heroku_app.foobar.name}"
+    app_id = "${heroku_app.foobar.id}"
     plan = "deployhooks:http"
     config = {
 		url = "http://google.com"

@@ -79,7 +79,7 @@ func testAccCheckHerokuAppReleaseExists(n string, appRelease *heroku.Release) re
 
 		client := testAccProvider.Meta().(*Config).Api
 
-		foundAppRelease, err := client.ReleaseInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		foundAppRelease, err := client.ReleaseInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -102,7 +102,7 @@ resource "heroku_app" "foobar" {
 	region = "us"
 }
 resource "heroku_app_release" "foobar-release" {
-	app = "${heroku_app.foobar.name}"
+	app_id = heroku_app.foobar.id
 	slug_id = "%s"
 }
 `, appName, slugId)
@@ -118,7 +118,7 @@ resource "heroku_app" "foobar" {
 	}
 }
 resource "heroku_app_release" "foobar-release" {
-	app = "${heroku_app.foobar.name}"
+	app_id = heroku_app.foobar.id
 	slug_id = "%s"
 	description = "%s"
 }

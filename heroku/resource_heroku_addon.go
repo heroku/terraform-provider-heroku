@@ -10,10 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
@@ -34,14 +33,15 @@ func resourceHerokuAddon() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 
-		SchemaVersion: 2,
+		SchemaVersion: 3,
 		MigrateState:  resourceHerokuAddonMigrate,
 
 		Schema: map[string]*schema.Schema{
-			"app": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"app_id": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IsUUID,
 			},
 
 			"plan": {
@@ -115,7 +115,7 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	client := config.Api
 
-	app := d.Get("app").(string)
+	app := d.Get("app_id").(string)
 	opts := heroku.AddOnCreateOpts{
 		Plan:    d.Get("plan").(string),
 		Confirm: &app,
@@ -157,7 +157,7 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Addon ID: %s", d.Id())
 
 	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		configVarValues, err := retrieveSpecificConfigVars(client, addon.App.Name, addon.ConfigVars)
+		configVarValues, err := retrieveSpecificConfigVars(client, addon.App.ID, addon.ConfigVars)
 		if err != nil {
 			return resource.NonRetryableError(err)
 		}
@@ -196,14 +196,14 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("name", addon.Name)
-	d.Set("app", addon.App.Name)
+	d.Set("app_id", addon.App.ID)
 	d.Set("plan", plan)
 	d.Set("provider_id", addon.ProviderID)
 	if err := d.Set("config_vars", addon.ConfigVars); err != nil {
 		return err
 	}
 
-	configVarValues, err := retrieveSpecificConfigVars(client, addon.App.Name, addon.ConfigVars)
+	configVarValues, err := retrieveSpecificConfigVars(client, addon.App.ID, addon.ConfigVars)
 	if err != nil {
 		return err
 	}
@@ -219,7 +219,7 @@ func resourceHerokuAddonUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 	opts := heroku.AddOnUpdateOpts{}
 
-	app := d.Get("app").(string)
+	app := d.Get("app_id").(string)
 
 	if d.HasChange("plan") {
 		opts.Plan = d.Get("plan").(string)
@@ -247,7 +247,7 @@ func resourceHerokuAddonDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] Deleting Addon: %s", d.Id())
 
 	// Destroy the app
-	_, err := client.AddOnDelete(context.TODO(), d.Get("app").(string), d.Id())
+	_, err := client.AddOnDelete(context.TODO(), d.Get("app_id").(string), d.Id())
 	if err != nil {
 		return fmt.Errorf("Error deleting addon: %s", err)
 	}

@@ -24,14 +24,14 @@ resource "heroku_space" "default" {
 
 // Give an existing team member create_apps permissions to the Private Space
 resource "heroku_space_app_access" "member1" {
-  space = heroku_space.default.name
+  space = heroku_space.default.id
   email = "member1@example.com"
   permissions = ["create_apps"]
 }
 
 // Remove all permissions from an existing team member
 resource "heroku_space_app_access" "member2" {
-  space = heroku_space.default.name
+  space = heroku_space.default.id
   email = "member2@example.com"
   permissions = []
 }
@@ -41,7 +41,7 @@ resource "heroku_space_app_access" "member2" {
 
 The following arguments are supported:
 
-* `space` - (Required) The name of the Private Space.
+* `space` - (Required) The ID of the Private Space.
 * `email` - (Required) The email of the existing Heroku Team member.
 * `permissions` - (Required) The permissions to grant the team member for the Private Space.
   Currently `create_apps` is the only supported permission. If not provided the member will have no permissions to the space.

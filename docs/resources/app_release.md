@@ -27,7 +27,7 @@ resource "heroku_app" "foobar" {
 # Upload your slug
 
 resource "heroku_app_release" "foobar-release" {
-    app = "${heroku_app.foobar.name}"
+    app_id = heroku_app.foobar.id
     slug_id = "01234567-89ab-cdef-0123-456789abcdef"
 }
 ```
@@ -36,7 +36,7 @@ resource "heroku_app_release" "foobar-release" {
 
 The following arguments are supported:
 
-* `app` - (Required) The name of the application
+* `app_id` - (Required) Heroku app ID (do not use app name)
 * `slug_id` - unique identifier of slug
 * `description` - description of changes in this release
 
@@ -47,7 +47,7 @@ The following attributes are exported:
 * `id` - The ID of the app release
 
 ## Import
-Existing app releases can be imported using the combination of the application name, a colon, and the formation's type.
+The most recent app release can be imported using the application name.
 
 For example:
 ```
