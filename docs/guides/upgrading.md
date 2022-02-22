@@ -44,9 +44,9 @@ resource "heroku_addon" "example" {
 }
 ```
 
-### 2. Replace `heroku_app` data source result references with `app_id`
+### 2. Replace `heroku_app` data source result references with `id`
 
-If you use this data source, its app ID output has changed from `app` to `app_id`.
+The app data source `id` attribute now contains the app UUID, not the app name. As long as `id` is used for `app_id` references, then no further configuration changes are required. Setting `app_id` references from `name` is no longer allowed, and must be updated to `id`, like `data.heroku_app.example.id`.
 
 ## Verify configuration changes
 
