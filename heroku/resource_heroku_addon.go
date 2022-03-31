@@ -115,10 +115,16 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	client := config.Api
 
-	app := d.Get("app_id").(string)
+	plan := d.Get("plan").(string)
+	appID := d.Get("app_id").(string)
+	app, err := client.AppInfo(context.TODO(), appID)
+	if err != nil {
+		return fmt.Errorf("Error reading app for addon: %w", err)
+	}
+
 	opts := heroku.AddOnCreateOpts{
-		Plan:    d.Get("plan").(string),
-		Confirm: &app,
+		Plan:    plan,
+		Confirm: &app.Name,
 	}
 
 	if c, ok := d.GetOk("config"); ok {
@@ -132,10 +138,10 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 		opts.Name = &v
 	}
 
-	log.Printf("[DEBUG] Addon create configuration: %#v, %#v", app, opts)
-	addon, err := client.AddOnCreate(context.TODO(), app, opts)
+	log.Printf("[DEBUG] Addon create configuration: %#v, %#v", appID, opts)
+	addon, err := client.AddOnCreate(context.TODO(), appID, opts)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error creating addon %s for app %s (%s): %w", plan, app.Name, appID, err)
 	}
 
 	// Wait for the Addon to be provisioned
@@ -143,7 +149,7 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{"provisioning"},
 		Target:  []string{"provisioned"},
-		Refresh: AddOnStateRefreshFunc(client, app, addon.ID),
+		Refresh: AddOnStateRefreshFunc(client, appID, addon.ID),
 		Timeout: time.Duration(config.AddonCreateTimeout) * time.Minute,
 	}
 
