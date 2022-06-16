@@ -610,7 +610,13 @@ func BuildStateRefreshFunc(client *heroku.Service, app, id string) resource.Stat
 		}
 
 		if build.Status == "failed" {
-			return nil, "", fmt.Errorf("Build failed (%s:%s) see logs: curl \"%s\"", app, id, build.OutputStreamURL)
+			resp, err := http.Get(build.OutputStreamURL)
+			if err != nil {
+				return nil, "", fmt.Errorf("Build failed (%s:%s), also failed (%s) to fetch build logs from: %s", app, id, resp.Status, build.OutputStreamURL)
+			}
+			defer resp.Body.Close()
+			buildLog, err := io.ReadAll(resp.Body)
+			return nil, "", fmt.Errorf("Build failed (%s:%s), complete build log follows:\n%s\n(End of build log)", app, id, buildLog)
 		}
 
 		return &build, build.Status, nil

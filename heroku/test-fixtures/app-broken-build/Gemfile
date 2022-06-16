@@ -1,0 +1,9 @@
+# frozen_string_literal: true
+
+<<<<<<< Intentional syntax error to break the build
+
+source "https://non-existent-rubygems.example.org"
+
+git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+
+# gem "rails"

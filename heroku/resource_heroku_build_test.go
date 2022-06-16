@@ -33,6 +33,26 @@ func TestAccHerokuBuild_Basic(t *testing.T) {
 	})
 }
 
+func TestAccHerokuBuild_Fails(t *testing.T) {
+	var build heroku.Build
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-%s", randString)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuBuildConfig_fails(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
+					resource.TestCheckResourceAttr("heroku_build.foobar", "status", "failed"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccHerokuBuild_InsecureUrl(t *testing.T) {
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
@@ -245,6 +265,20 @@ resource "heroku_build" "foobar" {
     app_id = heroku_app.foobar.id
     source {
         url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/app.tgz"
+    }
+}`, appName)
+}
+
+func testAccCheckHerokuBuildConfig_fails(appName string) string {
+	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_build" "foobar" {
+    app_id = heroku_app.foobar.id
+    source {
+        url = "https://github.com/heroku/terraform-provider-heroku/raw/display-build-error-inline/heroku/test-fixtures/app-broken-build.tgz"
     }
 }`, appName)
 }
