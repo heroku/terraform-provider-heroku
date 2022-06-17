@@ -600,23 +600,23 @@ func BuildStateRefreshFunc(client *heroku.Service, app, id string) resource.Stat
 	return func() (interface{}, string, error) {
 		build, err := client.BuildInfo(context.TODO(), app, id)
 		if err != nil {
-			log.Printf("[DEBUG] Failed to get Build status: %s (%s)", err, id)
+			log.Printf("[DEBUG] Failed to get Build status: %s (app: %s)", err, app)
 			return nil, "", err
 		}
 
 		if build.Status == "pending" {
-			log.Printf("[DEBUG] Build pending (%s:%s)", app, id)
+			log.Printf("[DEBUG] Build pending (app: %s)", app)
 			return &build, build.Status, nil
 		}
 
 		if build.Status == "failed" {
 			resp, err := http.Get(build.OutputStreamURL)
 			if err != nil {
-				return nil, "", fmt.Errorf("Build failed (%s:%s), also failed (%s) to fetch build logs from: %s", app, id, resp.Status, build.OutputStreamURL)
+				return nil, "", fmt.Errorf("Build failed (app: %s), also failed (%s) to fetch build logs from: %s", app, resp.Status, build.OutputStreamURL)
 			}
 			defer resp.Body.Close()
 			buildLog, err := io.ReadAll(resp.Body)
-			return nil, "", fmt.Errorf("Build failed (%s:%s), complete build log follows:\n%s\n(End of build log)", app, id, buildLog)
+			return nil, "", fmt.Errorf("Build failed (app: %s), complete build log follows:\n%s\n(End of build log)", app, buildLog)
 		}
 
 		return &build, build.Status, nil
