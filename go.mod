@@ -5,9 +5,9 @@ require (
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/uuid v1.3.0
-	github.com/hashicorp/go-multierror v1.0.0
-	github.com/hashicorp/go-uuid v1.0.1
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.8.0
+	github.com/hashicorp/go-multierror v1.1.1
+	github.com/hashicorp/go-uuid v1.0.3
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.17.0
 	github.com/heroku/heroku-go/v5 v5.4.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pborman/uuid v1.2.1 // indirect
