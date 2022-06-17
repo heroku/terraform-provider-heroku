@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -34,20 +35,22 @@ func TestAccHerokuBuild_Basic(t *testing.T) {
 }
 
 func TestAccHerokuBuild_Fails(t *testing.T) {
-	var build heroku.Build
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
+		ErrorCheck: func(err error) error {
+			// Expect the build log output from the Ruby buildpack
+			if strings.Contains(err.Error(), "-----> Ruby app detected") {
+				return nil
+			}
+			return err
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuBuildConfig_fails(appName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
-					resource.TestCheckResourceAttr("heroku_build.foobar", "status", "failed"),
-				),
 			},
 		},
 	})
