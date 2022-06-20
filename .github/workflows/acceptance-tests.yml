@@ -58,10 +58,10 @@ jobs:
         HEROKU_ORGANIZATION: terraform-ci-test-team
         HEROKU_SPACES_ORGANIZATION: terraform-ci-test-team
         HEROKU_TEAM: terraform-ci-test-team
-        HEROKU_EMAIL: mars+heroku-terraform-ci@heroku.com
-        HEROKU_TEST_USER: mars+heroku-terraform-ci-admin@heroku.com
-        HEROKU_NON_ADMIN_TEST_USER: mars+heroku-terraform-ci-member@heroku.com
+        HEROKU_EMAIL: terraform-provider-heroku+ci@salesforce.com
+        HEROKU_TEST_USER: terraform-provider-heroku+ci-admin-test@salesforce.com
+        HEROKU_NON_ADMIN_TEST_USER: terraform-provider-heroku+ci-user-test@salesforce.com
         HEROKU_SLUG_ID: 8527dbf3-c0a0-4255-beab-aca0aad1dfc9
-        HEROKU_USER_ID: 007fa6e2-00a1-429e-92a0-7bbe14b063fc
+        HEROKU_USER_ID: aaaa7bc7-7de5-410f-a60c-3741d2c355d1
 #        GOFLAGS: "-mod=vendor"
         # TF_LOG: DEBUG
