@@ -18,7 +18,7 @@ of the source code, may be deployed. If a local path is used, it may instead poi
 This resource waits until the [build](https://devcenter.heroku.com/articles/build-and-release-using-the-api)
 & [release](https://devcenter.heroku.com/articles/release-phase) completes.
 
-If the build fails, the error will contain a URL to view the build log. `curl "https://the-long-log-url-in-the-error"`.
+If the build fails, the build log will be output in the error message.
 
 To start the app from a successful build, use a [Formation resource](formation.html) to specify the process, dyno size, and dyno quantity.
 
