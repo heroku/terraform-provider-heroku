@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	DefaultPostAppCreateDelay    = int64(5)
+	DefaultPostAppCreateDelay    = int64(10)
 	DefaultPostSpaceCreateDelay  = int64(5)
 	DefaultPostDomainCreateDelay = int64(5)
 
