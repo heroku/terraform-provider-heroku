@@ -77,7 +77,6 @@ func resourceHerokuAddon() *schema.Resource {
 
 			"config_var_values": {
 				Type:     schema.TypeMap,
-				Optional: true,
 				Computed: true,
 				Elem: &schema.Schema{
 					Type:      schema.TypeString,
