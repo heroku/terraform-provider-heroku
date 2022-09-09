@@ -16,35 +16,14 @@ pipeline is created using [`heroku_pipeline`](./pipeline.html), and apps are add
 to different stages using `heroku_pipeline_coupling`, you can promote app slugs
 to the downstream stages.
 
+See [`heroku_pipeline`](./pipeline.html) for complete usage documentation.
+
 ## Example Usage
 
 ```hcl-terraform
-# Create Heroku apps for staging and production
-resource "heroku_app" "staging" {
-  name = "test-app-staging"
-  region = "us"
-}
-
-resource "heroku_app" "production" {
-  name = "test-app-production"
-  region = "us"
-}
-
-# Create a Heroku pipeline
-resource "heroku_pipeline" "test-app" {
-  name = "test-app"
-}
-
-# Couple apps to different pipeline stages
-resource "heroku_pipeline_coupling" "staging" {
-  app_id   = heroku_app.staging.id
-  pipeline = heroku_pipeline.test-app.id
-  stage    = "staging"
-}
-
 resource "heroku_pipeline_coupling" "production" {
   app_id   = heroku_app.production.id
-  pipeline = heroku_pipeline.test-app.id
+  pipeline = heroku_pipeline.test.id
   stage    = "production"
 }
 ```

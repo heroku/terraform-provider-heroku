@@ -17,40 +17,69 @@ pipeline is created, and apps are added to different stages using
 [`heroku_pipeline_coupling`](./pipeline_coupling.html), you can promote app
 slugs to the next stage.
 
+## Ownership & Access
+
+Pipelines may be created as Personal or Team resources. Access to a pipeline
+is based on access to apps in the pipeline.
+
+For team pipelines, auto-join settings are available in the Heroku Dashboard's
+Pipeline Access section.
+
+## GitHub Connection
+
+Pipelines may only be connected to GitHub via Heroku CLI or Dashboard web UI.
+
+If your Terraform use-case requires GitHub connection, then create the pipeline 
+manually, copy its ID (UUID) from its Dashboard URL, and then reference that ID in 
+the Terraform configuration.
+
+## Empty Pipelines
+
+Pipelines created via Heroku Dashboard may be empty. Only the pipeline creator
+can access an empty pipeline in Heroku CLI and Dashboard.
+
+Empty pipelines must be identified in API queries via ID (UUID).
+
+Empty team pipelines may be accessed by team members via API. This permits
+manually created pipelines to be populated with app couplings via Terraform.
+
+Removing all app couplings from a pipeline will result in automatic deletion of 
+the empty pipeline, within a short period of time (less than one-hour).
+
 ## Example Usage
 
 ```hcl-terraform
 # Create Heroku apps for staging and production
 resource "heroku_app" "staging" {
-  name = "test-app-staging"
+  name   = "test-app-staging"
   region = "us"
 }
 
 resource "heroku_app" "production" {
-  name = "test-app-production"
+  name   = "test-app-production"
   region = "us"
 }
 
 # Create a Heroku pipeline
-resource "heroku_pipeline" "test-pipeline" {
+resource "heroku_pipeline" "test" {
   name = "test-pipeline"
 
   owner {
-	id = "00b4aef3-073c-425b-92ab-274e483d19db"
-	type = "user"
+	  id   = "00b4aef3-073c-425b-92ab-274e483d19db"
+	  type = "team"
   }
 }
 
 # Couple apps to different pipeline stages
 resource "heroku_pipeline_coupling" "staging" {
   app_id   = heroku_app.staging.id
-  pipeline = heroku_pipeline.test-pipeline.id
+  pipeline = heroku_pipeline.test.id
   stage    = "staging"
 }
 
 resource "heroku_pipeline_coupling" "production" {
   app_id   = heroku_app.production.id
-  pipeline = heroku_pipeline.test-pipeline.id
+  pipeline = heroku_pipeline.test.id
   stage    = "production"
 }
 ```
