@@ -26,7 +26,7 @@ data "heroku_pipeline" "foobar" {
 
 The following arguments are supported:
 
-* `name` - (Required) The pipeline name.
+* `name` - (Required) The pipeline name or ID. Empty pipelines can only be retrieved by ID (UUID).
 
 ## Attributes Reference
 
