@@ -3,12 +3,13 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"log"
+	"regexp"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
-	"log"
-	"regexp"
 )
 
 func resourceHerokuReviewAppConfig() *schema.Resource {
@@ -121,6 +122,7 @@ func resourceHerokuReviewAppConfigImport(ctx context.Context, d *schema.Resource
 
 	d.SetId(pipelineID)
 	d.Set("org_repo", orgRepo)
+	d.Set("pipeline_id", pipelineID)
 
 	readErr := resourceHerokuReviewAppConfigRead(ctx, d, meta)
 	if readErr.HasError() {
@@ -203,7 +205,7 @@ func resourceHerokuReviewAppConfigCreate(ctx context.Context, d *schema.Resource
 
 	log.Printf("[DEBUG] Enabling review apps config on pipeline %s", pipelineID)
 
-	config, enableErr := client.ReviewAppConfigEnable(ctx, pipelineID, opts)
+	_, enableErr := client.ReviewAppConfigEnable(ctx, pipelineID, opts)
 	if enableErr != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
@@ -216,7 +218,7 @@ func resourceHerokuReviewAppConfigCreate(ctx context.Context, d *schema.Resource
 	log.Printf("[DEBUG] Enabled review apps config on pipeline %s", pipelineID)
 
 	// Set resource ID to the pipeline ID
-	d.SetId(config.PipelineID)
+	d.SetId(pipelineID)
 
 	return resourceHerokuReviewAppConfigRead(ctx, d, meta)
 }
@@ -316,7 +318,6 @@ func resourceHerokuReviewAppConfigRead(ctx context.Context, d *schema.ResourceDa
 		return diags
 	}
 
-	d.Set("pipeline_id", reviewAppConfig.PipelineID)
 	d.Set("automatic_review_apps", reviewAppConfig.AutomaticReviewApps)
 	d.Set("base_name", reviewAppConfig.BaseName)
 	d.Set("destroy_stale_apps", reviewAppConfig.DestroyStaleApps)
