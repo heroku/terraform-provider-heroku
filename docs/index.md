@@ -116,9 +116,9 @@ The following arguments are supported:
 * `email` - (Required) Email to be notified by Heroku. It must be provided, but
   it can also be sourced from [other locations](#Authentication).
 
-* `headers` - (Optional) Additional Headers to be sent to Heroku. If not
-  provided, it will be sourced from the `HEROKU_HEADERS` environment variable
-  (if set).
+* `headers` - (Optional) Additional Headers to be sent to Heroku, as a string-encoded JSON object, 
+  for example: `{"X-Custom-Header":"yes","X-Custom-Header-Too":"no"}`. If not provided, it will be 
+  sourced from the `HEROKU_HEADERS` environment variable (if set).
 
 * `customizations` - (Optional) Various attributes altering the behavior of certain resources.
   Only a single `customizations` block may be specified, and it supports the following arguments:
