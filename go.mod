@@ -1,4 +1,4 @@
-module github.com/heroku/terraform-provider-heroku/v4
+module github.com/heroku/terraform-provider-heroku/v6
 
 require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d
