@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/heroku/terraform-provider-heroku/v4/helper/test"
+	"github.com/heroku/terraform-provider-heroku/v5/helper/test"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )

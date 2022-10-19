@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	helper "github.com/heroku/terraform-provider-heroku/v4/helper/test"
+	helper "github.com/heroku/terraform-provider-heroku/v5/helper/test"
 )
 
 const (
