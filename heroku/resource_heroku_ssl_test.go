@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	heroku "github.com/heroku/heroku-go/v5"
-	"github.com/heroku/terraform-provider-heroku/v6/helper/test"
+	"github.com/heroku/terraform-provider-heroku/v5/helper/test"
 )
 
 func TestAccHerokuSSL_basic(t *testing.T) {
