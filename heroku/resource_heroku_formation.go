@@ -107,15 +107,15 @@ func resourceHerokuFormationCreate(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	size := d.Get("size").(string)
-	log.Printf("[DEBUG] Size: %s", size)
-	opts.Size = &size
-
-	if v, ok := d.GetOk("quantity"); ok {
-		vs := v.(int)
-		log.Printf("[DEBUG] Quantity: %v", vs)
-		opts.Quantity = &vs
+	if v, ok := d.GetOk("size"); ok {
+		vs := v.(string)
+		log.Printf("[DEBUG] Size: %s", vs)
+		opts.Size = &vs
 	}
+
+	quantity := d.Get("quantity").(int)
+	log.Printf("[DEBUG] Quantity: %v", quantity)
+	opts.Quantity = &quantity
 
 	log.Printf(fmt.Sprintf("[DEBUG] Updating %s formation...", appID))
 	f, err := client.FormationUpdate(context.TODO(), appID, getFormationType(d), opts)
