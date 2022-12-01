@@ -107,11 +107,9 @@ func resourceHerokuFormationCreate(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	if v, ok := d.GetOk("size"); ok {
-		vs := v.(string)
-		log.Printf("[DEBUG] Size: %s", vs)
-		opts.Size = &vs
-	}
+	size := d.Get("size").(string)
+	log.Printf("[DEBUG] Size: %s", size)
+	opts.Size = &size
 
 	if v, ok := d.GetOk("quantity"); ok {
 		vs := v.(int)
