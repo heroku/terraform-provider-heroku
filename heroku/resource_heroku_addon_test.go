@@ -87,7 +87,7 @@ func TestAccHerokuAddon_ConfigVarValues(t *testing.T) {
 				Config: testAccCheckHerokuAddonConfig_configVarValues(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.pg", &addon),
-					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:hobby-dev"),
+					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:mini"),
 					testAccCheckHerokuAddonConfigVarValueHasDatabaseURL("heroku_addon.pg", &addon),
 				),
 			},
@@ -311,7 +311,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_addon" "pg" {
     app_id = heroku_app.foobar.id
-    plan = "heroku-postgresql:hobby-dev"
+    plan = "heroku-postgresql:mini"
 }`, appName)
 }
 

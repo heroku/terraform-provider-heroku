@@ -55,7 +55,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_addon" "foobar" {
     app_id = heroku_app.foobar.id
-    plan = "heroku-postgresql:hobby-dev"
+    plan = "heroku-postgresql:mini"
 }
 
 resource "heroku_addon_attachment" "foobar" {
@@ -74,7 +74,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_addon" "foobar" {
     app_id = heroku_app.foobar.id
-    plan = "heroku-postgresql:hobby-dev"
+    plan = "heroku-postgresql:mini"
 }
 
 resource "heroku_addon_attachment" "foobar" {
