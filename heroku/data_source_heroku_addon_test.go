@@ -26,7 +26,7 @@ func TestAccDatasourceHerokuAddon_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet(
 						"data.heroku_addon.test_data", "app_id"),
 					resource.TestCheckResourceAttr(
-						"data.heroku_addon.test_data", "plan", "deployhooks:http"),
+						"data.heroku_addon.test_data", "plan", "scheduler:standard"),
 				),
 			},
 		},
@@ -42,7 +42,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_addon" "foobar" {
     app_id = "${heroku_app.foobar.id}"
-    plan = "deployhooks:http"
+    plan = "scheduler:standard"
     config = {
 		url = "http://google.com"
 	}
@@ -59,7 +59,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_addon" "foobar" {
     app_id = "${heroku_app.foobar.id}"
-    plan = "deployhooks:http"
+    plan = "scheduler:standard"
     config = {
 		url = "http://google.com"
 	}

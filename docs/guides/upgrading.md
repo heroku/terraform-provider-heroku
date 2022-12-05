@@ -70,7 +70,6 @@ Terraform detected the following changes made outside of Terraform since the las
   ~ resource "heroku_addon" "example" {
       + app_id            = "c92d7139-ec41-4088-a71d-3a6dfef99f83"
         id                = "41acf474-1b0e-4f53-960f-ca51095b84d7"
-        name              = "deployhooks-silhouetted-32012"
         # (5 unchanged attributes hidden)
     }
 

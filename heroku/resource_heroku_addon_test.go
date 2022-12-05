@@ -26,13 +26,11 @@ func TestAccHerokuAddon_Basic(t *testing.T) {
 				Config: testAccCheckHerokuAddonConfig_basic(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
-					testAccCheckHerokuAddonPlan(&addon, "deployhooks:http"),
-					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "config.url", "http://google.com"),
+					testAccCheckHerokuAddonPlan(&addon, "scheduler:standard"),
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "plan", "deployhooks:http"),
+						"heroku_addon.foobar", "plan", "scheduler:standard"),
 				),
 			},
 		},
@@ -186,7 +184,7 @@ func TestAccHerokuAddon_Disappears(t *testing.T) {
 				Config: testAccCheckHerokuAddonConfig_basic(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
-					testAccCheckHerokuAddonDisappears(appName, "deployhooks"),
+					testAccCheckHerokuAddonDisappears(appName, "scheduler"),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -295,7 +293,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_addon" "foobar" {
     app_id = heroku_app.foobar.id
-    plan = "deployhooks:http"
+    plan = "scheduler:standard"
     config = {
         url = "http://google.com"
 	}

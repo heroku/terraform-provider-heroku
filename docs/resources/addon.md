@@ -24,16 +24,6 @@ resource "heroku_addon" "database" {
   app_id = heroku_app.default.id
   plan   = "heroku-postgresql:mini"
 }
-
-# Add a web-hook addon for the app
-resource "heroku_addon" "webhook" {
-  app_id = heroku_app.default.id
-  plan   = "deployhooks:http"
-
-  config = {
-    url = "http://google.com"
-  }
-}
 ```
 
 ## Argument Reference
