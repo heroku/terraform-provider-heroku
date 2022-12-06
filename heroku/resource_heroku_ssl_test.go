@@ -81,7 +81,7 @@ resource "heroku_app_release" "one" {
 resource "heroku_formation" "web" {
   app_id = heroku_app.one.id
   type = "web"
-  size = "hobby"
+  size = "basic"
   quantity = 1
   depends_on = [heroku_app_release.one]
 }

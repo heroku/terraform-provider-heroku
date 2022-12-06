@@ -22,17 +22,7 @@ resource "heroku_app" "default" {
 # Create a database, and configure the app to use it
 resource "heroku_addon" "database" {
   app_id = heroku_app.default.id
-  plan   = "heroku-postgresql:hobby-basic"
-}
-
-# Add a web-hook addon for the app
-resource "heroku_addon" "webhook" {
-  app_id = heroku_app.default.id
-  plan   = "deployhooks:http"
-
-  config = {
-    url = "http://google.com"
-  }
+  plan   = "heroku-postgresql:mini"
 }
 ```
 

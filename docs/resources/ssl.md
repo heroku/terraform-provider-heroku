@@ -35,7 +35,7 @@ resource "heroku_build" "default" {
 resource "heroku_formation" "web" {
   app_id = heroku_app.default.id
   type = "web"
-  size = "hobby"
+  size = "basic"
   quantity = 1
 
   # Wait until the build has completed before attempting to scale
@@ -48,7 +48,7 @@ resource "heroku_ssl" "one" {
   certificate_chain = file("server.crt")
   private_key = file("server.key")
 
-  # Wait until the process_tier changes to hobby before attempting to create a cert
+  # Wait until the process_tier changes to basic before attempting to create a cert
   depends_on = [heroku_formation.web]
 }
 
@@ -71,7 +71,7 @@ resource "heroku_ssl" "two" {
   app_id = heroku_app.default.uuid
   certificate_chain = file("server.crt")
   private_key = file("server.key")
-  # Wait until the process_tier changes to hobby before attempting to create a cert
+  # Wait until the process_tier changes to basic before attempting to create a cert
   depends_on = [heroku_formation.web]
 }
 

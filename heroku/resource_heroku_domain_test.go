@@ -208,7 +208,7 @@ resource "heroku_app_release" "one" {
 resource "heroku_formation" "web" {
   app_id = heroku_app.one.id
   type = "web"
-  size = "hobby"
+  size = "basic"
   quantity = 1
   # Wait until the build has completed before attempting to scale
   depends_on = [heroku_app_release.one]
@@ -218,7 +218,7 @@ resource "heroku_ssl" "one" {
   app_id = heroku_app.one.uuid
   certificate_chain="${file("%s")}"
   private_key="${file("%s")}"
-  # Wait until the process_tier changes to hobby before attempting to create a cert
+  # Wait until the process_tier changes to basic before attempting to create a cert
   depends_on = [heroku_formation.web]
 }
 
@@ -256,7 +256,7 @@ resource "heroku_app_release" "one" {
 resource "heroku_formation" "web" {
   app_id = heroku_app.one.id
   type = "web"
-  size = "hobby"
+  size = "basic"
   quantity = 1
   depends_on = [heroku_app_release.one]
 }
@@ -308,7 +308,7 @@ resource "heroku_app_release" "one" {
 resource "heroku_formation" "web" {
   app_id = heroku_app.one.id
   type = "web"
-  size = "hobby"
+  size = "basic"
   quantity = 1
   depends_on = [heroku_app_release.one]
 }
