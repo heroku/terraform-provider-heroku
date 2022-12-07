@@ -18,11 +18,14 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
     steps:
-    - name: Install Go
-      uses: actions/setup-go@v1
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
       with:
-        go-version: 1.16
-      id: go
+        go-version-file: 'go.mod'
+        cache: true
 
     - name: Install Terraform
       run: |
@@ -37,8 +40,6 @@ jobs:
         rm terraform-bin.zip
 
         echo "Installed: $(eval "$terraform_bin version") ($terraform_bin)"
-
-    - uses: actions/checkout@master
 
     - name: Run make fmt
       if: runner.os != 'Windows'

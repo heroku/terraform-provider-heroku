@@ -14,4 +14,4 @@ require (
 	github.com/verybluebot/tarinator-go v0.0.0-20190613183509-5ab4e1193986
 )
 
-go 1.16
+go 1.19
