@@ -30,7 +30,7 @@ jobs:
     - name: Install Terraform
       run: |
         set -eu
-        curl -s -L "https://releases.hashicorp.com/terraform/1.0.2/terraform_1.0.2_linux_amd64.zip" > "terraform-bin.zip"
+        curl -s -L "https://releases.hashicorp.com/terraform/1.3.6/terraform_1.3.6_linux_amd64.zip" > "terraform-bin.zip"
 
         # overwrite existing Terraform binary
         terraform_bin="$(which terraform)"
