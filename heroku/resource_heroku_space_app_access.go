@@ -42,7 +42,7 @@ func resourceHerokuSpaceAppAccess() *schema.Resource {
 	}
 }
 
-//callback for schema.ResourceImporter
+// callback for schema.ResourceImporter
 func resourceHerokuSpaceAppAccessImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	space, email, err := parseCompositeID(d.Id())
 	if err != nil {
@@ -57,7 +57,7 @@ func resourceHerokuSpaceAppAccessImport(d *schema.ResourceData, meta interface{}
 	return []*schema.ResourceData{d}, nil
 }
 
-//callback for schema Resource.Create and schema Resource.Update
+// callback for schema Resource.Create and schema Resource.Update
 func resourceHerokuSpaceAppAccessSet(d *schema.ResourceData, meta interface{}) error {
 	_, err := updateSpaceAppAccess(d.Get("permissions").(*schema.Set), d, meta)
 	if err != nil {
@@ -66,7 +66,7 @@ func resourceHerokuSpaceAppAccessSet(d *schema.ResourceData, meta interface{}) e
 	return resourceHerokuSpaceAppAccessRead(d, meta)
 }
 
-//callback for schema Resource.Read
+// callback for schema Resource.Read
 func resourceHerokuSpaceAppAccessRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
 	space := d.Get("space").(string)
@@ -82,9 +82,9 @@ func resourceHerokuSpaceAppAccessRead(d *schema.ResourceData, meta interface{}) 
 	return nil
 }
 
-//callback for schema Resource.Delete
-//Members cannot be deleted from a space with this resource, they are removed
-//from the state file and their permissions are cleared out.
+// callback for schema Resource.Delete
+// Members cannot be deleted from a space with this resource, they are removed
+// from the state file and their permissions are cleared out.
 func resourceHerokuSpaceAppAccessDelete(d *schema.ResourceData, meta interface{}) error {
 	_, err := updateSpaceAppAccess(nil, d, meta)
 	if err != nil {
@@ -94,7 +94,7 @@ func resourceHerokuSpaceAppAccessDelete(d *schema.ResourceData, meta interface{}
 	return nil
 }
 
-//utility method to call heroku.SpaceAppAccessUpdate
+// utility method to call heroku.SpaceAppAccessUpdate
 func updateSpaceAppAccess(permissions *schema.Set, d *schema.ResourceData, meta interface{}) (*heroku.SpaceAppAccess, error) {
 	email := d.Get("email").(string)
 	space := d.Get("space").(string)
@@ -107,8 +107,8 @@ func updateSpaceAppAccess(permissions *schema.Set, d *schema.ResourceData, meta 
 	return spaceAppAccess, nil
 }
 
-//utility method to convert SpaceAppAccess to a simple string array of
-//permission names.
+// utility method to convert SpaceAppAccess to a simple string array of
+// permission names.
 func createPermissionsList(spaceAppAccess *heroku.SpaceAppAccess) []string {
 	perms := make([]string, 0)
 	if spaceAppAccess != nil {
@@ -119,8 +119,8 @@ func createPermissionsList(spaceAppAccess *heroku.SpaceAppAccess) []string {
 	return perms
 }
 
-//utility method to convert a schema.Set of simple permission names to
-//SpaceAppAccessUpdateOpts suitable as input into the the heroku API.
+// utility method to convert a schema.Set of simple permission names to
+// SpaceAppAccessUpdateOpts suitable as input into the the heroku API.
 func createSpaceAppAccessUpdateOpts(permSet *schema.Set) heroku.SpaceAppAccessUpdateOpts {
 	//The choice of using anonymous structs in heroku-go should be revisited per
 	//https://github.com/interagent/schematic/issues/17

@@ -21,7 +21,8 @@ Given that is likely a heroku provider user will likely be using teams, I'm impl
 resource first. So if you have a team/org, please use this resource.
 */
 
-/**
+/*
+*
 herokuTeamCollaborator is a value type used to hold the details of a
 team collaborator. We use this for common storage of values needed for the
 heroku.TeamCollaborator types
