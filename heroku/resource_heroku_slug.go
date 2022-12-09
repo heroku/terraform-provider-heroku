@@ -11,8 +11,10 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-uuid"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v5"
@@ -245,9 +247,19 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 	// Optionally upload slug before setting ID, so that an upload failure
 	// causes a resource creation error, is not saved in state.
 	if filePath != "" {
-		err := uploadSlug(filePath, slug.Blob.Method, slug.Blob.URL)
-		if err != nil {
-			return err
+		var uploadErr error
+		retryErr := resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+			uploadErr = uploadSlug(filePath, slug.Blob.Method, slug.Blob.URL)
+			if uploadErr != nil {
+				log.Printf("[DEBUG] Error uploading slug: %s", uploadErr.Error())
+				log.Printf("[DEBUG] Retry uploading slug")
+				time.Sleep(10 * time.Second)
+				return resource.RetryableError(uploadErr)
+			}
+			return nil
+		})
+		if retryErr != nil {
+			return fmt.Errorf("Error uploading slug: %s, last error: %s", retryErr, uploadErr)
 		}
 	}
 
