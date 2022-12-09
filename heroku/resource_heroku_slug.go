@@ -247,8 +247,9 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 	// Optionally upload slug before setting ID, so that an upload failure
 	// causes a resource creation error, is not saved in state.
 	if filePath != "" {
+		var uploadErr error
 		retryErr := resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-			uploadErr := uploadSlug(filePath, slug.Blob.Method, slug.Blob.URL)
+			uploadErr = uploadSlug(filePath, slug.Blob.Method, slug.Blob.URL)
 			if uploadErr != nil {
 				log.Printf("[DEBUG] Error uploading slug: %s", uploadErr.Error())
 				log.Printf("[DEBUG] Retry uploading slug")
@@ -258,7 +259,7 @@ func resourceHerokuSlugCreate(d *schema.ResourceData, meta interface{}) error {
 			return nil
 		})
 		if retryErr != nil {
-			return retryErr
+			return fmt.Errorf("Error uploading slug: %s, last error: %s", retryErr, uploadErr)
 		}
 	}
 
