@@ -37,7 +37,6 @@ Development happens in the [GitHub repo](https://github.com/heroku/terraform-pro
 ```hcl-terraform
 # Configure the Heroku provider
 provider "heroku" {
-  email   = "ops@company.com"
   api_key = var.heroku_api_key
 }
 
@@ -57,31 +56,44 @@ precedence, and explained below:
 * Environment variables
 * Netrc
 
+### Generating tokens
+
+All authentication tokens must be generated with one of these methods:
+
+* [Heroku Dashboard](https://dashboard.heroku.com) → Account Settings → Applications → [Authorizations](https://dashboard.heroku.com/account/applications)
+* `heroku auth` command of the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
+* [Heroku Platform APIs: OAuth](https://devcenter.heroku.com/articles/platform-api-reference#oauth-authorization)
+
+⛔️  Direct username-password authentication is [no longer supported by Heroku API](https://devcenter.heroku.com/changelog-items/2516).
+
 ### Static credentials
 
-Credentials can be provided statically by adding `email` and `api_key` arguments
+Credentials can be provided statically by adding `api_key` property
 to the Heroku provider block:
 
 ```hcl-terraform
+variable "heroku_api_key" {
+  type      = string
+  sensitive = true
+}
+
 provider "heroku" {
-  email   = "ops@company.com"
   api_key = var.heroku_api_key
 }
 ```
 
 ### Environment variables
 
-When the Heroku provider block does not contain an `email` or `api_key`
-argument, the missing credentials will be sourced from the environment via the
-`HEROKU_EMAIL` and `HEROKU_API_KEY` environment variables respectively:
+When the Heroku provider block does not contain an `api_key`
+argument, the missing credentials will be sourced from the environment via the 
+`HEROKU_API_KEY` environment variable:
 
 ```hcl-terraform
 provider "heroku" {}
 ```
 
 ```shell
-$ export HEROKU_EMAIL="ops@company.com"
-$ export HEROKU_API_KEY="heroku_api_key"
+$ export HEROKU_API_KEY="<heroku_auth_token>"
 $ terraform plan
 Refreshing Terraform state in-memory prior to plan...
 ```
@@ -99,8 +111,8 @@ provider "heroku" {}
 $ cat ~/.netrc
 ...
 machine api.heroku.com
-  login <your_heroku_email>
-  password <your_heroku_api_key>
+  login <ignored, can be any value>
+  password <heroku_auth_token>
 ...
 ```
 
@@ -113,8 +125,9 @@ The following arguments are supported:
 * `api_key` - (Required) Heroku API token. It must be provided, but it can also
   be sourced from [other locations](#Authentication).
 
-* `email` - (Required) Email to be notified by Heroku. It must be provided, but
-  it can also be sourced from [other locations](#Authentication).
+* `email` - (Ignored) This field originally supported username-password authentication, 
+  but has since [been deprecated](https://devcenter.heroku.com/changelog-items/2516).
+  Instead, simply set an auth token in the `api_key` property.
 
 * `headers` - (Optional) Additional Headers to be sent to Heroku, as a string-encoded JSON object, 
   for example: `{"X-Custom-Header":"yes","X-Custom-Header-Too":"no"}`. If not provided, it will be 
