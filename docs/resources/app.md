@@ -122,3 +122,5 @@ For example:
 $ terraform import heroku_app.foobar MyApp
 $ terraform import heroku_app.foobar e74ac056-7d00-4a7e-aa80-df4bc413a825
 ```
+
+Please note: `config_vars` & `sensitive_config_vars` will not be imported due to limitations of Terraform's import process (see [issue](https://github.com/heroku/terraform-provider-heroku/issues/247#issuecomment-602013774)). All vars will appear to be added on the next plan/apply. The diff may be manually reconciled using the outputs of `heroku config` & `terraform plan`.
