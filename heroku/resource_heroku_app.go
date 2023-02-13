@@ -79,20 +79,17 @@ func resourceHerokuApp() *schema.Resource {
 			"stack": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
 			},
 
 			"internal_routing": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Computed: true,
 				ForceNew: true,
 			},
 
 			"buildpacks": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -101,13 +98,11 @@ func resourceHerokuApp() *schema.Resource {
 			"config_vars": {
 				Type:     schema.TypeMap,
 				Optional: true,
-				Computed: true,
 			},
 
 			"sensitive_config_vars": {
 				Type:     schema.TypeMap,
 				Optional: true,
-				Computed: true,
 				Elem: &schema.Schema{
 					Type:      schema.TypeString,
 					Sensitive: true,
@@ -137,7 +132,6 @@ func resourceHerokuApp() *schema.Resource {
 			"acm": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Computed: true,
 			},
 
 			"heroku_hostname": {
@@ -162,14 +156,12 @@ func resourceHerokuApp() *schema.Resource {
 						"locked": {
 							Type:     schema.TypeBool,
 							Optional: true,
-							Computed: true,
 						},
 
 						"personal": {
 							Type:     schema.TypeBool,
 							Optional: true,
 							ForceNew: true,
-							Computed: true,
 						},
 					},
 				},

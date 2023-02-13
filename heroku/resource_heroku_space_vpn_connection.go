@@ -60,20 +60,17 @@ func resourceHerokuSpaceVPNConnection() *schema.Resource {
 
 			"tunnels": {
 				Type:     schema.TypeList,
-				Computed: true,
 				Optional: true,
 
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"ip": {
 							Type:     schema.TypeString,
-							Computed: true,
 							Optional: true,
 						},
 
 						"pre_shared_key": {
 							Type:     schema.TypeString,
-							Computed: true,
 							Optional: true,
 						},
 					},

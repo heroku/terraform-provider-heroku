@@ -43,7 +43,6 @@ func resourceHerokuBuild() *schema.Resource {
 
 			"buildpacks": {
 				Type:     schema.TypeList,
-				Computed: true,
 				Optional: true,
 				ForceNew: true,
 				Elem: &schema.Schema{
@@ -75,7 +74,6 @@ func resourceHerokuBuild() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"checksum": {
 							Type:     schema.TypeString,
-							Computed: true,
 							Optional: true,
 							ForceNew: true,
 						},

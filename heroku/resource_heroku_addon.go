@@ -52,7 +52,6 @@ func resourceHerokuAddon() *schema.Resource {
 			"name": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Computed:     true,
 				ValidateFunc: validateCustomAddonName,
 			},
 

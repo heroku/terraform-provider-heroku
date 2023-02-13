@@ -41,7 +41,6 @@ func resourceHerokuAppRelease() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
 			},
 		},
 		SchemaVersion: 1,

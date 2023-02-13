@@ -67,19 +67,16 @@ func resourceHerokuReviewAppConfig() *schema.Resource {
 			"base_name": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
 			},
 
 			"destroy_stale_apps": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  false,
 			},
 
 			"stale_days": {
 				Type:         schema.TypeInt,
 				Optional:     true,
-				Computed:     true,
 				RequiredWith: []string{"destroy_stale_apps"},
 				ValidateFunc: validation.IntBetween(1, 30),
 			},
