@@ -61,6 +61,7 @@ func resourceHerokuSpaceVPNConnection() *schema.Resource {
 			"tunnels": {
 				Type:     schema.TypeList,
 				Optional: true,
+				ForceNew: true,
 
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
