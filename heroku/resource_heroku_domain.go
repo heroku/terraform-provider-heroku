@@ -71,7 +71,10 @@ func resourceHerokuDomainImport(d *schema.ResourceData, meta interface{}) ([]*sc
 		return nil, err
 	}
 
-	populateResource(d, do)
+	err = populateResource(d, do, client)
+	if err != nil {
+		return nil, fmt.Errorf("Error populating domain attributes: %w", err)
+	}
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -93,7 +96,10 @@ func resourceHerokuDomainCreate(d *schema.ResourceData, meta interface{}) error 
 	if err != nil {
 		return err
 	}
-	populateResource(d, do)
+	err = populateResource(d, do, client)
+	if err != nil {
+		return fmt.Errorf("Error populating domain attributes: %w", err)
+	}
 
 	config := meta.(*Config)
 	time.Sleep(time.Duration(config.PostDomainCreateDelay) * time.Second)
@@ -116,7 +122,10 @@ func resourceHerokuDomainUpdate(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 
-	populateResource(d, do)
+	err = populateResource(d, do, client)
+	if err != nil {
+		return fmt.Errorf("Error populating domain attributes: %w", err)
+	}
 
 	return nil
 }
@@ -145,19 +154,28 @@ func resourceHerokuDomainRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[INFO] Reading Domain: %s", d.Id())
-	populateResource(d, do)
+	err = populateResource(d, do, client)
+	if err != nil {
+		return fmt.Errorf("Error populating domain attributes: %w", err)
+	}
 
 	return nil
 }
 
-func populateResource(d *schema.ResourceData, do *heroku.Domain) {
+func populateResource(d *schema.ResourceData, do *heroku.Domain, client *heroku.Service) error {
 	d.SetId(do.ID)
 	d.Set("app_id", do.App.ID)
 	d.Set("hostname", do.Hostname)
 	d.Set("cname", do.CName)
-	if v := do.SniEndpoint; v != nil {
+	// Do not capture SNI Endpoint when ACM is active
+	hasACM, err := retrieveAcm(do.App.ID, client)
+	if err != nil {
+		return err
+	}
+	if v := do.SniEndpoint; !hasACM && v != nil {
 		d.Set("sni_endpoint_id", v.ID)
 	}
+	return nil
 }
 
 func resourceHerokuDomainV0() *schema.Resource {

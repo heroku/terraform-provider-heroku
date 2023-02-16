@@ -38,6 +38,31 @@ func TestAccHerokuDomain_Basic(t *testing.T) {
 	})
 }
 
+func TestAccHerokuDomain_ACM(t *testing.T) {
+	var domain heroku.Domain
+	var endpoint heroku.SniEndpoint
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-%s", randString)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuDomainDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuDomainConfig_ACM(appName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuDomainExists("heroku_domain.one", &domain),
+					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
+					resource.TestCheckResourceAttr("heroku_domain.one", "hostname", "terraform-tftest-"+randString+".example.com"),
+					resource.TestCheckResourceAttrSet("heroku_domain.one", "app_id"),
+					resource.TestCheckNoResourceAttr("heroku_domain.one", "sni_endpoint_id"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccHerokuDomain_No_SSL_Change(t *testing.T) {
 	var domain heroku.Domain
 	var endpoint heroku.SniEndpoint
@@ -331,6 +356,19 @@ func testAccCheckHerokuDomainConfig_basic(appName string) string {
 	return fmt.Sprintf(`resource "heroku_app" "one" {
     name = "%s"
     region = "us"
+}
+
+resource "heroku_domain" "one" {
+  app_id = heroku_app.one.id
+  hostname = "terraform-%s.example.com"
+}`, appName, appName)
+}
+
+func testAccCheckHerokuDomainConfig_ACM(appName string) string {
+	return fmt.Sprintf(`resource "heroku_app" "one" {
+    name = "%s"
+    region = "us"
+    acm = true
 }
 
 resource "heroku_domain" "one" {
