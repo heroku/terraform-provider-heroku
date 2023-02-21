@@ -23,25 +23,29 @@ resource "heroku_app" "default" {
 # Associate a custom domain
 resource "heroku_domain" "default" {
   app_id   = heroku_app.default.id
-  hostname = "terraform.example.com"
+  hostname = "www.example.com"
 }
 ```
 
 ## Argument Reference
 
-The following arguments are supported:
-
-* `hostname` - (Required) The hostname to serve requests from.
 * `app_id` - (Required) Heroku app ID (do not use app name)
+
+For apps with ACM enabled (automated certificate management):
+
+* `hostname` - (Required) The hostname to setup via ACM.
+
+For apps with `heroku_ssl` (SNI Endpoint) resources (manual certificate management):
+
+* `hostname` - (Required) Must match common name or a subject alternative name of certificate in the `heroku_ssl` resource references by `sni_endpoint_id`.
+* `sni_endpoint_id` - (Required) The ID of the `heroku_ssl` resource to associate the domain with.
 
 ## Attributes Reference
 
 The following attributes are exported:
 
 * `id` - The ID of the domain record.
-* `hostname` - The hostname traffic will be served as.
 * `cname` - The CNAME traffic should route to.
-* `sni_endpoint_id` - The ID of the heroku_ssl resource to associate the domain with.
 
 ## Importing
 
