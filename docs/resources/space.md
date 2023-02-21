@@ -23,10 +23,10 @@ resource "heroku_space" "default" {
   region = "virginia"
 }
 
-// Create a new Heroku app in test-space
+// Create a new Heroku app in test-space, same region
 resource "heroku_app" "default" {
   name = "test-app"
-  region = "us"
+  region = "virginia"
   space = heroku_space.default.id
   organization = {
     name = "my-company"
