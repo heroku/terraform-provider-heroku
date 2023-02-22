@@ -408,12 +408,16 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	log.Printf("[LOG] Setting config vars: %s", configVars)
+	log.Printf("[DEBUG] Setting config vars: %s", configVars)
 	if err := d.Set("config_vars", configVars); err != nil {
 		log.Printf("[WARN] Error setting config vars: %s", err)
 	}
 
-	log.Printf("[LOG] Setting sensitive config vars: %s", sensitiveConfigVars)
+	var sensitiveVarNames []string
+	for sensitiveVarName, _ := range sensitiveConfigVars {
+		sensitiveVarNames = append(sensitiveVarNames, sensitiveVarName)
+	}
+	log.Printf("[DEBUG] Setting sensitive config vars: %s", sensitiveVarNames)
 	if err := d.Set("sensitive_config_vars", sensitiveConfigVars); err != nil {
 		log.Printf("[WARN] Error setting sensitive config vars: %s", err)
 	}
