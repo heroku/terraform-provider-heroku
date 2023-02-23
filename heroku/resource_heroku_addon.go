@@ -161,26 +161,29 @@ func resourceHerokuAddonCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(addon.ID)
 	log.Printf("[INFO] Addon ID: %s", d.Id())
 
-	err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		configVarValues, err := retrieveSpecificConfigVars(client, addon.App.ID, addon.ConfigVars)
+	if config.SetAddonConfigVarsInState {
+		err = resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+			configVarValues, err := retrieveSpecificConfigVars(client, addon.App.ID, addon.ConfigVars)
+			if err != nil {
+				return resource.NonRetryableError(err)
+			}
+			if len(configVarValues) != len(addon.ConfigVars) {
+				return resource.RetryableError(fmt.Errorf("Got %d add-on config vars from the app, but expected %d", len(configVarValues), len(addon.ConfigVars)))
+			}
+			log.Printf("[INFO] Addon config vars are set: %v", addon.ConfigVars)
+			return nil
+		})
 		if err != nil {
-			return resource.NonRetryableError(err)
+			return err
 		}
-		if len(configVarValues) != len(addon.ConfigVars) {
-			return resource.RetryableError(fmt.Errorf("Got %d add-on config vars from the app, but expected %d", len(configVarValues), len(addon.ConfigVars)))
-		}
-		log.Printf("[INFO] Addon config vars are set: %v", addon.ConfigVars)
-		return nil
-	})
-	if err != nil {
-		return err
 	}
 
 	return resourceHerokuAddonRead(d, meta)
 }
 
 func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Config).Api
+	config := meta.(*Config)
+	client := config.Api
 
 	addon, err := resourceHerokuAddonRetrieve(d.Id(), client)
 	if err != nil {
@@ -208,13 +211,16 @@ func resourceHerokuAddonRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	configVarValues, err := retrieveSpecificConfigVars(client, addon.App.ID, addon.ConfigVars)
-	if err != nil {
-		return err
-	}
-	err = d.Set("config_var_values", configVarValues)
-	if err != nil {
-		return err
+	d.Set("config_var_values", map[string]string{})
+	if config.SetAddonConfigVarsInState {
+		configVarValues, err := retrieveSpecificConfigVars(client, addon.App.ID, addon.ConfigVars)
+		if err != nil {
+			return err
+		}
+		err = d.Set("config_var_values", configVarValues)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

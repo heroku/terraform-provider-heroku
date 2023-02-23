@@ -93,6 +93,22 @@ func TestAccHerokuAddon_ConfigVarValues(t *testing.T) {
 	})
 }
 
+func TestAccHerokuAddon_DontSetConfigVarValues(t *testing.T) {
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAddonConfig_dontSetConfigVarValues(appName),
+				Check: resource.TestCheckNoResourceAttr(
+					"heroku_addon.pg", "config_var_values.DATABASE_URL"),
+			},
+		},
+	})
+}
+
 func TestAccHerokuAddon_CustomName(t *testing.T) {
 	var addon heroku.AddOn
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
@@ -302,6 +318,25 @@ resource "heroku_addon" "foobar" {
 
 func testAccCheckHerokuAddonConfig_configVarValues(appName string) string {
 	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_addon" "pg" {
+    app_id = heroku_app.foobar.id
+    plan = "heroku-postgresql:mini"
+}`, appName)
+}
+
+func testAccCheckHerokuAddonConfig_dontSetConfigVarValues(appName string) string {
+	return fmt.Sprintf(`
+provider "heroku" {
+  customizations {
+    set_addon_config_vars_in_state = false
+  }
+}
+
 resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"

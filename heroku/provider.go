@@ -38,7 +38,7 @@ func Provider() *schema.Provider {
 
 			"customizations": {
 				Type:     schema.TypeList,
-				MaxItems: 1,
+				MaxItems: 2,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -46,6 +46,11 @@ func Provider() *schema.Provider {
 							Type:     schema.TypeBool,
 							Optional: true,
 							Default:  DefaultSetAppAllConfigVarsInState,
+						},
+						"set_addon_config_vars_in_state": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  DefaultSetAddonConfigVarsInState,
 						},
 					},
 				},

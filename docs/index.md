@@ -142,6 +142,11 @@ The following arguments are supported:
     such as Postgres' `DATABASE_URL`, are always accessible in the state.
     Set to `false` to only track managed config vars in the state. Defaults to `true`.
 
+  * `set_addon_config_vars_in_state` - (Optional) Controls whether the `heroku_addon.config_var_values` attribute
+    is set in the state file. The attribute stores each addon's config vars in Terraform state. This means 
+    sensitive add-on config vars, such as Postgres' `DATABASE_URL`, are always accessible in the state.
+    Set to `false` to prevent capturing these values. Defaults to `true`.
+
 * `delays` - (Optional) Delays help mitigate issues that can arise due to
   Heroku's eventually consistent data model. Only a single `delays` block may be
   specified, and it supports the following arguments:
