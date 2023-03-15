@@ -5,7 +5,7 @@ builds:
   - env:
       - CGO_ENABLED=0
     ldflags:
-        - '-s -w -X version.ProviderVersion={{.Version}}'
+        - -s -w -X github.com/heroku/terraform-provider-heroku/v5/version.ProviderVersion={{.Version}}
     goos:
       - freebsd
       - openbsd
