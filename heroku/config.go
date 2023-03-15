@@ -25,6 +25,7 @@ const (
 
 	// Default custom timeouts
 	DefaultAddonCreateTimeout         = int64(20)
+	DefaultSetAddonConfigVarsInState  = true
 	DefaultSetAppAllConfigVarsInState = true
 )
 
@@ -45,6 +46,7 @@ type Config struct {
 	AddonCreateTimeout int64
 
 	// Customization
+	SetAddonConfigVarsInState  bool
 	SetAppAllConfigVarsInState bool
 }
 
@@ -60,6 +62,7 @@ func NewConfig() *Config {
 		PostDomainCreateDelay:      DefaultPostDomainCreateDelay,
 		PostSpaceCreateDelay:       DefaultPostSpaceCreateDelay,
 		AddonCreateTimeout:         DefaultAddonCreateTimeout,
+		SetAddonConfigVarsInState:  DefaultSetAddonConfigVarsInState,
 		SetAppAllConfigVarsInState: DefaultSetAppAllConfigVarsInState,
 	}
 	if logging.IsDebugOrHigher() {
@@ -120,6 +123,9 @@ func (c *Config) applySchema(d *schema.ResourceData) (err error) {
 			customizations := v.(map[string]interface{})
 			if v, ok := customizations["set_app_all_config_vars_in_state"].(bool); ok {
 				c.SetAppAllConfigVarsInState = v
+			}
+			if v, ok := customizations["set_addon_config_vars_in_state"].(bool); ok {
+				c.SetAddonConfigVarsInState = v
 			}
 		}
 	}

@@ -23,6 +23,7 @@ simplest path to delivering apps quickly:
 ## Guides
 
 * [Upgrading](guides/upgrading.html)
+* [Secure Practices](guides/security.html)
 
 ## Contributing
 
@@ -63,6 +64,8 @@ All authentication tokens must be generated with one of these methods:
 * [Heroku Dashboard](https://dashboard.heroku.com) → Account Settings → Applications → [Authorizations](https://dashboard.heroku.com/account/applications)
 * `heroku auth` command of the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
 * [Heroku Platform APIs: OAuth](https://devcenter.heroku.com/articles/platform-api-reference#oauth-authorization)
+
+🔐  See [Secure Practices](guides/security.html#authentication) for help creating a safe API token.
 
 ⛔️  Direct username-password authentication is [no longer supported by Heroku API](https://devcenter.heroku.com/changelog-items/2516).
 
@@ -123,7 +126,7 @@ The directory containing the `.netrc` file can be overridden by the `NETRC` envi
 The following arguments are supported:
 
 * `api_key` - (Required) Heroku API token. It must be provided, but it can also
-  be sourced from [other locations](#Authentication).
+  be sourced from [other locations](#Authentication). See also [Secure Practices](guides/security.html).
 
 * `email` - (Ignored) This field originally supported username-password authentication, 
   but has since [been deprecated](https://devcenter.heroku.com/changelog-items/2516).
@@ -137,10 +140,16 @@ The following arguments are supported:
   Only a single `customizations` block may be specified, and it supports the following arguments:
 
   * `set_app_all_config_vars_in_state` - (Optional) Controls whether the `heroku_app.all_config_vars` attribute
-    is set in the state file. The aforementioned attribute stores a snapshot of all config vars in Terraform state,
-    even if they are not defined in Terraform. This means sensitive Heroku add-on config vars,
-    such as Postgres' `DATABASE_URL`, are always accessible in the state.
-    Set to `false` to only track managed config vars in the state. Defaults to `true`.
+    is set in the state file. Normally a snapshot of all config vars is stored in state, even though they are
+    not managed by Terraform, such as secrets set via `heroku config` CLI, web dashboard, or add-ons like 
+    Postgres' `DATABASE_URL`. Set to `false` to only track managed config vars in the state. Defaults to `true`.
+    See also [Secure Practices](guides/security.html).
+
+  * `set_addon_config_vars_in_state` - (Optional) Controls whether the `heroku_addon.config_var_values` attribute
+    is set in the state file. The attribute stores each addon's config vars in Terraform state. This means 
+    sensitive add-on config vars, such as Postgres' `DATABASE_URL`, are always accessible in the state.
+    Set to `false` to prevent capturing these values. Defaults to `true`.
+    See also [Secure Practices](guides/security.html).
 
 * `delays` - (Optional) Delays help mitigate issues that can arise due to
   Heroku's eventually consistent data model. Only a single `delays` block may be
