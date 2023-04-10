@@ -12,6 +12,11 @@ import (
 	heroku "github.com/heroku/heroku-go/v5"
 )
 
+const (
+	DeployTargetTypeSpace = "space"
+	DeployTargeTypeRegion = "region"
+)
+
 func resourceHerokuReviewAppConfig() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceHerokuReviewAppConfigCreate,
@@ -52,7 +57,7 @@ func resourceHerokuReviewAppConfig() *schema.Resource {
 						"type": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"space", "region"}, false),
+							ValidateFunc: validation.StringInSlice([]string{DeployTargetTypeSpace, DeployTargeTypeRegion}, false),
 						},
 					},
 				},
@@ -327,20 +332,30 @@ func resourceHerokuReviewAppConfigRead(ctx context.Context, d *schema.ResourceDa
 
 	deployTarget := make([]map[string]interface{}, 0)
 	if reviewAppConfig.DeployTarget != nil {
-		// Lookup region info as the /review-app-config endpoint returns the region UUID
-		// for the deploy target ID instead of the name (ex. 'us').
-		region, regionGetErr := client.RegionInfo(ctx, reviewAppConfig.DeployTarget.ID)
-		if regionGetErr != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("Unable to retrieve region %s", reviewAppConfig.DeployTarget.ID),
-				Detail:   regionGetErr.Error(),
-			})
-			return diags
+		var deployTargetId string
+		switch reviewAppConfig.DeployTarget.Type {
+		case DeployTargeTypeRegion:
+			// Lookup region info as the /review-app-config endpoint returns the region UUID
+			// for the deploy target ID instead of the name (ex. 'us').
+			region, regionGetErr := client.RegionInfo(ctx, reviewAppConfig.DeployTarget.ID)
+			if regionGetErr != nil {
+				diags = append(diags, diag.Diagnostic{
+					Severity: diag.Error,
+					Summary:  fmt.Sprintf("Unable to retrieve region %s", reviewAppConfig.DeployTarget.ID),
+					Detail:   regionGetErr.Error(),
+				})
+				return diags
+			}
+
+			deployTargetId = region.Name
+		case DeployTargetTypeSpace:
+			deployTargetId = reviewAppConfig.DeployTarget.ID
+		default:
+			panic("unknown deploy target type")
 		}
 
 		deployTarget = append(deployTarget, map[string]interface{}{
-			"id":   region.Name,
+			"id":   deployTargetId,
 			"type": reviewAppConfig.DeployTarget.Type,
 		})
 	}
