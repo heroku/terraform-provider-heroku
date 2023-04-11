@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	DeployTargetTypeSpace = "space"
-	DeployTargeTypeRegion = "region"
+	DeployTargetTypeSpace  = "space"
+	DeployTargetTypeRegion = "region"
 )
 
 func resourceHerokuReviewAppConfig() *schema.Resource {
@@ -57,7 +57,7 @@ func resourceHerokuReviewAppConfig() *schema.Resource {
 						"type": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{DeployTargetTypeSpace, DeployTargeTypeRegion}, false),
+							ValidateFunc: validation.StringInSlice([]string{DeployTargetTypeSpace, DeployTargetTypeRegion}, false),
 						},
 					},
 				},
@@ -334,7 +334,7 @@ func resourceHerokuReviewAppConfigRead(ctx context.Context, d *schema.ResourceDa
 	if reviewAppConfig.DeployTarget != nil {
 		var deployTargetId string
 		switch reviewAppConfig.DeployTarget.Type {
-		case DeployTargeTypeRegion:
+		case DeployTargetTypeRegion:
 			// Lookup region info as the /review-app-config endpoint returns the region UUID
 			// for the deploy target ID instead of the name (ex. 'us').
 			region, regionGetErr := client.RegionInfo(ctx, reviewAppConfig.DeployTarget.ID)
