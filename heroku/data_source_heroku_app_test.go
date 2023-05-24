@@ -13,8 +13,6 @@ func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	appStack := "heroku-20"
 	gitUrl := fmt.Sprintf("https://git.heroku.com/%s.git", appName)
-	webUrl := fmt.Sprintf("https://%s.herokuapp.com/", appName)
-	herokuHostname := fmt.Sprintf("%s.herokuapp.com", appName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -34,15 +32,11 @@ func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "git_url", gitUrl),
 					resource.TestCheckResourceAttr(
-						"data.heroku_app.foobar", "web_url", webUrl),
-					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "config_vars.FOO", "bar"),
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "buildpacks.0", "https://github.com/heroku/heroku-buildpack-multi-procfile"),
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "acm", "false"),
-					resource.TestCheckResourceAttr(
-						"data.heroku_app.foobar", "heroku_hostname", herokuHostname),
 				),
 			},
 		},

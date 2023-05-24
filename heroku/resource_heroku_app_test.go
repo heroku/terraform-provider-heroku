@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -41,6 +42,16 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 						"heroku_app.foobar", "internal_routing", "false"),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "all_config_vars.%", "1"),
+					resource.TestCheckResourceAttrWith(
+						"heroku_app.foobar", "heroku_hostname", func(value string) error {
+							if !strings.HasSuffix(value, "herokuapp.com") {
+								return fmt.Errorf(fmt.Sprintf("'%s' should end with 'herokuapp.com'", value))
+							}
+							if !strings.HasPrefix(value, appName) {
+								return fmt.Errorf(fmt.Sprintf("'%s' should start with '%s'", value, appName))
+							}
+							return nil
+						}),
 				),
 			},
 		},

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-uuid"
@@ -362,7 +363,11 @@ func setAppDetails(d *schema.ResourceData, app *application) (err error) {
 	err = d.Set("web_url", app.App.WebURL)
 	err = d.Set("acm", app.App.Acm)
 	err = d.Set("uuid", app.App.ID)
-	err = d.Set("heroku_hostname", fmt.Sprintf("%s.herokuapp.com", app.App.Name))
+	err = d.Set("heroku_hostname",
+		strings.TrimPrefix(
+			strings.TrimPrefix(
+				strings.TrimSuffix(
+					app.App.WebURL, "/"), "https://"), "http://"))
 
 	return err
 }
