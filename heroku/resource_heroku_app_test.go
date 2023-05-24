@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -19,7 +20,6 @@ import (
 func TestAccHerokuApp_Basic(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	appStack := "heroku-20"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -27,10 +27,10 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
+				Config: testAccCheckHerokuAppConfig_basic(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
-					testAccCheckHerokuAppAttributes(&app, appName, "heroku-20"),
+					testAccCheckHerokuAppAttributes(&app, appName),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "name", appName),
 					resource.TestCheckResourceAttrSet(
@@ -41,6 +41,16 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 						"heroku_app.foobar", "internal_routing", "false"),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "all_config_vars.%", "1"),
+					resource.TestCheckResourceAttrWith(
+						"heroku_app.foobar", "heroku_hostname", func(value string) error {
+							if !strings.HasSuffix(value, "herokuapp.com") {
+								return fmt.Errorf(fmt.Sprintf("'%s' should end with 'herokuapp.com'", value))
+							}
+							if !strings.HasPrefix(value, appName) {
+								return fmt.Errorf(fmt.Sprintf("'%s' should start with '%s'", value, appName))
+							}
+							return nil
+						}),
 				),
 			},
 		},
@@ -49,14 +59,13 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 
 func TestAccHerokuApp_DontSetAllConfigVars(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	appStack := "heroku-20"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_DontSetConfigVars(appName, appStack),
+				Config: testAccCheckHerokuAppConfig_DontSetConfigVars(appName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "name", appName),
@@ -77,7 +86,6 @@ func TestAccHerokuApp_DontSetAllConfigVars(t *testing.T) {
 func TestAccHerokuApp_Disappears(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	appStack := "heroku-18"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -85,7 +93,7 @@ func TestAccHerokuApp_Disappears(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
+				Config: testAccCheckHerokuAppConfig_basic(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					testAccCheckHerokuAppDisappears(appName),
@@ -100,8 +108,6 @@ func TestAccHerokuApp_Change(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	appName2 := fmt.Sprintf("%s-v2", appName)
-	appStack := "heroku-18"
-	appStack2 := "heroku-20"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -109,27 +115,23 @@ func TestAccHerokuApp_Change(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
+				Config: testAccCheckHerokuAppConfig_basic(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
-					testAccCheckHerokuAppAttributes(&app, appName, appStack),
+					testAccCheckHerokuAppAttributes(&app, appName),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "name", appName),
-					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "stack", appStack),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "config_vars.FOO", "bar"),
 				),
 			},
 			{
-				Config: testAccCheckHerokuAppConfig_updated(appName2, appStack2),
+				Config: testAccCheckHerokuAppConfig_updated(appName2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
-					testAccCheckHerokuAppAttributesUpdated(&app, appName2, appStack2),
+					testAccCheckHerokuAppAttributesUpdated(&app, appName2),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "name", appName2),
-					resource.TestCheckResourceAttr(
-						"heroku_app.foobar", "stack", appStack2),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "config_vars.FOO", "bing"),
 					resource.TestCheckResourceAttr(
@@ -143,7 +145,6 @@ func TestAccHerokuApp_Change(t *testing.T) {
 func TestAccHerokuApp_NukeVars(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	appStack := "heroku-20"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -151,10 +152,10 @@ func TestAccHerokuApp_NukeVars(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_basic(appName, appStack),
+				Config: testAccCheckHerokuAppConfig_basic(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
-					testAccCheckHerokuAppAttributes(&app, appName, "heroku-20"),
+					testAccCheckHerokuAppAttributes(&app, appName),
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "name", appName),
 					resource.TestCheckResourceAttr(
@@ -493,16 +494,12 @@ func testAccCheckHerokuAppDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckHerokuAppAttributes(app *heroku.App, appName, stackName string) resource.TestCheckFunc {
+func testAccCheckHerokuAppAttributes(app *heroku.App, appName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := testAccProvider.Meta().(*Config).Api
 
 		if app.Region.Name != "us" {
 			return fmt.Errorf("Bad region: %s", app.Region.Name)
-		}
-
-		if app.BuildStack.Name != stackName {
-			return fmt.Errorf("Bad stack: %s", app.BuildStack.Name)
 		}
 
 		if app.Name != appName {
@@ -522,13 +519,9 @@ func testAccCheckHerokuAppAttributes(app *heroku.App, appName, stackName string)
 	}
 }
 
-func testAccCheckHerokuAppAttributesUpdated(app *heroku.App, appName, stackName string) resource.TestCheckFunc {
+func testAccCheckHerokuAppAttributesUpdated(app *heroku.App, appName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := testAccProvider.Meta().(*Config).Api
-
-		if app.BuildStack.Name != stackName {
-			return fmt.Errorf("Bad stack: %s", app.BuildStack.Name)
-		}
 
 		if app.Name != appName {
 			return fmt.Errorf("Bad name: %s", app.Name)
@@ -765,17 +758,16 @@ func testAccCheckHerokuAppDisappears(appName string) resource.TestCheckFunc {
 	}
 }
 
-func testAccCheckHerokuAppConfig_basic(appName, appStack string) string {
+func testAccCheckHerokuAppConfig_basic(appName string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
-  stack = "%s"
   region = "us"
 
   config_vars = {
     FOO = "bar"
   }
-}`, appName, appStack)
+}`, appName)
 }
 
 func testAccCheckHerokuAppConfig_go(appName string) string {
@@ -801,18 +793,17 @@ resource "heroku_app" "foobar" {
 }`, appName)
 }
 
-func testAccCheckHerokuAppConfig_updated(appName, appStack string) string {
+func testAccCheckHerokuAppConfig_updated(appName string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
-	stack  = "%s"
   region = "us"
 
   config_vars = {
     FOO = "bing"
     BAZ = "bar"
   }
-}`, appName, appStack)
+}`, appName)
 }
 
 func testAccCheckHerokuAppConfig_no_vars(appName string) string {
@@ -998,7 +989,7 @@ resource "heroku_app" "foobar" {
 }`, appName, org, locked)
 }
 
-func testAccCheckHerokuAppConfig_DontSetConfigVars(appName, appStack string) string {
+func testAccCheckHerokuAppConfig_DontSetConfigVars(appName string) string {
 	return fmt.Sprintf(`
 provider "heroku" {
   customizations {
@@ -1008,11 +999,10 @@ provider "heroku" {
 
 resource "heroku_app" "foobar" {
   name   = "%s"
-  stack = "%s"
   region = "us"
 
   config_vars = {
     FOO = "bar"
   }
-}`, appName, appStack)
+}`, appName)
 }

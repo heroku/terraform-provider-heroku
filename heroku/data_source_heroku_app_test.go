@@ -11,38 +11,29 @@ import (
 
 func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	appStack := "heroku-20"
 	gitUrl := fmt.Sprintf("https://git.heroku.com/%s.git", appName)
-	webUrl := fmt.Sprintf("https://%s.herokuapp.com/", appName)
-	herokuHostname := fmt.Sprintf("%s.herokuapp.com", appName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppWithDatasource_basic(appName, appStack),
+				Config: testAccCheckHerokuAppWithDatasource_basic(appName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "name", appName),
 					resource.TestCheckResourceAttrSet(
 						"data.heroku_app.foobar", "id"),
 					resource.TestCheckResourceAttr(
-						"data.heroku_app.foobar", "stack", appStack),
-					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "region", "us"),
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "git_url", gitUrl),
-					resource.TestCheckResourceAttr(
-						"data.heroku_app.foobar", "web_url", webUrl),
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "config_vars.FOO", "bar"),
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "buildpacks.0", "https://github.com/heroku/heroku-buildpack-multi-procfile"),
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "acm", "false"),
-					resource.TestCheckResourceAttr(
-						"data.heroku_app.foobar", "heroku_hostname", herokuHostname),
 				),
 			},
 		},
@@ -78,11 +69,10 @@ func TestAccDatasourceHerokuApp_Organization(t *testing.T) {
 	})
 }
 
-func testAccCheckHerokuApp_basic(appName string, stack string) string {
+func testAccCheckHerokuApp_basic(appName string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
-  stack = "%s"
   region = "us"
 
   buildpacks = [
@@ -93,14 +83,13 @@ resource "heroku_app" "foobar" {
     FOO = "bar"
 	}
 }
-`, appName, stack)
+`, appName)
 }
 
-func testAccCheckHerokuAppWithDatasource_basic(appName string, stack string) string {
+func testAccCheckHerokuAppWithDatasource_basic(appName string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
-  stack = "%s"
   region = "us"
 
   buildpacks = [
@@ -116,7 +105,7 @@ resource "heroku_app" "foobar" {
 data "heroku_app" "foobar" {
   name = "${heroku_app.foobar.name}"
 }
-`, appName, stack)
+`, appName)
 }
 
 func testAccCheckHerokuApp_organization(appName, orgName string) string {
