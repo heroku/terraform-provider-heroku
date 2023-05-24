@@ -11,7 +11,6 @@ import (
 
 func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
-	appStack := "heroku-20"
 	gitUrl := fmt.Sprintf("https://git.heroku.com/%s.git", appName)
 
 	resource.Test(t, resource.TestCase{
@@ -19,14 +18,12 @@ func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppWithDatasource_basic(appName, appStack),
+				Config: testAccCheckHerokuAppWithDatasource_basic(appName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "name", appName),
 					resource.TestCheckResourceAttrSet(
 						"data.heroku_app.foobar", "id"),
-					resource.TestCheckResourceAttr(
-						"data.heroku_app.foobar", "stack", appStack),
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "region", "us"),
 					resource.TestCheckResourceAttr(
@@ -72,11 +69,10 @@ func TestAccDatasourceHerokuApp_Organization(t *testing.T) {
 	})
 }
 
-func testAccCheckHerokuApp_basic(appName string, stack string) string {
+func testAccCheckHerokuApp_basic(appName string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
-  stack = "%s"
   region = "us"
 
   buildpacks = [
@@ -87,14 +83,13 @@ resource "heroku_app" "foobar" {
     FOO = "bar"
 	}
 }
-`, appName, stack)
+`, appName)
 }
 
-func testAccCheckHerokuAppWithDatasource_basic(appName string, stack string) string {
+func testAccCheckHerokuAppWithDatasource_basic(appName string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
-  stack = "%s"
   region = "us"
 
   buildpacks = [
@@ -110,7 +105,7 @@ resource "heroku_app" "foobar" {
 data "heroku_app" "foobar" {
   name = "${heroku_app.foobar.name}"
 }
-`, appName, stack)
+`, appName)
 }
 
 func testAccCheckHerokuApp_organization(appName, orgName string) string {

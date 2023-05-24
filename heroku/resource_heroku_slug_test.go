@@ -237,7 +237,6 @@ resource "heroku_slug" "foobar" {
     	test = "echo 'Just a test'"
     	diag = "echo 'Just diagnosis'"
     }
-    stack = "heroku-18"
 }`, appName)
 }
 
