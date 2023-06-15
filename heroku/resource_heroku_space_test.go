@@ -14,7 +14,7 @@ func TestAccHerokuSpace(t *testing.T) {
 	var space spaceWithNAT
 	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
 	org := testAccConfig.GetAnyOrganizationOrSkip(t)
-	spaceConfig := testAccCheckHerokuSpaceConfig_basic(spaceName, org, "10.0.0.0/16", "10.1.0.0/20")
+	spaceConfig := testAccCheckHerokuSpaceConfig_basic(spaceName, org, "10.0.0.0/16")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -30,7 +30,7 @@ func TestAccHerokuSpace(t *testing.T) {
 					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
 					resource.TestCheckResourceAttrSet("heroku_space.foobar", "outbound_ips.#"),
 					resource.TestCheckResourceAttr("heroku_space.foobar", "cidr", "10.0.0.0/16"),
-					resource.TestCheckResourceAttr("heroku_space.foobar", "data_cidr", "10.1.0.0/20"),
+					resource.TestCheckResourceAttrSet("heroku_space.foobar", "data_cidr"),
 				),
 			},
 			// append space test Steps, sharing the space, instead of recreating for each test
@@ -54,16 +54,15 @@ func TestAccHerokuSpace(t *testing.T) {
 //  …
 // }
 
-func testAccCheckHerokuSpaceConfig_basic(spaceName, orgName, cidr, dataCidr string) string {
+func testAccCheckHerokuSpaceConfig_basic(spaceName, orgName, cidr string) string {
 	return fmt.Sprintf(`
 resource "heroku_space" "foobar" {
   name = "%s"
   organization = "%s"
   region = "virginia"
   cidr         = "%s"
-  data_cidr    = "%s"
 }
-`, spaceName, orgName, cidr, dataCidr)
+`, spaceName, orgName, cidr)
 }
 
 func testAccCheckHerokuSpaceExists(n string, space *spaceWithNAT) resource.TestCheckFunc {
