@@ -50,7 +50,9 @@ between `heroku.yml` and Terraform, such as addons or config vars.
 A `source.url` may point to any `https://` URL that responds to a `GET` with a tarball source code. When running `terraform apply`,
 the source code will only be fetched once for a successful build. Change the URL to force a new resource.
 
-Useful for building public, open-source source code, such as projects that publish releases on GitHub.
+💡 Useful for building public, open-source source code, such as projects that publish releases on GitHub.
+
+⛔ Not useful for private URLs that require credentials to access.
 
 ### GitHub URLs
 GitHub provides [release](https://help.github.com/articles/creating-releases/) tarballs through URLs. Create a release
@@ -97,12 +99,17 @@ A `source.path` may point to either:
 
 * a tarball of source code
 * a directory of source code
-  * use `src/appname` relative paths to child directories within the Terraform project repo (recommended)
+  * use `src/appname` relative paths to subdirectories within the Terraform project repo (recommended)
   * use `/opt/src/appname` absolute or `../appname` relative paths to external directories
   * **avoid ancestor paths that contain the Terraform configuration itself**
     * paths such as `../` will [cause errors during apply](https://github.com/heroku/terraform-provider-heroku/issues/269)
 
 When running `terraform apply`, if the contents (SHA256) of the source path changed since the last `apply`, then a new build will start.
+
+🚚 **The complete source must already be present at its `path` when Terraform runs**, so either:
+  * copy/clone/checkout the source to the `path` before Terraform runs, like [this issue's solution](https://github.com/heroku/terraform-provider-heroku/issues/321#issuecomment-926778363)
+  * commit the source code into a subdirectory of the Terraform project repository, so that that it's all cloned together.
+
 
 ### Example Usage with Local Source Directory
 
