@@ -30,7 +30,7 @@ func TestAccHerokuSpace(t *testing.T) {
 					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
 					resource.TestCheckResourceAttrSet("heroku_space.foobar", "outbound_ips.#"),
 					resource.TestCheckResourceAttr("heroku_space.foobar", "cidr", "10.0.0.0/16"),
-					resource.TestCheckResourceAttr("heroku_space.foobar", "data_cidr", "10.2.0.0/16"), // the default
+					resource.TestCheckResourceAttrSet("heroku_space.foobar", "data_cidr"),
 				),
 			},
 			// append space test Steps, sharing the space, instead of recreating for each test

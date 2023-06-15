@@ -48,8 +48,8 @@ func resourceHerokuSpace() *schema.Resource {
 
 			"data_cidr": {
 				Type:     schema.TypeString,
+				Computed: true,
 				Optional: true,
-				Default:  "10.2.0.0/16",
 				ForceNew: true,
 			},
 
@@ -97,12 +97,12 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 		opts.Shield = &vs
 	}
 
-	if v := d.Get("cidr"); v != nil {
+	if v, ok := d.GetOk("cidr"); ok {
 		vs := v.(string)
 		opts.CIDR = &vs
 	}
 
-	if v := d.Get("data_cidr"); v != nil {
+	if v, ok := d.GetOk("data_cidr"); ok {
 		vs := v.(string)
 		opts.DataCIDR = &vs
 	}
