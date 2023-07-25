@@ -40,6 +40,26 @@ func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 	})
 }
 
+func TestAccDatasourceHerokuApp_ReleaseIDAndSlugID(t *testing.T) {
+	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckHerokuAppWithDatasource_slugRelease(appName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(
+						"data.heroku_app.foobar", "last_release_id"),
+					resource.TestCheckResourceAttrSet(
+						"data.heroku_app.foobar", "last_slug_id"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDatasourceHerokuApp_Organization(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	org := os.Getenv("HEROKU_SPACES_ORGANIZATION")
@@ -104,6 +124,35 @@ resource "heroku_app" "foobar" {
 
 data "heroku_app" "foobar" {
   name = "${heroku_app.foobar.name}"
+}
+`, appName)
+}
+
+func testAccCheckHerokuAppWithDatasource_slugRelease(appName string) string {
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_slug" "foobar" {
+    app_id = heroku_app.foobar.id
+    buildpack_provided_description = "Ruby"
+    file_path = "test-fixtures/slug.tgz"
+    process_types = {
+      web = "ruby server.rb"
+    }
+}
+
+resource "heroku_app_release" "foobar" {
+  app_id  = heroku_app.foobar.id
+  slug_id = heroku_slug.foobar.id
+}
+
+data "heroku_app" "foobar" {
+  name = "${heroku_app.foobar.name}"
+
+  depends_on = [heroku_app_release.foobar]
 }
 `, appName)
 }
