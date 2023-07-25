@@ -50,22 +50,22 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 				Config: testAccCheckHerokuAddonConfig_no_plan(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
-					testAccCheckHerokuAddonPlan(&addon, "memcachier:dev"),
+					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:mini"),
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "plan", "memcachier"),
+						"heroku_addon.foobar", "plan", "heroku-postgresql:mini"),
 				),
 			},
 			{
 				Config: testAccCheckHerokuAddonConfig_no_plan(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
-					testAccCheckHerokuAddonPlan(&addon, "memcachier:dev"),
+					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:mini"),
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "plan", "memcachier"),
+						"heroku_addon.foobar", "plan", "heroku-postgresql:mini"),
 				),
 			},
 		},
@@ -123,11 +123,11 @@ func TestAccHerokuAddon_CustomName(t *testing.T) {
 				Config: testAccCheckHerokuAddonConfig_CustomName(appName, customName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
-					testAccCheckHerokuAddonPlan(&addon, "memcachier:dev"),
+					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:mini"),
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "plan", "memcachier"),
+						"heroku_addon.foobar", "plan", "heroku-postgresql:mini"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "name", customName),
 				),
@@ -357,7 +357,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_addon" "foobar" {
     app_id = heroku_app.foobar.id
-    plan = "memcachier"
+    plan = "heroku-postgresql:mini"
 }`, appName)
 }
 
@@ -370,7 +370,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_addon" "foobar" {
     app_id = heroku_app.foobar.id
-    plan = "memcachier"
+    plan = "heroku-postgresql:mini"
     name = "%s"
 }`, appName, customAddonName)
 }
