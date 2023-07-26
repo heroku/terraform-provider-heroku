@@ -1,7 +1,11 @@
 package heroku
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	heroku "github.com/heroku/heroku-go/v5"
 )
 
 func dataSourceHerokuApp() *schema.Resource {
@@ -69,6 +73,16 @@ func dataSourceHerokuApp() *schema.Resource {
 				Computed: true,
 			},
 
+			"last_release_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"last_slug_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			"organization": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -125,6 +139,25 @@ func dataSourceHerokuAppRead(d *schema.ResourceData, m interface{}) error {
 
 	d.Set("buildpacks", app.Buildpacks)
 	d.Set("config_vars", app.Vars)
+
+	releaseRange := heroku.ListRange{
+		Field:      "version",
+		Max:        200,
+		Descending: true,
+	}
+	releases, err := client.ReleaseList(context.Background(), app.App.ID, &releaseRange)
+	if err != nil {
+		return fmt.Errorf("Failed to fetch releases for app '%s': %s", name, err)
+	}
+	for _, r := range releases {
+		if r.Status == "succeeded" {
+			d.Set("last_release_id", r.ID)
+			if r.Slug != nil {
+				d.Set("last_slug_id", r.Slug.ID)
+			}
+			break
+		}
+	}
 
 	return nil
 }

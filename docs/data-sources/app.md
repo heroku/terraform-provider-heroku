@@ -53,6 +53,10 @@ The following attributes are exported:
 * `heroku_hostname` - The hostname for the Heroku application, suitable
    for pointing DNS records.
 
+* `last_release_id` - The last successful Release ID for the app. May be empty.
+
+* `last_slug_id` - The Slug ID from the last successful release. May be empty.
+
 * `config_vars` - A map of all configuration variables for the app.
 
 * `acm` - True if Heroku ACM is enabled for this app, false otherwise.
