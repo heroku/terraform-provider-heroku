@@ -8,6 +8,11 @@ func dataSourceHerokuSpace() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceHerokuSpaceRead,
 		Schema: map[string]*schema.Schema{
+
+			"id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -71,7 +76,8 @@ func dataSourceHerokuSpaceRead(d *schema.ResourceData, m interface{}) error {
 
 	space := spaceRaw.(*spaceWithNAT)
 
-	d.SetId(name)
+	d.SetId(space.ID)
+	d.Set("name", space.Name)
 	d.Set("state", space.State)
 	d.Set("shield", space.Shield)
 
