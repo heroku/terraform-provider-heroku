@@ -18,6 +18,11 @@ func dataSourceHerokuSpace() *schema.Resource {
 				Computed: true,
 			},
 
+			"uuid": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			"cidr": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -72,6 +77,7 @@ func dataSourceHerokuSpaceRead(d *schema.ResourceData, m interface{}) error {
 	space := spaceRaw.(*spaceWithNAT)
 
 	d.SetId(name)
+	d.Set("uuid", space.ID)
 	d.Set("state", space.State)
 	d.Set("shield", space.Shield)
 

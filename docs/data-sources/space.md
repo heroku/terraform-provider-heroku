@@ -29,8 +29,9 @@ The following arguments are supported:
 
 The following attributes are exported:
 
-* `name` - The name of the Heroku Private Space. In Heroku, this is also the unique .
-* `id` - The unique ID of the Heroku Private Space.
+* `name` - The name of the Heroku Private Space.
+* `id` - The space's name. (Heroku API supports using name and ID interchangeably, and this data source uses name for the resource ID.)
+* `uuid` - The space's unique ID.
 * `region` - The region in which the Heroku Private Space is deployed.
 * `state` - The state of the Heroku Private Space. Either `allocating` or `allocated`.
 * `shield` - Whether or not the space has [Shield](https://devcenter.heroku.com/articles/private-spaces#shield-private-spaces) turned on. One of `on` or `off`.
