@@ -127,7 +127,7 @@ func resourceHerokuTeamCollaboratorCreate(d *schema.ResourceData, meta interface
 		if strings.Contains(strings.ToLower(createErr.Error()), "is already a collaborator on app") {
 			// Loop through all collaborators on the app to get the collaborator ID
 			collaborators, listErr := client.TeamAppCollaboratorList(context.TODO(), appID,
-				&heroku.ListRange{Max: 1000, Descending: true})
+				&heroku.ListRange{Field: "email", Max: 1000})
 			if listErr != nil {
 				return listErr
 			}
