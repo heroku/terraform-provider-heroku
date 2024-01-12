@@ -94,7 +94,7 @@ func resourceHerokuTeamMemberRead(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	members, err := client.TeamMemberList(context.TODO(), team, &heroku.ListRange{Field: "email"})
+	members, err := client.TeamMemberList(context.TODO(), team, &heroku.ListRange{Field: "email", Max: 1000})
 	if err != nil {
 		return err
 	}
