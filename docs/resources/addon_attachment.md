@@ -22,7 +22,7 @@ resource "heroku_addon_attachment" "database" {
 resource "heroku_addon_attachment" "database_credentials" {
   app_id  = heroku_app.default.id
   addon_id = heroku_addon.database.id
-  namespace = "credential: ${var.credential_name}"
+  namespace = "credential:${var.credential_name}"
 }
 
 ```
