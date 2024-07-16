@@ -54,7 +54,7 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "plan", "heroku-postgresql:essential-0"),
+						"heroku_addon.foobar", "plan", "heroku-postgresql"),
 				),
 			},
 			{
@@ -65,7 +65,7 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "plan", "heroku-postgresql:essential-0"),
+						"heroku_addon.foobar", "plan", "heroku-postgresql"),
 				),
 			},
 		},
@@ -127,7 +127,7 @@ func TestAccHerokuAddon_CustomName(t *testing.T) {
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "plan", "heroku-postgresql:essential-0"),
+						"heroku_addon.foobar", "plan", "heroku-postgresql"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "name", customName),
 				),
