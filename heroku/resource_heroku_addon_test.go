@@ -50,22 +50,22 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 				Config: testAccCheckHerokuAddonConfig_no_plan(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
-					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql"),
+					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:essential-0"),
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "plan", "heroku-postgresql"),
+						"heroku_addon.foobar", "plan", "heroku-postgresql:essential-0"),
 				),
 			},
 			{
 				Config: testAccCheckHerokuAddonConfig_no_plan(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
-					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql"),
+					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:essential-0"),
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "plan", "heroku-postgresql"),
+						"heroku_addon.foobar", "plan", "heroku-postgresql:essential-0"),
 				),
 			},
 		},
@@ -85,7 +85,7 @@ func TestAccHerokuAddon_ConfigVarValues(t *testing.T) {
 				Config: testAccCheckHerokuAddonConfig_configVarValues(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.pg", &addon),
-					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql"),
+					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:essential-0"),
 					testAccCheckHerokuAddonConfigVarValueHasDatabaseURL("heroku_addon.pg", &addon),
 				),
 			},
@@ -123,11 +123,11 @@ func TestAccHerokuAddon_CustomName(t *testing.T) {
 				Config: testAccCheckHerokuAddonConfig_CustomName(appName, customName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
-					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql"),
+					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:essential-0"),
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "plan", "heroku-postgresql"),
+						"heroku_addon.foobar", "plan", "heroku-postgresql:essential-0"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "name", customName),
 				),
