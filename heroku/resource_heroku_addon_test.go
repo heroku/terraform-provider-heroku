@@ -50,22 +50,22 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 				Config: testAccCheckHerokuAddonConfig_no_plan(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
-					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:mini"),
+					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:essential-0"),
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "plan", "heroku-postgresql:mini"),
+						"heroku_addon.foobar", "plan", "heroku-postgresql"),
 				),
 			},
 			{
 				Config: testAccCheckHerokuAddonConfig_no_plan(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
-					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:mini"),
+					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:essential-0"),
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "plan", "heroku-postgresql:mini"),
+						"heroku_addon.foobar", "plan", "heroku-postgresql"),
 				),
 			},
 		},
@@ -85,7 +85,7 @@ func TestAccHerokuAddon_ConfigVarValues(t *testing.T) {
 				Config: testAccCheckHerokuAddonConfig_configVarValues(appName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.pg", &addon),
-					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:mini"),
+					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:essential-0"),
 					testAccCheckHerokuAddonConfigVarValueHasDatabaseURL("heroku_addon.pg", &addon),
 				),
 			},
@@ -123,11 +123,11 @@ func TestAccHerokuAddon_CustomName(t *testing.T) {
 				Config: testAccCheckHerokuAddonConfig_CustomName(appName, customName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
-					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:mini"),
+					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:essential-0"),
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon.foobar", "app_id"),
 					resource.TestCheckResourceAttr(
-						"heroku_addon.foobar", "plan", "heroku-postgresql:mini"),
+						"heroku_addon.foobar", "plan", "heroku-postgresql"),
 					resource.TestCheckResourceAttr(
 						"heroku_addon.foobar", "name", customName),
 				),
@@ -325,7 +325,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_addon" "pg" {
     app_id = heroku_app.foobar.id
-    plan = "heroku-postgresql:mini"
+    plan = "heroku-postgresql"
 }`, appName)
 }
 
@@ -344,7 +344,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_addon" "pg" {
     app_id = heroku_app.foobar.id
-    plan = "heroku-postgresql:mini"
+    plan = "heroku-postgresql"
 }`, appName)
 }
 
@@ -357,7 +357,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_addon" "foobar" {
     app_id = heroku_app.foobar.id
-    plan = "heroku-postgresql:mini"
+    plan = "heroku-postgresql"
 }`, appName)
 }
 
@@ -370,7 +370,7 @@ resource "heroku_app" "foobar" {
 
 resource "heroku_addon" "foobar" {
     app_id = heroku_app.foobar.id
-    plan = "heroku-postgresql:mini"
+    plan = "heroku-postgresql"
     name = "%s"
 }`, appName, customAddonName)
 }
