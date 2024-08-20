@@ -18,10 +18,11 @@ type spaceWithNAT struct {
 
 func resourceHerokuSpace() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceHerokuSpaceCreate,
-		Read:   resourceHerokuSpaceRead,
-		Update: resourceHerokuSpaceUpdate,
-		Delete: resourceHerokuSpaceDelete,
+		Create:        resourceHerokuSpaceCreate,
+		Read:          resourceHerokuSpaceRead,
+		Update:        resourceHerokuSpaceUpdate,
+		Delete:        resourceHerokuSpaceDelete,
+		CustomizeDiff: resourceHerokuSpaceCustomizeDiff,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -77,7 +78,6 @@ func resourceHerokuSpace() *schema.Resource {
 			"log_drain_url": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 			},
 		},
 	}
@@ -194,6 +194,30 @@ func resourceHerokuSpaceDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId("")
+	return nil
+}
+
+func resourceHerokuSpaceCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
+	// Since `log_drain_url` is only settable during space creation but it can be updated if it was set
+	// at time of creating the space, checking here if it was previously set then update that otherwise
+	// force a new space creation
+	existing, new := diff.GetChange("log_drain_url")
+	log.Printf("[DEBUG] Diffing log_drain_url: existing '%s', new '%s'", existing, new)
+	if existing == new {
+		return nil
+	}
+
+	existingStr := existing.(string)
+	if existingStr != "" {
+		if err := diff.SetNew("log_drain_url", new); err != nil {
+			return fmt.Errorf("error updating log_drain_url: %s", err)
+		}
+	}
+
+	if err := diff.ForceNew("log_drain_url"); err != nil {
+		return fmt.Errorf("error forcing new space resource: %s", err)
+	}
+
 	return nil
 }
 
