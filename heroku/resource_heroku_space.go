@@ -73,6 +73,12 @@ func resourceHerokuSpace() *schema.Resource {
 				Default:  false,
 				ForceNew: true,
 			},
+
+			"log_drain_url": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
 		},
 	}
 }
@@ -105,6 +111,11 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 	if v, ok := d.GetOk("data_cidr"); ok {
 		vs := v.(string)
 		opts.DataCIDR = &vs
+	}
+
+	if v, ok := d.GetOk("log_drain_url"); ok {
+		vs := v.(string)
+		opts.LogDrainURL = &vs
 	}
 
 	space, err := client.SpaceCreate(context.TODO(), opts)

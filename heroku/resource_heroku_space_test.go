@@ -31,6 +31,7 @@ func TestAccHerokuSpace(t *testing.T) {
 					resource.TestCheckResourceAttrSet("heroku_space.foobar", "outbound_ips.#"),
 					resource.TestCheckResourceAttr("heroku_space.foobar", "cidr", "10.0.0.0/16"),
 					resource.TestCheckResourceAttrSet("heroku_space.foobar", "data_cidr"),
+					resource.TestCheckResourceAttrSet("heroku_space.foobar", "log_drain_url"),
 				),
 			},
 			// append space test Steps, sharing the space, instead of recreating for each test
@@ -61,6 +62,7 @@ resource "heroku_space" "foobar" {
   organization = "%s"
   region = "virginia"
   cidr         = "%s"
+  log_drain_url = "https://dummy-log-drain.heroku.com"
 }
 `, spaceName, orgName, cidr)
 }

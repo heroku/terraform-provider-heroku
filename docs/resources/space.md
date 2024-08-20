@@ -12,7 +12,7 @@ Provides a Heroku Private Space resource for running apps in isolated, highly av
 
 ## Example Usage
 
-A Heroku "team" was originally called an "organization", and that is still 
+A Heroku "team" was originally called an "organization", and that is still
 the identifier used in this resource.
 
 ```hcl-terraform
@@ -58,6 +58,7 @@ The following attributes are exported:
 * `cidr` - The space's CIDR.
 * `data_cidr` - The space's Data CIDR.
 * `outbound_ips` - The space's stable outbound [NAT IPs](https://devcenter.heroku.com/articles/platform-api-reference#space-network-address-translation).
+* `log_drain_url` - URL to which all apps will drain logs. Only settable during space creation and enables direct logging. Must use HTTPS.
 
 ## Import
 
