@@ -61,7 +61,8 @@ resource "heroku_space" "foobar" {
   name = "%s"
   organization = "%s"
   region = "virginia"
-  cidr         = "%s"
+  cidr    	    = "%s"
+  shield 		= true
   log_drain_url = "https://dummy-log-drain.heroku.com"
 }
 `, spaceName, orgName, cidr)
