@@ -207,11 +207,8 @@ func resourceHerokuSpaceCustomizeDiff(ctx context.Context, diff *schema.Resource
 		return nil
 	}
 
-	existingStr := existing.(string)
-	if existingStr != "" {
-		if err := diff.SetNew("log_drain_url", new); err != nil {
-			return fmt.Errorf("error updating log_drain_url: %s", err)
-		}
+	if existing.(string) != "" && new.(string) != "" {
+		return nil
 	}
 
 	if err := diff.ForceNew("log_drain_url"); err != nil {
