@@ -181,6 +181,7 @@ func resourceHerokuApp() *schema.Resource {
 				Computed: true,
 			},
 		},
+		CustomizeDiff: customDiffSensitiveConfigVars(),
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{
 			{
@@ -1011,6 +1012,7 @@ func resourceHerokuAppV0() *schema.Resource {
 				Computed: true,
 			},
 		},
+		CustomizeDiff: customDiffSensitiveConfigVars(),
 	}
 }
 
@@ -1031,4 +1033,40 @@ func resourceHerokuAppStateUpgradeV0(ctx context.Context, rawState map[string]in
 	rawState["id"] = foundApp.ID
 
 	return rawState, nil
+}
+
+func customDiffSensitiveConfigVars() schema.CustomizeDiffFunc {
+	return func(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+		old, new := d.GetChange("sensitive_config_vars")
+
+		changedKeys := diffMapKeys(old.(map[string]interface{}), new.(map[string]interface{}))
+
+		if len(changedKeys) > 0 {
+			d.SetNewComputed("sensitive_config_vars")
+			d.SetNew("changed_sensitive_config_var_keys", changedKeys)
+		}
+
+		return nil
+	}
+}
+
+// diffMapKeys returns the list of keys that differ between two maps
+func diffMapKeys(oldMap, newMap map[string]interface{}) []string {
+	changedKeys := []string{}
+
+	// Check for added or updated keys
+	for k, newVal := range newMap {
+		if oldVal, ok := oldMap[k]; !ok || oldVal != newVal {
+			changedKeys = append(changedKeys, k)
+		}
+	}
+
+	// Check for removed keys
+	for k := range oldMap {
+		if _, ok := newMap[k]; !ok {
+			changedKeys = append(changedKeys, k)
+		}
+	}
+
+	return changedKeys
 }
