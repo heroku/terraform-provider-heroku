@@ -90,6 +90,11 @@ func resourceHerokuApp() *schema.Resource {
 				ForceNew: true,
 			},
 
+			"allow_deletion": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+
 			"buildpacks": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -562,8 +567,13 @@ func resourceHerokuAppUpdate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceHerokuAppDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Config).Api
-
 	log.Printf("[INFO] Deleting App: %s", d.Id())
+
+	canBeDeleted := d.Get("allow_deletion").(bool)
+	if !canBeDeleted {
+		return fmt.Errorf("error deleting App: %s", "allow_deletion is false")
+	}
+
 	_, err := client.AppDelete(context.TODO(), d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting App: %s", err)
