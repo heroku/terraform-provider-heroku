@@ -2424,7 +2424,7 @@ func (s *Service) FormationList(ctx context.Context, appIdentity string, lr *Lis
 type FormationBatchUpdateOpts struct {
 	Updates []struct {
 		DynoSize *struct {
-			ID   string  `json:"id" url:"id,key"`                         // unique identifier of the dyno size
+			ID   *string `json:"id,omitempty" url:"id,omitempty,key"`     // unique identifier of the dyno size
 			Name *string `json:"name,omitempty" url:"name,omitempty,key"` // name of the dyno size
 		} `json:"dyno_size,omitempty" url:"dyno_size,omitempty,key"` // dyno size
 		Quantity *int   `json:"quantity,omitempty" url:"quantity,omitempty,key"` // number of processes to maintain
@@ -2443,7 +2443,7 @@ func (s *Service) FormationBatchUpdate(ctx context.Context, appIdentity string, 
 
 type FormationUpdateOpts struct {
 	DynoSize *struct {
-		ID   string  `json:"id" url:"id,key"`                         // unique identifier of the dyno size
+		ID   *string `json:"id,omitempty" url:"id,omitempty,key"`     // unique identifier of the dyno size
 		Name *string `json:"name,omitempty" url:"name,omitempty,key"` // name of the dyno size
 	} `json:"dyno_size,omitempty" url:"dyno_size,omitempty,key"` // dyno size
 	Quantity *int `json:"quantity,omitempty" url:"quantity,omitempty,key"` // number of processes to maintain

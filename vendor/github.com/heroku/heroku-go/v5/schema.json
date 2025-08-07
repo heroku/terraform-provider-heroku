@@ -7253,9 +7253,6 @@
             }
           },
           "readOnly": false,
-          "required": [
-            "id"
-          ],
           "type": [
             "object"
           ]
