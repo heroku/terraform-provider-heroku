@@ -110,7 +110,7 @@ func resourceHerokuFormationCreate(d *schema.ResourceData, meta interface{}) err
 	if v, ok := d.GetOk("size"); ok {
 		vs := v.(string)
 		log.Printf("[DEBUG] Size: %s", vs)
-		opts.Size = &vs
+		opts.DynoSize.Name = &vs
 	}
 
 	quantity := d.Get("quantity").(int)
@@ -139,7 +139,7 @@ func resourceHerokuFormationUpdate(d *schema.ResourceData, meta interface{}) err
 	if d.HasChange("size") {
 		v := d.Get("size").(string)
 		log.Printf("[DEBUG] New Size: %s", v)
-		opts.Size = &v
+		opts.DynoSize.Name = &v
 	}
 
 	if d.HasChange("quantity") {
