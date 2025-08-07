@@ -111,7 +111,6 @@ func Provider() *schema.Provider {
 			"heroku_app_release":                       resourceHerokuAppRelease(),
 			"heroku_app_webhook":                       resourceHerokuAppWebhook(),
 			"heroku_build":                             resourceHerokuBuild(),
-			"heroku_cert":                              resourceHerokuCert(),
 			"heroku_collaborator":                      resourceHerokuCollaborator(),
 			"heroku_config":                            resourceHerokuConfig(),
 			"heroku_domain":                            resourceHerokuDomain(),
