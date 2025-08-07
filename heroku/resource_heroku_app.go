@@ -616,7 +616,9 @@ func (a *application) Update() error {
 	a.App.Region = app.Region.Name
 	a.App.Stack = app.BuildStack.Name
 	a.App.GitURL = app.GitURL
-	a.App.WebURL = app.WebURL
+	if app.WebURL != nil {
+		a.App.WebURL = *app.WebURL
+	}
 	a.App.Acm = app.Acm
 	a.App.ID = app.ID
 
