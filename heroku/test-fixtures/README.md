@@ -9,9 +9,9 @@ In `heroku/test-fixtures/`, directories like `app/`, `app-2/`, & `app-broken-bui
 When the app dirs are changed, their associated `*.tgz` archives should be remade with:
 ```
 cd heroku/test-fixtures/
-tar -czf app.tgz app
-tar -czf app-2.tgz app-2
-tar -czf app-broken-build.tgz app-broken-build
+tar -czf app.tgz app/*
+tar -czf app-2.tgz app-2/*
+tar -czf app-broken-build.tgz app-broken-build/*
 ```
 
 Then, the **checksums** of these tarballs must be manually computed and updated throughout `heroku/resource_heroku_build_test.go`.

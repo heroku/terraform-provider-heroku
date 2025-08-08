@@ -2,6 +2,9 @@ GEM
   remote: https://rubygems.org/
   specs:
 
+RUBY VERSION
+   ruby 3.4.4
+
 PLATFORMS
   ruby
 

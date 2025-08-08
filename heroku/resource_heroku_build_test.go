@@ -114,8 +114,8 @@ func TestAccHerokuBuild_LocalSourceTarball(t *testing.T) {
 	// Manually generated using `shasum --algorithm 256 app.tgz`
 	// Manually generated using `shasum --algorithm 256 app-2.tgz`
 	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
-	sourceChecksum := "SHA256:ec6f7070fd416adde60b3c26a181d6cca80e7acad0c07e507a1e55f7ce2c4f3f"
-	sourceChecksum2 := "SHA256:b9f442aa243e56aac986522324a9028873bcc49448586d7624839207e592feda"
+	sourceChecksum := "SHA256:da57c23d767c971b383de3bf1a680e5ea0f3991f4738552cb383127e60864b20"
+	sourceChecksum2 := "SHA256:483332872ad9112337b5790da1406c8b3cdcf07d53d04c953d9e17d3e63fb522"
 
 	defer resetSourceFiles()
 
@@ -331,7 +331,7 @@ resource "heroku_build" "foobar" {
       "https://github.com/heroku/heroku-buildpack-ruby",
     ]
     source {
-      checksum = "SHA256:ec6f7070fd416adde60b3c26a181d6cca80e7acad0c07e507a1e55f7ce2c4f3f"
+      checksum = "SHA256:da57c23d767c971b383de3bf1a680e5ea0f3991f4738552cb383127e60864b20"
       url = "https://github.com/heroku/terraform-provider-heroku/raw/update-heroku-api-client/heroku/test-fixtures/app.tgz"
       version = "v0"
     }
