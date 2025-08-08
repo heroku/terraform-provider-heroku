@@ -28,6 +28,11 @@ type formation struct {
 	Client    *heroku.Service // Client to interact with the heroku API
 }
 
+type dynoSize struct {
+		ID   string `json:"id" url:"id,key"`     // unique identifier of the dyno size
+		Name string `json:"name" url:"name,key"` // name of the dyno size
+} `json:"dyno_size" url:"dyno_size,key"` // dyno size
+
 func resourceHerokuFormation() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceHerokuFormationCreate,
@@ -110,7 +115,8 @@ func resourceHerokuFormationCreate(d *schema.ResourceData, meta interface{}) err
 	if v, ok := d.GetOk("size"); ok {
 		vs := v.(string)
 		log.Printf("[DEBUG] Size: %s", vs)
-		opts.DynoSize.Name = &vs
+		ds := dynoSize{Name: &vs}
+		opts.DynoSize = ds
 	}
 
 	quantity := d.Get("quantity").(int)
@@ -139,7 +145,8 @@ func resourceHerokuFormationUpdate(d *schema.ResourceData, meta interface{}) err
 	if d.HasChange("size") {
 		v := d.Get("size").(string)
 		log.Printf("[DEBUG] New Size: %s", v)
-		opts.DynoSize.Name = &v
+		ds := dynoSize{Name: &v}
+		opts.DynoSize = ds
 	}
 
 	if d.HasChange("quantity") {
