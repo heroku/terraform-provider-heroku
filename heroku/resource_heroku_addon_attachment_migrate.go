@@ -3,9 +3,10 @@ package heroku
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	heroku "github.com/heroku/heroku-go/v5"
 	"log"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	heroku "github.com/heroku/heroku-go/v6"
 )
 
 func resourceHerokuAddonAttachmentMigrateState(v int, is *terraform.InstanceState, meta interface{}) (*terraform.InstanceState, error) {

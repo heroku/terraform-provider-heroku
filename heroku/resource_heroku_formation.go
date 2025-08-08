@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	heroku "github.com/heroku/heroku-go/v5"
+	heroku "github.com/heroku/heroku-go/v6"
 )
 
 // herokuFormation is a value type used to hold the details of a formation
@@ -122,7 +122,7 @@ func resourceHerokuFormationCreate(d *schema.ResourceData, meta interface{}) err
 	log.Printf("[DEBUG] Quantity: %v", quantity)
 	opts.Quantity = &quantity
 
-	log.Printf(fmt.Sprintf("[DEBUG] Updating %s formation...", appID))
+	log.Printf("[DEBUG] Updating %s formation...", appID)
 	f, err := client.FormationUpdate(context.TODO(), appID, getFormationType(d), opts)
 	if err != nil {
 		return err

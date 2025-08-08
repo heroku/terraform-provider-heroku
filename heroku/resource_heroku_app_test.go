@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	heroku "github.com/heroku/heroku-go/v5"
+	heroku "github.com/heroku/heroku-go/v6"
 )
 
 func TestAccHerokuApp_Basic(t *testing.T) {
@@ -44,10 +44,10 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 					resource.TestCheckResourceAttrWith(
 						"heroku_app.foobar", "heroku_hostname", func(value string) error {
 							if !strings.HasSuffix(value, "herokuapp.com") {
-								return fmt.Errorf(fmt.Sprintf("'%s' should end with 'herokuapp.com'", value))
+								return fmt.Errorf("'%s' should end with 'herokuapp.com'", value)
 							}
 							if !strings.HasPrefix(value, appName) {
-								return fmt.Errorf(fmt.Sprintf("'%s' should start with '%s'", value, appName))
+								return fmt.Errorf("'%s' should start with '%s'", value, appName)
 							}
 							return nil
 						}),

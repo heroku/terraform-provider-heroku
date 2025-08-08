@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	heroku "github.com/heroku/heroku-go/v5"
+	heroku "github.com/heroku/heroku-go/v6"
 )
 
 func resourceHerokuAddonMigrate(v int, is *terraform.InstanceState, meta interface{}) (*terraform.InstanceState, error) {

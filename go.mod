@@ -6,7 +6,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-uuid v1.0.3
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
-	github.com/heroku/heroku-go/v5 v5.5.1-0.20250807230708-aa87a5d8bc5b
+	github.com/heroku/heroku-go/v6 v6.0.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/verybluebot/tarinator-go v0.0.0-20190613183509-5ab4e1193986
 )
@@ -61,4 +61,4 @@ require (
 	google.golang.org/protobuf v1.28.1 // indirect
 )
 
-go 1.19
+go 1.24
