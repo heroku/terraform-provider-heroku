@@ -30,15 +30,28 @@ jobs:
     - name: Install Terraform
       run: |
         set -eu
-        curl -s -L "https://releases.hashicorp.com/terraform/1.3.6/terraform_1.3.6_linux_amd64.zip" > "terraform-bin.zip"
+        terraform_version="1.6.6"
 
-        # overwrite existing Terraform binary
+        set +e
         terraform_bin="$(which terraform)"
+        set -e
+        if [ -z "$terraform_bin" ]
+        then
+          terraform_bin="/usr/local/bin/terraform"
+          echo "Installing Terraform ($terraform_bin)"
+        else
+          echo "Replacing Terraform ($terraform_bin)"
+        fi
+        echo "Downloading version $terraform_version"
+        curl -s -L "https://releases.hashicorp.com/terraform/${terraform_version}/terraform_${terraform_version}_linux_amd64.zip" > "terraform-bin.zip"
+        echo "Unzipping archive"
         unzip -p terraform-bin.zip > terraform-bin
+        echo "Moving into place"
         sudo mv terraform-bin "$terraform_bin"
+        echo "Making executable"
         sudo chmod +x "$terraform_bin"
+        echo "Cleaning-up"
         rm terraform-bin.zip
-
         echo "Installed: $(eval "$terraform_bin version") ($terraform_bin)"
 
     - name: Run make fmt

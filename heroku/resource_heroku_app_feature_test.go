@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	heroku "github.com/heroku/heroku-go/v5"
+	heroku "github.com/heroku/heroku-go/v6"
 )
 
 func TestAccHerokuAppFeature(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	heroku "github.com/heroku/heroku-go/v5"
+	heroku "github.com/heroku/heroku-go/v6"
 )
 
 func TestAccHerokuBuild_Basic(t *testing.T) {
@@ -111,10 +111,11 @@ func TestAccHerokuBuild_LocalSourceTarball(t *testing.T) {
 	var build, build2 heroku.Build
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
-	// Manually generated using `shasum --algorithm 256 slug.tgz`
+	// Manually generated using `shasum --algorithm 256 app.tgz`
+	// Manually generated using `shasum --algorithm 256 app-2.tgz`
 	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
-	sourceChecksum := "SHA256:14671a3dcf1ba3f4976438bfd4654da5d2b18ccefa59d10187ecc1286f08ee29"
-	sourceChecksum2 := "SHA256:a60dabd2ab4253e85a1a13734dcc444e830f61995247cd307655219c2504738a"
+	sourceChecksum := "SHA256:da57c23d767c971b383de3bf1a680e5ea0f3991f4738552cb383127e60864b20"
+	sourceChecksum2 := "SHA256:483332872ad9112337b5790da1406c8b3cdcf07d53d04c953d9e17d3e63fb522"
 
 	defer resetSourceFiles()
 
@@ -267,7 +268,7 @@ func testAccCheckHerokuBuildConfig_basic(appName string) string {
 resource "heroku_build" "foobar" {
     app_id = heroku_app.foobar.id
     source {
-        url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/app.tgz"
+        url = "https://github.com/heroku/terraform-provider-heroku/raw/update-heroku-api-client/heroku/test-fixtures/app.tgz"
     }
 }`, appName)
 }
@@ -281,7 +282,7 @@ func testAccCheckHerokuBuildConfig_fails(appName string) string {
 resource "heroku_build" "foobar" {
     app_id = heroku_app.foobar.id
     source {
-        url = "https://github.com/heroku/terraform-provider-heroku/raw/display-build-error-inline/heroku/test-fixtures/app-broken-build.tgz"
+        url = "https://github.com/heroku/terraform-provider-heroku/raw/update-heroku-api-client/heroku/test-fixtures/app-broken-build.tgz"
     }
 }`, appName)
 }
@@ -295,7 +296,7 @@ func testAccCheckHerokuBuildConfig_insecureUrl(appName string) string {
 resource "heroku_build" "foobar" {
     app_id = heroku_app.foobar.id
     source {
-      url = "http://github.com/mars/terraform-provider-heroku/raw/build-resource/heroku/test-fixtures/app.tgz"
+      url = "http://github.com/mars/terraform-provider-heroku/raw/update-heroku-api-client/heroku/test-fixtures/app.tgz"
     }
 }`, appName)
 }
@@ -315,7 +316,7 @@ resource "heroku_build" "foobar" {
 }
 
 func testAccCheckHerokuBuildConfig_allOpts(appName string) string {
-	// Manually generated `checksum` using `shasum --algorithm 256 v2.1.1.tar.gz`
+	// Manually generated `checksum` using `shasum --algorithm 256 app.tar.gz`
 	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
 
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
@@ -330,8 +331,8 @@ resource "heroku_build" "foobar" {
       "https://github.com/heroku/heroku-buildpack-ruby",
     ]
     source {
-      checksum = "SHA256:14671a3dcf1ba3f4976438bfd4654da5d2b18ccefa59d10187ecc1286f08ee29"
-      url = "https://github.com/heroku/terraform-provider-heroku/raw/master/heroku/test-fixtures/app.tgz"
+      checksum = "SHA256:da57c23d767c971b383de3bf1a680e5ea0f3991f4738552cb383127e60864b20"
+      url = "https://github.com/heroku/terraform-provider-heroku/raw/update-heroku-api-client/heroku/test-fixtures/app.tgz"
       version = "v0"
     }
 }`, appName)

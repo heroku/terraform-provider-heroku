@@ -2,10 +2,13 @@ GEM
   remote: https://rubygems.org/
   specs:
 
+RUBY VERSION
+   ruby 3.4.4
+
 PLATFORMS
   ruby
 
 DEPENDENCIES
 
 BUNDLED WITH
-   1.16.2
+   2.6.9

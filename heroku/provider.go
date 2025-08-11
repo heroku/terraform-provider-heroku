@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	heroku "github.com/heroku/heroku-go/v5"
+	heroku "github.com/heroku/heroku-go/v6"
 )
 
 // Provider returns a terraform.ResourceProvider.
@@ -111,7 +111,6 @@ func Provider() *schema.Provider {
 			"heroku_app_release":                       resourceHerokuAppRelease(),
 			"heroku_app_webhook":                       resourceHerokuAppWebhook(),
 			"heroku_build":                             resourceHerokuBuild(),
-			"heroku_cert":                              resourceHerokuCert(),
 			"heroku_collaborator":                      resourceHerokuCollaborator(),
 			"heroku_config":                            resourceHerokuConfig(),
 			"heroku_domain":                            resourceHerokuDomain(),
