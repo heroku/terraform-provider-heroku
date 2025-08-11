@@ -1,11 +1,16 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    webrick (1.9.1)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  webrick (~> 1.9)
+
+RUBY VERSION
+   ruby 3.4.4
 
 BUNDLED WITH
-   1.16.2
+   2.6.9

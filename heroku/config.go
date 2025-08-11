@@ -13,7 +13,7 @@ import (
 	"github.com/bgentry/go-netrc/netrc"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	heroku "github.com/heroku/heroku-go/v5"
+	heroku "github.com/heroku/heroku-go/v6"
 	"github.com/heroku/terraform-provider-heroku/v5/version"
 	homedir "github.com/mitchellh/go-homedir"
 )

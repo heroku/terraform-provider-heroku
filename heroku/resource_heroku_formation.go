@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	heroku "github.com/heroku/heroku-go/v5"
+	heroku "github.com/heroku/heroku-go/v6"
 )
 
 // herokuFormation is a value type used to hold the details of a formation
@@ -110,14 +110,19 @@ func resourceHerokuFormationCreate(d *schema.ResourceData, meta interface{}) err
 	if v, ok := d.GetOk("size"); ok {
 		vs := v.(string)
 		log.Printf("[DEBUG] Size: %s", vs)
-		opts.Size = &vs
+		opts.DynoSize = &struct {
+			ID   *string `json:"id,omitempty" url:"id,omitempty,key"`     // unique identifier of the dyno size
+			Name *string `json:"name,omitempty" url:"name,omitempty,key"` // name of the dyno size
+		}{
+			Name: &vs,
+		}
 	}
 
 	quantity := d.Get("quantity").(int)
 	log.Printf("[DEBUG] Quantity: %v", quantity)
 	opts.Quantity = &quantity
 
-	log.Printf(fmt.Sprintf("[DEBUG] Updating %s formation...", appID))
+	log.Printf("[DEBUG] Updating %s formation...", appID)
 	f, err := client.FormationUpdate(context.TODO(), appID, getFormationType(d), opts)
 	if err != nil {
 		return err
@@ -139,7 +144,12 @@ func resourceHerokuFormationUpdate(d *schema.ResourceData, meta interface{}) err
 	if d.HasChange("size") {
 		v := d.Get("size").(string)
 		log.Printf("[DEBUG] New Size: %s", v)
-		opts.Size = &v
+		opts.DynoSize = &struct {
+			ID   *string `json:"id,omitempty" url:"id,omitempty,key"`     // unique identifier of the dyno size
+			Name *string `json:"name,omitempty" url:"name,omitempty,key"` // name of the dyno size
+		}{
+			Name: &v,
+		}
 	}
 
 	if d.HasChange("quantity") {

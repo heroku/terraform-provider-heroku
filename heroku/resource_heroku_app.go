@@ -15,7 +15,7 @@ import (
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	heroku "github.com/heroku/heroku-go/v5"
+	heroku "github.com/heroku/heroku-go/v6"
 )
 
 // herokuApplication is a value type used to hold the details of an
@@ -616,7 +616,9 @@ func (a *application) Update() error {
 	a.App.Region = app.Region.Name
 	a.App.Stack = app.BuildStack.Name
 	a.App.GitURL = app.GitURL
-	a.App.WebURL = app.WebURL
+	if app.WebURL != nil {
+		a.App.WebURL = *app.WebURL
+	}
 	a.App.Acm = app.Acm
 	a.App.ID = app.ID
 
