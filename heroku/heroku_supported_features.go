@@ -20,6 +20,15 @@ var featureMatrix = map[string]map[string]map[string]bool{
 			"inbound_ruleset":       true, // Cedar supports inbound rulesets
 			"peering_connection":    true, // Cedar supports IPv4 peering
 		},
+		"app": {
+			"buildpacks":              true,  // Cedar supports traditional buildpacks
+			"stack":                   true,  // Cedar supports stack configuration
+			"internal_routing":        true,  // Cedar supports internal routing
+			"cloud_native_buildpacks": false, // Cedar doesn't use CNB by default
+		},
+		"drain": {
+			"app_log_drains": true, // Cedar supports traditional log drains
+		},
 	},
 	"fir": {
 		"space": {
@@ -33,6 +42,15 @@ var featureMatrix = map[string]map[string]map[string]bool{
 			"vpn_connection":        false, // VPN connections not supported
 			"inbound_ruleset":       false, // Inbound rulesets not supported
 			"peering_connection":    false, // IPv4 peering not supported
+		},
+		"app": {
+			"buildpacks":              false, // Fir doesn't support traditional buildpacks
+			"stack":                   false, // Fir doesn't use traditional stack config
+			"internal_routing":        false, // Fir doesn't support internal routing
+			"cloud_native_buildpacks": true,  // Fir uses CNB exclusively
+		},
+		"drain": {
+			"app_log_drains": false, // Fir apps don't support traditional log drains
 		},
 	},
 }
