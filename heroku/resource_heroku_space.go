@@ -6,8 +6,10 @@ import (
 	"log"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -73,6 +75,15 @@ func resourceHerokuSpace() *schema.Resource {
 				Default:  false,
 				ForceNew: true,
 			},
+
+			"generation": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "cedar",
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"cedar", "fir"}, false),
+				Description:  "Generation of the space. Defaults to cedar for backward compatibility.",
+			},
 		},
 	}
 }
@@ -92,6 +103,11 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 	if v := d.Get("shield"); v != nil {
 		vs := v.(bool)
 		if vs {
+			// Validate shield support for the selected generation
+			generation := d.Get("generation").(string)
+			if !IsFeatureSupported(generation, "space", "shield") {
+				return fmt.Errorf("shield spaces are not supported for %s generation", generation)
+			}
 			log.Printf("[DEBUG] Creating a shield space")
 		}
 		opts.Shield = &vs
@@ -151,6 +167,16 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("shield", space.Shield)
 	d.Set("cidr", space.CIDR)
 	d.Set("data_cidr", space.DataCIDR)
+
+	// Validate generation features during plan phase (warn only)
+	generation := d.Get("generation")
+	if generation == nil {
+		generation = "cedar" // Default for existing spaces without generation field
+	}
+	generationStr := generation.(string)
+	if space.Shield && !IsFeatureSupported(generationStr, "space", "shield") {
+		tflog.Warn(context.TODO(), fmt.Sprintf("Space has shield enabled but shield is not supported for %s generation", generationStr))
+	}
 
 	log.Printf("[DEBUG] Set NAT source IPs to %s for %s", space.NAT.Sources, d.Id())
 

@@ -15,6 +15,10 @@ var featureMatrix = map[string]map[string]map[string]bool{
 			"private_vpn":           true,
 			"outbound_rules":        true,
 			"private_space_logging": true,
+			"outbound_ips":          true, // Cedar supports outbound IPs
+			"vpn_connection":        true, // Cedar supports VPN connections
+			"inbound_ruleset":       true, // Cedar supports inbound rulesets
+			"peering_connection":    true, // Cedar supports IPv4 peering
 		},
 	},
 	"fir": {
@@ -25,6 +29,10 @@ var featureMatrix = map[string]map[string]map[string]bool{
 			"private_vpn":           false, // private_vpn
 			"outbound_rules":        false, // outbound_rules
 			"private_space_logging": false, // private_space_logging
+			"outbound_ips":          false, // space_outbound_ips
+			"vpn_connection":        false, // VPN connections not supported
+			"inbound_ruleset":       false, // Inbound rulesets not supported
+			"peering_connection":    false, // IPv4 peering not supported
 		},
 	},
 }
