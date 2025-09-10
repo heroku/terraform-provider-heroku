@@ -20,10 +20,11 @@ type spaceWithNAT struct {
 
 func resourceHerokuSpace() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceHerokuSpaceCreate,
-		Read:   resourceHerokuSpaceRead,
-		Update: resourceHerokuSpaceUpdate,
-		Delete: resourceHerokuSpaceDelete,
+		Create:        resourceHerokuSpaceCreate,
+		Read:          resourceHerokuSpaceRead,
+		Update:        resourceHerokuSpaceUpdate,
+		Delete:        resourceHerokuSpaceDelete,
+		CustomizeDiff: resourceHerokuSpaceCustomizeDiff,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -103,11 +104,6 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 	if v := d.Get("shield"); v != nil {
 		vs := v.(bool)
 		if vs {
-			// Validate shield support for the selected generation
-			generation := d.Get("generation").(string)
-			if !IsFeatureSupported(generation, "space", "shield") {
-				return fmt.Errorf("shield spaces are not supported for %s generation", generation)
-			}
 			log.Printf("[DEBUG] Creating a shield space")
 		}
 		opts.Shield = &vs
@@ -241,4 +237,23 @@ func SpaceStateRefreshFunc(client *heroku.Service, id string) resource.StateRefr
 
 		return &s, space.State, nil
 	}
+}
+
+// resourceHerokuSpaceCustomizeDiff validates generation-specific feature support during plan phase
+func resourceHerokuSpaceCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
+	generation, generationExists := diff.GetOk("generation")
+	shield, shieldExists := diff.GetOk("shield")
+
+	// Only validate if both fields are present
+	if generationExists && shieldExists {
+		generationStr := generation.(string)
+		shieldBool := shield.(bool)
+
+		// Check if shield is enabled for a generation that doesn't support it
+		if shieldBool && !IsFeatureSupported(generationStr, "space", "shield") {
+			return fmt.Errorf("shield spaces are not supported for %s generation", generationStr)
+		}
+	}
+
+	return nil
 }
