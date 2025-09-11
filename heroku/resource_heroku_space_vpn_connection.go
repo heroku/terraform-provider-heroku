@@ -9,14 +9,16 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
 func resourceHerokuSpaceVPNConnection() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceHerokuSpaceVPNConnectionCreate,
-		Read:   resourceHerokuSpaceVPNConnectionRead,
-		Delete: resourceHerokuSpaceVPNConnectionDelete,
+		Create:        resourceHerokuSpaceVPNConnectionCreate,
+		Read:          resourceHerokuSpaceVPNConnectionRead,
+		Delete:        resourceHerokuSpaceVPNConnectionDelete,
+		CustomizeDiff: resourceHerokuSpaceVPNConnectionCustomizeDiff,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -27,6 +29,15 @@ func resourceHerokuSpaceVPNConnection() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+			},
+
+			"generation": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "cedar",
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"cedar", "fir"}, false),
+				Description:  "Generation of the space for VPN connection. Defaults to cedar for backward compatibility.",
 			},
 
 			"name": {
@@ -189,4 +200,21 @@ func spaceVPNConnectionStateRefreshFunc(client *heroku.Service, space, connectio
 
 		return vpn, vpn.Status, nil
 	}
+}
+
+// resourceHerokuSpaceVPNConnectionCustomizeDiff validates generation-specific feature support during plan phase
+func resourceHerokuSpaceVPNConnectionCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
+	generation, generationExists := diff.GetOk("generation")
+
+	// Only validate if generation field is present
+	if generationExists {
+		generationStr := generation.(string)
+
+		// Check if VPN connections are supported for this generation
+		if !IsFeatureSupported(generationStr, "space", "vpn_connection") {
+			return fmt.Errorf("VPN connections are not supported for %s generation spaces", generationStr)
+		}
+	}
+
+	return nil
 }

@@ -86,3 +86,52 @@ resource "heroku_space_vpn_connection" "foobar" {
 }
 `, spaceConfig)
 }
+
+func TestHerokuSpaceVPNConnectionGeneration(t *testing.T) {
+	tests := []struct {
+		name        string
+		generation  string
+		expectError bool
+		description string
+	}{
+		{
+			name:        "Cedar generation should be supported",
+			generation:  "cedar",
+			expectError: false,
+			description: "Cedar supports VPN connections",
+		},
+		{
+			name:        "Fir generation should be unsupported",
+			generation:  "fir",
+			expectError: true,
+			description: "Fir does not support VPN connections",
+		},
+		{
+			name:        "Default generation (cedar) should be supported",
+			generation:  "", // Will default to cedar
+			expectError: false,
+			description: "Default cedar generation supports VPN connections",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test the feature support logic
+			generation := tt.generation
+			if generation == "" {
+				generation = "cedar" // Default
+			}
+
+			supported := IsFeatureSupported(generation, "space", "vpn_connection")
+			shouldError := !supported
+
+			if shouldError != tt.expectError {
+				t.Errorf("Expected error: %t, but got: %t for generation %s",
+					tt.expectError, shouldError, generation)
+			}
+
+			t.Logf("✅ Generation: %s, Supported: %t, ShouldError: %t",
+				generation, supported, shouldError)
+		})
+	}
+}
