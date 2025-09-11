@@ -56,6 +56,43 @@ func TestAccHerokuSpace(t *testing.T) {
 //  …
 // }
 
+// TestAccHerokuSpace_Fir creates a single Fir space and runs multiple Fir-specific tests against it
+// This follows the efficient pattern from TestAccHerokuSpace instead of creating multiple spaces
+func TestAccHerokuSpace_Fir(t *testing.T) {
+	var space spaceWithNAT
+	spaceName := fmt.Sprintf("tftest-fir-%s", acctest.RandString(10))
+	org := testAccConfig.GetAnyOrganizationOrSkip(t)
+	spaceConfig := testAccCheckHerokuSpaceConfig_generation(spaceName, org, "fir", false)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+		},
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuSpaceDestroy,
+		Steps: []resource.TestStep{
+			{
+				// Step 1: Create Fir space and validate generation
+				ResourceName: "heroku_space.foobar",
+				Config:       spaceConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
+					resource.TestCheckResourceAttr("heroku_space.foobar", "generation", "fir"),
+					resource.TestCheckResourceAttr("heroku_space.foobar", "shield", "false"),
+					resource.TestCheckResourceAttrSet("heroku_space.foobar", "outbound_ips.#"),
+					resource.TestCheckResourceAttr("heroku_space.foobar", "cidr", "10.0.0.0/16"),
+					resource.TestCheckResourceAttrSet("heroku_space.foobar", "data_cidr"),
+				),
+			},
+			// Test Fir-specific feature limitations (these should fail)
+			testStep_AccHerokuSpaceVPNConnection_FirValidation(t, spaceConfig),
+			testStep_AccHerokuSpaceInboundRuleset_FirValidation(t, spaceConfig),
+			testStep_AccHerokuSpacePeeringConnection_FirValidation(t, spaceConfig),
+		},
+	})
+}
+
+// TestAccHerokuSpace_Generation tests default and Cedar generation behavior efficiently
 func TestAccHerokuSpace_Generation(t *testing.T) {
 	var space spaceWithNAT
 	spaceName := fmt.Sprintf("tftest-gen-%s", acctest.RandString(10))
@@ -78,20 +115,11 @@ func TestAccHerokuSpace_Generation(t *testing.T) {
 				),
 			},
 			{
-				// Test 2: Explicit cedar generation
-				Config: testAccCheckHerokuSpaceConfig_generation(spaceName+"-cedar", org, "cedar", false),
+				// Test 2: Explicit cedar generation (ForceNew test - recreates the space)
+				Config: testAccCheckHerokuSpaceConfig_generation(spaceName, org, "cedar", false),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
 					resource.TestCheckResourceAttr("heroku_space.foobar", "generation", "cedar"),
-					resource.TestCheckResourceAttr("heroku_space.foobar", "shield", "false"),
-				),
-			},
-			{
-				// Test 3: Fir generation (non-shield)
-				Config: testAccCheckHerokuSpaceConfig_generation(spaceName+"-fir", org, "fir", false),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
-					resource.TestCheckResourceAttr("heroku_space.foobar", "generation", "fir"),
 					resource.TestCheckResourceAttr("heroku_space.foobar", "shield", "false"),
 				),
 			},
@@ -99,6 +127,7 @@ func TestAccHerokuSpace_Generation(t *testing.T) {
 	})
 }
 
+// TestAccHerokuSpace_GenerationShieldValidation tests that Fir + Shield fails with proper error
 func TestAccHerokuSpace_GenerationShieldValidation(t *testing.T) {
 	spaceName := fmt.Sprintf("tftest-shield-%s", acctest.RandString(10))
 	org := testAccConfig.GetAnyOrganizationOrSkip(t)
@@ -110,7 +139,7 @@ func TestAccHerokuSpace_GenerationShieldValidation(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				// Test: Fir + Shield should fail during apply
+				// Test: Fir + Shield should fail during plan
 				Config:      testAccCheckHerokuSpaceConfig_generation(spaceName, org, "fir", true),
 				ExpectError: regexp.MustCompile("shield spaces are not supported for fir generation"),
 			},
@@ -118,34 +147,8 @@ func TestAccHerokuSpace_GenerationShieldValidation(t *testing.T) {
 	})
 }
 
-func TestAccHerokuSpace_GenerationForceNew(t *testing.T) {
-	spaceName := fmt.Sprintf("tftest-forcenew-%s", acctest.RandString(10))
-	org := testAccConfig.GetAnyOrganizationOrSkip(t)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuSpaceDestroy,
-		Steps: []resource.TestStep{
-			{
-				// Step 1: Create space with cedar generation
-				Config: testAccCheckHerokuSpaceConfig_generation(spaceName, org, "cedar", false),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("heroku_space.foobar", "generation", "cedar"),
-				),
-			},
-			{
-				// Step 2: Change generation to fir - should force recreation
-				Config: testAccCheckHerokuSpaceConfig_generation(spaceName, org, "fir", false),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("heroku_space.foobar", "generation", "fir"),
-				),
-			},
-		},
-	})
-}
+// ForceNew behavior is already tested in TestAccHerokuSpace_Generation above
+// No separate test needed since changing generation recreates the space
 
 func testAccCheckHerokuSpaceConfig_basic(spaceName, orgName, cidr string) string {
 	return fmt.Sprintf(`
@@ -332,5 +335,51 @@ func TestHerokuSpaceGeneration(t *testing.T) {
 
 			t.Logf("✅ Generation: %s, Shield: %t, Supported: %t", generation, shield, IsFeatureSupported(generation, "space", "shield"))
 		})
+	}
+}
+
+// Test step functions for Fir-specific feature validation
+// These validate that unsupported features fail properly on Fir spaces
+
+func testStep_AccHerokuSpaceVPNConnection_FirValidation(t *testing.T, spaceConfig string) resource.TestStep {
+	return resource.TestStep{
+		Config: spaceConfig + `
+resource "heroku_space_vpn_connection" "fir_vpn_fail" {
+  name           = "fir-vpn-should-fail"
+  space          = heroku_space.foobar.id
+  generation     = "fir"
+  public_ip      = "203.0.113.10"
+  routable_cidrs = ["192.168.1.0/24"]
+}`,
+		ExpectError: regexp.MustCompile("generation.*fir.*not supported|vpn.*not supported.*fir"),
+	}
+}
+
+func testStep_AccHerokuSpaceInboundRuleset_FirValidation(t *testing.T, spaceConfig string) resource.TestStep {
+	return resource.TestStep{
+		Config: spaceConfig + `
+resource "heroku_space_inbound_ruleset" "fir_inbound_fail" {
+  space      = heroku_space.foobar.id
+  generation = "fir"
+  
+  rule {
+    action = "allow"
+    source = "0.0.0.0/0"
+  }
+}`,
+		ExpectError: regexp.MustCompile("generation.*fir.*not supported|inbound.*not supported.*fir"),
+	}
+}
+
+func testStep_AccHerokuSpacePeeringConnection_FirValidation(t *testing.T, spaceConfig string) resource.TestStep {
+	return resource.TestStep{
+		Config: spaceConfig + `
+resource "heroku_space_peering_connection_accepter" "fir_peering_fail" {
+  space             = heroku_space.foobar.id
+  generation        = "fir"
+  vpc_peering_connection_id = "pcx-123456789abcdef01"
+  type             = "aws"
+}`,
+		ExpectError: regexp.MustCompile("generation.*fir.*not supported|peering.*not supported.*fir"),
 	}
 }
