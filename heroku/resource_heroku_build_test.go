@@ -471,3 +471,109 @@ func resetSourceFiles() error {
 	}
 	return nil
 }
+
+// Unit tests for build generation functionality
+func TestHerokuBuildGeneration(t *testing.T) {
+	tests := []struct {
+		name       string
+		generation string
+		feature    string
+		expected   bool
+	}{
+		{
+			name:       "Cedar build traditional_buildpacks should be supported",
+			generation: "cedar",
+			feature:    "traditional_buildpacks",
+			expected:   true,
+		},
+		{
+			name:       "Cedar build cloud_native_buildpacks should be unsupported",
+			generation: "cedar",
+			feature:    "cloud_native_buildpacks",
+			expected:   false,
+		},
+		{
+			name:       "Fir build traditional_buildpacks should be unsupported",
+			generation: "fir",
+			feature:    "traditional_buildpacks",
+			expected:   false,
+		},
+		{
+			name:       "Fir build cloud_native_buildpacks should be supported",
+			generation: "fir",
+			feature:    "cloud_native_buildpacks",
+			expected:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			supported := IsFeatureSupported(tt.generation, "build", tt.feature)
+			if supported != tt.expected {
+				t.Errorf("Expected %t but got %t for generation %s feature %s", tt.expected, supported, tt.generation, tt.feature)
+			}
+			t.Logf("✅ Generation: %s, Resource: build, Feature: %s, Supported: %t", tt.generation, tt.feature, supported)
+		})
+	}
+}
+
+// Acceptance test for build generation validation
+func TestAccHerokuBuild_Generation(t *testing.T) {
+	var build heroku.Build
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-build-gen-%s", randString)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				// Test Cedar generation with buildpacks (should work)
+				Config: testAccCheckHerokuBuildConfig_generation(appName, "cedar", true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
+					resource.TestCheckResourceAttr("heroku_build.foobar", "generation", "cedar"),
+					resource.TestCheckResourceAttr("heroku_build.foobar", "status", "succeeded"),
+				),
+			},
+			{
+				// Test Fir generation with buildpacks (should fail during plan)
+				Config:      testAccCheckHerokuBuildConfig_generation(appName+"-fir", "fir", true),
+				ExpectError: regexp.MustCompile("buildpacks are not supported for fir generation builds"),
+			},
+			{
+				// Test Fir generation without buildpacks (should work)
+				Config: testAccCheckHerokuBuildConfig_generation(appName+"-fir-clean", "fir", false),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
+					resource.TestCheckResourceAttr("heroku_build.foobar", "generation", "fir"),
+					resource.TestCheckResourceAttr("heroku_build.foobar", "status", "succeeded"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckHerokuBuildConfig_generation(appName, generation string, includeBuildpacks bool) string {
+	buildpackConfig := ""
+	if includeBuildpacks {
+		buildpackConfig = `
+  buildpacks = ["https://github.com/heroku/heroku-buildpack-nodejs"]`
+	}
+
+	return fmt.Sprintf(`
+resource "heroku_app" "foobar" {
+  name   = "%s"
+  region = "us"
+}
+
+resource "heroku_build" "foobar" {
+  app_id     = heroku_app.foobar.id
+  generation = "%s"%s
+
+  source {
+    path = "test-fixtures/app"
+  }
+}
+`, appName, generation, buildpackConfig)
+}

@@ -20,6 +20,10 @@ var featureMatrix = map[string]map[string]map[string]bool{
 			"inbound_ruleset":       true, // Cedar supports inbound rulesets
 			"peering_connection":    true, // Cedar supports IPv4 peering
 		},
+		"build": {
+			"traditional_buildpacks":  true,  // Cedar supports buildpack URLs
+			"cloud_native_buildpacks": false, // Cedar does not support CNB
+		},
 	},
 	"fir": {
 		"space": {
@@ -33,6 +37,10 @@ var featureMatrix = map[string]map[string]map[string]bool{
 			"vpn_connection":        false, // VPN connections not supported
 			"inbound_ruleset":       false, // Inbound rulesets not supported
 			"peering_connection":    false, // IPv4 peering not supported
+		},
+		"build": {
+			"traditional_buildpacks":  false, // Fir does not support buildpack URLs
+			"cloud_native_buildpacks": true,  // Fir supports CNB via project.toml
 		},
 	},
 }

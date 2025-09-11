@@ -82,12 +82,34 @@ func TestIsFeatureSupported(t *testing.T) {
 			feature:      "some_feature",
 			expected:     false,
 		},
+		// Build generation tests
 		{
-			name:         "Fir build features should be unsupported (not implemented yet)",
+			name:         "Cedar build traditional_buildpacks should be supported",
+			generation:   "cedar",
+			resourceType: "build",
+			feature:      "traditional_buildpacks",
+			expected:     true,
+		},
+		{
+			name:         "Cedar build cloud_native_buildpacks should be unsupported",
+			generation:   "cedar",
+			resourceType: "build",
+			feature:      "cloud_native_buildpacks",
+			expected:     false,
+		},
+		{
+			name:         "Fir build traditional_buildpacks should be unsupported",
 			generation:   "fir",
 			resourceType: "build",
-			feature:      "some_feature",
+			feature:      "traditional_buildpacks",
 			expected:     false,
+		},
+		{
+			name:         "Fir build cloud_native_buildpacks should be supported",
+			generation:   "fir",
+			resourceType: "build",
+			feature:      "cloud_native_buildpacks",
+			expected:     true,
 		},
 
 		// Invalid generation tests

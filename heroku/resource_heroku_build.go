@@ -41,6 +41,15 @@ func resourceHerokuBuild() *schema.Resource {
 				ValidateFunc: validation.IsUUID,
 			},
 
+			"generation": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "cedar",
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"cedar", "fir"}, false),
+				Description:  "Generation of the build platform. Valid values are 'cedar' and 'fir'. Defaults to 'cedar' for backward compatibility.",
+			},
+
 			"buildpacks": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -369,6 +378,20 @@ func resourceHerokuBuildCustomizeDiff(ctx context.Context, diff *schema.Resource
 				if err := diff.ForceNew("local_checksum"); err != nil {
 					return fmt.Errorf("Error forcing new source resource: %s", err)
 				}
+			}
+		}
+	}
+
+	// Validate generation-specific build features
+	generation, generationExists := diff.GetOk("generation")
+	if generationExists {
+		generationStr := generation.(string)
+
+		// Validate buildpacks field
+		if buildpacks, buildpacksExists := diff.GetOk("buildpacks"); buildpacksExists {
+			buildpacksList := buildpacks.([]interface{})
+			if len(buildpacksList) > 0 && !IsFeatureSupported(generationStr, "build", "traditional_buildpacks") {
+				return fmt.Errorf("buildpacks are not supported for %s generation builds. Use Cloud Native Buildpacks and configure via project.toml instead", generationStr)
 			}
 		}
 	}

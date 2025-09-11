@@ -12,6 +12,10 @@ description: |-
 Provides a [Heroku Build](https://devcenter.heroku.com/articles/platform-api-reference#build)
 resource, to deploy source code to a Heroku app.
 
+The Heroku platform supports two generations with different build approaches:
+- **Cedar** (default): Traditional platform with support for configurable buildpacks and stack selection
+- **Fir**: Next-generation platform with Cloud Native Buildpacks (CNB), where buildpacks are configured via `project.toml` in the source code
+
 Either a [URL](#source-urls) or [local path](#local-source), pointing to a [tarball](https://en.wikipedia.org/wiki/Tar_(computing))
 of the source code, may be deployed. If a local path is used, it may instead point to a directory of source code, which will be tarballed automatically and then deployed.
 
@@ -37,6 +41,30 @@ will be searched until a match is detected and used to compile the app.
 A [`Procfile`](https://devcenter.heroku.com/articles/procfile) may be required to successfully launch the app.
 Some buildpacks provide a default web process, such as [`npm start` for Node.js](https://devcenter.heroku.com/articles/nodejs-support#default-web-process-type).
 Other buildpacks may require a `Procfile`, like for a [pure Ruby app](https://devcenter.heroku.com/articles/ruby-support#ruby-applications-process-types).
+
+### Building with Cloud Native Buildpacks (Fir Generation)
+
+For Fir generation apps, buildpacks are configured using [Cloud Native Buildpacks (CNB)](https://buildpacks.io/) standards.
+Instead of specifying buildpacks in the Terraform configuration, create a [`project.toml`](https://buildpacks.io/docs/app-developer-guide/using-project-descriptor/) file in your source code root:
+
+```toml
+[project]
+schema-version = "0.2"
+
+[[project.licenses]]
+type = "MIT"
+
+[build]
+builder = "heroku/buildpacks:20"
+
+[[build.buildpacks]]
+uri = "heroku/nodejs"
+
+[[build.buildpacks]]  
+uri = "heroku/procfile"
+```
+
+**Important**: Do not specify `buildpacks` in the `heroku_build` resource when using Fir generation, as this will cause a validation error.
 
 ### Building with Docker
 
@@ -68,14 +96,16 @@ of the Terraform configuration.
 
 ### Example Usage with Source URL
 
+#### Cedar Generation (Default)
 ```hcl-terraform
-resource "heroku_app" "foobar" {
-    name   = "foobar"
+resource "heroku_app" "cedar_app" {
+    name   = "cedar-example"
     region = "us"
 }
 
-resource "heroku_build" "foobar" {
-  app_id     = heroku_app.foobar.id
+resource "heroku_build" "cedar_build" {
+  app_id     = heroku_app.cedar_app.id
+  generation = "cedar"  # Optional, defaults to "cedar"
   buildpacks = ["https://github.com/mars/create-react-app-buildpack"]
 
   source {
@@ -85,12 +115,41 @@ resource "heroku_build" "foobar" {
   }
 }
 
-resource "heroku_formation" "foobar" {
-  app_id     = heroku_app.foobar.id
+resource "heroku_formation" "cedar_formation" {
+  app_id     = heroku_app.cedar_app.id
   type       = "web"
   quantity   = 1
   size       = "Standard-1x"
-  depends_on = ["heroku_build.foobar"]
+  depends_on = ["heroku_build.cedar_build"]
+}
+```
+
+#### Fir Generation (Cloud Native Buildpacks)
+```hcl-terraform
+resource "heroku_app" "fir_app" {
+    name       = "fir-example"
+    region     = "us"
+    generation = "fir"
+}
+
+resource "heroku_build" "fir_build" {
+  app_id     = heroku_app.fir_app.id
+  generation = "fir"
+  # Note: buildpacks not specified - configured via project.toml in source
+
+  source {
+    # Source code must include project.toml for CNB configuration
+    url     = "https://github.com/example/cnb-app/archive/v1.0.0.tar.gz"
+    version = "v1.0.0"
+  }
+}
+
+resource "heroku_formation" "fir_formation" {
+  app_id     = heroku_app.fir_app.id
+  type       = "web"
+  quantity   = 1
+  size       = "Standard-1x"
+  depends_on = ["heroku_build.fir_build"]
 }
 ```
 
@@ -113,14 +172,16 @@ When running `terraform apply`, if the contents (SHA256) of the source path chan
 
 ### Example Usage with Local Source Directory
 
+#### Cedar Generation with Local Source
 ```hcl-terraform
-resource "heroku_app" "foobar" {
-    name   = "foobar"
+resource "heroku_app" "local_app" {
+    name   = "local-example"
     region = "us"
 }
 
-resource "heroku_build" "foobar" {
-  app_id = heroku_app.foobar.id
+resource "heroku_build" "local_build" {
+  app_id = heroku_app.local_app.id
+  # generation defaults to "cedar"
 
   source {
     # A local directory, changing its contents will
@@ -129,12 +190,39 @@ resource "heroku_build" "foobar" {
   }
 }
 
-resource "heroku_formation" "foobar" {
-  app_id     = heroku_app.foobar.id
+resource "heroku_formation" "local_formation" {
+  app_id     = heroku_app.local_app.id
   type       = "web"
   quantity   = 1
   size       = "Standard-1x"
-  depends_on = ["heroku_build.foobar"]
+  depends_on = ["heroku_build.local_build"]
+}
+```
+
+#### Fir Generation with Local Source
+```hcl-terraform
+resource "heroku_app" "local_fir_app" {
+    name       = "local-fir-example"
+    region     = "us" 
+    generation = "fir"
+}
+
+resource "heroku_build" "local_fir_build" {
+  app_id     = heroku_app.local_fir_app.id
+  generation = "fir"
+
+  source {
+    # Local directory must contain project.toml for CNB configuration
+    path = "src/cnb-app"
+  }
+}
+
+resource "heroku_formation" "local_fir_formation" {
+  app_id     = heroku_app.local_fir_app.id
+  type       = "web"
+  quantity   = 1
+  size       = "Standard-1x"
+  depends_on = ["heroku_build.local_fir_build"]
 }
 ```
 
@@ -143,7 +231,10 @@ resource "heroku_formation" "foobar" {
 The following arguments are supported:
 
 * `app_id` - (Required) Heroku app ID (do not use app name)
-* `buildpacks` - List of buildpack GitHub URLs
+* `generation` - (Optional) Generation of the build platform. Valid values are `cedar` and `fir`. Defaults to `cedar` for backward compatibility. **ForceNew**.
+  
+  **Note**: For Fir generation, buildpacks are configured via `project.toml` in your source code rather than the `buildpacks` field.
+* `buildpacks` - List of buildpack GitHub URLs. **Not supported for Fir generation** - use `project.toml` configuration instead.
 * `source` - (Required) A block that specifies the source code to build & release:
   * `checksum` - SHA256 hash of the tarball archive to verify its integrity, example:
     `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
@@ -159,6 +250,7 @@ The following arguments are supported:
 The following attributes are exported:
 
 * `uuid` - The ID of the build
+* `generation` - Generation of the build platform (`cedar` or `fir`)
 * `output_stream_url` - URL that [streams the log output from the build](https://devcenter.heroku.com/articles/build-and-release-using-the-api#streaming-build-output)
 * `release_id` - The Heroku app release created with a build's slug
 * `slug_id` - The Heroku slug created by a build
