@@ -16,11 +16,22 @@ func resourceHerokuSpaceInboundRuleset() *schema.Resource {
 		Update: resourceHerokuSpaceInboundRulesetSet,
 		Delete: resourceHerokuSpaceInboundRulesetDelete,
 
+		CustomizeDiff: resourceHerokuSpaceInboundRulesetCustomizeDiff,
+
 		Schema: map[string]*schema.Schema{
 			"space": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+			},
+
+			"generation": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "cedar",
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"cedar", "fir"}, false),
+				Description:  "Generation of the space for inbound ruleset. Defaults to cedar for backward compatibility.",
 			},
 
 			"rule": {
@@ -134,5 +145,18 @@ func resourceHerokuSpaceInboundRulesetDelete(d *schema.ResourceData, meta interf
 	}
 
 	d.SetId("")
+	return nil
+}
+
+func resourceHerokuSpaceInboundRulesetCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
+	generation, generationExists := diff.GetOk("generation")
+
+	if generationExists {
+		generationStr := generation.(string)
+
+		if !IsFeatureSupported(generationStr, "space", "inbound_ruleset") {
+			return fmt.Errorf("inbound rulesets are not supported for %s generation spaces", generationStr)
+		}
+	}
 	return nil
 }

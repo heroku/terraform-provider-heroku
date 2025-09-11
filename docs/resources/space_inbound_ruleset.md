@@ -13,16 +13,18 @@ Provides a resource for managing [inbound rulesets](https://devcenter.heroku.com
 ## Example Usage
 
 ```hcl-terraform
-# Create a new Heroku space
+# Create a new Heroku space (Cedar generation - supports inbound rulesets)
 resource "heroku_space" "default" {
   name         = "test-space"
   organization = "my-company"
   region       = "virginia"
+  generation   = "cedar"
 }
 
 # Allow all traffic EXCEPT 8.8.4.4 to access the HPS.
 resource "heroku_space_inbound_ruleset" "default" {
-  space = heroku_space.default.id
+  space      = heroku_space.default.id
+  generation = "cedar"
 
   rule {
     action = "allow"
@@ -41,6 +43,7 @@ resource "heroku_space_inbound_ruleset" "default" {
 The following arguments are supported:
 
 * `space` - (Required) The ID of the space.
+* `generation` - (Optional) Generation of the space for inbound ruleset. Valid values are `cedar` and `fir`. Defaults to `cedar` for backward compatibility. **ForceNew**. Note: Inbound rulesets are not supported for `fir` generation spaces.
 * `rule` - (Required) At least one `rule` block. Rules are documented below.
 
 A `rule` block supports the following arguments:
@@ -53,3 +56,4 @@ A `rule` block supports the following arguments:
 The following attributes are exported:
 
 * `id` - The ID of the inbound ruleset.
+* `generation` - Generation of the space for inbound ruleset.
