@@ -76,7 +76,7 @@ The following attributes are exported:
 * `region` - The space's region.
 * `cidr` - The space's CIDR.
 * `data_cidr` - The space's Data CIDR.
-* `outbound_ips` - The space's stable outbound [NAT IPs](https://devcenter.heroku.com/articles/platform-api-reference#space-network-address-translation).
+* `outbound_ips` - The space's stable outbound [NAT IPs](https://devcenter.heroku.com/articles/platform-api-reference#space-network-address-translation). Note: Outbound IP management is not supported for `fir` generation spaces.
 
 ## Import
 
