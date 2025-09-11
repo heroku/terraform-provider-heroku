@@ -49,11 +49,12 @@ type application struct {
 
 func resourceHerokuApp() *schema.Resource {
 	return &schema.Resource{
-		Create: switchHerokuAppCreate,
-		Read:   resourceHerokuAppRead,
-		Update: resourceHerokuAppUpdate,
-		Delete: resourceHerokuAppDelete,
-		Exists: resourceHerokuAppExists,
+		Create:        switchHerokuAppCreate,
+		Read:          resourceHerokuAppRead,
+		Update:        resourceHerokuAppUpdate,
+		Delete:        resourceHerokuAppDelete,
+		Exists:        resourceHerokuAppExists,
+		CustomizeDiff: resourceHerokuAppCustomizeDiff,
 
 		Importer: &schema.ResourceImporter{
 			State: resourceHerokuAppImport,
@@ -75,6 +76,15 @@ func resourceHerokuApp() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+			},
+
+			"generation": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "cedar",
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"cedar", "fir"}, false),
+				Description:  "Generation of the app platform. Defaults to cedar for backward compatibility.",
 			},
 
 			"stack": {
@@ -1033,4 +1043,35 @@ func resourceHerokuAppStateUpgradeV0(ctx context.Context, rawState map[string]in
 	rawState["id"] = foundApp.ID
 
 	return rawState, nil
+}
+
+func resourceHerokuAppCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
+	generation, generationExists := diff.GetOk("generation")
+
+	if generationExists {
+		generationStr := generation.(string)
+
+		// Validate buildpacks field
+		if buildpacks, buildpacksExists := diff.GetOk("buildpacks"); buildpacksExists {
+			buildpacksList := buildpacks.([]interface{})
+			if len(buildpacksList) > 0 && !IsFeatureSupported(generationStr, "app", "buildpacks") {
+				return fmt.Errorf("buildpacks are not supported for %s generation apps. Use Cloud Native Buildpacks and configure via project.toml instead", generationStr)
+			}
+		}
+
+		// Validate stack field
+		if stack, stackExists := diff.GetOk("stack"); stackExists {
+			if stack.(string) != "" && !IsFeatureSupported(generationStr, "app", "stack") {
+				return fmt.Errorf("stack configuration is not supported for %s generation apps. Remove the 'stack' field", generationStr)
+			}
+		}
+
+		// Validate internal_routing field
+		if internalRouting, internalRoutingExists := diff.GetOk("internal_routing"); internalRoutingExists {
+			if internalRouting.(bool) && !IsFeatureSupported(generationStr, "app", "internal_routing") {
+				return fmt.Errorf("internal routing is not supported for %s generation apps", generationStr)
+			}
+		}
+	}
+	return nil
 }

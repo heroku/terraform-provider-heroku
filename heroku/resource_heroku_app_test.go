@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -899,6 +900,75 @@ resource "heroku_app" "foobar" {
 }`, appName, org)
 }
 
+func testAccCheckHerokuAppConfig_generation_cedar(spaceConfig, appName, org string) string {
+	return fmt.Sprintf(`
+# heroku_space.foobar config inherited from previous steps
+%s
+
+resource "heroku_app" "foobar" {
+  name       = "%s"
+  space      = heroku_space.foobar.name
+  region     = "virginia"
+  generation = "cedar"
+
+  organization {
+    name = "%s"
+  }
+
+  buildpacks = ["heroku/nodejs"]
+  stack      = "heroku-22"
+
+  config_vars = {
+    FOO = "bar"
+  }
+}`, spaceConfig, appName, org)
+}
+
+func testAccCheckHerokuAppConfig_generation_fir(spaceConfig, appName, org string) string {
+	return fmt.Sprintf(`
+# heroku_space.foobar config inherited from previous steps
+%s
+
+resource "heroku_app" "foobar" {
+  name       = "%s"
+  space      = heroku_space.foobar.name
+  region     = "virginia"
+  generation = "fir"
+
+  organization {
+    name = "%s"
+  }
+
+  config_vars = {
+    FOO = "bar"
+  }
+}`, spaceConfig, appName, org)
+}
+
+func testAccCheckHerokuAppConfig_generation_fir_invalid(spaceConfig, appName, org string) string {
+	return fmt.Sprintf(`
+# heroku_space.foobar config inherited from previous steps
+%s
+
+resource "heroku_app" "foobar" {
+  name       = "%s"
+  space      = heroku_space.foobar.name
+  region     = "virginia"
+  generation = "fir"
+
+  organization {
+    name = "%s"
+  }
+
+  # This should trigger validation error
+  buildpacks = ["heroku/nodejs"]
+
+  config_vars = {
+    FOO = "bar"
+  }
+}`, spaceConfig, appName, org)
+}
+
 func testAccCheckHerokuAppConfig_acm_disabled(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
@@ -1005,4 +1075,87 @@ resource "heroku_app" "foobar" {
     FOO = "bar"
   }
 }`, appName)
+}
+
+// Unit tests for app generation support
+// Simple unit test for app generation validation logic
+func TestHerokuAppGeneration(t *testing.T) {
+	// Test that the feature matrix correctly identifies supported/unsupported features
+	tests := []struct {
+		name       string
+		generation string
+		feature    string
+		expected   bool
+	}{
+		// Cedar app features - should all be supported except CNB
+		{name: "Cedar buildpacks should be supported", generation: "cedar", feature: "buildpacks", expected: true},
+		{name: "Cedar stack should be supported", generation: "cedar", feature: "stack", expected: true},
+		{name: "Cedar internal_routing should be supported", generation: "cedar", feature: "internal_routing", expected: true},
+		{name: "Cedar cloud_native_buildpacks should be unsupported", generation: "cedar", feature: "cloud_native_buildpacks", expected: false},
+
+		// Fir app features - traditional features should be unsupported, CNB should be supported
+		{name: "Fir buildpacks should be unsupported", generation: "fir", feature: "buildpacks", expected: false},
+		{name: "Fir stack should be unsupported", generation: "fir", feature: "stack", expected: false},
+		{name: "Fir internal_routing should be unsupported", generation: "fir", feature: "internal_routing", expected: false},
+		{name: "Fir cloud_native_buildpacks should be supported", generation: "fir", feature: "cloud_native_buildpacks", expected: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			supported := IsFeatureSupported(tt.generation, "app", tt.feature)
+			if supported != tt.expected {
+				t.Errorf("Expected %t but got %t for generation %s feature %s", tt.expected, supported, tt.generation, tt.feature)
+			}
+			t.Logf("✅ Generation: %s, Feature: %s, Supported: %t", tt.generation, tt.feature, supported)
+		})
+	}
+}
+
+// Generates a "test step" not a whole test, so that it can reuse the space.
+// See: resource_heroku_space_test.go, where this is used.
+func testStep_AccHerokuApp_Generation_Cedar(t *testing.T, spaceConfig, spaceName string) resource.TestStep {
+	var app heroku.TeamApp
+	appName := fmt.Sprintf("tftest-cedar-%s", acctest.RandString(10))
+	org := testAccConfig.GetSpaceOrganizationOrSkip(t)
+
+	return resource.TestStep{
+		Config: testAccCheckHerokuAppConfig_generation_cedar(spaceConfig, appName, org),
+		Check: resource.ComposeTestCheckFunc(
+			testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
+			resource.TestCheckResourceAttr("heroku_app.foobar", "generation", "cedar"),
+			resource.TestCheckResourceAttr("heroku_app.foobar", "buildpacks.#", "1"),
+			resource.TestCheckResourceAttr("heroku_app.foobar", "buildpacks.0", "heroku/nodejs"),
+			resource.TestCheckResourceAttr("heroku_app.foobar", "stack", "heroku-22"),
+		),
+	}
+}
+
+// Generates a "test step" not a whole test, so that it can reuse the space.
+// See: resource_heroku_space_test.go, where this is used.
+func testStep_AccHerokuApp_Generation_Fir(t *testing.T, spaceConfig, spaceName string) resource.TestStep {
+	var app heroku.TeamApp
+	appName := fmt.Sprintf("tftest-fir-%s", acctest.RandString(10))
+	org := testAccConfig.GetSpaceOrganizationOrSkip(t)
+
+	return resource.TestStep{
+		Config: testAccCheckHerokuAppConfig_generation_fir(spaceConfig, appName, org),
+		Check: resource.ComposeTestCheckFunc(
+			testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
+			resource.TestCheckResourceAttr("heroku_app.foobar", "generation", "fir"),
+			// Fir apps should not have buildpacks or stack configured
+			resource.TestCheckNoResourceAttr("heroku_app.foobar", "buildpacks"),
+			resource.TestCheckNoResourceAttr("heroku_app.foobar", "stack"),
+		),
+	}
+}
+
+// Test that Fir app with buildpacks fails validation during plan
+func testStep_AccHerokuApp_Generation_Fir_Invalid(t *testing.T, spaceConfig, spaceName string) resource.TestStep {
+	appName := fmt.Sprintf("tftest-fir-invalid-%s", acctest.RandString(10))
+	org := testAccConfig.GetSpaceOrganizationOrSkip(t)
+
+	return resource.TestStep{
+		Config:      testAccCheckHerokuAppConfig_generation_fir_invalid(spaceConfig, appName, org),
+		ExpectError: regexp.MustCompile("buildpacks are not supported for fir generation apps"),
+	}
 }

@@ -10,14 +10,19 @@ description: |-
 
 Provides a Heroku App resource. This can be used to create and manage applications on Heroku.
 
+The Heroku platform supports two generations:
+- **Cedar** (default): Traditional platform with support for buildpacks, stack configuration, and internal routing
+- **Fir**: Next-generation platform with Cloud Native Buildpacks (CNB), enhanced security, and modern containerization
+
 -> **Always reference apps by ID (UUID) in Terraform configuration**
 Starting with v5.0 of this provider, all HCL app references are by ID. Read more details in [Upgrading](guides/upgrading.html).
 
 ## Example Usage
 
+### Cedar Generation (Default)
 ```hcl-terraform
-resource "heroku_app" "default" {
-  name   = "my-cool-app"
+resource "heroku_app" "cedar_app" {
+  name   = "my-cedar-app"
   region = "us"
 
   config_vars = {
@@ -27,6 +32,24 @@ resource "heroku_app" "default" {
   buildpacks = [
     "heroku/go"
   ]
+  
+  stack = "heroku-22"
+}
+```
+
+### Fir Generation (Cloud Native Buildpacks)
+```hcl-terraform
+resource "heroku_app" "fir_app" {
+  name       = "my-fir-app"
+  region     = "us"
+  generation = "fir"
+
+  config_vars = {
+    FOOBAR = "baz"
+  }
+  
+  # Note: buildpacks and stack are not supported for Fir generation
+  # Use project.toml in your application code instead
 }
 ```
 
@@ -52,9 +75,12 @@ The following arguments are supported:
 * `name` - (Required) The name of the application. In Heroku, this is also the
    unique ID, so it must be unique and have a minimum of 3 characters.
 * `region` - (Required) The region that the app should be deployed in.
-* `stack` - (Optional) The application stack is what platform to run the application in.
+* `generation` - (Optional) Generation of the app platform. Valid values are `cedar` and `fir`. Defaults to `cedar` for backward compatibility. **ForceNew**. 
+   - **Cedar**: Traditional platform supporting buildpacks, stack configuration, and internal routing
+   - **Fir**: Next-generation platform with Cloud Native Buildpacks (CNB). Does not support `buildpacks`, `stack`, or `internal_routing` fields
+* `stack` - (Optional) The application stack is what platform to run the application in. **Note**: Not supported for `fir` generation apps.
 * `buildpacks` - (Optional) Buildpack names or URLs for the application.
-  Buildpacks configured externally won't be altered if this is not present.
+  Buildpacks configured externally won't be altered if this is not present. **Note**: Not supported for `fir` generation apps. Use project.toml for Cloud Native Buildpacks configuration instead.
 * `config_vars`<sup>[1](#deleting-vars)</sup> - (Optional) Configuration variables for the application.
      The config variables in this map are not the final set of configuration
      variables, but rather variables you want present. That is, other
@@ -68,7 +94,7 @@ The following arguments are supported:
 * `space` - (Optional) The name of a private space to create the app in.
 * `internal_routing` - (Optional) If true, the application will be routable
   only internally in a private space. This option is only available for apps
-  that also specify `space`.
+  that also specify `space`. **Note**: Not supported for `fir` generation apps.
 * `organization` - (Optional) A block that can be specified once to define
      Heroku Team settings for this app. The fields for this block are
      documented below.
@@ -96,6 +122,7 @@ The following attributes are exported:
 
 * `id` - The ID (UUID) of the app.
 * `name` - The name of the app.
+* `generation` - Generation of the app platform (cedar or fir). Defaults to cedar.
 * `stack` - The application stack is what platform to run the application in.
 * `space` - The private space the app should run in.
 * `internal_routing` - Whether internal routing is enabled the private space app.
@@ -112,6 +139,55 @@ The following attributes are exported:
   their values are redacted in console output.) This attribute is not set in state if the `provider`
   attribute `set_app_all_config_vars_in_state` is `false`.
 * `uuid` - The unique UUID of the Heroku app. **NOTE:** Use this for `null_resource` triggers.
+
+## Cloud Native Buildpacks (Fir Generation)
+
+When using the Fir generation (`generation = "fir"`), applications use Cloud Native Buildpacks (CNB) instead of traditional Heroku buildpacks. This requires different configuration approaches:
+
+### project.toml Configuration
+
+Instead of specifying `buildpacks` in Terraform, create a `project.toml` file in your application root:
+
+```toml
+[build]
+[[build.buildpacks]]
+id = "heroku/nodejs"
+
+[[build.buildpacks]] 
+id = "heroku/procfile"
+
+[build.env]
+BP_NODE_VERSION = "18.*"
+```
+
+### Migration from Cedar to Fir
+
+When migrating from Cedar to Fir generation:
+
+1. **Remove incompatible fields**: Remove `buildpacks`, `stack`, and `internal_routing` from your Terraform configuration
+2. **Add project.toml**: Create a `project.toml` file in your application code with buildpack configuration
+3. **Update generation**: Set `generation = "fir"` in your app resource
+4. **Redeploy**: Deploy your application with the new configuration
+
+```hcl-terraform
+# Before (Cedar)
+resource "heroku_app" "example" {
+  name   = "my-app"
+  region = "us"
+  
+  buildpacks = ["heroku/nodejs"]
+  stack      = "heroku-22"
+}
+
+# After (Fir)
+resource "heroku_app" "example" {
+  name       = "my-app" 
+  region     = "us"
+  generation = "fir"
+  
+  # buildpacks and stack removed - configured via project.toml
+}
+```
 
 ## Import
 
