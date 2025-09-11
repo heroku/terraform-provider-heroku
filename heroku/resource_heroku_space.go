@@ -171,7 +171,7 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	generationStr := generation.(string)
 	if space.Shield && !IsFeatureSupported(generationStr, "space", "shield") {
-		tflog.Warn(context.TODO(), fmt.Sprintf("Space has shield enabled but shield is not supported for %s generation", generationStr))
+		tflog.Warn(context.TODO(), fmt.Sprintf("Space has `shield` set to `true` but Shield spaces are unsupported for the %s generation", generationStr))
 	}
 
 	log.Printf("[DEBUG] Set NAT source IPs to %s for %s", space.NAT.Sources, d.Id())
