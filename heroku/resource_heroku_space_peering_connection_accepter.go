@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -21,6 +22,8 @@ func resourceHerokuSpacePeeringConnectionAccepter() *schema.Resource {
 		Read:   resourceHerokuSpacePeeringConnectionAccepterRead,
 		Delete: resourceHerokuSpacePeeringConnectionAccepterDelete,
 
+		CustomizeDiff: resourceHerokuSpacePeeringConnectionAccepterCustomizeDiff,
+
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceHerokuSpacePeeringConnectionAccepterImport,
 		},
@@ -30,6 +33,15 @@ func resourceHerokuSpacePeeringConnectionAccepter() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+			},
+
+			"generation": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "cedar",
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"cedar", "fir"}, false),
+				Description:  "Generation of the space for peering connection. Defaults to cedar for backward compatibility.",
 			},
 
 			"status": {
@@ -170,4 +182,17 @@ func SpacePeeringConnAccepterStateRefreshFunc(client *heroku.Service, spaceIdent
 
 		return &pcx, peeringConn.Status, nil
 	}
+}
+
+func resourceHerokuSpacePeeringConnectionAccepterCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
+	generation, generationExists := diff.GetOk("generation")
+
+	if generationExists {
+		generationStr := generation.(string)
+
+		if !IsFeatureSupported(generationStr, "space", "peering_connection") {
+			return fmt.Errorf("peering connections are not supported for %s generation spaces", generationStr)
+		}
+	}
+	return nil
 }
