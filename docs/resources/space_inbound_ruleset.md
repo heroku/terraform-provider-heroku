@@ -10,6 +10,8 @@ description: |-
 
 Provides a resource for managing [inbound rulesets](https://devcenter.heroku.com/articles/platform-api-reference#inbound-ruleset) for Heroku Private Spaces.
 
+~> **IMPORTANT:** When renaming or relocating this resource, use a [`moved` block](https://developer.hashicorp.com/terraform/language/block/moved) to prevent the resource from being destroyed and recreated. During destroy/create operations, the space's inbound ruleset is temporarily set to allow all traffic, which can create a security risk.
+
 ## Example Usage
 
 ```hcl-terraform
