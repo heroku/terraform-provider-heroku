@@ -119,6 +119,12 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 		opts.DataCIDR = &vs
 	}
 
+	if v, ok := d.GetOk("generation"); ok {
+		vs := v.(string)
+		opts.Generation = &vs
+		log.Printf("[DEBUG] Creating space with generation: %s", vs)
+	}
+
 	space, err := client.SpaceCreate(context.TODO(), opts)
 	if err != nil {
 		return err
@@ -163,6 +169,13 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("shield", space.Shield)
 	d.Set("cidr", space.CIDR)
 	d.Set("data_cidr", space.DataCIDR)
+
+	// Set generation from API response, defaulting to cedar for backward compatibility
+	if space.Generation.Name != "" {
+		d.Set("generation", space.Generation.Name)
+	} else {
+		d.Set("generation", "cedar")
+	}
 
 	// Validate generation features during plan phase (warn only)
 	generation := d.Get("generation")
