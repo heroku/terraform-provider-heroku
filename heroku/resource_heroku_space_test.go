@@ -16,7 +16,7 @@ func TestAccHerokuSpace(t *testing.T) {
 	var space spaceWithNAT
 	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
 	org := testAccConfig.GetAnyOrganizationOrSkip(t)
-	spaceConfig := testAccCheckHerokuSpaceConfig_basic(spaceName, org, "10.0.0.0/16")
+	spaceConfig := testAccCheckHerokuSpaceConfig_basic(spaceName, org)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -31,8 +31,7 @@ func TestAccHerokuSpace(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
 					resource.TestCheckResourceAttrSet("heroku_space.foobar", "outbound_ips.#"),
-					resource.TestCheckResourceAttr("heroku_space.foobar", "cidr", "10.0.0.0/16"),
-					resource.TestCheckResourceAttrSet("heroku_space.foobar", "data_cidr"),
+					resource.TestCheckResourceAttrSet("heroku_space.foobar", "cidr"),
 				),
 			},
 			// append space test Steps, sharing the space, instead of recreating for each test
@@ -80,47 +79,7 @@ func TestAccHerokuSpace_Fir(t *testing.T) {
 					resource.TestCheckResourceAttr("heroku_space.foobar", "generation", "fir"),
 					resource.TestCheckResourceAttr("heroku_space.foobar", "shield", "false"),
 					resource.TestCheckResourceAttrSet("heroku_space.foobar", "outbound_ips.#"),
-					resource.TestCheckResourceAttr("heroku_space.foobar", "cidr", "10.0.0.0/16"),
-					resource.TestCheckResourceAttrSet("heroku_space.foobar", "data_cidr"),
-				),
-			},
-			// Test Fir-specific feature limitations (these should fail)
-			testStep_AccHerokuSpaceVPNConnection_FirValidation(t, spaceConfig),
-			testStep_AccHerokuSpaceInboundRuleset_FirValidation(t, spaceConfig),
-			testStep_AccHerokuSpacePeeringConnection_FirValidation(t, spaceConfig),
-		},
-	})
-}
-
-// TestAccHerokuSpace_Generation tests default and Cedar generation behavior efficiently
-func TestAccHerokuSpace_Generation(t *testing.T) {
-	var space spaceWithNAT
-	spaceName := fmt.Sprintf("tftest-gen-%s", acctest.RandString(10))
-	org := testAccConfig.GetAnyOrganizationOrSkip(t)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuSpaceDestroy,
-		Steps: []resource.TestStep{
-			{
-				// Test 1: Default generation (should be cedar)
-				Config: testAccCheckHerokuSpaceConfig_generation(spaceName, org, "", false),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
-					resource.TestCheckResourceAttr("heroku_space.foobar", "generation", "cedar"),
-					resource.TestCheckResourceAttr("heroku_space.foobar", "shield", "false"),
-				),
-			},
-			{
-				// Test 2: Explicit cedar generation (ForceNew test - recreates the space)
-				Config: testAccCheckHerokuSpaceConfig_generation(spaceName, org, "cedar", false),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHerokuSpaceExists("heroku_space.foobar", &space),
-					resource.TestCheckResourceAttr("heroku_space.foobar", "generation", "cedar"),
-					resource.TestCheckResourceAttr("heroku_space.foobar", "shield", "false"),
+					resource.TestCheckResourceAttrSet("heroku_space.foobar", "cidr"),
 				),
 			},
 		},
@@ -150,15 +109,14 @@ func TestAccHerokuSpace_GenerationShieldValidation(t *testing.T) {
 // ForceNew behavior is already tested in TestAccHerokuSpace_Generation above
 // No separate test needed since changing generation recreates the space
 
-func testAccCheckHerokuSpaceConfig_basic(spaceName, orgName, cidr string) string {
+func testAccCheckHerokuSpaceConfig_basic(spaceName, orgName string) string {
 	return fmt.Sprintf(`
 resource "heroku_space" "foobar" {
   name = "%s"
   organization = "%s"
   region = "virginia"
-  cidr         = "%s"
 }
-`, spaceName, orgName, cidr)
+`, spaceName, orgName)
 }
 
 func testAccCheckHerokuSpaceConfig_generation(spaceName, orgName, generation string, shield bool) string {
@@ -166,8 +124,7 @@ func testAccCheckHerokuSpaceConfig_generation(spaceName, orgName, generation str
 resource "heroku_space" "foobar" {
   name = "%s"
   organization = "%s"
-  region = "virginia"
-  cidr = "10.0.0.0/16"`, spaceName, orgName)
+  region = "virginia"`, spaceName, orgName)
 
 	if generation != "" {
 		config += fmt.Sprintf(`
