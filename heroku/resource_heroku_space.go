@@ -170,13 +170,6 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("cidr", space.CIDR)
 	d.Set("data_cidr", space.DataCIDR)
 
-	// Set generation from API response, defaulting to cedar for backward compatibility
-	if space.Generation.Name != "" {
-		d.Set("generation", space.Generation.Name)
-	} else {
-		d.Set("generation", "cedar")
-	}
-
 	// Validate generation features during plan phase (warn only)
 	generation := d.Get("generation")
 	if generation == nil {
