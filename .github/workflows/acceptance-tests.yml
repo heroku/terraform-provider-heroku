@@ -2,7 +2,8 @@ name: Acceptance
 on:
   pull_request:
     branches:
-    - master
+      - master
+      - fir-compatibility
     paths-ignore:
       - 'docs/**'
       - '**.md'
