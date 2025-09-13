@@ -6,8 +6,10 @@ import (
 	"log"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -18,10 +20,11 @@ type spaceWithNAT struct {
 
 func resourceHerokuSpace() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceHerokuSpaceCreate,
-		Read:   resourceHerokuSpaceRead,
-		Update: resourceHerokuSpaceUpdate,
-		Delete: resourceHerokuSpaceDelete,
+		Create:        resourceHerokuSpaceCreate,
+		Read:          resourceHerokuSpaceRead,
+		Update:        resourceHerokuSpaceUpdate,
+		Delete:        resourceHerokuSpaceDelete,
+		CustomizeDiff: resourceHerokuSpaceCustomizeDiff,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -41,8 +44,8 @@ func resourceHerokuSpace() *schema.Resource {
 
 			"cidr": {
 				Type:     schema.TypeString,
+				Computed: true,
 				Optional: true,
-				Default:  "10.0.0.0/16",
 				ForceNew: true,
 			},
 
@@ -72,6 +75,15 @@ func resourceHerokuSpace() *schema.Resource {
 				Optional: true,
 				Default:  false,
 				ForceNew: true,
+			},
+
+			"generation": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "cedar",
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"cedar", "fir"}, false),
+				Description:  "Generation of the space. Defaults to cedar for backward compatibility.",
 			},
 		},
 	}
@@ -105,6 +117,12 @@ func resourceHerokuSpaceCreate(d *schema.ResourceData, meta interface{}) error {
 	if v, ok := d.GetOk("data_cidr"); ok {
 		vs := v.(string)
 		opts.DataCIDR = &vs
+	}
+
+	if v, ok := d.GetOk("generation"); ok {
+		vs := v.(string)
+		opts.Generation = &vs
+		log.Printf("[DEBUG] Creating space with generation: %s", vs)
 	}
 
 	space, err := client.SpaceCreate(context.TODO(), opts)
@@ -151,6 +169,16 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("shield", space.Shield)
 	d.Set("cidr", space.CIDR)
 	d.Set("data_cidr", space.DataCIDR)
+
+	// Validate generation features during plan phase (warn only)
+	generation := d.Get("generation")
+	if generation == nil {
+		generation = "cedar" // Default for existing spaces without generation field
+	}
+	generationStr := generation.(string)
+	if space.Shield && !IsFeatureSupported(generationStr, "space", "shield") {
+		tflog.Warn(context.TODO(), fmt.Sprintf("Space has `shield` set to `true` but Shield spaces are unsupported for the %s generation", generationStr))
+	}
 
 	log.Printf("[DEBUG] Set NAT source IPs to %s for %s", space.NAT.Sources, d.Id())
 
@@ -215,4 +243,23 @@ func SpaceStateRefreshFunc(client *heroku.Service, id string) resource.StateRefr
 
 		return &s, space.State, nil
 	}
+}
+
+// resourceHerokuSpaceCustomizeDiff validates generation-specific feature support during plan phase
+func resourceHerokuSpaceCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
+	generation, generationExists := diff.GetOk("generation")
+	shield, shieldExists := diff.GetOk("shield")
+
+	// Only validate if both fields are present
+	if generationExists && shieldExists {
+		generationStr := generation.(string)
+		shieldBool := shield.(bool)
+
+		// Check if shield is enabled for a generation that doesn't support it
+		if shieldBool && !IsFeatureSupported(generationStr, "space", "shield") {
+			return fmt.Errorf("shield spaces are not supported for %s generation", generationStr)
+		}
+	}
+
+	return nil
 }
