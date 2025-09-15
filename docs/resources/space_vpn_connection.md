@@ -23,7 +23,7 @@ resource "heroku_space" "default" {
 // Connect the Heroku space to another network with a VPN
 resource "heroku_space_vpn_connection" "office" {
   name           = "office"
-  space          = heroku_space.default.id
+  space          = heroku_space.default.name
   public_ip      = "203.0.113.1"
   routable_cidrs = ["192.168.1.0/24"]
 }
@@ -34,7 +34,7 @@ resource "heroku_space_vpn_connection" "office" {
 The following arguments are supported:
 
 * `name` - (Required) The name of the VPN connection.
-* `space` - (Required) The ID of the Heroku Private Space where the VPN connection will be established.
+* `space` - (Required) The name of the Private Space (ID/UUID is acceptable too, but must be used consistently).
 * `public_ip` - (Required) The public IP address of the VPN endpoint on the network where the VPN connection will be established.
 * `routable_cidrs` - (Required) A list of IPv4 CIDR blocks used by the network where the VPN connection will be established.
 
