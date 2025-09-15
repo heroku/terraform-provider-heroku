@@ -27,7 +27,7 @@ resource "aws_vpc_peering_connection" "request" {
 
 # Accept the request.
 resource "heroku_space_peering_connection_accepter" "accept" {
-  space                     = heroku_space.peer_space.id
+  space                     = heroku_space.peer_space.name
   vpc_peering_connection_id = aws_vpc_peering_connection.request.id
 }
 ```

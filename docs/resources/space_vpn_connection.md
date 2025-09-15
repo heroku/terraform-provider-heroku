@@ -23,7 +23,7 @@ resource "heroku_space" "default" {
 // Connect the Heroku space to another network with a VPN
 resource "heroku_space_vpn_connection" "office" {
   name           = "office"
-  space          = heroku_space.default.id
+  space          = heroku_space.default.name
   public_ip      = "203.0.113.1"
   routable_cidrs = ["192.168.1.0/24"]
 }

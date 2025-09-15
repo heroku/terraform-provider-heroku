@@ -24,7 +24,7 @@ resource "heroku_space" "default" {
 
 # Allow all traffic EXCEPT 8.8.4.4 to access the HPS.
 resource "heroku_space_inbound_ruleset" "default" {
-  space = heroku_space.default.id
+  space = heroku_space.default.name
 
   rule {
     action = "allow"

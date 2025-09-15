@@ -24,14 +24,14 @@ resource "heroku_space" "default" {
 
 // Give an existing team member create_apps permissions to the Private Space
 resource "heroku_space_app_access" "member1" {
-  space = heroku_space.default.id
+  space = heroku_space.default.name
   email = "member1@example.com"
   permissions = ["create_apps"]
 }
 
 // Remove all permissions from an existing team member
 resource "heroku_space_app_access" "member2" {
-  space = heroku_space.default.id
+  space = heroku_space.default.name
   email = "member2@example.com"
   permissions = []
 }
