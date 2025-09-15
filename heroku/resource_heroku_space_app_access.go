@@ -76,7 +76,6 @@ func resourceHerokuSpaceAppAccessRead(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 	d.SetId(spaceAppAccess.User.ID)
-	d.Set("space", spaceAppAccess.Space.Name)
 	d.Set("email", spaceAppAccess.User.Email)
 	d.Set("permissions", createPermissionsList(spaceAppAccess))
 	return nil
