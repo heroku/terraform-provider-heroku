@@ -42,7 +42,7 @@ resource "heroku_space_inbound_ruleset" "default" {
 
 The following arguments are supported:
 
-* `space` - (Required) The ID of the space.
+* `space` - (Required) The name of the Private Space (ID/UUID is acceptable too, but must be used consistently).
 * `rule` - (Required) At least one `rule` block. Rules are documented below.
 
 A `rule` block supports the following arguments:

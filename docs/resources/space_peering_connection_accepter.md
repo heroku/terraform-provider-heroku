@@ -36,7 +36,7 @@ resource "heroku_space_peering_connection_accepter" "accept" {
 
 The following arguments are supported:
 
-* `space` - (Required) The ID of the space.
+* `space` - (Required) The name of the Private Space (ID/UUID is acceptable too, but must be used consistently).
 * `vpc_peering_connection_id` - (Required) The peering connection request ID.
 
 ## Attributes Reference

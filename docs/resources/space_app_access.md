@@ -41,7 +41,7 @@ resource "heroku_space_app_access" "member2" {
 
 The following arguments are supported:
 
-* `space` - (Required) The ID of the Private Space.
+* `space` - (Required) The name of the Private Space (ID/UUID is acceptable too, but must be used consistently).
 * `email` - (Required) The email of the existing Heroku Team member.
 * `permissions` - (Required) The permissions to grant the team member for the Private Space.
   Currently `create_apps` is the only supported permission. If not provided the member will have no permissions to the space.
