@@ -45,6 +45,7 @@ type application struct {
 	Vars       map[string]string  // Represents all vars on a heroku app.
 	Buildpacks []string           // The application's buildpack names or URLs
 	IsTeamApp  bool               // Is the application a team (organization) app
+	Generation string             // The generation of the app platform (cedar/fir)
 }
 
 func resourceHerokuApp() *schema.Resource {
@@ -79,12 +80,9 @@ func resourceHerokuApp() *schema.Resource {
 			},
 
 			"generation": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Default:      "cedar",
-				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"cedar", "fir"}, false),
-				Description:  "Generation of the app platform. Defaults to cedar for backward compatibility.",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Generation of the app platform. Determined by the space the app is deployed to.",
 			},
 
 			"stack": {
@@ -451,6 +449,9 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		return buildpacksErr
 	}
 
+	// Set generation based on app characteristics
+	d.Set("generation", app.Generation)
+
 	if app.IsTeamApp {
 		orgErr := setTeamDetails(d, app)
 		if orgErr != nil {
@@ -638,6 +639,17 @@ func (a *application) Update() error {
 
 	if app.Space != nil {
 		a.App.Space = app.Space.Name
+		// Determine generation from space information
+		spaceGeneration, err := a.getSpaceGeneration(app.Space.ID)
+		if err != nil {
+			log.Printf("[WARN] Could not determine space generation for %s: %s", app.Space.ID, err)
+			a.Generation = "cedar" // Default to cedar if we can't determine
+		} else {
+			a.Generation = spaceGeneration
+		}
+	} else {
+		// Apps not in a space are cedar generation (common app platform)
+		a.Generation = "cedar"
 	}
 
 	// If app is a team/org app, define additional values.
@@ -658,9 +670,17 @@ func (a *application) Update() error {
 
 	var errs []error
 	var err error
-	a.Buildpacks, err = retrieveBuildpacks(a.Id, a.Client)
-	if err != nil {
-		errs = append(errs, err)
+
+	// Only retrieve buildpacks for apps that support traditional buildpacks
+	if IsFeatureSupported(a.Generation, "app", "buildpacks") {
+		a.Buildpacks, err = retrieveBuildpacks(a.Id, a.Client)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	} else {
+		// CNB apps don't have traditional buildpacks
+		log.Printf("[DEBUG] App %s uses generation %s which doesn't support traditional buildpacks", a.Id, a.Generation)
+		a.Buildpacks = []string{}
 	}
 
 	a.Vars, err = retrieveConfigVars(a.Id, a.Client)
@@ -693,6 +713,32 @@ func retrieveBuildpacks(id string, client *heroku.Service) ([]string, error) {
 	}
 
 	return buildpacks, nil
+}
+
+// isCNBError checks if an error is related to Cloud Native Buildpacks
+func isCNBError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errorMessage := err.Error()
+	return strings.Contains(errorMessage, "Cloud Native Buildpacks") ||
+		strings.Contains(errorMessage, "project.toml")
+}
+
+// getSpaceGeneration determines the generation of a space by querying the space API
+func (a *application) getSpaceGeneration(spaceID string) (string, error) {
+	space, err := a.Client.SpaceInfo(context.TODO(), spaceID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get space info: %w", err)
+	}
+
+	// Check if the space has generation information
+	if space.Generation.Name != "" {
+		return space.Generation.Name, nil
+	}
+
+	// Default to cedar if generation is not specified
+	return "cedar", nil
 }
 
 func retrieveAcm(id string, client *heroku.Service) (bool, error) {
@@ -1046,32 +1092,7 @@ func resourceHerokuAppStateUpgradeV0(ctx context.Context, rawState map[string]in
 }
 
 func resourceHerokuAppCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
-	generation, generationExists := diff.GetOk("generation")
-
-	if generationExists {
-		generationStr := generation.(string)
-
-		// Validate buildpacks field
-		if buildpacks, buildpacksExists := diff.GetOk("buildpacks"); buildpacksExists {
-			buildpacksList := buildpacks.([]interface{})
-			if len(buildpacksList) > 0 && !IsFeatureSupported(generationStr, "app", "buildpacks") {
-				return fmt.Errorf("buildpacks are not supported for %s generation apps. Use Cloud Native Buildpacks and configure via project.toml instead", generationStr)
-			}
-		}
-
-		// Validate stack field
-		if stack, stackExists := diff.GetOk("stack"); stackExists {
-			if stack.(string) != "" && !IsFeatureSupported(generationStr, "app", "stack") {
-				return fmt.Errorf("stack configuration is not supported for %s generation apps. Remove the 'stack' field", generationStr)
-			}
-		}
-
-		// Validate internal_routing field
-		if internalRouting, internalRoutingExists := diff.GetOk("internal_routing"); internalRoutingExists {
-			if internalRouting.(bool) && !IsFeatureSupported(generationStr, "app", "internal_routing") {
-				return fmt.Errorf("internal routing is not supported for %s generation apps", generationStr)
-			}
-		}
-	}
+	// Note: Generation is now computed based on the space, not user-configurable.
+	// Validation will happen during the apply phase when we can determine the actual generation.
 	return nil
 }

@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -902,14 +901,13 @@ resource "heroku_app" "foobar" {
 
 func testAccCheckHerokuAppConfig_generation_cedar(spaceConfig, appName, org string) string {
 	return fmt.Sprintf(`
-# heroku_space.foobar config inherited from previous steps
+# heroku_space.foobar config inherited from previous steps (Cedar space)
 %s
 
 resource "heroku_app" "foobar" {
-  name       = "%s"
-  space      = heroku_space.foobar.name
-  region     = "virginia"
-  generation = "cedar"
+  name   = "%s"
+  space  = heroku_space.foobar.name
+  region = "virginia"
 
   organization {
     name = "%s"
@@ -926,42 +924,17 @@ resource "heroku_app" "foobar" {
 
 func testAccCheckHerokuAppConfig_generation_fir(spaceConfig, appName, org string) string {
 	return fmt.Sprintf(`
-# heroku_space.foobar config inherited from previous steps
+# heroku_space.foobar config inherited from previous steps (Fir space)
 %s
 
 resource "heroku_app" "foobar" {
-  name       = "%s"
-  space      = heroku_space.foobar.name
-  region     = "virginia"
-  generation = "fir"
+  name   = "%s"
+  space  = heroku_space.foobar.name
+  region = "virginia"
 
   organization {
     name = "%s"
   }
-
-  config_vars = {
-    FOO = "bar"
-  }
-}`, spaceConfig, appName, org)
-}
-
-func testAccCheckHerokuAppConfig_generation_fir_invalid(spaceConfig, appName, org string) string {
-	return fmt.Sprintf(`
-# heroku_space.foobar config inherited from previous steps
-%s
-
-resource "heroku_app" "foobar" {
-  name       = "%s"
-  space      = heroku_space.foobar.name
-  region     = "virginia"
-  generation = "fir"
-
-  organization {
-    name = "%s"
-  }
-
-  # This should trigger validation error
-  buildpacks = ["heroku/nodejs"]
 
   config_vars = {
     FOO = "bar"
@@ -1142,20 +1115,10 @@ func testStep_AccHerokuApp_Generation_Fir(t *testing.T, spaceConfig, spaceName s
 		Check: resource.ComposeTestCheckFunc(
 			testAccCheckHerokuAppExistsOrg("heroku_app.foobar", &app),
 			resource.TestCheckResourceAttr("heroku_app.foobar", "generation", "fir"),
-			// Fir apps should not have buildpacks or stack configured
-			resource.TestCheckNoResourceAttr("heroku_app.foobar", "buildpacks"),
-			resource.TestCheckNoResourceAttr("heroku_app.foobar", "stack"),
+			// Fir apps should have empty buildpacks (CNB apps don't show traditional buildpacks)
+			resource.TestCheckResourceAttr("heroku_app.foobar", "buildpacks.#", "0"),
+			// Fir apps should show CNB stack
+			resource.TestCheckResourceAttr("heroku_app.foobar", "stack", "cnb"),
 		),
-	}
-}
-
-// Test that Fir app with buildpacks fails validation during plan
-func testStep_AccHerokuApp_Generation_Fir_Invalid(t *testing.T, spaceConfig, spaceName string) resource.TestStep {
-	appName := fmt.Sprintf("tftest-fir-invalid-%s", acctest.RandString(10))
-	org := testAccConfig.GetSpaceOrganizationOrSkip(t)
-
-	return resource.TestStep{
-		Config:      testAccCheckHerokuAppConfig_generation_fir_invalid(spaceConfig, appName, org),
-		ExpectError: regexp.MustCompile("buildpacks are not supported for fir generation apps"),
 	}
 }
