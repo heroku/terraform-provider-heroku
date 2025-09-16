@@ -639,16 +639,13 @@ func (a *application) Update() error {
 
 	if app.Space != nil {
 		a.App.Space = app.Space.Name
-		// Determine generation from space information
-		spaceGeneration, err := a.getSpaceGeneration(app.Space.ID)
-		if err != nil {
-			log.Printf("[WARN] Could not determine space generation for %s: %s", app.Space.ID, err)
-			a.Generation = "cedar" // Default to cedar if we can't determine
-		} else {
-			a.Generation = spaceGeneration
-		}
+	}
+
+	// Determine generation from app's generation field (available in AppInfo response)
+	if app.Generation.Name != "" {
+		a.Generation = app.Generation.Name
 	} else {
-		// Apps not in a space are cedar generation (common app platform)
+		// Default to cedar if generation is not specified
 		a.Generation = "cedar"
 	}
 
@@ -723,22 +720,6 @@ func isCNBError(err error) bool {
 	errorMessage := err.Error()
 	return strings.Contains(errorMessage, "Cloud Native Buildpacks") ||
 		strings.Contains(errorMessage, "project.toml")
-}
-
-// getSpaceGeneration determines the generation of a space by querying the space API
-func (a *application) getSpaceGeneration(spaceID string) (string, error) {
-	space, err := a.Client.SpaceInfo(context.TODO(), spaceID)
-	if err != nil {
-		return "", fmt.Errorf("failed to get space info: %w", err)
-	}
-
-	// Check if the space has generation information
-	if space.Generation.Name != "" {
-		return space.Generation.Name, nil
-	}
-
-	// Default to cedar if generation is not specified
-	return "cedar", nil
 }
 
 func retrieveAcm(id string, client *heroku.Service) (bool, error) {
