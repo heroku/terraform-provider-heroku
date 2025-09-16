@@ -89,8 +89,8 @@ The following arguments are supported:
    unique ID, so it must be unique and have a minimum of 3 characters.
 * `region` - (Required) The region that the app should be deployed in.
 * `generation` - (Computed) Generation of the app platform. Automatically determined based on the space the app is deployed to. Apps in Fir generation spaces will be `fir`, all other apps will be `cedar`.
-   - **Cedar**: Traditional platform supporting buildpacks, stack configuration, and internal routing
-   - **Fir**: Next-generation platform with Cloud Native Buildpacks (CNB). Does not support `buildpacks`, `stack`, or `internal_routing` fields
+   - `cedar`: Traditional platform supporting buildpacks, stack configuration, and internal routing
+   - `fir`: Next-generation platform with Cloud Native Buildpacks (CNB). Does not support `buildpacks`, `stack`, or `internal_routing` fields
 * `stack` - (Optional) The application stack is what platform to run the application in. **Note**: Not supported for `fir` generation apps.
 * `buildpacks` - (Optional) Buildpack names or URLs for the application.
   Buildpacks configured externally won't be altered if this is not present. **Note**: Not supported for `fir` generation apps. Use project.toml for Cloud Native Buildpacks configuration instead.
