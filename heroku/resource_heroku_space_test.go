@@ -39,6 +39,8 @@ func TestAccHerokuSpace(t *testing.T) {
 			testStep_AccDatasourceHerokuSpacePeeringInfo_Basic(t, spaceConfig),
 			testStep_AccHerokuApp_Space(t, spaceConfig, spaceName),
 			testStep_AccHerokuApp_Space_Internal(t, spaceConfig, spaceName),
+			// App generation acceptance tests
+			testStep_AccHerokuApp_Generation_Cedar(t, spaceConfig, spaceName),
 			testStep_AccHerokuSlug_WithFile_InPrivateSpace(t, spaceConfig),
 			testStep_AccHerokuSpaceAppAccess_Basic(t, spaceConfig),
 			testStep_AccHerokuSpaceAppAccess_importBasic(t, spaceName),
@@ -82,6 +84,8 @@ func TestAccHerokuSpace_Fir(t *testing.T) {
 					resource.TestCheckResourceAttrSet("heroku_space.foobar", "cidr"),
 				),
 			},
+			// Step 2: Test Fir app generation behavior
+			testStep_AccHerokuApp_Generation_Fir(t, spaceConfig, spaceName),
 		},
 	})
 }

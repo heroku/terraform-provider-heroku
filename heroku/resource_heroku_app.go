@@ -45,15 +45,17 @@ type application struct {
 	Vars       map[string]string  // Represents all vars on a heroku app.
 	Buildpacks []string           // The application's buildpack names or URLs
 	IsTeamApp  bool               // Is the application a team (organization) app
+	Generation string             // The generation of the app platform (cedar/fir)
 }
 
 func resourceHerokuApp() *schema.Resource {
 	return &schema.Resource{
-		Create: switchHerokuAppCreate,
-		Read:   resourceHerokuAppRead,
-		Update: resourceHerokuAppUpdate,
-		Delete: resourceHerokuAppDelete,
-		Exists: resourceHerokuAppExists,
+		Create:        switchHerokuAppCreate,
+		Read:          resourceHerokuAppRead,
+		Update:        resourceHerokuAppUpdate,
+		Delete:        resourceHerokuAppDelete,
+		Exists:        resourceHerokuAppExists,
+		CustomizeDiff: resourceHerokuAppCustomizeDiff,
 
 		Importer: &schema.ResourceImporter{
 			State: resourceHerokuAppImport,
@@ -75,6 +77,12 @@ func resourceHerokuApp() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+			},
+
+			"generation": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Generation of the app platform. Determined by the space the app is deployed to.",
 			},
 
 			"stack": {
@@ -441,6 +449,9 @@ func resourceHerokuAppRead(d *schema.ResourceData, meta interface{}) error {
 		return buildpacksErr
 	}
 
+	// Set generation based on app characteristics
+	d.Set("generation", app.Generation)
+
 	if app.IsTeamApp {
 		orgErr := setTeamDetails(d, app)
 		if orgErr != nil {
@@ -630,6 +641,14 @@ func (a *application) Update() error {
 		a.App.Space = app.Space.Name
 	}
 
+	// Determine generation from app's generation field (available in AppInfo response)
+	if app.Generation.Name != "" {
+		a.Generation = app.Generation.Name
+	} else {
+		// Default to cedar if generation is not specified
+		a.Generation = "cedar"
+	}
+
 	// If app is a team/org app, define additional values.
 	if app.Organization != nil && app.Team != nil {
 		// Set to true to control additional state actions downstream
@@ -648,9 +667,17 @@ func (a *application) Update() error {
 
 	var errs []error
 	var err error
-	a.Buildpacks, err = retrieveBuildpacks(a.Id, a.Client)
-	if err != nil {
-		errs = append(errs, err)
+
+	// Only retrieve buildpacks for apps that support traditional buildpacks
+	if IsFeatureSupported(a.Generation, "app", "buildpacks") {
+		a.Buildpacks, err = retrieveBuildpacks(a.Id, a.Client)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	} else {
+		// CNB apps don't have traditional buildpacks
+		log.Printf("[DEBUG] App %s uses generation %s which doesn't support traditional buildpacks", a.Id, a.Generation)
+		a.Buildpacks = []string{}
 	}
 
 	a.Vars, err = retrieveConfigVars(a.Id, a.Client)
@@ -683,6 +710,16 @@ func retrieveBuildpacks(id string, client *heroku.Service) ([]string, error) {
 	}
 
 	return buildpacks, nil
+}
+
+// isCNBError checks if an error is related to Cloud Native Buildpacks
+func isCNBError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errorMessage := err.Error()
+	return strings.Contains(errorMessage, "Cloud Native Buildpacks") ||
+		strings.Contains(errorMessage, "project.toml")
 }
 
 func retrieveAcm(id string, client *heroku.Service) (bool, error) {
@@ -1033,4 +1070,10 @@ func resourceHerokuAppStateUpgradeV0(ctx context.Context, rawState map[string]in
 	rawState["id"] = foundApp.ID
 
 	return rawState, nil
+}
+
+func resourceHerokuAppCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
+	// Note: Generation is now computed based on the space, not user-configurable.
+	// Validation will happen during the apply phase when we can determine the actual generation.
+	return nil
 }

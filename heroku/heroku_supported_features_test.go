@@ -75,12 +75,62 @@ func TestIsFeatureSupported(t *testing.T) {
 		},
 
 		// Unknown resource type tests
+		// App feature tests
 		{
-			name:         "Cedar app features should be unsupported (not implemented yet)",
+			name:         "Cedar app buildpacks should be supported",
 			generation:   "cedar",
 			resourceType: "app",
-			feature:      "some_feature",
+			feature:      "buildpacks",
+			expected:     true,
+		},
+		{
+			name:         "Cedar app stack should be supported",
+			generation:   "cedar",
+			resourceType: "app",
+			feature:      "stack",
+			expected:     true,
+		},
+		{
+			name:         "Cedar app internal_routing should be supported",
+			generation:   "cedar",
+			resourceType: "app",
+			feature:      "internal_routing",
+			expected:     true,
+		},
+		{
+			name:         "Cedar app cloud_native_buildpacks should be unsupported",
+			generation:   "cedar",
+			resourceType: "app",
+			feature:      "cloud_native_buildpacks",
 			expected:     false,
+		},
+		{
+			name:         "Fir app buildpacks should be unsupported",
+			generation:   "fir",
+			resourceType: "app",
+			feature:      "buildpacks",
+			expected:     false,
+		},
+		{
+			name:         "Fir app stack should be unsupported",
+			generation:   "fir",
+			resourceType: "app",
+			feature:      "stack",
+			expected:     false,
+		},
+		{
+			name:         "Fir app internal_routing should be unsupported",
+			generation:   "fir",
+			resourceType: "app",
+			feature:      "internal_routing",
+			expected:     false,
+		},
+		{
+			name:         "Fir app cloud_native_buildpacks should be supported",
+			generation:   "fir",
+			resourceType: "app",
+			feature:      "cloud_native_buildpacks",
+			expected:     true,
 		},
 		{
 			name:         "Fir build features should be unsupported (not implemented yet)",
