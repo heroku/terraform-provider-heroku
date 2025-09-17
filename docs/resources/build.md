@@ -22,6 +22,15 @@ If the build fails, the build log will be output in the error message.
 
 To start the app from a successful build, use a [Formation resource](formation.html) to specify the process, dyno size, and dyno quantity.
 
+## Generation Compatibility
+
+Build configuration varies between Cedar (traditional) and Fir (next-generation) apps:
+
+- **Cedar apps**: Support traditional `buildpacks` configuration for specifying buildpack URLs or names
+- **Fir apps**: Use [Cloud Native Buildpacks](https://devcenter.heroku.com/articles/using-multiple-buildpacks-for-an-app) configured via `project.toml` in the source code. The `buildpacks` argument cannot be used with Fir generation apps.
+
+Apps inherit their generation from their space (Fir) or default to Cedar when not in a space.
+
 ## Source code layout
 
 The code contained in the source directory or tarball must follow the layout required by the [buildpack](https://devcenter.heroku.com/articles/buildpacks)
@@ -46,6 +55,25 @@ A [`heroku.yml` manifest](https://devcenter.heroku.com/articles/build-docker-ima
 file is required to declare which `Dockerfile` to build for each process. Be careful not to create conflicting configuration
 between `heroku.yml` and Terraform, such as addons or config vars.
 
+### Building with Cloud Native Buildpacks (Fir Generation)
+
+Fir generation apps use [Cloud Native Buildpacks](https://devcenter.heroku.com/articles/using-multiple-buildpacks-for-an-app) instead of traditional buildpacks. Buildpack configuration must be specified in a `project.toml` file in the source code rather than the Terraform configuration.
+
+The `buildpacks` argument cannot be used with Fir generation apps. Attempting to do so will result in an error during `terraform apply`.
+
+Example `project.toml` for a Node.js app:
+
+```toml
+[build]
+buildpacks = ["heroku/nodejs"]
+
+[[build.env]]
+name = "NODE_ENV"
+value = "production"
+```
+
+For more information, see [Using Multiple Buildpacks for an App](https://devcenter.heroku.com/articles/using-multiple-buildpacks-for-an-app).
+
 ## Source URLs
 A `source.url` may point to any `https://` URL that responds to a `GET` with a tarball source code. When running `terraform apply`,
 the source code will only be fetched once for a successful build. Change the URL to force a new resource.
@@ -68,14 +96,16 @@ of the Terraform configuration.
 
 ### Example Usage with Source URL
 
+#### Cedar Generation (Traditional)
+
 ```hcl-terraform
-resource "heroku_app" "foobar" {
-    name   = "foobar"
+resource "heroku_app" "cedar_app" {
+    name   = "my-cedar-app"
     region = "us"
 }
 
-resource "heroku_build" "foobar" {
-  app_id     = heroku_app.foobar.id
+resource "heroku_build" "cedar_build" {
+  app_id     = heroku_app.cedar_app.id
   buildpacks = ["https://github.com/mars/create-react-app-buildpack"]
 
   source {
@@ -85,12 +115,53 @@ resource "heroku_build" "foobar" {
   }
 }
 
-resource "heroku_formation" "foobar" {
-  app_id     = heroku_app.foobar.id
+resource "heroku_formation" "cedar_formation" {
+  app_id     = heroku_app.cedar_app.id
   type       = "web"
   quantity   = 1
   size       = "Standard-1x"
-  depends_on = ["heroku_build.foobar"]
+  depends_on = ["heroku_build.cedar_build"]
+}
+```
+
+#### Fir Generation (Cloud Native Buildpacks)
+
+```hcl-terraform
+resource "heroku_space" "fir_space" {
+  name         = "my-fir-space"
+  organization = "my-organization"
+  region       = "virginia"
+  generation   = "fir"
+}
+
+resource "heroku_app" "fir_app" {
+  name   = "my-fir-app"
+  region = heroku_space.fir_space.region
+  space  = heroku_space.fir_space.id
+  
+  organization {
+    name = "my-organization"
+  }
+}
+
+resource "heroku_build" "fir_build" {
+  app_id = heroku_app.fir_app.id
+  # Note: Do not specify buildpacks for Fir apps
+  # Buildpacks are configured via project.toml in the source code
+
+  source {
+    # Source must include project.toml for CNB configuration
+    url     = "https://github.com/username/my-cnb-app/archive/v1.0.0.tar.gz"
+    version = "v1.0.0"
+  }
+}
+
+resource "heroku_formation" "fir_formation" {
+  app_id     = heroku_app.fir_app.id
+  type       = "web"
+  quantity   = 1
+  size       = "Standard-1x"
+  depends_on = ["heroku_build.fir_build"]
 }
 ```
 
@@ -113,28 +184,71 @@ When running `terraform apply`, if the contents (SHA256) of the source path chan
 
 ### Example Usage with Local Source Directory
 
+#### Cedar Generation (Traditional)
+
 ```hcl-terraform
-resource "heroku_app" "foobar" {
-    name   = "foobar"
+resource "heroku_app" "cedar_app" {
+    name   = "my-cedar-app"
     region = "us"
 }
 
-resource "heroku_build" "foobar" {
-  app_id = heroku_app.foobar.id
+resource "heroku_build" "cedar_build" {
+  app_id     = heroku_app.cedar_app.id
+  buildpacks = ["heroku/nodejs"]
 
   source {
     # A local directory, changing its contents will
     # force a new build during `terraform apply`
-    path = "src/example-app"
+    path = "src/my-cedar-app"
   }
 }
 
-resource "heroku_formation" "foobar" {
-  app_id     = heroku_app.foobar.id
+resource "heroku_formation" "cedar_formation" {
+  app_id     = heroku_app.cedar_app.id
   type       = "web"
   quantity   = 1
   size       = "Standard-1x"
-  depends_on = ["heroku_build.foobar"]
+  depends_on = ["heroku_build.cedar_build"]
+}
+```
+
+#### Fir Generation (Cloud Native Buildpacks)
+
+```hcl-terraform
+resource "heroku_space" "fir_space" {
+  name         = "my-fir-space"
+  organization = "my-organization"
+  region       = "virginia"
+  generation   = "fir"
+}
+
+resource "heroku_app" "fir_app" {
+  name   = "my-fir-app"
+  region = heroku_space.fir_space.region
+  space  = heroku_space.fir_space.id
+  
+  organization {
+    name = "my-organization"
+  }
+}
+
+resource "heroku_build" "fir_build" {
+  app_id = heroku_app.fir_app.id
+  # Note: Do not specify buildpacks for Fir apps
+
+  source {
+    # Local directory must contain project.toml
+    # for Cloud Native Buildpack configuration
+    path = "src/my-cnb-app"
+  }
+}
+
+resource "heroku_formation" "fir_formation" {
+  app_id     = heroku_app.fir_app.id
+  type       = "web"
+  quantity   = 1
+  size       = "Standard-1x"
+  depends_on = ["heroku_build.fir_build"]
 }
 ```
 

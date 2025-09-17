@@ -471,3 +471,202 @@ func resetSourceFiles() error {
 	}
 	return nil
 }
+
+// TestHerokuBuildGeneration tests the generation validation logic for build resources
+func TestHerokuBuildGeneration(t *testing.T) {
+	testCases := []struct {
+		name              string
+		generation        string
+		resourceType      string
+		feature           string
+		expectedSupported bool
+	}{
+		{
+			name:              "Cedar apps should support buildpacks",
+			generation:        "cedar",
+			resourceType:      "app",
+			feature:           "buildpacks",
+			expectedSupported: true,
+		},
+		{
+			name:              "Fir apps should not support buildpacks",
+			generation:        "fir",
+			resourceType:      "app",
+			feature:           "buildpacks",
+			expectedSupported: false,
+		},
+		{
+			name:              "Cedar apps should not support cloud_native_buildpacks",
+			generation:        "cedar",
+			resourceType:      "app",
+			feature:           "cloud_native_buildpacks",
+			expectedSupported: false,
+		},
+		{
+			name:              "Fir apps should support cloud_native_buildpacks",
+			generation:        "fir",
+			resourceType:      "app",
+			feature:           "cloud_native_buildpacks",
+			expectedSupported: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := IsFeatureSupported(tc.generation, tc.resourceType, tc.feature)
+			if result != tc.expectedSupported {
+				t.Errorf("Expected IsFeatureSupported(%s, %s, %s) = %v, got %v",
+					tc.generation, tc.resourceType, tc.feature, tc.expectedSupported, result)
+			} else {
+				t.Logf("✅ Generation: %s, Feature: %s, Supported: %v", tc.generation, tc.feature, result)
+			}
+		})
+	}
+}
+
+// TestAccHerokuBuild_Generation tests build generation validation with single space pattern
+func TestAccHerokuBuild_Generation(t *testing.T) {
+	var space spaceWithNAT
+	var cedarApp heroku.App
+	var firApp heroku.App
+	var cedarBuild heroku.Build
+	var firBuildValid heroku.Build
+
+	spaceName := fmt.Sprintf("tftest-build-gen-%s", acctest.RandString(10))
+	cedarAppName := fmt.Sprintf("tftest-cedar-build-%s", acctest.RandString(10))
+	firAppName := fmt.Sprintf("tftest-fir-build-%s", acctest.RandString(10))
+	org := testAccConfig.GetAnyOrganizationOrSkip(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+		},
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckHerokuSpaceDestroy,
+		Steps: []resource.TestStep{
+			// Step 1: Create Fir space and Cedar app with build (should succeed)
+			{
+				Config: testAccCheckHerokuBuildConfig_generation_setup(spaceName, cedarAppName, firAppName, org),
+				Check: resource.ComposeTestCheckFunc(
+					// Check space
+					testAccCheckHerokuSpaceExists("heroku_space.fir_space", &space),
+					resource.TestCheckResourceAttr("heroku_space.fir_space", "generation", "fir"),
+					// Check Cedar app
+					testAccCheckHerokuAppExists("heroku_app.cedar_app", &cedarApp),
+					resource.TestCheckResourceAttr("heroku_app.cedar_app", "generation", "cedar"),
+					// Check Fir app
+					testAccCheckHerokuAppExists("heroku_app.fir_app", &firApp),
+					resource.TestCheckResourceAttr("heroku_app.fir_app", "generation", "fir"),
+					// Check Cedar build succeeds with buildpacks
+					testAccCheckHerokuBuildExists("heroku_build.cedar_build", &cedarBuild),
+					resource.TestCheckResourceAttr("heroku_build.cedar_build", "status", "succeeded"),
+					// Check Fir build succeeds without buildpacks
+					testAccCheckHerokuBuildExists("heroku_build.fir_build_valid", &firBuildValid),
+					resource.TestCheckResourceAttr("heroku_build.fir_build_valid", "status", "succeeded"),
+				),
+			},
+			// Step 2: Try to create Fir build with buildpacks (should fail)
+			{
+				Config:      testAccCheckHerokuBuildConfig_generation_fir_invalid(spaceName, cedarAppName, firAppName, org),
+				ExpectError: regexp.MustCompile("buildpacks cannot be specified for fir generation apps"),
+			},
+		},
+	})
+}
+
+// Configuration for generation testing setup (success cases)
+func testAccCheckHerokuBuildConfig_generation_setup(spaceName, cedarAppName, firAppName, org string) string {
+	return fmt.Sprintf(`
+resource "heroku_space" "fir_space" {
+  name         = "%s"
+  organization = "%s"
+  region       = "virginia"
+  generation   = "fir"
+}
+
+resource "heroku_app" "cedar_app" {
+  name   = "%s"
+  region = "us"
+}
+
+resource "heroku_app" "fir_app" {
+  name   = "%s"
+  region = heroku_space.fir_space.region
+  space  = heroku_space.fir_space.id
+  organization {
+    name = "%s"
+  }
+}
+
+resource "heroku_build" "cedar_build" {
+  app_id     = heroku_app.cedar_app.id
+  buildpacks = ["https://github.com/heroku/heroku-buildpack-ruby.git"]
+
+  source {
+    path = "test-fixtures/app"
+  }
+}
+
+resource "heroku_build" "fir_build_valid" {
+  app_id = heroku_app.fir_app.id
+  # No buildpacks - should work with CNB
+
+  source {
+    path = "test-fixtures/app"
+  }
+}
+`, spaceName, org, cedarAppName, firAppName, org)
+}
+
+// Configuration for generation testing with invalid Fir build (failure case)
+func testAccCheckHerokuBuildConfig_generation_fir_invalid(spaceName, cedarAppName, firAppName, org string) string {
+	return fmt.Sprintf(`
+resource "heroku_space" "fir_space" {
+  name         = "%s"
+  organization = "%s"
+  region       = "virginia"
+  generation   = "fir"
+}
+
+resource "heroku_app" "cedar_app" {
+  name   = "%s"
+  region = "us"
+}
+
+resource "heroku_app" "fir_app" {
+  name   = "%s"
+  region = heroku_space.fir_space.region
+  space  = heroku_space.fir_space.id
+  organization {
+    name = "%s"
+  }
+}
+
+resource "heroku_build" "cedar_build" {
+  app_id     = heroku_app.cedar_app.id
+  buildpacks = ["https://github.com/heroku/heroku-buildpack-ruby.git"]
+
+  source {
+    path = "test-fixtures/app"
+  }
+}
+
+resource "heroku_build" "fir_build_valid" {
+  app_id = heroku_app.fir_app.id
+  # No buildpacks - should work with CNB
+
+  source {
+    path = "test-fixtures/app"
+  }
+}
+
+resource "heroku_build" "fir_build_invalid" {
+  app_id     = heroku_app.fir_app.id
+  buildpacks = ["https://github.com/heroku/heroku-buildpack-nodejs.git"]  # Should fail
+
+  source {
+    path = "test-fixtures/app"
+  }
+}
+`, spaceName, org, cedarAppName, firAppName, org)
+}
