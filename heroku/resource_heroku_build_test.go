@@ -524,135 +524,54 @@ func TestHerokuBuildGeneration(t *testing.T) {
 	}
 }
 
-// TestAccHerokuBuild_Generation tests build generation validation with single space pattern
-func TestAccHerokuBuild_Generation(t *testing.T) {
-	var space spaceWithNAT
-	var cedarApp heroku.App
-	var firApp heroku.App
-	var cedarBuild heroku.Build
-	var firBuildValid heroku.Build
+// testStep_AccHerokuBuild_Generation_FirValid tests that Fir builds work without buildpacks
+func testStep_AccHerokuBuild_Generation_FirValid(spaceConfig, spaceName string) resource.TestStep {
+	return resource.TestStep{
+		Config: fmt.Sprintf(`
+%s
 
-	spaceName := fmt.Sprintf("tftest-build-gen-%s", acctest.RandString(10))
-	cedarAppName := fmt.Sprintf("tftest-cedar-build-%s", acctest.RandString(10))
-	firAppName := fmt.Sprintf("tftest-fir-build-%s", acctest.RandString(10))
-	org := testAccConfig.GetAnyOrganizationOrSkip(t)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			testAccPreCheck(t)
-		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuSpaceDestroy,
-		Steps: []resource.TestStep{
-			// Step 1: Create Fir space and Cedar app with build (should succeed)
-			{
-				Config: testAccCheckHerokuBuildConfig_generation_setup(spaceName, cedarAppName, firAppName, org),
-				Check: resource.ComposeTestCheckFunc(
-					// Check space
-					testAccCheckHerokuSpaceExists("heroku_space.fir_space", &space),
-					resource.TestCheckResourceAttr("heroku_space.fir_space", "generation", "fir"),
-					// Check Cedar app
-					testAccCheckHerokuAppExists("heroku_app.cedar_app", &cedarApp),
-					resource.TestCheckResourceAttr("heroku_app.cedar_app", "generation", "cedar"),
-					// Check Fir app
-					testAccCheckHerokuAppExists("heroku_app.fir_app", &firApp),
-					resource.TestCheckResourceAttr("heroku_app.fir_app", "generation", "fir"),
-					// Check Cedar build succeeds with buildpacks
-					testAccCheckHerokuBuildExists("heroku_build.cedar_build", &cedarBuild),
-					resource.TestCheckResourceAttr("heroku_build.cedar_build", "status", "succeeded"),
-					// Check Fir build succeeds without buildpacks
-					testAccCheckHerokuBuildExists("heroku_build.fir_build_valid", &firBuildValid),
-					resource.TestCheckResourceAttr("heroku_build.fir_build_valid", "status", "succeeded"),
-				),
-			},
-			// Step 2: Try to create Fir build with buildpacks (should fail)
-			{
-				Config:      testAccCheckHerokuBuildConfig_generation_fir_invalid(spaceName, cedarAppName, firAppName, org),
-				ExpectError: regexp.MustCompile("buildpacks cannot be specified for fir generation apps"),
-			},
-		},
-	})
-}
-
-// Configuration for generation testing setup (success cases)
-func testAccCheckHerokuBuildConfig_generation_setup(spaceName, cedarAppName, firAppName, org string) string {
-	return fmt.Sprintf(`
-resource "heroku_space" "fir_space" {
-  name         = "%s"
-  organization = "%s"
-  region       = "virginia"
-  generation   = "fir"
-}
-
-resource "heroku_app" "cedar_app" {
-  name   = "%s"
-  region = "us"
-}
-
-resource "heroku_app" "fir_app" {
-  name   = "%s"
-  region = heroku_space.fir_space.region
-  space  = heroku_space.fir_space.id
+resource "heroku_app" "fir_build_app" {
+  name   = "tftest-fir-build-%s"
+  region = heroku_space.foobar.region
+  space  = heroku_space.foobar.id
   organization {
-    name = "%s"
-  }
-}
-
-resource "heroku_build" "cedar_build" {
-  app_id     = heroku_app.cedar_app.id
-  buildpacks = ["https://github.com/heroku/heroku-buildpack-ruby.git"]
-
-  source {
-    path = "test-fixtures/app"
+    name = heroku_space.foobar.organization
   }
 }
 
 resource "heroku_build" "fir_build_valid" {
-  app_id = heroku_app.fir_app.id
+  app_id = heroku_app.fir_build_app.id
   # No buildpacks - should work with CNB
 
   source {
     path = "test-fixtures/app"
   }
 }
-`, spaceName, org, cedarAppName, firAppName, org)
+`, spaceConfig, acctest.RandString(6)),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr("heroku_app.fir_build_app", "generation", "fir"),
+			resource.TestCheckResourceAttr("heroku_build.fir_build_valid", "status", "succeeded"),
+		),
+	}
 }
 
-// Configuration for generation testing with invalid Fir build (failure case)
-func testAccCheckHerokuBuildConfig_generation_fir_invalid(spaceName, cedarAppName, firAppName, org string) string {
-	return fmt.Sprintf(`
-resource "heroku_space" "fir_space" {
-  name         = "%s"
-  organization = "%s"
-  region       = "virginia"
-  generation   = "fir"
-}
+// testStep_AccHerokuBuild_Generation_FirInvalid tests that Fir builds fail with buildpacks
+func testStep_AccHerokuBuild_Generation_FirInvalid(spaceConfig, spaceName string) resource.TestStep {
+	return resource.TestStep{
+		Config: fmt.Sprintf(`
+%s
 
-resource "heroku_app" "cedar_app" {
-  name   = "%s"
-  region = "us"
-}
-
-resource "heroku_app" "fir_app" {
-  name   = "%s"
-  region = heroku_space.fir_space.region
-  space  = heroku_space.fir_space.id
+resource "heroku_app" "fir_build_app" {
+  name   = "tftest-fir-build-%s"
+  region = heroku_space.foobar.region
+  space  = heroku_space.foobar.id
   organization {
-    name = "%s"
-  }
-}
-
-resource "heroku_build" "cedar_build" {
-  app_id     = heroku_app.cedar_app.id
-  buildpacks = ["https://github.com/heroku/heroku-buildpack-ruby.git"]
-
-  source {
-    path = "test-fixtures/app"
+    name = heroku_space.foobar.organization
   }
 }
 
 resource "heroku_build" "fir_build_valid" {
-  app_id = heroku_app.fir_app.id
+  app_id = heroku_app.fir_build_app.id
   # No buildpacks - should work with CNB
 
   source {
@@ -661,12 +580,14 @@ resource "heroku_build" "fir_build_valid" {
 }
 
 resource "heroku_build" "fir_build_invalid" {
-  app_id     = heroku_app.fir_app.id
-  buildpacks = ["https://github.com/heroku/heroku-buildpack-nodejs.git"]  # Should fail
+  app_id     = heroku_app.fir_build_app.id
+  buildpacks = ["heroku/nodejs"]  # Should fail
 
   source {
     path = "test-fixtures/app"
   }
 }
-`, spaceName, org, cedarAppName, firAppName, org)
+`, spaceConfig, acctest.RandString(6)),
+		ExpectError: regexp.MustCompile("buildpacks cannot be specified for fir generation apps"),
+	}
 }

@@ -86,6 +86,10 @@ func TestAccHerokuSpace_Fir(t *testing.T) {
 			},
 			// Step 2: Test Fir app generation behavior
 			testStep_AccHerokuApp_Generation_Fir(t, spaceConfig, spaceName),
+			// Step 3: Test Fir build generation behavior (valid build)
+			testStep_AccHerokuBuild_Generation_FirValid(spaceConfig, spaceName),
+			// Step 4: Test Fir build generation behavior (invalid build with buildpacks)
+			testStep_AccHerokuBuild_Generation_FirInvalid(spaceConfig, spaceName),
 		},
 	})
 }
