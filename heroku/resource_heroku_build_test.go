@@ -471,3 +471,114 @@ func resetSourceFiles() error {
 	}
 	return nil
 }
+
+// TestHerokuBuildGeneration tests the generation validation logic for build resources
+func TestHerokuBuildGeneration(t *testing.T) {
+	testCases := []struct {
+		name              string
+		generation        string
+		resourceType      string
+		feature           string
+		expectedSupported bool
+	}{
+		{
+			name:              "Cedar apps should support buildpacks",
+			generation:        "cedar",
+			resourceType:      "app",
+			feature:           "buildpacks",
+			expectedSupported: true,
+		},
+		{
+			name:              "Fir apps should not support buildpacks",
+			generation:        "fir",
+			resourceType:      "app",
+			feature:           "buildpacks",
+			expectedSupported: false,
+		},
+		{
+			name:              "Cedar apps should not support cloud_native_buildpacks",
+			generation:        "cedar",
+			resourceType:      "app",
+			feature:           "cloud_native_buildpacks",
+			expectedSupported: false,
+		},
+		{
+			name:              "Fir apps should support cloud_native_buildpacks",
+			generation:        "fir",
+			resourceType:      "app",
+			feature:           "cloud_native_buildpacks",
+			expectedSupported: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := IsFeatureSupported(tc.generation, tc.resourceType, tc.feature)
+			if result != tc.expectedSupported {
+				t.Errorf("Expected IsFeatureSupported(%s, %s, %s) = %v, got %v",
+					tc.generation, tc.resourceType, tc.feature, tc.expectedSupported, result)
+			} else {
+				t.Logf("✅ Generation: %s, Feature: %s, Supported: %v", tc.generation, tc.feature, result)
+			}
+		})
+	}
+}
+
+// testStep_AccHerokuBuild_Generation_FirValid tests that Fir builds work without buildpacks
+func testStep_AccHerokuBuild_Generation_FirValid(spaceConfig, spaceName string) resource.TestStep {
+	return resource.TestStep{
+		Config: fmt.Sprintf(`
+%s
+
+resource "heroku_app" "fir_build_app_valid" {
+  name   = "tftest-fir-bld-v-%s"
+  region = heroku_space.foobar.region
+  space  = heroku_space.foobar.name
+  organization {
+    name = heroku_space.foobar.organization
+  }
+}
+
+resource "heroku_build" "fir_build_valid" {
+  app_id = heroku_app.fir_build_app_valid.id
+  # No buildpacks - should work with CNB
+
+  source {
+    path = "test-fixtures/app"
+  }
+}
+`, spaceConfig, acctest.RandString(6)),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr("heroku_app.fir_build_app_valid", "generation", "fir"),
+			resource.TestCheckResourceAttr("heroku_build.fir_build_valid", "status", "succeeded"),
+		),
+	}
+}
+
+// testStep_AccHerokuBuild_Generation_FirInvalid tests that Fir builds fail with buildpacks
+func testStep_AccHerokuBuild_Generation_FirInvalid(spaceConfig, spaceName string) resource.TestStep {
+	return resource.TestStep{
+		Config: fmt.Sprintf(`
+%s
+
+resource "heroku_app" "fir_build_app_invalid" {
+  name   = "tftest-fir-bld-i-%s"
+  region = heroku_space.foobar.region
+  space  = heroku_space.foobar.name
+  organization {
+    name = heroku_space.foobar.organization
+  }
+}
+
+resource "heroku_build" "fir_build_invalid" {
+  app_id     = heroku_app.fir_build_app_invalid.id
+  buildpacks = ["heroku/nodejs"]  # Should fail
+
+  source {
+    path = "test-fixtures/app"
+  }
+}
+`, spaceConfig, acctest.RandString(6)),
+		ExpectError: regexp.MustCompile("buildpacks cannot be specified for fir generation apps"),
+	}
+}
