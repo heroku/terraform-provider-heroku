@@ -530,17 +530,17 @@ func testStep_AccHerokuBuild_Generation_FirValid(spaceConfig, spaceName string) 
 		Config: fmt.Sprintf(`
 %s
 
-resource "heroku_app" "fir_build_app" {
-  name   = "tftest-fir-build-%s"
+resource "heroku_app" "fir_build_app_valid" {
+  name   = "tftest-fir-bld-v-%s"
   region = heroku_space.foobar.region
-  space  = heroku_space.foobar.id
+  space  = heroku_space.foobar.name
   organization {
     name = heroku_space.foobar.organization
   }
 }
 
 resource "heroku_build" "fir_build_valid" {
-  app_id = heroku_app.fir_build_app.id
+  app_id = heroku_app.fir_build_app_valid.id
   # No buildpacks - should work with CNB
 
   source {
@@ -549,7 +549,7 @@ resource "heroku_build" "fir_build_valid" {
 }
 `, spaceConfig, acctest.RandString(6)),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr("heroku_app.fir_build_app", "generation", "fir"),
+			resource.TestCheckResourceAttr("heroku_app.fir_build_app_valid", "generation", "fir"),
 			resource.TestCheckResourceAttr("heroku_build.fir_build_valid", "status", "succeeded"),
 		),
 	}
@@ -561,26 +561,17 @@ func testStep_AccHerokuBuild_Generation_FirInvalid(spaceConfig, spaceName string
 		Config: fmt.Sprintf(`
 %s
 
-resource "heroku_app" "fir_build_app" {
-  name   = "tftest-fir-build-%s"
+resource "heroku_app" "fir_build_app_invalid" {
+  name   = "tftest-fir-bld-i-%s"
   region = heroku_space.foobar.region
-  space  = heroku_space.foobar.id
+  space  = heroku_space.foobar.name
   organization {
     name = heroku_space.foobar.organization
   }
 }
 
-resource "heroku_build" "fir_build_valid" {
-  app_id = heroku_app.fir_build_app.id
-  # No buildpacks - should work with CNB
-
-  source {
-    path = "test-fixtures/app"
-  }
-}
-
 resource "heroku_build" "fir_build_invalid" {
-  app_id     = heroku_app.fir_build_app.id
+  app_id     = heroku_app.fir_build_app_invalid.id
   buildpacks = ["heroku/nodejs"]  # Should fail
 
   source {
