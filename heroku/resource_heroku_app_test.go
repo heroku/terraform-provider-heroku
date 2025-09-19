@@ -763,6 +763,7 @@ func testAccCheckHerokuAppConfig_basic(appName string) string {
 resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
+	allow_deletion = true
 
   config_vars = {
     FOO = "bar"
@@ -981,6 +982,7 @@ func testAccCheckHerokuAppConfig_locked(appName, org, locked string) string {
 resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
+	allow_deletion = true
 
   organization {
     name = "%s"
