@@ -17,6 +17,11 @@ pipeline is created, and apps are added to different stages using
 [`heroku_pipeline_coupling`](./pipeline_coupling.html), you can promote app
 slugs to the next stage.
 
+## Generation Compatibility
+
+All apps in a pipeline must use the same Heroku platform generation (Cedar or Fir). 
+Attempting to add apps from different generations will result in an error.
+
 ## Ownership & Access
 
 Pipelines may be created as Personal or Team resources. Access to a pipeline
