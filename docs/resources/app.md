@@ -19,7 +19,7 @@ Starting with v5.0 of this provider, all HCL app references are by ID. Read more
 
 ## Example Usage
 
-### Cedar Generation (Default)
+### Cedar Generation Using Classic Buildpacks (Default)
 ```hcl-terraform
 resource "heroku_app" "cedar_app" {
   name   = "my-cedar-app"
@@ -37,7 +37,7 @@ resource "heroku_app" "cedar_app" {
 }
 ```
 
-### Fir Generation (via Fir Space)
+### Fir Generation Using Cloud Native Buildpacks (via Fir Space)
 ```hcl-terraform
 # Create a Fir generation space first
 resource "heroku_space" "fir_space" {
