@@ -119,6 +119,11 @@ func resourceHerokuDrainCreate(d *schema.ResourceData, meta interface{}) error {
 
 	appID := d.Get("app_id").(string)
 
+	// Check if app supports traditional drains (Cedar generation only)
+	if err := validateAppSupportsTraditionalDrains(client, appID); err != nil {
+		return err
+	}
+
 	var url string
 	if v, ok := d.GetOk("url"); ok {
 		vs := v.(string)
@@ -191,6 +196,20 @@ func resourceHerokuDrainRead(d *schema.ResourceData, meta interface{}) error {
 
 	if _, ok := d.GetOk("sensitive_url"); ok {
 		d.Set("sensitive_url", dr.URL)
+	}
+
+	return nil
+}
+
+// validateAppSupportsTraditionalDrains checks if the app supports traditional log drains (Cedar generation only)
+func validateAppSupportsTraditionalDrains(client *heroku.Service, appID string) error {
+	app, err := client.AppInfo(context.TODO(), appID)
+	if err != nil {
+		return fmt.Errorf("error fetching app info: %s", err)
+	}
+
+	if IsFeatureSupported(app.Generation.Name, "app", "otel") {
+		return fmt.Errorf("traditional log drains are not supported for Fir generation apps. App '%s' is %s generation. Use heroku_telemetry_drain for Fir apps", app.Name, app.Generation.Name)
 	}
 
 	return nil
