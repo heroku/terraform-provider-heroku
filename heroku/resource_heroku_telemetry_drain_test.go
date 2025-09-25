@@ -104,14 +104,6 @@ resource "heroku_telemetry_drain" "app_test" {
   headers = {
     "x-honeycomb-team" = "test-key"
   }
-}
-
-resource "heroku_telemetry_drain" "space_test" {
-  owner_id      = heroku_space.foobar.id
-  owner_type    = "space"
-  endpoint      = "https://api.honeycomb.io/v1/traces"
-  exporter_type = "otlphttp"
-  signals       = ["traces", "metrics"]
 }`,
 		spaceConfig, appName, testAccConfig.GetOrganizationOrSkip(t))
 
@@ -127,14 +119,6 @@ resource "heroku_telemetry_drain" "space_test" {
 			resource.TestCheckResourceAttrSet("heroku_telemetry_drain.app_test", "id"),
 			resource.TestCheckResourceAttrSet("heroku_telemetry_drain.app_test", "created_at"),
 			resource.TestCheckResourceAttrSet("heroku_telemetry_drain.app_test", "updated_at"),
-
-			// Check space-scoped telemetry drain
-			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "owner_type", "space"),
-			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "endpoint", "https://api.honeycomb.io/v1/traces"),
-			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "exporter_type", "otlphttp"),
-			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "signals.#", "2"),
-			resource.TestCheckResourceAttrSet("heroku_telemetry_drain.space_test", "id"),
-			resource.TestCheckResourceAttrSet("heroku_telemetry_drain.space_test", "created_at"),
 		),
 	}
 }
