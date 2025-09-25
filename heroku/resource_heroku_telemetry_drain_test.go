@@ -109,9 +109,9 @@ resource "heroku_telemetry_drain" "app_test" {
 resource "heroku_telemetry_drain" "space_test" {
   owner_id      = heroku_space.foobar.id
   owner_type    = "space"
-  endpoint      = "logs.example.com:4317"
-  exporter_type = "otlp"
-  signals       = ["logs"]
+  endpoint      = "https://api.honeycomb.io/v1/traces"
+  exporter_type = "otlphttp"
+  signals       = ["traces", "metrics"]
 }`,
 		spaceConfig, appName, testAccConfig.GetOrganizationOrSkip(t))
 
@@ -130,9 +130,9 @@ resource "heroku_telemetry_drain" "space_test" {
 
 			// Check space-scoped telemetry drain
 			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "owner_type", "space"),
-			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "endpoint", "logs.example.com:4317"),
-			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "exporter_type", "otlp"),
-			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "signals.#", "1"),
+			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "endpoint", "https://api.honeycomb.io/v1/traces"),
+			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "exporter_type", "otlphttp"),
+			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "signals.#", "2"),
 			resource.TestCheckResourceAttrSet("heroku_telemetry_drain.space_test", "id"),
 			resource.TestCheckResourceAttrSet("heroku_telemetry_drain.space_test", "created_at"),
 		),
