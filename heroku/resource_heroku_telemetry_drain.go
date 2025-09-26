@@ -60,7 +60,7 @@ func resourceHerokuTelemetryDrain() *schema.Resource {
 
 			"headers": {
 				Type:        schema.TypeMap,
-				Optional:    true,
+				Required:    true,
 				Description: "Headers to send to your OpenTelemetry consumer",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,

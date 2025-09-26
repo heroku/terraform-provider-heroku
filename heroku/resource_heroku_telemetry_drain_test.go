@@ -104,6 +104,18 @@ resource "heroku_telemetry_drain" "app_test" {
   headers = {
     "x-honeycomb-team" = "test-key"
   }
+}
+
+resource "heroku_telemetry_drain" "space_test" {
+  owner_id      = heroku_space.foobar.id
+  owner_type    = "space"
+  endpoint      = "https://logs.datadog.com/api/v2/logs"
+  exporter_type = "otlphttp"
+  signals       = ["logs"]
+  
+  headers = {
+    "DD-API-KEY" = "test-space-key"
+  }
 }`,
 		spaceConfig, appName, testAccConfig.GetOrganizationOrSkip(t))
 
@@ -118,6 +130,16 @@ resource "heroku_telemetry_drain" "app_test" {
 			resource.TestCheckResourceAttr("heroku_telemetry_drain.app_test", "headers.x-honeycomb-team", "test-key"),
 			resource.TestCheckResourceAttrSet("heroku_telemetry_drain.app_test", "id"),
 			resource.TestCheckResourceAttrSet("heroku_telemetry_drain.app_test", "created_at"),
+			resource.TestCheckResourceAttrSet("heroku_telemetry_drain.app_test", "updated_at"),
+
+			// Check space-scoped telemetry drain
+			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "owner_type", "space"),
+			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "endpoint", "https://logs.datadog.com/api/v2/logs"),
+			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "exporter_type", "otlphttp"),
+			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "signals.#", "1"),
+			resource.TestCheckResourceAttr("heroku_telemetry_drain.space_test", "headers.DD-API-KEY", "test-space-key"),
+			resource.TestCheckResourceAttrSet("heroku_telemetry_drain.space_test", "id"),
+			resource.TestCheckResourceAttrSet("heroku_telemetry_drain.space_test", "created_at"),
 			resource.TestCheckResourceAttrSet("heroku_telemetry_drain.app_test", "updated_at"),
 		),
 	}

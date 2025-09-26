@@ -100,7 +100,7 @@ The following arguments are supported:
   * `"traces"` - Distributed tracing data
   * `"metrics"` - Application and system metrics
   * `"logs"` - Application and system logs
-* `headers` - (Optional) A map of headers to send to your OpenTelemetry consumer for authentication or configuration.
+* `headers` - (Required) A map of headers to send to your OpenTelemetry consumer for authentication or configuration. At least one header must be specified.
 
 ## Attributes Reference
 
