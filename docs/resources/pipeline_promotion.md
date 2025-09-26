@@ -11,11 +11,12 @@ description: |-
 Provides a [Heroku Pipeline Promotion](https://devcenter.heroku.com/articles/pipelines#promoting)
 resource.
 
-Use it to perform a pipeline promotion which deploys a specific release from one app to other apps within the same
-pipeline. This operation enables infrastructure-as-code workflow for promoting code between pipeline stages
+Use it to perform a pipeline promotion, which deploys a specific release from one app to other apps within the same
+pipeline. This operation enables an infrastructure-as-code workflow for promoting code between pipeline stages
 such as staging to production. Promotions copy the specified release to all target apps.
 
--> **Notes:** Pipeline promotions are immutable. You can't update or modify them after creation.
+>[!NOTE]
+>Pipeline promotions are immutable. You can't update or modify them after creation.
 
 ## Requirements
 * All apps (source and targets) must be in the same pipeline.
@@ -47,7 +48,7 @@ resource "heroku_pipeline_promotion" "staging_to_multiple" {
 
 ## Argument Reference
 
-The following arguments are supported:
+The resource supports the following arguments:
 
 * `pipeline`: (Required) The UUID of the pipeline containing the apps.
 * `source_app_id`: (Required) The UUID of the source app to promote from.
@@ -61,4 +62,4 @@ The following attributes are exported:
 * `id`: The UUID of the pipeline promotion.
 * `status`: The status of the promotion (`pending`, `completed`).
 * `created_at`: When the promotion was created.
-* `promoted_release_id`: The UUID of the release that was actually promoted.
+* `promoted_release_id`: The UUID of the release that was promoted.
