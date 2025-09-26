@@ -60,10 +60,10 @@ The resource supports the following arguments:
 * `name`: (Required) The name of the space.
 * `organization`: (Required) The name of the Heroku team to designate as owner of the space.
 * `generation`: (Optional) The generation of the Heroku platform for the space ( `cedar` or `fir`). Defaults to `cedar` for backward compatibility. You can't change it after space creation.
-* `cidr`: (Optional) The RFC-1918 CIDR block for the space to use.
+* `cidr`: (Optional) The RFC-1918 CIDR block for the space to use. **Note:** Only supported for the `cedar` generation.
   It must be a `/16` subnet in `10.0.0.0/8`, `172.16.0.0/12` or `192.168.0.0/16`
 * `data_cidr`: (Optional) The RFC-1918 CIDR block for the Private Space to use for the Heroku-managed peering connection
-  that's automatically created when using Heroku Data add-ons. It must be between a `/16` and a `/20` subnet.
+  that's automatically created when using Heroku Data add-ons. It must be between a `/16` and a `/20` subnet. **Note:** Shield spaces are only supported for the `cedar` generation.
 * `region`: (Optional) The [region](https://devcenter.heroku.com/articles/regions#viewing-available-regions) to provision the space in.
 * `shield`: (Optional) `true` if provisioning as a [Shield Private Space](https://devcenter.heroku.com/articles/private-spaces#shield-private-spaces). **Note:** Shield spaces are only supported for the `cedar` generation.
 
