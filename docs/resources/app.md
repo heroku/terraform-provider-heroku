@@ -8,14 +8,15 @@ description: |-
 
 # heroku\_app
 
-Provides a Heroku App resource. Use this resource to create and manage applications on Heroku.
+Provides a [Heroku App](https://devcenter.heroku.com/articles/platform-api-reference#app) resource. Use this resource to create and manage applications on Heroku.
 
-The Heroku platform supports two generations:
+The Heroku platform supports two [generations](https://devcenter.heroku.com/articles/generations):
 - **Cedar** (default): Legacy platform with support for classic buildpacks, stack configuration, and internal routing
 - **Fir**: Next-generation platform with enhanced security, and modern containerization
 
--> **Always reference apps by ID (UUID) in Terraform configuration**
-Starting with v5.0 of this provider, all HCL app references are by ID. Read more details in [Upgrading](guides/upgrading.html).
+>[!NOTE]
+>**Always reference apps by ID (UUID) in Terraform configuration.**
+>Starting with v5.0 of this provider, all HCL app references are by ID. Read more details in [Upgrading](guides/upgrading.html).
 
 ## Example Usage
 
@@ -39,7 +40,7 @@ resource "heroku_app" "cedar_app" {
 
 ### Fir Generation Using Cloud Native Buildpacks (via Fir Space)
 ```hcl-terraform
-# Create a Fir generation space first
+# Create a Fir-generation space first
 resource "heroku_space" "fir_space" {
   name         = "my-fir-space"
   organization = "my-org"
@@ -68,7 +69,7 @@ resource "heroku_app" "fir_app" {
 
 ## Example Usage for a Team
 
-A Heroku "team" was originally called an "organization", and that is still the identifier used in this resource.
+A Heroku "team" was originally called an "organization", and that's still the identifier used in this resource.
 
 ```hcl-terraform
 resource "heroku_app" "default" {
@@ -83,77 +84,76 @@ resource "heroku_app" "default" {
 
 ## Argument Reference
 
-The following arguments are supported:
+The resource supports the following arguments:
 
-* `name` - (Required) The name of the application. In Heroku, this is the
-   unique ID, so it must be unique and have a minimum of 3 characters.
-* `region` - (Required) The region to deploy the app in.
-* `generation` - (Computed) Generation of the app platform. Automatically determined based on the space the app is deployed to. Apps in Fir generation spaces are `fir`, all other apps are `cedar`.
+* `name`: (Required) The name of the application. In Heroku, this argument is the unique ID, so it must be unique and have a minimum of 3 characters.
+* `region`: (Required) The region to deploy the app in.
+* `generation`: (Computed) Generation of the app platform. Automatically determined based on the space the app is deployed to. Apps in Fir-generation spaces are `fir`, all other apps are `cedar`.
    - `cedar`: Legacy platform supporting classic buildpacks, stack configuration, and internal routing.
    - `fir`: Next-generation platform with Cloud Native Buildpacks (CNB). No support for `buildpacks`, `stack`, or `internal_routing` fields.
-* `stack` - (Optional) The name of the [stack](https://devcenter.heroku.com/articles/stack) to run the application in. **Note**: Not supported for `fir` generation apps.
-* `buildpacks` - (Optional) Clasiic buildpack names or URLs for the application.
-  Buildpacks configured externally won't be altered if this is not present. **Note**: Not supported for apps using Cloud Native Buildpacks, like Fir-generation apps. Use `project.toml` for configuration instead.
-* `config_vars`<sup>[1](#deleting-vars)</sup> - (Optional) Configuration variables for the application.
+* `stack`: (Optional) The name of the [stack](https://devcenter.heroku.com/articles/stack) to run the application in. **Note**: Not supported for `fir` generation apps.
+* `buildpacks`: (Optional) Classic buildpack names or URLs for the application.
+  Buildpacks configured externally won't be altered if this isn't present. **Note**: Not supported for apps using Cloud Native Buildpacks, like Fir-generation apps. Use `project.toml` for configuration instead.
+* `config_vars`<sup>[1](#deleting-vars)</sup>: (Optional) Configuration variables for the application.
      The config variables in this map aren't the final set of configuration
      variables, but rather variables you want present. Terraform doesn't remove configuration variables set externally
      if they aren't present in this list.
-* `sensitive_config_vars`<sup>[1](#deleting-vars)</sup> - (Optional) This argument is the same as `config_vars`.
+* `sensitive_config_vars`<sup>[1](#deleting-vars)</sup>: (Optional) This argument is the same as `config_vars`.
      The main difference between the two is when `sensitive_config_vars` outputs
      are displayed on-screen following a `terraform apply` or `terraform refresh`,
-     are redacted, with `<sensitive>` displayed in place of their value.
-     It's recommended to put private keys, passwords, etc. in this argument.
-* `space` - (Optional) The name of a private space to create the app in.
+     they're redacted, with `<sensitive>` displayed in place of their value.
+     It's recommended to put sensitive information like private keys, and passwords in this argument.
+* `space`: (Optional) The name of a Private Space to create the app in.
 * `internal_routing` - (Optional) If true, the application is routable
-  only internally in a private space. This option is only available for apps
+  only internally in a Private Space. This option is only available for apps
   that also specify `space`. **Note**: Only supported for apps in Cedar-generation spaces.
-* `organization` - (Optional) Specify this block once to define
+* `organization`: (Optional) Specify this block once to define
      Heroku Team settings for this app. The fields for this block are
      documented below.
-* `acm` - (Optional) If Automated Certificate Management is enabled for the app.
+* `acm`: (Optional) If Automated Certificate Management is enabled for the app.
 
 The `organization` block supports:
-* `name` (string) - The name of the Heroku Team.
-* `locked` (boolean) - If other team members are forbidden from joining this app.
-* `personal` (boolean) - Force creation of the app in the user's account, even if a default team is set.
+* `name` (string): The name of the Heroku Team.
+* `locked` (boolean): If other team members are forbidden from joining this app.
+* `personal` (boolean): Force creation of the app in the user's account, even if a default team is set.
 
 ### Deleting Vars
 
 Deleting an entire `config_vars` or `sensitive_config_vars` map from a `heroku_app`
-configuration doesn't actually remove the vars on the remote resource. To remove an existing variable,
-leave these attribute maps in-place and delete only its entries from the map. After these attributes are
+configuration doesn't remove the variables on the remote resource. To remove an existing variable,
+leave these attribute maps in-place and only delete its entries from the map. After these attributes are
 empty, you can delete the map itself from the configuration. Otherwise, if you delete the map with existing
 entries, the config vars don't get deleted from the remote resource.
 
 If you're migrating all `config_vars` to `sensitive_config_vars`, or migrating
-config vars to `heroku_app_config_association` resource, this behavior is especially important to note.
+config vars to `heroku_app_config_association` resource, this behavior is especially important.
 
 ## Attributes Reference
 
 The following attributes are exported:
 
-* `id` - The ID (UUID) of the app.
-* `name` - The name of the app.
-* `generation` - Generation of the app platform (`cedar` or `fir`). Automatically determined from the space the app is deployed to.
-* `stack` - The name of the [stack](https://devcenter.heroku.com/articles/stack) the application is run in.
-* `space` - The private space the app is in.
-* `internal_routing` - If internal routing is enabled the private space app.
-* `region` - The region that the app is deployed to.
-* `git_url` - The Git URL for the application, used for
+* `id`: The ID (UUID) of the app.
+* `name`: The name of the app.
+* `generation`: Generation of the app platform (`cedar` or `fir`). Automatically determined from the space the app is deployed to.
+* `stack`: The name of the [stack](https://devcenter.heroku.com/articles/stack) the application is run in.
+* `space`: The Private Space the app is in.
+* `internal_routing`: If internal routing is enabled in the Private Space app.
+* `region`: The region that the app is deployed to.
+* `git_url`: The Git URL for the application, used for
    deploying new versions of the app.
-* `web_url` - The web (HTTP) URL for accessing the application by default.
-* `heroku_hostname` - The hostname for the Heroku application, suitable
+* `web_url`: The web (HTTP) URL for accessing the application by default.
+* `heroku_hostname`: The hostname for the Heroku application, suitable
    for pointing DNS records.
-* `all_config_vars` - The map of all configuration variables that
+* `all_config_vars`: The map of all configuration variables that
   exist for the app, containing both those set by Terraform and those
-  set externally. These are treated as "sensitive" so that
-  their values are redacted in console output. This attribute is not set in state if the `provider`
+  set externally. These variables are treated as "sensitive" so that
+  their values are redacted in console output. This attribute isn't set in state if the `provider`
   attribute `set_app_all_config_vars_in_state` is `false`.
-* `uuid` - The unique UUID of the Heroku app. **NOTE:** Use this for `null_resource` triggers.
+* `uuid`: The unique UUID of the Heroku app. **Note:** Use this attribute for `null_resource` triggers.
 
 ## Cloud Native Buildpacks
 
-When apps are deployed to Fir-generation spaces, they automatically use Cloud Native Buildpacks (CNB) instead of classic Heroku buildpacks. This requires different configuration approaches:
+When apps are deployed to Fir-generation spaces, they automatically use Cloud Native Buildpacks (CNB) instead of classic Heroku buildpacks. CNBs require different configuration approaches:
 
 ### project.toml Configuration
 
@@ -226,4 +226,5 @@ $ terraform import heroku_app.foobar MyApp
 $ terraform import heroku_app.foobar e74ac056-7d00-4a7e-aa80-df4bc413a825
 ```
 
--> **Note:** `config_vars` & `sensitive_config_vars` aren't imported due to limitations of Terraform's import process (see [issue](https://github.com/heroku/terraform-provider-heroku/issues/247#issuecomment-602013774)). All vars appear to be added on the next plan/apply. Manually reconcile the diff using the outputs of `heroku config` & `terraform plan`.
+>[!NOTE]
+>`config_vars` & `sensitive_config_vars` aren't imported due to limitations of Terraform's import process (see [issue](https://github.com/heroku/terraform-provider-heroku/issues/247#issuecomment-602013774)). All vars appear to be added on the next plan/apply. Manually reconcile the diff using the outputs of `heroku config` & `terraform plan`.
