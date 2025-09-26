@@ -15,8 +15,7 @@ Use it to perform a pipeline promotion, which deploys a specific release from on
 pipeline. This operation enables an infrastructure-as-code workflow for promoting code between pipeline stages
 such as staging to production. Promotions copy the specified release to all target apps.
 
->[!NOTE]
->Pipeline promotions are immutable. You can't update or modify them after creation.
+->**Note:** Pipeline promotions are immutable. You can't update or modify them after creation.
 
 ## Requirements
 * All apps (source and targets) must be in the same pipeline.
