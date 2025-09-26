@@ -16,7 +16,7 @@ An app release represents a combination of code, config vars and add-ons for an 
 ~> **NOTE:** To use this resource, you must have uploaded a slug to Heroku using [`heroku_slug`](slug.html)
 or with external tooling prior to running Terraform.
 
-~> **NOTE:** This resource is only supported for [Cedar-generation](https://devcenter.heroku.com/articles/generations#cedar) apps.
+~> **NOTE:** This resource is only supported for apps that use [classic buildpacks](https://devcenter.heroku.com/articles/buildpacks#classic-buildpacks).
 
 ## Example Usage
 ```hcl-terraform
