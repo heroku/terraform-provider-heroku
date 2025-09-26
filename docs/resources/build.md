@@ -31,7 +31,7 @@ Build configuration varies between apps that use [classic buildpacks vs. Cloud N
 
 Apps inherit their [generation](https://devcenter.heroku.com/articles/generations) from where they are deployed:
 
-- Cedar-generation apps, which use classic buildpack, are deployed in the [Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime#common-runtime) or in [Cedar Private Spaces](https://devcenter.heroku.com/articles/private-spaces#additional-features-for-cedar-private-spaces).
+- Cedar-generation apps, which use classic buildpacks, are deployed in the [Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime#common-runtime) or in [Cedar Private Spaces](https://devcenter.heroku.com/articles/private-spaces#additional-features-for-cedar-private-spaces).
 - Fir-generation apps, which use CNBs, are deployed to [Fir Private Spaces](https://devcenter.heroku.com/articles/private-spaces#fir-private-spaces).
 
 ## Source Code Layout
