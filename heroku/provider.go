@@ -128,6 +128,7 @@ func Provider() *schema.Provider {
 			"heroku_space_peering_connection_accepter": resourceHerokuSpacePeeringConnectionAccepter(),
 			"heroku_space_vpn_connection":              resourceHerokuSpaceVPNConnection(),
 			"heroku_ssl":                               resourceHerokuSSL(),
+			"heroku_telemetry_drain":                   resourceHerokuTelemetryDrain(),
 			"heroku_team_collaborator":                 resourceHerokuTeamCollaborator(),
 			"heroku_team_member":                       resourceHerokuTeamMember(),
 		},
