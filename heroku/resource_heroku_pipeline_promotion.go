@@ -39,10 +39,10 @@ func resourceHerokuPipelinePromotion() *schema.Resource {
 
 			"release_id": {
 				Type:         schema.TypeString,
-				Optional:     true,
+				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.IsUUID,
-				Description:  "Specific release ID to promote (optional, defaults to latest release)",
+				Description:  "Release ID to promote to target apps",
 			},
 
 			"targets": {
@@ -94,14 +94,12 @@ func resourceHerokuPipelinePromotionCreate(d *schema.ResourceData, meta interfac
 		ID *string `json:"id,omitempty" url:"id,omitempty,key"`
 	}{ID: &sourceAppID}
 
-	// Add release_id if specified
-	if releaseID, ok := d.GetOk("release_id"); ok {
-		releaseIDStr := releaseID.(string)
-		opts.Source.Release = &struct {
-			ID *string `json:"id,omitempty" url:"id,omitempty,key"`
-		}{ID: &releaseIDStr}
-		log.Printf("[DEBUG] Promoting specific release: %s", releaseIDStr)
-	}
+	// Set required release_id
+	releaseIDStr := d.Get("release_id").(string)
+	opts.Source.Release = &struct {
+		ID *string `json:"id,omitempty" url:"id,omitempty,key"`
+	}{ID: &releaseIDStr}
+	log.Printf("[DEBUG] Promoting release: %s", releaseIDStr)
 
 	// Convert targets set to slice
 	for _, target := range targets.List() {
