@@ -1,10 +1,7 @@
 // Pipeline Promotion Resource
 //
 // This resource allows promoting releases between apps in a Heroku Pipeline.
-// Currently promotes the latest release from the source app to target apps.
-//
-// DEPENDENCY: The 'release_id' field requires Flow team to add Promotion#release_id
-// API support. Until then, only latest release promotion is supported.
+// Supports promoting either the latest release or a specific release by ID.
 package heroku
 
 import (
@@ -45,7 +42,7 @@ func resourceHerokuPipelinePromotion() *schema.Resource {
 				Optional:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.IsUUID,
-				Description:  "Specific release ID to promote (requires Flow team API update)",
+				Description:  "Specific release ID to promote (optional, defaults to latest release)",
 			},
 
 			"targets": {
@@ -86,12 +83,7 @@ func resourceHerokuPipelinePromotionCreate(d *schema.ResourceData, meta interfac
 
 	log.Printf("[DEBUG] Creating pipeline promotion")
 
-	// Check if release_id is specified - this requires Flow team API support
-	if releaseID, ok := d.GetOk("release_id"); ok {
-		return fmt.Errorf("release_id parameter (%s) is not yet supported - waiting for Flow team to add Promotion#release_id API support", releaseID.(string))
-	}
-
-	// Build promotion options using current API
+	// Build promotion options with release_id support
 	pipelineID := d.Get("pipeline").(string)
 	sourceAppID := d.Get("source_app_id").(string)
 	targets := d.Get("targets").(*schema.Set)
@@ -101,6 +93,15 @@ func resourceHerokuPipelinePromotionCreate(d *schema.ResourceData, meta interfac
 	opts.Source.App = &struct {
 		ID *string `json:"id,omitempty" url:"id,omitempty,key"`
 	}{ID: &sourceAppID}
+
+	// Add release_id if specified
+	if releaseID, ok := d.GetOk("release_id"); ok {
+		releaseIDStr := releaseID.(string)
+		opts.Source.Release = &struct {
+			ID *string `json:"id,omitempty" url:"id,omitempty,key"`
+		}{ID: &releaseIDStr}
+		log.Printf("[DEBUG] Promoting specific release: %s", releaseIDStr)
+	}
 
 	// Convert targets set to slice
 	for _, target := range targets.List() {
