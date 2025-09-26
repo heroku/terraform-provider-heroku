@@ -14,7 +14,7 @@ resource.
 
 A pipeline is a group of Heroku apps that share the same codebase. After creating a
 pipeline, and adding apps to different stages using
-[`heroku_pipeline_coupling`](./pipeline_coupling.html), you can promote app
+[`heroku_pipeline_coupling`](./pipeline_coupling.html), you can promote an app's
 build artifacts to the next stage.
 
 ## Generation Compatibility
