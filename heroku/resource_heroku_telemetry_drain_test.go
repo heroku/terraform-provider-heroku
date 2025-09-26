@@ -52,9 +52,9 @@ func TestResourceHerokuTelemetryDrain_Schema(t *testing.T) {
 		t.Errorf("headers field should be TypeMap")
 	}
 
-	// Test headers field is optional
-	if resource.Schema["headers"].Required {
-		t.Errorf("headers field should be optional")
+	// Test headers field is required
+	if !resource.Schema["headers"].Required {
+		t.Errorf("headers field should be required")
 	}
 }
 
