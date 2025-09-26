@@ -14,9 +14,7 @@ The Heroku platform supports two [generations](https://devcenter.heroku.com/arti
 - **Cedar** (default): Legacy platform with support for classic buildpacks, stack configuration, and internal routing
 - **Fir**: Next-generation platform with enhanced security, and modern containerization
 
->[!NOTE]
->**Always reference apps by ID (UUID) in Terraform configuration.**
->Starting with v5.0 of this provider, all HCL app references are by ID. Read more details in [Upgrading](guides/upgrading.html).
+-> **Note:** Always reference apps by ID (UUID) in Terraform configuration. Starting with v5.0 of this provider, all HCL app references are by ID. Read more details in [Upgrading](guides/upgrading.html).
 
 ## Example Usage
 
