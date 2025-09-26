@@ -69,4 +69,4 @@ The following attributes are exported:
 
   * `personal`: True for personal apps
 
-* `uuid` - The unique UUID of the Heroku app.
+* `uuid`: The unique UUID of the Heroku app.
