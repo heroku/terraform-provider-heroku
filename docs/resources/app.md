@@ -103,9 +103,9 @@ The resource supports the following arguments:
      are displayed on-screen following a `terraform apply` or `terraform refresh`,
      they're redacted, with `<sensitive>` displayed in place of their value.
      It's recommended to put sensitive information like private keys, and passwords in this argument.
-* `space`: (Optional) The name of a Private Space to create the app in.
+* `space`: (Optional) The name of the space to create the app in.
 * `internal_routing` - (Optional) If true, the application is routable
-  only internally in a Private Space. This option is only available for apps
+  only internally in Heroku Private Spaces. This option is only available for apps
   that also specify `space`. **Note**: Only supported for apps in Cedar-generation spaces.
 * `organization`: (Optional) Specify this block once to define
      Heroku Team settings for this app. The fields for this block are
@@ -136,8 +136,8 @@ The following attributes are exported:
 * `name`: The name of the app.
 * `generation`: Generation of the app platform (`cedar` or `fir`). Automatically determined from the space the app is deployed to.
 * `stack`: The name of the [stack](https://devcenter.heroku.com/articles/stack) the application is run in.
-* `space`: The Private Space the app is in.
-* `internal_routing`: If internal routing is enabled in the Private Space app.
+* `space`: The space the app is in.
+* `internal_routing`: If internal routing is enabled. Only for apps in Heroku Private Spaces.
 * `region`: The region that the app is deployed to.
 * `git_url`: The Git URL for the application, used for
    deploying new versions of the app.
