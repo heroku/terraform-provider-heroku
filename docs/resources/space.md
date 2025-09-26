@@ -3,12 +3,13 @@ layout: "heroku"
 page_title: "Heroku: heroku_space"
 sidebar_current: "docs-heroku-resource-space"
 description: |-
-  Provides a Heroku Space resource for running apps in isolated, highly available, secure app execution environments.
+  Provides a Heroku Space resource for running apps in isolated, highly available, secure app execution environments. Use this resource to create a Heroku Private Space.
 ---
 
 # heroku\_space
 
 Provides a Heroku Private Space resource for running apps in isolated, highly available, secure app execution environments.
+Use this resource to create [Heroku Private Spaces](https://devcenter.heroku.com/articles/private-spaces).
 
 Both generations of the Heroku platform offer Private Spaces:
 
