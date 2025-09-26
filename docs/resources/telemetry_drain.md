@@ -92,7 +92,7 @@ resource "heroku_telemetry_drain" "app_logs" {
 
 ## Argument Reference
 
-The following arguments are supported:
+The resource supports the following arguments:
 
 * `owner_id`: (Required, ForceNew) The UUID of the app or space that owns this telemetry drain. You can't change it after creation.
 * `owner_type`: (Required, ForceNew) The type of owner (`"app"` or `"space"`). You can't change it after creation.
