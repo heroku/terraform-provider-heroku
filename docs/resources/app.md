@@ -106,7 +106,7 @@ The following arguments are supported:
 * `space` - (Optional) The name of a private space to create the app in.
 * `internal_routing` - (Optional) If true, the application is routable
   only internally in a private space. This option is only available for apps
-  that also specify `space`. **Note**: Not supported for `fir` generation apps.
+  that also specify `space`. **Note**: Only supported for apps in Cedar-generation spaces.
 * `organization` - (Optional) Specify this block once to define
      Heroku Team settings for this app. The fields for this block are
      documented below.
