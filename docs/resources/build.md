@@ -58,8 +58,7 @@ file is required to declare which `Dockerfile` to build for each process. Be car
 
 ### Building with Cloud Native Buildpacks
 
->[!NOTE]
->Fir-generation apps always use Cloud Native Buildpacks instead of classic buildpacks. 
+-> **Note:** Fir-generation apps always use Cloud Native Buildpacks instead of classic buildpacks. 
 
 You must specify the buildpack configuration in a `project.toml` file in the source code rather than the Terraform configuration. You can't use `buildpacks` argument to configure them. Attempting to do so results in an error during `terraform apply`.
 
@@ -80,10 +79,7 @@ For more information, see [Set a Cloud Native Buildpack](https://devcenter.herok
 A `source.url` can point to any `https://` URL that responds to a `GET` with a tarball source code. When running `terraform apply`,
 the source code is only fetched once for a successful build. Change the URL to force a new resource.
 
->[!NOTE]
->Source URLs are useful for building public, open-source source code, such as projects that publish releases on GitHub.
->
->They're not useful for private URLs that require credentials to access.
+-> **Note:** Source URLs are useful for building public, open-source source code, such as projects that publish releases on GitHub. They're not useful for private URLs that require credentials to access.
 
 ### GitHub URLs
 GitHub provides [release](https://help.github.com/articles/creating-releases/) tarballs through URLs. Create a release
@@ -180,10 +176,9 @@ A `source.path` can point to either:
 
 When running `terraform apply`, if the contents (SHA256) of the source path changed since the last `apply`, then a new build starts.
 
->[!NOTE]
->The complete source must already be present at its `path` when Terraform runs, so either:
->  * Copy, clone, or check out the source to the `path` before Terraform runs, like [this issue's solution](https://github.com/heroku/terraform-provider-heroku/issues/321#issuecomment-926778363).
->  * Commit the source code into a subdirectory of the Terraform project repository, so that it's all cloned together.
+-> **Note:** The complete source must already be present at its `path` when Terraform runs, so either:
+ * Copy, clone, or check out the source to the `path` before Terraform runs, like [this issue's solution](https://github.com/heroku/terraform-provider-heroku/issues/321#issuecomment-926778363).
+ * Commit the source code into a subdirectory of the Terraform project repository, so that it's all cloned together.
 
 
 ### Example Usage with Local Source Directory
