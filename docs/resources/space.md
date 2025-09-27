@@ -16,8 +16,7 @@ Both generations of the Heroku platform offer Private Spaces:
 * **Cedar** (default): The [Cedar generation](https://devcenter.heroku.com/articles/private-spaces#additional-features-for-cedar-private-spaces) supports all Private Space features, including Shield spaces.
 * **Fir**: The next-generation platform supports enhanced capabilities for Cloud Native Buildpacks (CNB), but with has some [feature limitations](https://devcenter.heroku.com/articles/generations#feature-parity) compared to Cedar Private Spaces.
 
->[!NOTE]
->You can't change the `generation` parameter after space creation. Choose carefully based on your application requirements.
+-> **Note:** You can't change the `generation` parameter after space creation. Choose carefully based on your application requirements.
 
 ## Example Usage
 
