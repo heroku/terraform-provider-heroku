@@ -12,6 +12,8 @@ Provides a resource for managing [inbound rulesets](https://devcenter.heroku.com
 
 !> **Warning:** When renaming or relocating this resource, use a [`moved` block](https://developer.hashicorp.com/terraform/language/block/moved) to prevent the resource from being destroyed and recreated. During destroy/create operations, the space's inbound ruleset is temporarily set to allow all traffic, which can create a security risk.
 
+-> **Note:** This resource is only supported for the [Cedar-generation of Heroku Private Spaces](https://devcenter.heroku.com/articles/private-spaces).
+
 ## Example Usage
 
 ```hcl-terraform
@@ -42,16 +44,16 @@ resource "heroku_space_inbound_ruleset" "default" {
 
 The following arguments are supported:
 
-* `space` - (Required) The ID of the space.
-* `rule` - (Required) At least one `rule` block. Rules are documented below.
+* `space`: (Required) The ID of the space.
+* `rule`: (Required) The rule to apply. You must provide at least one `rule` block, as documented below.
 
 A `rule` block supports the following arguments:
 
-* `action` - (Required) The action to apply this rule to. Must be one of `allow` or `deny`.
-* `source` - (Required) A CIDR block source for the rule.
+* `action` - (Required) The action to apply this rule to (`allow` or `deny`).
+* `source` - (Required) The CIDR block source for the rule.
 
 ## Attributes Reference
 
 The following attributes are exported:
 
-* `id` - The ID of the inbound ruleset.
+* `id`: The ID of the inbound ruleset.

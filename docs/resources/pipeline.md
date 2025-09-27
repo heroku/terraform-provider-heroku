@@ -12,44 +12,44 @@ description: |-
 Provides a [Heroku Pipeline](https://devcenter.heroku.com/articles/pipelines)
 resource.
 
-A pipeline is a group of Heroku apps that share the same codebase. Once a
-pipeline is created, and apps are added to different stages using
-[`heroku_pipeline_coupling`](./pipeline_coupling.html), you can promote app
-slugs to the next stage.
+A pipeline is a group of Heroku apps that share the same codebase. After creating a
+pipeline, and adding apps to different stages using
+[`heroku_pipeline_coupling`](./pipeline_coupling.html), you can promote an app's
+build artifacts to the next stage.
 
 ## Generation Compatibility
 
-All apps in a pipeline must use the same Heroku platform generation (Cedar or Fir). 
-Attempting to add apps from different generations will result in an error.
+All apps in a pipeline must use the same Heroku platform [generation](https://devcenter.heroku.com/articles/generations) (Cedar or Fir). 
+Attempting to add apps from different generations results in an error.
 
-## Ownership & Access
+## Ownership and Access
 
-Pipelines may be created as Personal or Team resources. Access to a pipeline
-is based on access to apps in the pipeline.
+You can create pipelines for personal or team resources. Access to a pipeline
+is based on access to the apps in the pipeline.
 
-For team pipelines, auto-join settings are available in the Heroku Dashboard's
-Pipeline Access section.
+For team pipelines, configure auto-join settings in the Heroku Dashboard's
+**`Pipeline Access`** section.
 
 ## GitHub Connection
 
-Pipelines may only be connected to GitHub via Heroku CLI or Dashboard web UI.
+You can only connect pipelines to GitHub via Heroku CLI or the dashboard web UI.
 
-If your Terraform use-case requires GitHub connection, then create the pipeline 
-manually, copy its ID (UUID) from its Dashboard URL, and then reference that ID in 
+If your Terraform use case requires a GitHub connection, create the pipeline 
+manually, copy its ID (UUID) from its dashboard URL, and then reference that ID in 
 the Terraform configuration.
 
 ## Empty Pipelines
 
-Pipelines created via Heroku Dashboard may be empty. Only the pipeline creator
-can access an empty pipeline in Heroku CLI and Dashboard.
+You can create empty pipelines via the Heroku Dashboard. Only the pipeline creator
+can access an empty pipeline in Heroku CLI and dashboard.
 
-Empty pipelines must be identified in API queries via ID (UUID).
+You must identify empty pipelines in API queries via ID (UUID).
 
-Empty team pipelines may be accessed by team members via API. This permits
+Team members can access empty team pipelines via API. This access allows
 manually created pipelines to be populated with app couplings via Terraform.
 
-Removing all app couplings from a pipeline will result in automatic deletion of 
-the empty pipeline, within a short period of time (less than one-hour).
+Removing all app couplings from a pipeline automatically deletes 
+the empty pipeline, within a short period of time (less than one hour).
 
 ## Example Usage
 
@@ -91,29 +91,32 @@ resource "heroku_pipeline_coupling" "production" {
 
 ## Argument Reference
 
-The following arguments are supported:
+The resource supports the following arguments:
 
-* `name` - (Required) The name of the pipeline.
-* `owner` - (Required) The owner of the pipeline. This block as the following required attributes:
-    * `id` - (Required) The unique identifier (UUID) of a pipeline owner.
-    * `type` - (Required) The type of pipeline owner. Can be either `user` or `team`.
+* `name`: (Required) The name of the pipeline.
+* `owner`: (Required) The owner of the pipeline. This block has the following required attributes:
+    * `id`: (Required) The unique identifier (UUID) of a pipeline owner.
+    * `type`: (Required) The type of pipeline owner ( `user` or `team`).
 
 
-Regarding the `owner` attribute block, please note the following:
-* The Heroku Platform API allows a pipeline to be created without an owner. However, the UI indicates pipelines require an owner.
-So to improve usability, if the `owner` attribute block is not set in your configuration(s), the pipeline owner
-will default to the user used to authenticate to the Platform API via this provider.
+For the `owner` attribute block:
+
+* You can create unowned pipelines with the Heroku Platform API. However, the dashboard UI requires that pipelines have an owner.
+* To improve usability, if you don't set the `owner` attribute block in your configuration(s), the pipeline owner
+defaults to the user used to authenticate to the Platform API via this provider.
 
 ## Attributes Reference
 
 The following attributes are exported:
 
-* `id` - The UUID of the pipeline.
-* `name` - The name of the pipeline.
+* `id`: The UUID of the pipeline.
+* `name`: The name of the pipeline.
 
 ## Import
 
-Pipelines can be imported using the Pipeline `id`, e.g.
+Import pipelines using the pipeline's `id`.
+
+For example:
 
 ```
 $ terraform import heroku_pipeline.foobar 12345678

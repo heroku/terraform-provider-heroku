@@ -3,7 +3,7 @@ layout: "heroku"
 page_title: "Heroku: heroku_app_release"
 sidebar_current: "docs-heroku-resource-app-release"
 description: |-
-  Provides the ability to deploy a heroku release to an application
+  Provides the ability to deploy a Heroku release to an application
 ---
 
 # heroku\_app\_release
@@ -11,11 +11,12 @@ description: |-
 Provides a [Heroku App Release](https://devcenter.heroku.com/articles/platform-api-reference#release)
 resource.
 
-An app release represents a combination of code, config vars and add-ons for an app on Heroku.
+An app release represents a combination of code, config vars and add-ons for an app on Heroku. 
 
-~> **NOTE:**
-This resource requires the slug be uploaded to Heroku using [`heroku_slug`](slug.html)
-or with external tooling prior to running terraform.
+~> **NOTE:** To use this resource, you must have uploaded a slug to Heroku using [`heroku_slug`](slug.html)
+or with external tooling prior to running Terraform.
+
+~> **NOTE:** This resource is only supported for apps that use [classic buildpacks](https://devcenter.heroku.com/articles/buildpacks#classic-buildpacks).
 
 ## Example Usage
 ```hcl-terraform
@@ -36,18 +37,18 @@ resource "heroku_app_release" "foobar-release" {
 
 The following arguments are supported:
 
-* `app_id` - (Required) Heroku app ID (do not use app name)
-* `slug_id` - unique identifier of slug
-* `description` - description of changes in this release
+* `app_id`: (Required) The Heroku app ID (not name)
+* `slug_id`: The unique identifier of slug
+* `description`: The description of changes in this release
 
 ## Attributes Reference
 
 The following attributes are exported:
 
-* `id` - The ID of the app release
+* `id`: The ID of the app release
 
 ## Import
-The most recent app release can be imported using the application name.
+Import the most recent app release using the application name.
 
 For example:
 ```

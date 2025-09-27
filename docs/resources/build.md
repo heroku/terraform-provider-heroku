@@ -12,54 +12,55 @@ description: |-
 Provides a [Heroku Build](https://devcenter.heroku.com/articles/platform-api-reference#build)
 resource, to deploy source code to a Heroku app.
 
-Either a [URL](#source-urls) or [local path](#local-source), pointing to a [tarball](https://en.wikipedia.org/wiki/Tar_(computing))
-of the source code, may be deployed. If a local path is used, it may instead point to a directory of source code, which will be tarballed automatically and then deployed.
+You can either deploy a [URL](#source-urls) or [local path](#local-source), pointing to a [tarball](https://en.wikipedia.org/wiki/Tar_(computing))
+of the source code. If you use a local path, it can instead point to a directory of source code, which will be tarballed automatically and then deployed.
 
 This resource waits until the [build](https://devcenter.heroku.com/articles/build-and-release-using-the-api)
-& [release](https://devcenter.heroku.com/articles/release-phase) completes.
+and [release](https://devcenter.heroku.com/articles/release-phase) completes.
 
-If the build fails, the build log will be output in the error message.
+If the build fails, the build log is output in the error message.
 
 To start the app from a successful build, use a [Formation resource](formation.html) to specify the process, dyno size, and dyno quantity.
 
-## Generation Compatibility
+## Buildpack Configuration
 
-Build configuration varies between Cedar (traditional) and Fir (next-generation) apps:
+Build configuration varies between apps that use [classic buildpacks vs. Cloud Native Buildpacks (CNBs)](https://devcenter.heroku.com/articles/classic-vs-cloud-native-buildpacks):
 
-- **Cedar apps**: Support traditional `buildpacks` configuration for specifying buildpack URLs or names
-- **Fir apps**: Use [Cloud Native Buildpacks](https://devcenter.heroku.com/articles/using-multiple-buildpacks-for-an-app) configured via `project.toml` in the source code. The `buildpacks` argument cannot be used with Fir generation apps.
+- **Classic buildpacks**: Configured via the `buildpacks` argument for specifying buildpack URLs or names.
+- **CNBs**: Configured via [`project.toml`](https://devcenter.heroku.com/articles/managing-buildpacks#set-a-cloud-native-buildpack) in the source code. You can't use the `buildpacks` argument for CNBs.
 
-Apps inherit their generation from their space (Fir) or default to Cedar when not in a space.
+Apps inherit their [generation](https://devcenter.heroku.com/articles/generations) from where they're deployed:
 
-## Source code layout
+- Cedar-generation apps, which use classic buildpacks, are deployed in the [Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime#common-runtime) or in [Cedar Private Spaces](https://devcenter.heroku.com/articles/private-spaces#additional-features-for-cedar-private-spaces).
+- Fir-generation apps, which use CNBs, are deployed to [Fir Private Spaces](https://devcenter.heroku.com/articles/private-spaces#fir-private-spaces).
 
-The code contained in the source directory or tarball must follow the layout required by the [buildpack](https://devcenter.heroku.com/articles/buildpacks)
+## Source Code Layout
+
+The code contained in the source directory or tarball must follow the layout required by the [buildpack](https://devcenter.heroku.com/articles/managing-buildpacks#classic-buildpacks-references)
 or the `Dockerfile` for [container builds](https://devcenter.heroku.com/articles/build-docker-images-heroku-yml).
 
 ### Building with Buildpacks
 
-This is the default build process.
+Building with buildpacks is the default build process.
 
-For apps that do not have a buildpack set, the [official Heroku buildpacks](https://devcenter.heroku.com/articles/buildpacks#officially-supported-buildpacks)
-will be searched until a match is detected and used to compile the app.
+For apps without a buildpack set, the app searches the [official Heroku buildpacks](https://devcenter.heroku.com/articles/officially-supported-buildpacks) until it detects a match and uses the buildpack to compile the app.
 
-A [`Procfile`](https://devcenter.heroku.com/articles/procfile) may be required to successfully launch the app.
+You can require a [`Procfile`](https://devcenter.heroku.com/articles/procfile) to successfully launch the app.
 Some buildpacks provide a default web process, such as [`npm start` for Node.js](https://devcenter.heroku.com/articles/nodejs-support#default-web-process-type).
-Other buildpacks may require a `Procfile`, like for a [pure Ruby app](https://devcenter.heroku.com/articles/ruby-support#ruby-applications-process-types).
+Other buildpacks can require a `Procfile`, like for a [pure Ruby app](https://devcenter.heroku.com/articles/ruby-support#ruby-applications-process-types).
 
 ### Building with Docker
 
 To use container builds, set the parent `heroku_app` resource's `stack = "container"`
 
 A [`heroku.yml` manifest](https://devcenter.heroku.com/articles/build-docker-images-heroku-yml#heroku-yml-overview)
-file is required to declare which `Dockerfile` to build for each process. Be careful not to create conflicting configuration
-between `heroku.yml` and Terraform, such as addons or config vars.
+file is required to declare which `Dockerfile` to build for each process. Be careful not to create conflicting configuration between `heroku.yml` and Terraform, such as add-ons or config vars.
 
-### Building with Cloud Native Buildpacks (Fir Generation)
+### Building with Cloud Native Buildpacks
 
-Fir generation apps use [Cloud Native Buildpacks](https://devcenter.heroku.com/articles/using-multiple-buildpacks-for-an-app) instead of traditional buildpacks. Buildpack configuration must be specified in a `project.toml` file in the source code rather than the Terraform configuration.
+-> **Note:** Fir-generation apps always use Cloud Native Buildpacks instead of classic buildpacks. 
 
-The `buildpacks` argument cannot be used with Fir generation apps. Attempting to do so will result in an error during `terraform apply`.
+You must specify the buildpack configuration in a `project.toml` file in the source code rather than the Terraform configuration. You can't use `buildpacks` argument to configure them. Attempting to do so results in an error during `terraform apply`.
 
 Example `project.toml` for a Node.js app:
 
@@ -72,15 +73,13 @@ name = "NODE_ENV"
 value = "production"
 ```
 
-For more information, see [Using Multiple Buildpacks for an App](https://devcenter.heroku.com/articles/using-multiple-buildpacks-for-an-app).
+For more information, see [Set a Cloud Native Buildpack](https://devcenter.heroku.com/articles/managing-buildpacks#set-a-cloud-native-buildpack).
 
 ## Source URLs
-A `source.url` may point to any `https://` URL that responds to a `GET` with a tarball source code. When running `terraform apply`,
-the source code will only be fetched once for a successful build. Change the URL to force a new resource.
+A `source.url` can point to any `https://` URL that responds to a `GET` with a tarball source code. When running `terraform apply`,
+the source code is only fetched once for a successful build. Change the URL to force a new resource.
 
-💡 Useful for building public, open-source source code, such as projects that publish releases on GitHub.
-
-⛔ Not useful for private URLs that require credentials to access.
+-> **Note:** Source URLs are useful for building public, open-source source code, such as projects that publish releases on GitHub. They're not useful for private URLs that require credentials to access.
 
 ### GitHub URLs
 GitHub provides [release](https://help.github.com/articles/creating-releases/) tarballs through URLs. Create a release
@@ -91,12 +90,12 @@ https://github.com/username/example/archive/v1.0.0.tar.gz
 ```
 
 Using a branch or master `source.url` is possible, but be aware that tracking down exactly what commit was deployed
-for a given `terraform apply` may be difficult. On the other hand, using stable release tags ensures repeatability
+for a given `terraform apply` can be difficult. On the other hand, using stable release tags ensures repeatability
 of the Terraform configuration.
 
 ### Example Usage with Source URL
 
-#### Cedar Generation (Traditional)
+#### Classic Buildpacks
 
 ```hcl-terraform
 resource "heroku_app" "cedar_app" {
@@ -124,7 +123,7 @@ resource "heroku_formation" "cedar_formation" {
 }
 ```
 
-#### Fir Generation (Cloud Native Buildpacks)
+#### Cloud Native Buildpacks
 
 ```hcl-terraform
 resource "heroku_space" "fir_space" {
@@ -146,7 +145,7 @@ resource "heroku_app" "fir_app" {
 
 resource "heroku_build" "fir_build" {
   app_id = heroku_app.fir_app.id
-  # Note: Do not specify buildpacks for Fir apps
+  # Note: Don't specify buildpacks for Fir apps
   # Buildpacks are configured via project.toml in the source code
 
   source {
@@ -165,26 +164,26 @@ resource "heroku_formation" "fir_formation" {
 }
 ```
 
-## Local source
-A `source.path` may point to either:
+## Local Source
+A `source.path` can point to either:
 
-* a tarball of source code
-* a directory of source code
-  * use `src/appname` relative paths to subdirectories within the Terraform project repo (recommended)
-  * use `/opt/src/appname` absolute or `../appname` relative paths to external directories
-  * **avoid ancestor paths that contain the Terraform configuration itself**
-    * paths such as `../` will [cause errors during apply](https://github.com/heroku/terraform-provider-heroku/issues/269)
+* A tarball of source code
+* A directory of source code
+  * Use `src/appname` relative paths to subdirectories within the Terraform project repo (recommended).
+  * Use `/opt/src/appname` absolute or `../appname` relative paths to external directories.
+  * **Avoid ancestor paths that contain the Terraform configuration itself.**
+    * Paths such as `../` [cause errors during apply](https://github.com/heroku/terraform-provider-heroku/issues/269)
 
-When running `terraform apply`, if the contents (SHA256) of the source path changed since the last `apply`, then a new build will start.
+When running `terraform apply`, if the contents (SHA256) of the source path changed since the last `apply`, then a new build starts.
 
-🚚 **The complete source must already be present at its `path` when Terraform runs**, so either:
-  * copy/clone/checkout the source to the `path` before Terraform runs, like [this issue's solution](https://github.com/heroku/terraform-provider-heroku/issues/321#issuecomment-926778363)
-  * commit the source code into a subdirectory of the Terraform project repository, so that that it's all cloned together.
+-> **Note:** The complete source must already be present at its `path` when Terraform runs, so either:
+ * Copy, clone, or check out the source to the `path` before Terraform runs, like [this issue's solution](https://github.com/heroku/terraform-provider-heroku/issues/321#issuecomment-926778363).
+ * Commit the source code into a subdirectory of the Terraform project repository, so that it's all cloned together.
 
 
 ### Example Usage with Local Source Directory
 
-#### Cedar Generation (Traditional)
+#### Classic Buildpacks
 
 ```hcl-terraform
 resource "heroku_app" "cedar_app" {
@@ -212,7 +211,7 @@ resource "heroku_formation" "cedar_formation" {
 }
 ```
 
-#### Fir Generation (Cloud Native Buildpacks)
+#### Cloud Native Buildpacks
 
 ```hcl-terraform
 resource "heroku_space" "fir_space" {
@@ -254,16 +253,16 @@ resource "heroku_formation" "fir_formation" {
 
 ## Argument Reference
 
-The following arguments are supported:
+The resource supports the following arguments:
 
-* `app_id` - (Required) Heroku app ID (do not use app name)
-* `buildpacks` - List of buildpack GitHub URLs
-* `source` - (Required) A block that specifies the source code to build & release:
-  * `checksum` - SHA256 hash of the tarball archive to verify its integrity, example:
+* `app_id`: (Required) The Heroku app ID (don't use app name).
+* `buildpacks`: (Optional) Buildpack GitHub URLs for the application. **Note:** Not supported for apps using Cloud Native Buildpacks, like Fir-generation apps. Use `project.toml` for configuration instead.
+* `source`: (Required) A block that specifies the source code to build and release:
+  * `checksum`: SHA256 hash of the tarball archive to verify its integrity, for example:
     `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
-  * `path` - (Required unless `source.url` is set) Local path to the source directory or tarball archive for the app
-  * `url` - (Required unless `source.path` is set) `https` location of the source archive for the app
-  * `version` - Use to track what version of your source originated this build. If you are creating builds
+  * `path`: (Required unless `source.url` is set) The local path to the source directory or tarball archive for the app.
+  * `url`: (Required unless `source.path` is set) The `https` location of the source archive for the app.
+  * `version`: Use to track what version of your source originated this build. If you are creating builds
     from git-versioned source code, for example, the commit hash, or release tag would be a good value to use for the
     version parameter.
 
@@ -272,25 +271,25 @@ The following arguments are supported:
 
 The following attributes are exported:
 
-* `uuid` - The ID of the build
-* `output_stream_url` - URL that [streams the log output from the build](https://devcenter.heroku.com/articles/build-and-release-using-the-api#streaming-build-output)
-* `release_id` - The Heroku app release created with a build's slug
-* `slug_id` - The Heroku slug created by a build
-* `stack` - Name or ID of the [Heroku stack](https://devcenter.heroku.com/articles/stack)
-* `status` - The status of a build. Possible values are `pending`, `successful` and `failed`
-* `user` - Heroku account that created a build
-  * `email`
-  * `id`
+* `uuid`: The ID of the build
+* `output_stream_url`: The URL that [streams the log output from the build](https://devcenter.heroku.com/articles/build-and-release-using-the-api#streaming-build-output).
+* `release_id`: The Heroku app release created with a build's artifacts.
+* `slug_id`: The Heroku slug created by a build. **Note**: Only for apps using classic buildpacks.
+* `stack`: The name or ID of the [Heroku stack](https://devcenter.heroku.com/articles/stack).
+* `status`: The status of a build. Possible values are `pending`, `successful` and `failed`.
+* `user`: The Heroku account that created a build.
+  * `email`: The email address of the user.
+  * `id`: The ID of the user.
 
 ## Import
-Existing builds can be imported using the combination of the application name, a colon, and the build ID.
+Import existing builds with a combination of the application name, a colon, and the build ID.
 
 For example:
 ```
 $ terraform import heroku_build.foobar bazbux:4f1db8ef-ed5c-4c42-a3d6-3c28262d5abc
 ```
 
-* `foobar` is the **heroku_build** resource's name
-* `bazbux` is the Heroku app name (or ID) that the build belongs to
-* `:` separates the app identifier & the build identifier
-* `4f1db8ef…` is the build ID
+* `foobar` is the **heroku_build** resource's name.
+* `bazbux` is the Heroku app name or ID that the build belongs to.
+* `:` separates the app identifier and the build identifier.
+* `4f1db8ef…` is the build ID.
