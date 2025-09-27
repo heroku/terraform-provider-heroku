@@ -9,6 +9,7 @@ description: |-
 # heroku\_telemetry\_drain
 
 Provides a [Heroku Telemetry Drain](https://devcenter.heroku.com/articles/platform-api-reference#telemetry-drain) resource.
+
 Telemetry drains forward OpenTelemetry traces, metrics, and logs from [Fir-generation](https://devcenter.heroku.com/articles/generations#fir) apps and spaces to your own consumer endpoint. 
 
 Use this resource to create a [telemetry drain](https://devcenter.heroku.com/articles/heroku-telemetry) scoped to the app or space level.
@@ -57,6 +58,7 @@ resource "heroku_telemetry_drain" "app_traces" {
   }
 }
 ```
+
 
 ### Space-Scoped Telemetry Drain
 

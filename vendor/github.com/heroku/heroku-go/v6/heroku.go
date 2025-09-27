@@ -3502,6 +3502,10 @@ type PipelinePromotionCreateOpts struct {
 		App *struct {
 			ID *string `json:"id,omitempty" url:"id,omitempty,key"` // unique identifier of app
 		} `json:"app,omitempty" url:"app,omitempty,key"` // the app which was promoted from
+		Release *struct {
+			ID *string `json:"id,omitempty" url:"id,omitempty,key"` // unique identifier of release
+		} `json:"release,omitempty" url:"release,omitempty,key"` // the specific release to promote from (optional, defaults to current
+		// release)
 	} `json:"source" url:"source,key"` // the app being promoted from
 	Targets []struct {
 		App *struct {

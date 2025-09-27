@@ -15,16 +15,18 @@ var featureMatrix = map[string]map[string]map[string]bool{
 			"private_vpn":           true,
 			"outbound_rules":        true,
 			"private_space_logging": true,
-			"outbound_ips":          true, // Cedar supports outbound IPs
-			"vpn_connection":        true, // Cedar supports VPN connections
-			"inbound_ruleset":       true, // Cedar supports inbound rulesets
-			"peering_connection":    true, // Cedar supports IPv4 peering
+			"outbound_ips":          true,  // Cedar supports outbound IPs
+			"vpn_connection":        true,  // Cedar supports VPN connections
+			"inbound_ruleset":       true,  // Cedar supports inbound rulesets
+			"peering_connection":    true,  // Cedar supports IPv4 peering
+			"otel":                  false, // Cedar doesn't supports OTel at the space level
 		},
 		"app": {
 			"buildpacks":              true,  // Cedar supports traditional buildpacks
 			"stack":                   true,  // Cedar supports stack configuration
 			"internal_routing":        true,  // Cedar supports internal routing
 			"cloud_native_buildpacks": false, // Cedar doesn't use CNB by default
+			"otel":                    false, // Cedar doesn't supports OTel at the app level
 		},
 		"drain": {
 			"app_log_drains": true, // Cedar supports traditional log drains
@@ -42,12 +44,14 @@ var featureMatrix = map[string]map[string]map[string]bool{
 			"vpn_connection":        false, // VPN connections not supported
 			"inbound_ruleset":       false, // Inbound rulesets not supported
 			"peering_connection":    false, // IPv4 peering not supported
+			"otel":                  true,  // Fir supports OTel at the space level
 		},
 		"app": {
 			"buildpacks":              false, // Fir doesn't support traditional buildpacks
 			"stack":                   false, // Fir doesn't use traditional stack config
 			"internal_routing":        false, // Fir doesn't support internal routing
 			"cloud_native_buildpacks": true,  // Fir uses CNB exclusively
+			"otel":                    true,  // Fir supports OTel at the app level
 		},
 		"drain": {
 			"app_log_drains": false, // Fir apps don't support traditional log drains

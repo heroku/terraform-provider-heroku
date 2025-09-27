@@ -579,6 +579,6 @@ resource "heroku_build" "fir_build_invalid" {
   }
 }
 `, spaceConfig, acctest.RandString(6)),
-		ExpectError: regexp.MustCompile("buildpacks cannot be specified for fir generation apps"),
+		ExpectError: regexp.MustCompile("buildpacks cannot be specified for fir generation apps.*Use project\\.toml"),
 	}
 }
