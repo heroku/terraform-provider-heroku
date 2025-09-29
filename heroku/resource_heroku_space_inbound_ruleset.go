@@ -101,7 +101,6 @@ func resourceHerokuSpaceInboundRulesetRead(d *schema.ResourceData, meta interfac
 
 	d.SetId(ruleset.ID)
 	d.Set("rule", rulesList)
-	d.Set("space", ruleset.Space.Name)
 
 	return nil
 }
