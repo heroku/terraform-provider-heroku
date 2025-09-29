@@ -178,6 +178,11 @@ func resourceHerokuBuildCreate(d *schema.ResourceData, meta interface{}) error {
 
 	appID := getAppId(d)
 
+	// Apply-time validation: ensure buildpacks are not specified for Fir apps
+	if err := validateBuildpacksForApp(client, appID, d); err != nil {
+		return err
+	}
+
 	// Build up our creation options
 	opts := heroku.BuildCreateOpts{}
 
@@ -333,6 +338,11 @@ func resourceHerokuBuildDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceHerokuBuildCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
+	// Validate buildpack compatibility with app generation during plan phase
+	if err := validateBuildpacksForAppGeneration(ctx, diff, v); err != nil {
+		return err
+	}
+
 	// Detect changes to the content of local source archive.
 	if v, ok := diff.GetOk("source"); ok {
 		vL := v.([]interface{})
@@ -371,6 +381,67 @@ func resourceHerokuBuildCustomizeDiff(ctx context.Context, diff *schema.Resource
 				}
 			}
 		}
+	}
+
+	return nil
+}
+
+// validateBuildpacksForAppGeneration validates buildpack configuration against the target app's generation
+func validateBuildpacksForAppGeneration(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
+	// Only validate if buildpacks are specified
+	if _, ok := diff.GetOk("buildpacks"); !ok {
+		return nil // No buildpacks specified, nothing to validate
+	}
+
+	// Get the app ID to check its generation
+	appID := diff.Get("app_id").(string)
+	if appID == "" {
+		// During plan phase, the app_id might not be available yet if the app is being created
+		// in the same configuration. Skip validation for now - it will be caught at apply time.
+		return nil
+	}
+
+	config := v.(*Config)
+	client := config.Api
+
+	// Fetch app info to determine its generation
+	app, err := client.AppInfo(ctx, appID)
+	if err != nil {
+		// If we can't fetch the app (it might not exist yet during plan), skip validation
+		// It will be caught at apply time
+		return nil
+	}
+
+	// Validate buildpacks against app generation
+	return validateBuildpacksForGeneration(app.Generation.Name)
+}
+
+// validateBuildpacksForApp validates buildpack configuration at apply-time
+func validateBuildpacksForApp(client *heroku.Service, appID string, d *schema.ResourceData) error {
+	// Only validate if buildpacks are specified
+	if _, ok := d.GetOk("buildpacks"); !ok {
+		return nil // No buildpacks specified, nothing to validate
+	}
+
+	// Fetch app info to determine its generation
+	app, err := client.AppInfo(context.TODO(), appID)
+	if err != nil {
+		return fmt.Errorf("failed to get app info for build validation: %w", err)
+	}
+
+	// Validate buildpacks against app generation
+	return validateBuildpacksForGeneration(app.Generation.Name)
+}
+
+// validateBuildpacksForGeneration validates buildpacks against a given generation
+func validateBuildpacksForGeneration(generationName string) error {
+	appGeneration := generationName
+	if appGeneration == "" {
+		appGeneration = "cedar" // Default to cedar if generation is not specified
+	}
+
+	if !IsFeatureSupported(appGeneration, "app", "buildpacks") {
+		return fmt.Errorf("buildpacks cannot be specified for %s generation apps. Use project.toml to configure Cloud Native Buildpacks instead. See: https://devcenter.heroku.com/articles/using-multiple-buildpacks-for-an-app", appGeneration)
 	}
 
 	return nil

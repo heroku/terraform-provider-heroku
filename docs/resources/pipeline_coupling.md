@@ -9,11 +9,13 @@ description: |-
 # heroku\_pipeline\_coupling
 
 Provides a [Heroku Pipeline Coupling](https://devcenter.heroku.com/articles/pipelines)
-resource.
+resource. 
 
-A pipeline is a group of Heroku apps that share the same codebase. Once a
-pipeline is created using [`heroku_pipeline`](./pipeline.html), and apps are added
-to different stages using `heroku_pipeline_coupling`, you can promote app slugs
+A pipeline is a group of Heroku apps that share the same codebase. Use a pipeline coupling to add apps to different stages of the pipeline.
+
+After creating a
+pipeline with [`heroku_pipeline`](./pipeline.html), and adding apps
+to stages with `heroku_pipeline_coupling`, you can [promote](/pipeline_promotion.html) an app's build artifacts
 to the downstream stages.
 
 See [`heroku_pipeline`](./pipeline.html) for complete usage documentation.
@@ -32,20 +34,19 @@ resource "heroku_pipeline_coupling" "production" {
 
 The following arguments are supported:
 
-* `app_id` - (Required) Heroku app ID (do not use app name)
-* `pipeline` - (Required) The ID of the pipeline to add this app to.
-* `stage` - (Required) The stage to couple this app to. Must be one of
-`review`, `development`, `staging`, or `production`.
+* `app_id`: (Required) The Heroku app ID (not name)
+* `pipeline`: (Required) The ID of the pipeline to add this app to.
+* `stage`: (Required) The stage to couple this app to (`review`, `development`, `staging`, or `production`).
 
 ## Attributes Reference
 
 The following attributes are exported:
 
-* `id` - The UUID of this pipeline coupling.
+* `id`: The UUID of the pipeline coupling.
 
 ## Import
 
-Pipeline couplings can be imported using the Pipeline coupling `id`, e.g.
+You can import a pipeline couplings with the its `id`, e.g.
 
 ```
 $ terraform import heroku_pipeline_coupling.foobar 12345678

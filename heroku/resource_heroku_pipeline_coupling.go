@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -67,7 +68,15 @@ func resourceHerokuPipelineCouplingCreate(d *schema.ResourceData, meta interface
 
 	p, err := client.PipelineCouplingCreate(context.TODO(), opts)
 	if err != nil {
-		return fmt.Errorf("Error creating pipeline: %s", err)
+		// Enhance generation-related errors with app context
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "same generation") {
+			if app, appErr := client.AppInfo(context.TODO(), d.Get("app_id").(string)); appErr == nil {
+				return fmt.Errorf("%s\n\nYour app '%s' is %s generation. Ensure all apps in the pipeline use the same generation (Cedar or Fir)",
+					errMsg, app.Name, app.Generation.Name)
+			}
+		}
+		return fmt.Errorf("error creating pipeline: %s", err)
 	}
 
 	d.SetId(p.ID)
@@ -84,7 +93,7 @@ func resourceHerokuPipelineCouplingDelete(d *schema.ResourceData, meta interface
 
 	_, err := client.PipelineCouplingDelete(context.TODO(), d.Id())
 	if err != nil {
-		return fmt.Errorf("Error deleting pipeline: %s", err)
+		return fmt.Errorf("error deleting pipeline: %s", err)
 	}
 
 	return nil
@@ -95,7 +104,7 @@ func resourceHerokuPipelineCouplingRead(d *schema.ResourceData, meta interface{}
 
 	p, err := client.PipelineCouplingInfo(context.TODO(), d.Id())
 	if err != nil {
-		return fmt.Errorf("Error retrieving pipeline: %s", err)
+		return fmt.Errorf("error retrieving pipeline: %s", err)
 	}
 
 	d.Set("app_id", p.App.ID)

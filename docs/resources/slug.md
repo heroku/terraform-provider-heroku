@@ -13,9 +13,11 @@ Provides a [Heroku Slug](https://devcenter.heroku.com/articles/platform-api-refe
 resource.
 
 This resource supports uploading a pre-generated archive file of executable code, making it possible to launch apps
-directly from a Terraform config. This resource does not itself generate the slug archive.
+directly from a Terraform config. This resource doesn't generate the slug archive itself.
 [A guide to creating slug archives](https://devcenter.heroku.com/articles/platform-api-deploying-slugs) is available
 in the Heroku Dev Center.
+
+~> **NOTE:** This resource is only supported for apps that use [classic buildpacks](https://devcenter.heroku.com/articles/buildpacks#classic-buildpacks).
 
 ## Minimal Example
 
@@ -24,12 +26,12 @@ Create a ready-to-release slug:
 * `file_url` or `file_path` must reference a file containing a slug archive of executable code
   and must follow the prescribed layout from [Create slug archive](https://devcenter.heroku.com/articles/platform-api-deploying-slugs#create-slug-archive)
   in the Heroku Dev Center (nested within an `./app` directory)
-* The archive may be created by an external build system, downloaded from another Heroku app,
+* The archive can be created by an external build system, downloaded from another Heroku app,
   or otherwise provided outside of the context of this Terraform resource
-* If the content (SHA256) of `file_path` changes, then a new resource will be forced on the next plan/apply;
-  if the file does not exist, the difference is ignored.
-* The `file_url` is only fetched during resource creation. To trigger another fetch the `file_url` should be changed,
-  then a new resource will be forced on the next plan/apply.
+* If the content (SHA256) of `file_path` changes, then a new resource is forced on the next plan/apply;
+  if the file doesn't exist, the difference is ignored.
+* The `file_url` is only fetched during resource creation. To trigger another fetch, change the `file_url`,
+  then a new resource is forced on the next plan/apply.
 
 ```hcl-terraform
 resource "heroku_app" "foobar" {
@@ -89,38 +91,38 @@ resource "heroku_formation" "foobar" {
 
 The following arguments are supported:
 
-* `app_id` - (Required) Heroku app ID (do not use app name)
-* `buildpack_provided_description` - Description of language or app framework, `"Ruby/Rack"`;
+* `app_id`: (Required) The Heroku app ID (not name)
+* `buildpack_provided_description` - The description of language or app framework, `"Ruby/Rack"`;
   displayed as the app's language in the Heroku Dashboard
-* `checksum` - Hash of the slug for verifying its integrity, auto-generated from contents of `file_path` or `file_url`,
+* `checksum` - The hash of the slug for verifying its integrity, auto-generated from contents of `file_path` or `file_url`,
   `SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
-* `commit` - Identification of the code with your version control system (eg: SHA of the git HEAD), `"60883d9e8947a57e04dc9124f25df004866a2051"`
-* `commit_description` - Description of the provided commit
-* `file_path` - (Required unless `file_url` is set) Local path to a slug archive, `"slugs/current.tgz"`
-* `file_url` - (Required unless `file_path` is set) **https** URL to a slug archive, `"https://example.com/slugs/app-v1.tgz"`
-* `process_types` - (Required) Map of [processes to launch on Heroku Dynos](https://devcenter.heroku.com/articles/process-model)
-* `stack` - Name or ID of the [Heroku stack](https://devcenter.heroku.com/articles/stack)
+* `commit` - The identification of the code with your version control system (example: SHA of the git HEAD), `"60883d9e8947a57e04dc9124f25df004866a2051"`
+* `commit_description` - The description of the provided commit
+* `file_path` - (Required unless `file_url` is set) The local path to the slug archive, `"slugs/current.tgz"`
+* `file_url` - (Required unless `file_path` is set) The **https** URL to the slug archive, `"https://example.com/slugs/app-v1.tgz"`
+* `process_types` - (Required) The map of [processes to launch on Heroku Dynos](https://devcenter.heroku.com/articles/process-model)
+* `stack` - The name or ID of the [Heroku stack](https://devcenter.heroku.com/articles/stack)
 
 ## Attributes Reference
 
 The following attributes are exported:
 
-* `id` - The ID of the slug
-* `app` - The ID or unique name of the Heroku app
-* `blob` - Slug archive (compressed tar of executable code)
-  * `method` - HTTP method to upload the archive
-  * `url` - Pre-signed, expiring URL to upload the archive
-* `buildpack_provided_description` - Description of language or app framework, `"Ruby/Rack"`
-* `checksum` - Hash of the slug for verifying its integrity, auto-generated from contents of `file_path` or `file_url`
-* `commit` - Identification of the code with your version control system (eg: SHA of the git HEAD), `"60883d9e8947a57e04dc9124f25df004866a2051"`
-* `commit_description` - Description of the provided commit
-* `process_types` - Map of [processes to launch on Heroku Dynos](https://devcenter.heroku.com/articles/process-model)
-* `size` - Slug archive filesize in bytes
-* `stack` - [Heroku stack](https://devcenter.heroku.com/articles/stack) name
-* `stack_id` - [Heroku stack](https://devcenter.heroku.com/articles/stack) ID
+* `id`: The ID of the slug
+* `app`: The ID or unique name of the Heroku app
+* `blob`: The slug archive (compressed tar of executable code)
+  * `method`: The HTTP method to upload the archive
+  * `url`: The pre-signed, expiring URL to upload the archive
+* `buildpack_provided_description`: The description of language or app framework, `"Ruby/Rack"`
+* `checksum`: The hash of the slug for verifying its integrity, auto-generated from contents of `file_path` or `file_url`
+* `commit`: The identification of the code with your version control system (example: SHA of the git HEAD), `"60883d9e8947a57e04dc9124f25df004866a2051"`
+* `commit_description`: The description of the provided commit
+* `process_types`: The map of [processes to launch on Heroku Dynos](https://devcenter.heroku.com/articles/process-model)
+* `size`: The slug archive filesize in bytes
+* `stack`: The [Heroku stack](https://devcenter.heroku.com/articles/stack) name
+* `stack_id`: The [Heroku stack](https://devcenter.heroku.com/articles/stack) ID
 
 ## Import
-Existing slugs can be imported using the combination of the application name, a colon, and the slug ID.
+Import existing slugs with the combination of the application name, a colon, and the slug ID.
 
 For example:
 

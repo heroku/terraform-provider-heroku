@@ -11283,6 +11283,18 @@
                     "type": [
                       "object"
                     ]
+                  },
+                  "release": {
+                    "description": "the specific release to promote from (optional, defaults to current release)",
+                    "properties": {
+                      "id": {
+                        "$ref": "#/definitions/release/definitions/id"
+                      }
+                    },
+                    "strictProperties": true,
+                    "type": [
+                      "object"
+                    ]
                   }
                 },
                 "type": [
@@ -12471,7 +12483,8 @@
           "enum": [
             "failed",
             "pending",
-            "succeeded"
+            "succeeded",
+            "expired"
           ],
           "example": "succeeded",
           "readOnly": true,

@@ -10,6 +10,8 @@ description: |-
 
 Provides a resource for accepting VPC peering requests to Heroku Private Spaces.
 
+-> **Note:** This resource is only supported for the [Cedar-generation of Heroku Private Spaces](https://devcenter.heroku.com/articles/private-spaces).
+
 ## Example Usage
 
 ```hcl-terraform
@@ -36,12 +38,12 @@ resource "heroku_space_peering_connection_accepter" "accept" {
 
 The following arguments are supported:
 
-* `space` - (Required) The name of the Private Space (ID/UUID is acceptable too, but must be used consistently).
-* `vpc_peering_connection_id` - (Required) The peering connection request ID.
+* `space`: (Required) The name of the Private Space (ID/UUID is acceptable too, but must be used consistently).
+* `vpc_peering_connection_id`: (Required) The peering connection request ID.
 
 ## Attributes Reference
 
 The following attributes are exported:
 
-* `status` - The status of the peering connection request.
-* `type` - The type of the peering connection.
+* `status`: The status of the peering connection request.
+* `type`: The type of the peering connection.
