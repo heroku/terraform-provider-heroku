@@ -34,6 +34,8 @@ func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 						"data.heroku_app.foobar", "buildpacks.0", "https://github.com/heroku/heroku-buildpack-multi-procfile"),
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "acm", "false"),
+					resource.TestCheckResourceAttr(
+						"data.heroku_app.foobar", "generation", "cedar"),
 				),
 			},
 		},
@@ -87,6 +89,41 @@ func TestAccDatasourceHerokuApp_Organization(t *testing.T) {
 			},
 		},
 	})
+}
+
+// testStep_AccDatasourceHerokuApp_Generation_Fir tests the data source with a Fir app
+func testStep_AccDatasourceHerokuApp_Generation_Fir(t *testing.T, spaceConfig, spaceName string) resource.TestStep {
+	randString := acctest.RandString(5)
+	appName := fmt.Sprintf("tftest-app-ds-fir-%s", randString)
+
+	config := fmt.Sprintf(`%s
+
+resource "heroku_app" "data_source_test" {
+  name   = "%s"
+  region = heroku_space.foobar.region
+  space  = heroku_space.foobar.name
+  
+  organization {
+    name = "%s"
+  }
+}
+
+data "heroku_app" "data_source_test" {
+  name = heroku_app.data_source_test.name
+}`,
+		spaceConfig, appName, testAccConfig.GetOrganizationOrSkip(t))
+
+	return resource.TestStep{
+		Config: config,
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr("data.heroku_app.data_source_test", "name", appName),
+			resource.TestCheckResourceAttr("data.heroku_app.data_source_test", "generation", "fir"),
+			resource.TestCheckResourceAttr("data.heroku_app.data_source_test", "stack", "cnb"),
+			resource.TestCheckResourceAttr("data.heroku_app.data_source_test", "buildpacks.#", "0"),
+			resource.TestCheckResourceAttrSet("data.heroku_app.data_source_test", "id"),
+			resource.TestCheckResourceAttrSet("data.heroku_app.data_source_test", "space"),
+		),
+	}
 }
 
 func testAccCheckHerokuApp_basic(appName string) string {
