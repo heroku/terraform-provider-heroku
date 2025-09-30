@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -167,12 +168,6 @@ func resourceHerokuReviewAppConfigCreate(ctx context.Context, d *schema.Resource
 		opts.BaseName = &vs
 	}
 
-	if v, ok := d.GetOk("base_name"); ok {
-		vs := v.(string)
-		log.Printf("[DEBUG] review app enable - base_name: %s", vs)
-		opts.BaseName = &vs
-	}
-
 	if v, ok := d.GetOk("deploy_target"); ok {
 		vL := v.([]interface{})
 		deployTargetData := struct {
@@ -212,10 +207,19 @@ func resourceHerokuReviewAppConfigCreate(ctx context.Context, d *schema.Resource
 
 	_, enableErr := client.ReviewAppConfigEnable(ctx, pipelineID, opts)
 	if enableErr != nil {
+		// Provide helpful error message for common GitHub connection issue
+		errorDetail := enableErr.Error()
+		if strings.Contains(errorDetail, "Not found") {
+			errorDetail = fmt.Sprintf("%s\n\nThis error typically occurs when the pipeline is not connected to a GitHub repository. "+
+				"Review apps require the pipeline to be connected to GitHub before configuration can be enabled. "+
+				"Please connect your pipeline to a GitHub repository using the Heroku Dashboard or CLI:\n"+
+				"  heroku pipelines:connect <pipeline-name> --repo <owner/repo>", errorDetail)
+		}
+
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
 			Summary:  fmt.Sprintf("Unable to enable review apps config for pipeline %s", pipelineID),
-			Detail:   enableErr.Error(),
+			Detail:   errorDetail,
 		})
 		return diags
 	}

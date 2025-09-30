@@ -14,7 +14,7 @@ You can only use this resource after you create a pipeline and connect it to a G
 Refer to [the Heroku Dev Center](https://devcenter.heroku.com/articles/github-integration-review-apps#setup)
 for more information.
 
--> **Note:** This resource is only supported for the [Cedar-generation](https://devcenter.heroku.com/articles/generations#cedar) apps.
+-> **Note:** This resource supports both Cedar and Fir generation pipelines.
 
 ## Example Usage
 
