@@ -10,14 +10,23 @@ description: |-
 
 Use this data source to get information about a Heroku app.
 
-~> **NOTE:** This resource is only supported for apps that use [classic buildpacks](https://devcenter.heroku.com/articles/buildpacks#classic-buildpacks).
+This data source supports both the [Cedar and Fir generations](https://devcenter.heroku.com/articles/generations) of Heroku apps.
 
 ## Example Usage
 
 ```hcl-terraform
 # Lookup an existing Heroku app
 data "heroku_app" "default" {
-  name   = "my-cool-app"
+  name = "my-cool-app"
+}
+
+# Example: Check app generation and buildpacks
+output "app_generation" {
+  value = data.heroku_app.default.generation
+}
+
+output "app_buildpacks" {
+  value = data.heroku_app.default.buildpacks
 }
 ```
 
@@ -39,7 +48,9 @@ The following attributes are exported:
 
 * `stack`: The application [stack](https://devcenter.heroku.com/articles/stack) is what platform to run the application in.
 
-* `buildpacks`: A list of buildpacks that this app uses.
+* `generation`: The generation of the app platform (`cedar` or `fir`).
+
+* `buildpacks`: The list of buildpacks that this app uses. Empty for apps using Cloud Native Buildpacks, such as Fir-generation apps, which list buildpacks in `project.toml` instead.
 
 * `space`: The [space](https://devcenter.heroku.com/articles/private-spaces) in which the app runs. Not present for [Common Runtime](https://devcenter.heroku.com/articles/dyno-runtime#common-runtime) apps.
 

@@ -88,7 +88,9 @@ func TestAccHerokuSpace_Fir(t *testing.T) {
 			testStep_AccHerokuApp_Generation_Fir(t, spaceConfig, spaceName),
 			// Step 3: Test Fir build generation behavior (valid build)
 			testStep_AccHerokuBuild_Generation_FirValid(spaceConfig, spaceName),
-			// Step 4: Test Fir telemetry drain functionality
+			// Step 4: Test Fir app data source functionality
+			testStep_AccDatasourceHerokuApp_Generation_Fir(t, spaceConfig, spaceName),
+			// Step 5: Test Fir telemetry drain functionality
 			testStep_AccHerokuTelemetryDrain_Generation_Fir(t, spaceConfig, spaceName),
 		},
 	})

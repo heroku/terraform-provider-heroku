@@ -35,6 +35,12 @@ func dataSourceHerokuApp() *schema.Resource {
 				Default:  nil,
 			},
 
+			"generation": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Generation of the app platform (cedar or fir)",
+			},
+
 			"internal_routing": {
 				Type:     schema.TypeBool,
 				Computed: true,
@@ -139,6 +145,7 @@ func dataSourceHerokuAppRead(d *schema.ResourceData, m interface{}) error {
 
 	d.Set("buildpacks", app.Buildpacks)
 	d.Set("config_vars", app.Vars)
+	d.Set("generation", app.Generation)
 
 	releaseRange := heroku.ListRange{
 		Field:      "version",
@@ -147,7 +154,7 @@ func dataSourceHerokuAppRead(d *schema.ResourceData, m interface{}) error {
 	}
 	releases, err := client.ReleaseList(context.Background(), app.App.ID, &releaseRange)
 	if err != nil {
-		return fmt.Errorf("Failed to fetch releases for app '%s': %s", name, err)
+		return fmt.Errorf("failed to fetch releases for app '%s': %s", name, err)
 	}
 	for _, r := range releases {
 		if r.Status == "succeeded" {
