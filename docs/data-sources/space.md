@@ -43,7 +43,7 @@ The following attributes are exported:
 * `generation` - The generation of the space platform (`cedar` or `fir`).
 * `organization` - The Heroku Team that owns this space. The fields for this block are documented below.
 * `cidr` - The RFC-1918 CIDR the Private Space will use. It must be a /16 in 10.0.0.0/8, 172.16.0.0/12 or 192.168.0.0/16
-* `data_cidr` - The RFC-1918 CIDR that the Private Space will use for the Heroku-managed peering connection that's automatically created when using Heroku Data add-ons. It must be between a /16 and a /20
+* `data_cidr` - The RFC-1918 CIDR block that the space uses for the Heroku-managed peering connection for Heroku Data add-ons.
 * `outbound_ips` - The space's stable outbound [NAT IPs](https://devcenter.heroku.com/articles/platform-api-reference#space-network-address-translation).
 
 The `organization` block supports:
