@@ -19,6 +19,8 @@ func testStep_AccDatasourceHerokuSpace_Basic(t *testing.T, spaceConfig string) r
 				"data.heroku_space.foobar", "organization", orgName),
 			resource.TestCheckResourceAttr(
 				"data.heroku_space.foobar", "region", "virginia"),
+			resource.TestCheckResourceAttr(
+				"data.heroku_space.foobar", "generation", "cedar"),
 		),
 	}
 }
@@ -32,4 +34,28 @@ data "heroku_space" "foobar" {
   name = heroku_space.foobar.name
 }
 `, spaceConfig)
+}
+
+// testStep_AccDatasourceHerokuSpace_Generation_Fir tests the space data source with a Fir space
+func testStep_AccDatasourceHerokuSpace_Generation_Fir(t *testing.T, spaceConfig string) resource.TestStep {
+	orgName := testAccConfig.GetAnyOrganizationOrSkip(t)
+
+	config := fmt.Sprintf(`%s
+
+data "heroku_space" "data_source_test" {
+  name = heroku_space.foobar.name
+}`, spaceConfig)
+
+	return resource.TestStep{
+		Config: config,
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttrSet("data.heroku_space.data_source_test", "name"),
+			resource.TestCheckResourceAttr("data.heroku_space.data_source_test", "generation", "fir"),
+			resource.TestCheckResourceAttr("data.heroku_space.data_source_test", "organization", orgName),
+			resource.TestCheckResourceAttr("data.heroku_space.data_source_test", "shield", "false"),
+			resource.TestCheckResourceAttrSet("data.heroku_space.data_source_test", "id"),
+			resource.TestCheckResourceAttrSet("data.heroku_space.data_source_test", "uuid"),
+			resource.TestCheckResourceAttrSet("data.heroku_space.data_source_test", "region"),
+		),
+	}
 }

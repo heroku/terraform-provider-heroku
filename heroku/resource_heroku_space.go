@@ -169,6 +169,7 @@ func resourceHerokuSpaceRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("shield", space.Shield)
 	d.Set("cidr", space.CIDR)
 	d.Set("data_cidr", space.DataCIDR)
+	d.Set("generation", space.Generation.Name)
 
 	// Validate generation features during plan phase (warn only)
 	generation := d.Get("generation")

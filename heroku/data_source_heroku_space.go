@@ -61,6 +61,12 @@ func dataSourceHerokuSpace() *schema.Resource {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
+
+			"generation": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Generation of the space platform (cedar or fir)",
+			},
 		},
 	}
 }
