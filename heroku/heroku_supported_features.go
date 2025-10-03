@@ -31,6 +31,9 @@ var featureMatrix = map[string]map[string]map[string]bool{
 		"drain": {
 			"app_log_drains": true, // Cedar supports traditional log drains
 		},
+		"pipeline": {
+			"base_name": true, // Cedar pipelines support Predictable URLs for Review Apps
+		},
 	},
 	"fir": {
 		"space": {
@@ -55,6 +58,9 @@ var featureMatrix = map[string]map[string]map[string]bool{
 		},
 		"drain": {
 			"app_log_drains": false, // Fir apps don't support traditional log drains
+		},
+		"pipeline": {
+			"base_name": false, // Fir pipelines don't support Predictable URLs for Review Apps
 		},
 	},
 }
