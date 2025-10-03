@@ -14,7 +14,7 @@ You can only use this resource after you create a pipeline and connect it to a G
 Refer to [the Heroku Dev Center](https://devcenter.heroku.com/articles/github-integration-review-apps#setup)
 for more information.
 
--> **Note:** This resource is only supported for the [Cedar-generation](https://devcenter.heroku.com/articles/generations#cedar) apps.
+-> **Note:** This resource supports both [Cedar and Fir-generation](https://devcenter.heroku.com/articles/generations) pipelines.
 
 ## Example Usage
 
@@ -27,7 +27,6 @@ resource "heroku_review_app_config" "foobar" {
   pipeline_id = data.heroku_pipeline.test-pipeline.id
   org_repo = "yourcompany/yourrepo"
   automatic_review_apps = true
-  base_name = "yourcompany"
 
   deploy_target {
     id   = "us"
@@ -52,7 +51,7 @@ The following arguments are supported:
   * `type`: (Required) The type of deploy target (`space` or `region`).
 * `automatic_review_apps`: (Optional) If `true`, triggers the creation of review apps when pull requests
   are opened in the repo. Defaults to `false`.
-* `base_name`: (Optional) The unique prefix used to create review app names.
+* `base_name`: (Optional) Enable predictable URLs for Review Apps by setting a prefix for their `herokuapp.com` hostnames. **Note:** predictable URLs for Review Apps are only supported for the `cedar` generation.
 * `destroy_stale_apps: (Optional) If `true`, triggers the automatic deletion of review apps when they’re stale.
   Defaults to `false`.
 * `stale_days`: (Optional) The number of days without deploys to destroy stale review apps automatically.

@@ -12,6 +12,31 @@ import (
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
+// Unit tests for app generation support
+// Simple unit test for pipeline generation validation logic
+func TestHerokuPipelineGeneration(t *testing.T) {
+	// Test that the feature matrix correctly identifies supported/unsupported features
+	tests := []struct {
+		name       string
+		generation string
+		feature    string
+		expected   bool
+	}{
+		{name: "Cedar pipeline base_name should be supported", generation: "cedar", feature: "base_name", expected: true},
+		{name: "Fir pipeline base_name should be unsupported", generation: "fir", feature: "base_name", expected: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			supported := IsFeatureSupported(tt.generation, "pipeline", tt.feature)
+			if supported != tt.expected {
+				t.Errorf("Expected %t but got %t for generation %s feature %s", tt.expected, supported, tt.generation, tt.feature)
+			}
+			t.Logf("✅ Generation: %s, Feature: %s, Supported: %t", tt.generation, tt.feature, supported)
+		})
+	}
+}
+
 func TestAccHerokuPipeline_Basic(t *testing.T) {
 	var pipeline heroku.Pipeline
 	pipelineName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
