@@ -144,6 +144,15 @@ func resourceHerokuReviewAppConfigCreate(ctx context.Context, d *schema.Resource
 	opts := heroku.ReviewAppConfigEnableOpts{}
 
 	pipelineID := getPipelineID(d)
+	pipeline, err := client.PipelineInfo(ctx, pipelineID)
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  fmt.Sprintf("Unable to fetch pipeline %s to enable review apps config", pipelineID),
+			Detail:   err.Error(),
+		})
+		return diags
+	}
 
 	if v, ok := d.GetOk("org_repo"); ok {
 		opts.Repo = v.(string)
@@ -164,8 +173,16 @@ func resourceHerokuReviewAppConfigCreate(ctx context.Context, d *schema.Resource
 
 	if v, ok := d.GetOk("base_name"); ok {
 		vs := v.(string)
-		log.Printf("[DEBUG] review app enable - base_name: %s", vs)
-		opts.BaseName = &vs
+		if IsFeatureSupported(pipeline.Generation.Name, "pipeline", "base_name") {
+			log.Printf("[DEBUG] review app enable - base_name: %s", vs)
+			opts.BaseName = &vs
+		} else {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  fmt.Sprintf("base_name is not supported for %s generation pipelines, ignoring this setting", pipeline.Generation.Name),
+				Detail:   "",
+			})
+		}
 	}
 
 	if v, ok := d.GetOk("deploy_target"); ok {
@@ -229,7 +246,7 @@ func resourceHerokuReviewAppConfigCreate(ctx context.Context, d *schema.Resource
 	// Set resource ID to the pipeline ID
 	d.SetId(pipelineID)
 
-	return resourceHerokuReviewAppConfigRead(ctx, d, meta)
+	return append(diags, resourceHerokuReviewAppConfigRead(ctx, d, meta)...)
 }
 
 func resourceHerokuReviewAppConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
