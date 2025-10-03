@@ -230,7 +230,7 @@ func resourceHerokuReviewAppConfigCreate(ctx context.Context, d *schema.Resource
 			errorDetail = fmt.Sprintf("%s\n\nThis error typically occurs when the pipeline is not connected to a GitHub repository. "+
 				"Review apps require the pipeline to be connected to GitHub before configuration can be enabled. "+
 				"Please connect your pipeline to a GitHub repository using the Heroku Dashboard or CLI:\n"+
-				"  heroku pipelines:connect <pipeline-name> --repo <owner/repo>", errorDetail)
+				"  heroku pipelines:connect %s --repo %s", errorDetail, pipeline.Name, opts.Repo)
 		}
 
 		diags = append(diags, diag.Diagnostic{
