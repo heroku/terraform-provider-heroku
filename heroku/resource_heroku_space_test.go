@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccHerokuSpace(t *testing.T) {
+func TestAccHerokuSpace_Cedar(t *testing.T) {
 	var space spaceWithNAT
 	spaceName := fmt.Sprintf("tftest1-%s", acctest.RandString(10))
 	org := testAccConfig.GetAnyOrganizationOrSkip(t)
