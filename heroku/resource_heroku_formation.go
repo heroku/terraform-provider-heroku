@@ -58,9 +58,9 @@ func resourceHerokuFormation() *schema.Resource {
 			},
 
 			"size": {
-				Type:      schema.TypeString,
-				Required:  true,
-				StateFunc: formatSize,
+				Type:             schema.TypeString,
+				Required:         true,
+				DiffSuppressFunc: suppressCaseDiff,
 			},
 		},
 		SchemaVersion: 1,
@@ -186,6 +186,13 @@ func resourceHerokuFormationDelete(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
+// suppressCaseDiff is a DiffSuppressFunc that performs case-insensitive comparison.
+// This is used for dyno sizes to handle both Cedar (returns capitalized, e.g. "Standard-1X")
+// and Fir (returns lowercase, e.g. "dyno-2c-1gb") API behaviors without causing churn.
+func suppressCaseDiff(k, old, new string, d *schema.ResourceData) bool {
+	return strings.EqualFold(old, new)
+}
+
 func getFormationType(d *schema.ResourceData) string {
 	var formationType string
 	if v, ok := d.GetOk("type"); ok {
@@ -253,46 +260,6 @@ func resourceHerokuFormationImport(d *schema.ResourceData, meta interface{}) ([]
 	return []*schema.ResourceData{d}, nil
 }
 
-// Guarantees a consistent format for the string that describes the
-// size of a dyno. A formation's size can be "free" or "standard-1x"
-// or "Private-M".
-//
-// Heroku's PATCH formation endpoint accepts lowercase but
-// returns the capitalised version. This ensures consistent
-// capitalisation for state.
-//
-// For all supported dyno types see:
-// https://devcenter.heroku.com/articles/dyno-types
-// https://devcenter.heroku.com/articles/heroku-enterprise#available-dyno-types
-func formatSize(quant interface{}) string {
-	if quant == nil || quant == (*string)(nil) {
-		return ""
-	}
-
-	var rawQuant string
-	switch quant.(type) {
-	case string:
-		rawQuant = quant.(string)
-	case *string:
-		rawQuant = *quant.(*string)
-	default:
-		return ""
-	}
-
-	// Capitalise the first descriptor, uppercase the remaining descriptors
-	var formattedSlice []string
-	s := strings.Split(rawQuant, "-")
-	for i := range s {
-		if i == 0 {
-			formattedSlice = append(formattedSlice, strings.Title(s[i]))
-		} else {
-			formattedSlice = append(formattedSlice, strings.ToUpper(s[i]))
-		}
-	}
-
-	return strings.Join(formattedSlice, "-")
-}
-
 func resourceHerokuFormationV0() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
@@ -313,9 +280,9 @@ func resourceHerokuFormationV0() *schema.Resource {
 			},
 
 			"size": {
-				Type:      schema.TypeString,
-				Required:  true,
-				StateFunc: formatSize,
+				Type:             schema.TypeString,
+				Required:         true,
+				DiffSuppressFunc: suppressCaseDiff,
 			},
 		},
 	}
