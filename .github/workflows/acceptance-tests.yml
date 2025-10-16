@@ -16,8 +16,31 @@ on:
 
 jobs:
   tests:
-    name: Tests
+    name: Tests - ${{ matrix.test-group }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test-group:
+          - spaces-cedar
+          - spaces-fir
+          - addons
+          - builds
+          - apps-and-slugs
+          - other
+    env:
+      # Test configuration
+      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      HEROKU_ORGANIZATION: terraform-ci-test-team
+      HEROKU_SPACES_ORGANIZATION: terraform-ci-test-team
+      HEROKU_TEAM: terraform-ci-test-team
+      HEROKU_EMAIL: terraform-provider-heroku+ci@salesforce.com
+      HEROKU_TEST_USER: terraform-provider-heroku+ci-admin-test@salesforce.com
+      HEROKU_NON_ADMIN_TEST_USER: terraform-provider-heroku+ci-user-test@salesforce.com
+      HEROKU_SLUG_ID: f2eba78f-25c9-476b-8998-2325241b980a
+      HEROKU_USER_ID: aaaa7bc7-7de5-410f-a60c-3741d2c355d1
+      # Test group patterns (for maintainability)
+      TEST_SKIP_PATTERN_OTHER: "^TestAccHerokuSpace|^TestAccHerokuAddon|^TestAccHerokuBuild|^TestAccHerokuApp|^TestAccHerokuSlug"
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -64,19 +87,44 @@ jobs:
     - name: Run go vet
       run: go vet ./...
 
-    - name: Run tests
+    - name: Run tests - Spaces Cedar
+      if: matrix.test-group == 'spaces-cedar'
+      timeout-minutes: 20
       run: |
         echo "Using: $(terraform version) ($(which terraform))"
-        make testacc TEST="./heroku/"
-      env:
-        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        HEROKU_ORGANIZATION: terraform-ci-test-team
-        HEROKU_SPACES_ORGANIZATION: terraform-ci-test-team
-        HEROKU_TEAM: terraform-ci-test-team
-        HEROKU_EMAIL: terraform-provider-heroku+ci@salesforce.com
-        HEROKU_TEST_USER: terraform-provider-heroku+ci-admin-test@salesforce.com
-        HEROKU_NON_ADMIN_TEST_USER: terraform-provider-heroku+ci-user-test@salesforce.com
-        HEROKU_SLUG_ID: f2eba78f-25c9-476b-8998-2325241b980a
-        HEROKU_USER_ID: aaaa7bc7-7de5-410f-a60c-3741d2c355d1
-#        GOFLAGS: "-mod=vendor"
-        # TF_LOG: DEBUG
+        make testacc TEST="./heroku/" TESTARGS="-run TestAccHerokuSpace_Cedar"
+
+    - name: Run tests - Spaces Fir
+      if: matrix.test-group == 'spaces-fir'
+      timeout-minutes: 10
+      run: |
+        echo "Using: $(terraform version) ($(which terraform))"
+        make testacc TEST="./heroku/" TESTARGS="-run TestAccHerokuSpace_Fir"
+
+    - name: Run tests - Addons
+      if: matrix.test-group == 'addons'
+      timeout-minutes: 20
+      run: |
+        echo "Using: $(terraform version) ($(which terraform))"
+        make testacc TEST="./heroku/" TESTARGS="-run TestAccHerokuAddon"
+
+    - name: Run tests - Builds
+      if: matrix.test-group == 'builds'
+      timeout-minutes: 10
+      run: |
+        echo "Using: $(terraform version) ($(which terraform))"
+        make testacc TEST="./heroku/" TESTARGS="-run TestAccHerokuBuild"
+
+    - name: Run tests - Apps and Slugs
+      if: matrix.test-group == 'apps-and-slugs'
+      timeout-minutes: 10
+      run: |
+        echo "Using: $(terraform version) ($(which terraform))"
+        make testacc TEST="./heroku/" TESTARGS="-run '^TestAccHerokuApp|^TestAccHerokuSlug'"
+
+    - name: Run tests - Other
+      if: matrix.test-group == 'other'
+      timeout-minutes: 20
+      run: |
+        echo "Using: $(terraform version) ($(which terraform))"
+        make testacc TEST="./heroku/" TESTARGS="-skip '${{ env.TEST_SKIP_PATTERN_OTHER }}'"
