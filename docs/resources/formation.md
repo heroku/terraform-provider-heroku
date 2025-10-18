@@ -52,7 +52,9 @@ resource "heroku_formation" "foobar-web" {
 * `app_id` - (Required) Heroku app ID (do not use app name)
 * `type` - (Required) type of process such as "web"
 * `quantity` - (Required) number of processes to maintain
-* `size` - (Required) dyno size (Example: “standard-1X”). Capitalization does not matter.
+* `size` - (Required) dyno size. Capitalization does not matter. Examples:
+  * Cedar apps: `"standard-1x"`, `"standard-2x"`, `"performance-m"`, `"private-s"`, etc.
+  * Fir apps: `"dyno-2c-1gb"`, `"dyno-4c-2gb"`, etc.
 
 ## Attributes Reference
 
