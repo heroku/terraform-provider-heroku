@@ -89,17 +89,27 @@ jobs:
 
     - name: Run tests - Spaces Cedar
       if: matrix.test-group == 'spaces-cedar'
-      timeout-minutes: 20
-      run: |
-        echo "Using: $(terraform version) ($(which terraform))"
-        make testacc TEST="./heroku/" TESTARGS="-run TestAccHerokuSpace_Cedar"
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 20
+        max_attempts: 3
+        retry_wait_seconds: 20
+        retry_on: error
+        command: |
+          echo "Using: $(terraform version) ($(which terraform))"
+          make testacc TEST="./heroku/" TESTARGS="-run TestAccHerokuSpace_Cedar"
 
     - name: Run tests - Spaces Fir
       if: matrix.test-group == 'spaces-fir'
-      timeout-minutes: 10
-      run: |
-        echo "Using: $(terraform version) ($(which terraform))"
-        make testacc TEST="./heroku/" TESTARGS="-run TestAccHerokuSpace_Fir"
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 10
+        max_attempts: 3
+        retry_wait_seconds: 20
+        retry_on: error
+        command: |
+          echo "Using: $(terraform version) ($(which terraform))"
+          make testacc TEST="./heroku/" TESTARGS="-run TestAccHerokuSpace_Fir"
 
     - name: Run tests - Addons
       if: matrix.test-group == 'addons'
