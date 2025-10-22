@@ -46,6 +46,19 @@ resource "heroku_pipeline_promotion" "staging_to_multiple" {
     heroku_app.demo.id
   ]
 }
+
+# Access the promoted release information
+output "promoted_releases" {
+  value = heroku_pipeline_promotion.staging_to_multiple.promoted_release_ids
+}
+
+# Access a specific target's release ID
+output "production_release_id" {
+  value = [
+    for release in heroku_pipeline_promotion.staging_to_multiple.promoted_release_ids :
+    release.release_id if release.app_id == heroku_app.production.id
+  ][0]
+}
 ```
 
 ## Argument Reference
@@ -65,4 +78,7 @@ The following attributes are exported:
 * `id`: The UUID of the pipeline promotion.
 * `status`: The status of the promotion (`pending`, `completed`).
 * `created_at`: When the promotion was created.
-* `promoted_release_id`: The UUID of the release that was promoted.
+* `promoted_release_ids`: List of objects containing information about each promoted release. Each object has:
+  * `app_id`: The UUID of the target app that received the promotion.
+  * `release_id`: The UUID of the release created on that target app.
+* `promoted_release_id`: **(Deprecated)** The UUID of the first promoted release. Use `promoted_release_ids` instead. This attribute is maintained for backwards compatibility and will be removed in a future major version.
