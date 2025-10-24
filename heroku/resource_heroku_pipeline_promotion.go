@@ -72,7 +72,28 @@ func resourceHerokuPipelinePromotion() *schema.Resource {
 			"promoted_release_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "ID of the release that was actually promoted",
+				Deprecated:  "Use promoted_release_ids instead. This attribute contains the first release ID from promoted_release_ids for backwards compatibility.",
+				Description: "ID of the first promoted release (deprecated, use promoted_release_ids)",
+			},
+
+			"promoted_release_ids": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of promoted releases with their associated target app IDs",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"app_id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "ID of the target app that received the promotion",
+						},
+						"release_id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "ID of the release created on the target app",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -142,16 +163,48 @@ func resourceHerokuPipelinePromotionRead(d *schema.ResourceData, meta interface{
 	d.Set("status", promotion.Status)
 	d.Set("created_at", promotion.CreatedAt.String())
 
-	// Set the release that was actually promoted
-	if promotion.Source.Release.ID != "" {
-		d.Set("promoted_release_id", promotion.Source.Release.ID)
-	}
-
 	// Set configuration from API response
 	d.Set("pipeline", promotion.Pipeline.ID)
 	d.Set("source_app_id", promotion.Source.App.ID)
 
-	log.Printf("[DEBUG] Pipeline promotion read completed for: %s", d.Id())
+	// Fetch promotion targets to get the resulting release IDs
+	targets, err := client.PipelinePromotionTargetList(context.TODO(), d.Id(), nil)
+	if err != nil {
+		return fmt.Errorf("error retrieving pipeline promotion targets: %s", err)
+	}
+
+	// Build list of promoted releases with app associations
+	var promotedReleases []map[string]interface{}
+	var firstReleaseID string
+	for _, target := range targets {
+		if target.Release != nil && target.Release.ID != "" {
+			promotedRelease := map[string]interface{}{
+				"app_id":     target.App.ID,
+				"release_id": target.Release.ID,
+			}
+			promotedReleases = append(promotedReleases, promotedRelease)
+
+			// Capture first release ID for backwards compatibility
+			if firstReleaseID == "" {
+				firstReleaseID = target.Release.ID
+			}
+
+			log.Printf("[DEBUG] Found promoted release ID: %s for app: %s", target.Release.ID, target.App.ID)
+		}
+	}
+
+	// Set promoted_release_ids (new structured attribute)
+	if err := d.Set("promoted_release_ids", promotedReleases); err != nil {
+		return fmt.Errorf("error setting promoted_release_ids: %s", err)
+	}
+
+	// Set promoted_release_id (deprecated, for backwards compatibility)
+	// Contains the first release ID from the list
+	if firstReleaseID != "" {
+		d.Set("promoted_release_id", firstReleaseID)
+	}
+
+	log.Printf("[DEBUG] Pipeline promotion read completed for: %s with %d promoted releases", d.Id(), len(promotedReleases))
 	return nil
 }
 
