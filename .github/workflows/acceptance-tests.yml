@@ -43,10 +43,10 @@ jobs:
       TEST_SKIP_PATTERN_OTHER: "^TestAccHerokuSpace|^TestAccHerokuAddon|^TestAccHerokuBuild|^TestAccHerokuApp|^TestAccHerokuSlug"
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
 
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v6
       with:
         go-version-file: 'go.mod'
         cache: true
@@ -54,7 +54,7 @@ jobs:
     - name: Install Terraform
       run: |
         set -eu
-        terraform_version="1.6.6"
+        terraform_version="1.14.0"
 
         set +e
         terraform_bin="$(which terraform)"
