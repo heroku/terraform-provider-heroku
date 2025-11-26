@@ -69,7 +69,7 @@ jobs:
         echo "Downloading version $terraform_version"
         curl -s -L "https://releases.hashicorp.com/terraform/${terraform_version}/terraform_${terraform_version}_linux_amd64.zip" > "terraform-bin.zip"
         echo "Unzipping archive"
-        unzip -p terraform-bin.zip > terraform-bin
+        unzip -p terraform-bin.zip terraform > terraform-bin
         echo "Moving into place"
         sudo mv terraform-bin "$terraform_bin"
         echo "Making executable"
