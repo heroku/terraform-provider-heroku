@@ -43,10 +43,10 @@ jobs:
       TEST_SKIP_PATTERN_OTHER: "^TestAccHerokuSpace|^TestAccHerokuAddon|^TestAccHerokuBuild|^TestAccHerokuApp|^TestAccHerokuSlug"
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
 
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v6
       with:
         go-version-file: 'go.mod'
         cache: true
@@ -54,7 +54,7 @@ jobs:
     - name: Install Terraform
       run: |
         set -eu
-        terraform_version="1.6.6"
+        terraform_version="1.14.0"
 
         set +e
         terraform_bin="$(which terraform)"
@@ -69,7 +69,7 @@ jobs:
         echo "Downloading version $terraform_version"
         curl -s -L "https://releases.hashicorp.com/terraform/${terraform_version}/terraform_${terraform_version}_linux_amd64.zip" > "terraform-bin.zip"
         echo "Unzipping archive"
-        unzip -p terraform-bin.zip > terraform-bin
+        unzip -p terraform-bin.zip terraform > terraform-bin
         echo "Moving into place"
         sudo mv terraform-bin "$terraform_bin"
         echo "Making executable"
