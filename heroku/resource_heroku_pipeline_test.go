@@ -121,7 +121,7 @@ func TestAccHerokuPipeline_InvalidOwnerType(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuPipeline_basic(pipelineName, "16d1c25f-d879-4f4d-ad1b-d807169aaa1c", "invalid"), // not real UUID
-				ExpectError: regexp.MustCompile(`expected owner.0.type to be one of \[team user], got invalid`),
+				ExpectError: regexp.MustCompile(`expected owner.0.type to be one of \["team" "user"\], got invalid`),
 			},
 		},
 	})
