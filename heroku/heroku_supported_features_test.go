@@ -98,11 +98,11 @@ func TestIsFeatureSupported(t *testing.T) {
 			expected:     true,
 		},
 		{
-			name:         "Cedar app cloud_native_buildpacks should be unsupported",
+			name:         "Cedar app cloud_native_buildpacks should be supported",
 			generation:   "cedar",
 			resourceType: "app",
 			feature:      "cloud_native_buildpacks",
-			expected:     false,
+			expected:     true,
 		},
 		{
 			name:         "Fir app buildpacks should be unsupported",
@@ -224,5 +224,31 @@ func TestFeatureMatrixConsistency(t *testing.T) {
 	}
 	if IsFeatureSupported("fir", "space", "shield") {
 		t.Error("Fir space shield must be unsupported")
+	}
+}
+
+func TestIsCNBApp(t *testing.T) {
+	tests := []struct {
+		name       string
+		generation string
+		stack      string
+		expected   bool
+	}{
+		{"fir app is always CNB", "fir", "cnb", true},
+		{"fir app with empty stack is CNB", "fir", "", true},
+		{"fir app with other stack is CNB", "fir", "heroku-22", true},
+		{"cedar app with cnb stack is CNB", "cedar", "cnb", true},
+		{"cedar app with heroku-22 stack is not CNB", "cedar", "heroku-22", false},
+		{"cedar app with empty stack is not CNB", "cedar", "", false},
+		{"unknown generation is not CNB", "unknown", "cnb", false},
+		{"empty generation is not CNB", "", "cnb", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := IsCNBApp(tt.generation, tt.stack)
+			if got != tt.expected {
+				t.Errorf("IsCNBApp(%q, %q) = %v, want %v", tt.generation, tt.stack, got, tt.expected)
+			}
+		})
 	}
 }

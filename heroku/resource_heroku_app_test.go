@@ -1064,7 +1064,7 @@ func TestHerokuAppGeneration(t *testing.T) {
 		{name: "Cedar buildpacks should be supported", generation: "cedar", feature: "buildpacks", expected: true},
 		{name: "Cedar stack should be supported", generation: "cedar", feature: "stack", expected: true},
 		{name: "Cedar internal_routing should be supported", generation: "cedar", feature: "internal_routing", expected: true},
-		{name: "Cedar cloud_native_buildpacks should be unsupported", generation: "cedar", feature: "cloud_native_buildpacks", expected: false},
+		{name: "Cedar cloud_native_buildpacks should be supported", generation: "cedar", feature: "cloud_native_buildpacks", expected: true},
 
 		// Fir app features - traditional features should be unsupported, CNB should be supported
 		{name: "Fir buildpacks should be unsupported", generation: "fir", feature: "buildpacks", expected: false},

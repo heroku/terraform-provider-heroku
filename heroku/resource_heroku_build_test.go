@@ -496,11 +496,11 @@ func TestHerokuBuildGeneration(t *testing.T) {
 			expectedSupported: false,
 		},
 		{
-			name:              "Cedar apps should not support cloud_native_buildpacks",
+			name:              "Cedar apps should support cloud_native_buildpacks",
 			generation:        "cedar",
 			resourceType:      "app",
 			feature:           "cloud_native_buildpacks",
-			expectedSupported: false,
+			expectedSupported: true,
 		},
 		{
 			name:              "Fir apps should support cloud_native_buildpacks",
