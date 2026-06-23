@@ -36,6 +36,22 @@ resource "heroku_app" "cedar_app" {
 }
 ```
 
+### Cedar Generation Using Cloud Native Buildpacks
+```hcl-terraform
+resource "heroku_app" "cedar_cnb_app" {
+  name   = "my-cedar-cnb-app"
+  region = "us"
+
+  # Setting stack = "cnb" opts this Cedar app into Cloud Native Buildpacks.
+  # Do not specify buildpacks — configure them via project.toml instead.
+  stack = "cnb"
+
+  config_vars = {
+    FOOBAR = "baz"
+  }
+}
+```
+
 ### Fir Generation Using Cloud Native Buildpacks (via Fir Space)
 ```hcl-terraform
 # Create a Fir-generation space first
@@ -89,9 +105,9 @@ The resource supports the following arguments:
 * `generation`: (Computed) Generation of the app platform. Automatically determined based on the space the app is deployed to. Apps in Fir-generation spaces are `fir`, all other apps are `cedar`.
    - `cedar`: Legacy platform supporting classic buildpacks, stack configuration, and internal routing.
    - `fir`: Next-generation platform with Cloud Native Buildpacks (CNB). No support for `buildpacks`, `stack`, or `internal_routing` fields.
-* `stack`: (Optional) The name of the [stack](https://devcenter.heroku.com/articles/stack) to run the application in. **Note**: Not supported for `fir` generation apps.
+* `stack`: (Optional) The name of the [stack](https://devcenter.heroku.com/articles/stack) to run the application in. **Note**: Not supported for `fir` generation apps. Set to `"cnb"` on Cedar apps to opt into Cloud Native Buildpacks.
 * `buildpacks`: (Optional) Classic buildpack names or URLs for the application.
-  Buildpacks configured externally won't be altered if this isn't present. **Note**: Not supported for apps using Cloud Native Buildpacks, like Fir-generation apps. Use `project.toml` for configuration instead.
+  Buildpacks configured externally won't be altered if this isn't present. **Note**: Not supported for apps using Cloud Native Buildpacks (`fir` generation apps, or Cedar apps with `stack = "cnb"`). Use `project.toml` for configuration instead.
 * `config_vars`<sup>[1](#deleting-vars)</sup>: (Optional) Configuration variables for the application.
      The config variables in this map aren't the final set of configuration
      variables, but rather variables you want present. Terraform doesn't remove configuration variables set externally
@@ -151,7 +167,11 @@ The following attributes are exported:
 
 ## Cloud Native Buildpacks
 
-When apps are deployed to Fir-generation spaces, they automatically use Cloud Native Buildpacks (CNB) instead of classic Heroku buildpacks. CNBs require different configuration approaches:
+Apps use Cloud Native Buildpacks (CNB) in two cases:
+- **Fir generation**: All Fir apps use CNB automatically.
+- **Cedar generation with `stack = "cnb"`**: Cedar apps can opt into CNB by setting `stack = "cnb"`.
+
+In both cases, CNBs require different configuration approaches from classic buildpacks:
 
 ### project.toml Configuration
 
