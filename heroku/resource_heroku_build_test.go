@@ -524,6 +524,30 @@ func TestHerokuBuildGeneration(t *testing.T) {
 	}
 }
 
+// TestValidateBuildpacksForGenerationAndStack tests that CNB apps reject traditional buildpacks
+func TestValidateBuildpacksForGenerationAndStack(t *testing.T) {
+	tests := []struct {
+		name       string
+		generation string
+		stack      string
+		wantErr    bool
+	}{
+		{"cedar with heroku-22 allows buildpacks", "cedar", "heroku-22", false},
+		{"cedar with empty stack allows buildpacks", "cedar", "", false},
+		{"cedar with cnb stack rejects buildpacks", "cedar", "cnb", true},
+		{"fir always rejects buildpacks", "fir", "cnb", true},
+		{"fir with empty stack rejects buildpacks", "fir", "", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateBuildpacksForGenerationAndStack(tt.generation, tt.stack)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateBuildpacksForGenerationAndStack(%q, %q) error = %v, wantErr %v", tt.generation, tt.stack, err, tt.wantErr)
+			}
+		})
+	}
+}
+
 // testStep_AccHerokuBuild_Generation_FirValid tests that Fir builds work without buildpacks
 func testStep_AccHerokuBuild_Generation_FirValid(spaceConfig, spaceName string) resource.TestStep {
 	return resource.TestStep{
