@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -14,9 +15,51 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	fwvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 )
+
+// customAddonNameRegex matches the original SDKv2 validateCustomAddonName regex:
+// must start with a letter, then letters, digits, underscores or dashes.
+var customAddonNameRegex = regexp.MustCompile(`^[a-zA-Z][A-Za-z0-9_-]+$`)
+
+// customAddonNameValidator validates the optional custom addon name at plan
+// time, mirroring the SDKv2 validateCustomAddonName ValidateFunc: length 1-256
+// and the customAddonNameRegex format. Without it, invalid names fall through to
+// the Heroku API, which rejects them only at apply time.
+type customAddonNameValidator struct{}
+
+func (v customAddonNameValidator) Description(_ context.Context) string {
+	return "custom addon name must be 1-256 characters, start with a letter, and contain only letters, numbers, underscores and dashes"
+}
+
+func (v customAddonNameValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v customAddonNameValidator) ValidateString(_ context.Context, req fwvalidator.StringRequest, resp *fwvalidator.StringResponse) {
+	// Skip when the attribute is absent or not yet known: the name is then
+	// computed by Heroku and there is nothing to validate.
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+	value := req.ConfigValue.ValueString()
+	if l := len(value); l < 1 || l > 256 {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid custom addon name",
+			fmt.Sprintf("%q must be between 1 and 256 characters, got %d", req.Path, l),
+		)
+	}
+	if !customAddonNameRegex.MatchString(value) {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid custom addon name",
+			"must start with a letter and can only contain lowercase letters, numbers, and dashes",
+		)
+	}
+}
 
 // addonResourceLock prevents parallelism for heroku_addon since the Heroku API
 // cannot handle a single application requesting multiple addons simultaneously.
@@ -96,6 +139,14 @@ func (r *addonResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 			"name": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
+				Validators: []fwvalidator.String{
+					customAddonNameValidator{},
+				},
+				PlanModifiers: []planmodifier.String{
+					// Retain the API-generated name when absent from config;
+					// otherwise it plans as unknown on every update.
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			// config is ForceNew — any change requires recreation.
 			"config": schema.MapAttribute{
