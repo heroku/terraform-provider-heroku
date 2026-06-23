@@ -11,6 +11,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	heroku "github.com/heroku/heroku-go/v6"
 	helper "github.com/heroku/terraform-provider-heroku/v5/helper/test"
 )
 
@@ -39,9 +40,19 @@ var testAccConfig *helper.TestConfig
 func newTestAccConfig() *Config {
 	config := NewConfig()
 
+	// url: HEROKU_API_URL env, else heroku.DefaultURL. This MUST be set before
+	// applyNetrcFile (which parses the host out of it) and before initializeAPI
+	// (which copies it onto the API client). Without it the client has an empty
+	// base URL and every request fails with `unsupported protocol scheme ""`.
+	config.URL = heroku.DefaultURL
+	if v := os.Getenv("HEROKU_API_URL"); v != "" {
+		config.URL = v
+	}
+
 	// Best effort: netrc may not exist in CI.
 	_ = config.applyNetrcFile()
 
+	// Environment takes precedence over netrc, mirroring the provider Configure.
 	if v := os.Getenv("HEROKU_EMAIL"); v != "" {
 		config.Email = v
 	}
