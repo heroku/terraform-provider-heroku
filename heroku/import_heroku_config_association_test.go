@@ -2,10 +2,11 @@ package heroku
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"regexp"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestAccHerokuAppConfigAssociation_importBasic(t *testing.T) {
@@ -23,7 +24,7 @@ func TestAccHerokuAppConfigAssociation_importBasic(t *testing.T) {
 				ResourceName:      "heroku_app_config_association.foobar-config",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ExpectError:       regexp.MustCompile(`not possible to import`),
+				ExpectError:       regexp.MustCompile(`does not support import`),
 			},
 		},
 	})
