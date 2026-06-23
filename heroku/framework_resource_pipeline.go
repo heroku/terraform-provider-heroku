@@ -103,8 +103,8 @@ func pipelineOwnerObjectType() types.ObjectType {
 }
 
 type pipelineResourceModel struct {
-	ID    types.String `tfsdk:"id"`
-	Name  types.String `tfsdk:"name"`
+	ID   types.String `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
 	// owner is a Computed nested attribute, so it must be types.List to hold an
 	// unknown value at plan time.
 	Owner types.List `tfsdk:"owner"`
