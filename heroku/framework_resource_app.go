@@ -13,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -181,6 +183,14 @@ func (r *appResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 			"stack": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					// Carry the prior computed value forward when the attribute is
+					// absent from config. Without this it plans as unknown on every
+					// update; the Update path would then read an empty string and
+					// send a blank BuildStack to the API ("No such stack."). SDKv2
+					// retained the computed value during planning.
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"generation": schema.StringAttribute{
 				Computed:    true,
@@ -207,17 +217,30 @@ func (r *appResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 				Optional:    true,
 				Computed:    true,
 				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.List{
+					// Retain the prior value when absent from config. Otherwise it
+					// plans as unknown on update and buildpackListsEqual treats
+					// unknown-vs-known as a change, triggering a spurious
+					// updateBuildpacks([]) that wipes the app's buildpacks.
+					listplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"config_vars": schema.MapAttribute{
 				Optional:    true,
 				Computed:    true,
 				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"sensitive_config_vars": schema.MapAttribute{
 				Optional:    true,
 				Computed:    true,
 				Sensitive:   true,
 				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"all_config_vars": schema.MapAttribute{
 				Computed: true,
@@ -236,6 +259,13 @@ func (r *appResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 			"acm": schema.BoolAttribute{
 				Optional: true,
 				Computed: true,
+				PlanModifiers: []planmodifier.Bool{
+					// Retain the prior value when absent from config. Otherwise it
+					// plans as unknown on update; the Update path then reads false
+					// and calls AppDisableACM on an app that never had ACM enabled
+					// ("Your app does not have ACM enabled").
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"heroku_hostname": schema.StringAttribute{
 				Computed: true,
