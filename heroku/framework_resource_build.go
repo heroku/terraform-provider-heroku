@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	fwvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 	tarinator "github.com/verybluebot/tarinator-go"
@@ -52,10 +53,19 @@ type buildSourceModel struct {
 	Version  types.String `tfsdk:"version"`
 }
 
-// buildUserModel mirrors the "user" computed nested block.
+// buildUserModel mirrors an element of the "user" computed nested attribute.
 type buildUserModel struct {
 	Email types.String `tfsdk:"email"`
 	ID    types.String `tfsdk:"id"`
+}
+
+// buildUserObjectType returns the object type for a "user" list element,
+// matching the nested attribute schema.
+func buildUserObjectType() types.ObjectType {
+	return types.ObjectType{AttrTypes: map[string]attr.Type{
+		"email": types.StringType,
+		"id":    types.StringType,
+	}}
 }
 
 // buildResourceModel is the model for schema version 1.
@@ -69,7 +79,7 @@ type buildResourceModel struct {
 	SlugID          types.String       `tfsdk:"slug_id"`
 	Stack           types.String       `tfsdk:"stack"`
 	Status          types.String       `tfsdk:"status"`
-	User            []buildUserModel   `tfsdk:"user"`
+	User            types.List         `tfsdk:"user"`
 	UUID            types.String       `tfsdk:"uuid"`
 	LocalChecksum   types.String       `tfsdk:"local_checksum"`
 }
@@ -85,7 +95,7 @@ type buildResourceModelV0 struct {
 	SlugID          types.String       `tfsdk:"slug_id"`
 	Stack           types.String       `tfsdk:"stack"`
 	Status          types.String       `tfsdk:"status"`
-	User            []buildUserModel   `tfsdk:"user"`
+	User            types.List         `tfsdk:"user"`
 	UUID            types.String       `tfsdk:"uuid"`
 	LocalChecksum   types.String       `tfsdk:"local_checksum"`
 }
@@ -139,6 +149,26 @@ func (r *buildResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 			"local_checksum": schema.StringAttribute{
 				Computed: true,
 			},
+			// user is populated by the API after the build is created. It is a
+			// Computed nested attribute (not a block) so the framework can plan it
+			// as unknown and accept the post-apply value, avoiding the
+			// "block count changed from 0 to 1" inconsistency a computed block hits.
+			"user": schema.ListNestedAttribute{
+				Computed: true,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"email": schema.StringAttribute{
+							Computed: true,
+						},
+						"id": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 		Blocks: map[string]schema.Block{
 			"source": schema.ListNestedBlock{
@@ -153,6 +183,9 @@ func (r *buildResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 						},
 						"url": schema.StringAttribute{
 							Optional: true,
+							Validators: []fwvalidator.String{
+								buildSourceURLValidator{},
+							},
 						},
 						"version": schema.StringAttribute{
 							Optional: true,
@@ -161,18 +194,6 @@ func (r *buildResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				},
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.RequiresReplace(),
-				},
-			},
-			"user": schema.ListNestedBlock{
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"email": schema.StringAttribute{
-							Computed: true,
-						},
-						"id": schema.StringAttribute{
-							Computed: true,
-						},
-					},
 				},
 			},
 		},
@@ -626,27 +647,39 @@ func populateBuildModel(ctx context.Context, m *buildResourceModel, build *herok
 		m.Buildpacks = types.ListValueMust(types.StringType, []attr.Value{})
 	}
 
-	// User
-	m.User = []buildUserModel{
+	// User: a Computed nested attribute, built as a types.List so the framework
+	// can plan it as unknown before apply.
+	userList, userDiags := types.ListValueFrom(ctx, buildUserObjectType(), []buildUserModel{
 		{
 			Email: types.StringValue(build.User.Email),
 			ID:    types.StringValue(build.User.ID),
 		},
+	})
+	if !userDiags.HasError() {
+		m.User = userList
 	}
 
 	// Source: preserve path from existing model; only populate checksum/url from
 	// the API when path is not set (mirrors SDKv2 setBuildState logic).
 	if len(m.Source) > 0 {
 		src := m.Source[0]
-		// If path is set, do not overwrite checksum or url from the API response —
-		// they are ephemeral/auto-generated values.
+		// checksum is Optional+Computed, so it plans as unknown when absent from
+		// config. It must be set to a known value (or null) after apply.
 		if src.Path.IsNull() || src.Path.ValueString() == "" {
+			// URL-based source: take the checksum from the API, or null if the
+			// API didn't return one.
 			if build.SourceBlob.Checksum != nil {
 				src.Checksum = types.StringValue(*build.SourceBlob.Checksum)
+			} else {
+				src.Checksum = types.StringNull()
 			}
 			if build.SourceBlob.URL != "" {
 				src.URL = types.StringValue(build.SourceBlob.URL)
 			}
+		} else {
+			// Path-based source: checksum is auto-generated for the upload and is
+			// not a meaningful persisted value here (it lives in local_checksum).
+			src.Checksum = types.StringNull()
 		}
 		if build.SourceBlob.Version != nil {
 			src.Version = types.StringValue(*build.SourceBlob.Version)
@@ -869,6 +902,32 @@ func frameworkCleanupSourceFile(filePath string) {
 		if err := os.Remove(filePath); err != nil {
 			log.Printf("[WARN] Error cleaning-up build source tarball: %s (%s)", err, filePath)
 		}
+	}
+}
+
+// buildSourceURLValidator validates at plan time that source.url is a secure
+// (https) URL, mirroring the SDKv2 validateSourceUrl ValidateFunc. Without it,
+// an insecure URL falls through to the Heroku API and errors only at apply time.
+type buildSourceURLValidator struct{}
+
+func (v buildSourceURLValidator) Description(_ context.Context) string {
+	return "source.url must be a secure URL starting with https://"
+}
+
+func (v buildSourceURLValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v buildSourceURLValidator) ValidateString(_ context.Context, req fwvalidator.StringRequest, resp *fwvalidator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+	value := req.ConfigValue.ValueString()
+	if value == "" {
+		return
+	}
+	if err := frameworkValidateSourceURL(value); err != nil {
+		resp.Diagnostics.AddAttributeError(req.Path, "Invalid source.url", err.Error())
 	}
 }
 

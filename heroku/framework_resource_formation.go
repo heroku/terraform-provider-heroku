@@ -49,29 +49,27 @@ type formationResourceModelV0 struct {
 	Size     types.String `tfsdk:"size"`
 }
 
-// caseInsensitiveStringPlanModifier is a planmodifier.String that suppresses
-// plan differences caused solely by case changes (e.g. dyno size names differ
-// between Cedar and Fir API responses). It mirrors the SDKv2 suppressCaseDiff
-// DiffSuppressFunc.
-type caseInsensitiveStringPlanModifier struct{}
-
-func (m caseInsensitiveStringPlanModifier) Description(_ context.Context) string {
-	return "Suppress case-only differences in string values."
-}
-
-func (m caseInsensitiveStringPlanModifier) MarkdownDescription(_ context.Context) string {
-	return "Suppress case-only differences in string values."
-}
-
-func (m caseInsensitiveStringPlanModifier) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	// If the state and plan values differ only in case, keep the state value so
-	// no diff is presented to the user.
-	if !req.StateValue.IsNull() && !req.StateValue.IsUnknown() &&
-		!req.PlanValue.IsNull() && !req.PlanValue.IsUnknown() {
-		if strings.EqualFold(req.StateValue.ValueString(), req.PlanValue.ValueString()) {
-			resp.PlanValue = req.StateValue
+// formatSize normalizes a dyno size string to the canonical capitalized form
+// returned by the Heroku API: "basic" → "Basic", "standard-2x" → "Standard-2X".
+// It mirrors the SDKv2 formatSize used via StateFunc on the "size" attribute.
+func formatSize(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	parts := strings.Split(raw, "-")
+	for i, p := range parts {
+		if p == "" {
+			continue
+		}
+		if i == 0 {
+			// Capitalise the first descriptor.
+			parts[i] = strings.ToUpper(p[:1]) + strings.ToLower(p[1:])
+		} else {
+			// Uppercase the remaining descriptors.
+			parts[i] = strings.ToUpper(p)
 		}
 	}
+	return strings.Join(parts, "-")
 }
 
 func (r *formationResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -101,9 +99,16 @@ func (r *formationResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Required: true,
 			},
 			"size": schema.StringAttribute{
-				Required: true,
+				// Optional+Computed so size may be omitted (the API assigns a default
+				// then) while still being tracked. Terraform core forbids a plan from
+				// transforming a known config value, so unlike the SDKv2 StateFunc this
+				// resource cannot auto-capitalize a configured size; the value is stored
+				// as typed. readFormationIntoModel reconciles case-only differences
+				// against the API so lowercase input neither errors nor churns.
+				Optional: true,
+				Computed: true,
 				PlanModifiers: []planmodifier.String{
-					caseInsensitiveStringPlanModifier{},
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 		},
@@ -244,7 +249,7 @@ func (r *formationResource) ImportState(ctx context.Context, req resource.Import
 		AppID:    types.StringValue(f.App.ID),
 		Type:     types.StringValue(f.Type),
 		Quantity: types.Int64Value(int64(f.Quantity)),
-		Size:     types.StringValue(f.Size),
+		Size:     types.StringValue(formatSize(f.Size)),
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -347,7 +352,15 @@ func (r *formationResource) readFormationIntoModel(ctx context.Context, m *forma
 	m.AppID = types.StringValue(f.App.ID)
 	m.Type = types.StringValue(f.Type)
 	m.Quantity = types.Int64Value(int64(f.Quantity))
-	m.Size = types.StringValue(f.Size)
+
+	// Preserve the configured/state value when it differs from the API value by
+	// case only (e.g. config "standard-2x" vs API "Standard-2X"). Overwriting it
+	// with the canonical API form would either error ("inconsistent result after
+	// apply", since the plan must equal the known config value) or churn the plan
+	// on every refresh. Only adopt the API value on a genuine size change.
+	if m.Size.IsNull() || m.Size.IsUnknown() || formatSize(m.Size.ValueString()) != formatSize(f.Size) {
+		m.Size = types.StringValue(formatSize(f.Size))
+	}
 
 	return nil
 }

@@ -21,7 +21,7 @@ func TestAccHerokuFormation_importBasic(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuFormationConfig_WithOrg(org, appName, slugID, "standard-2x", 2),
+				Config: testAccCheckHerokuFormationConfig_WithOrg(org, appName, slugID, "Standard-2X", 2),
 			},
 			{
 				ResourceName:      "heroku_formation.foobar-web",

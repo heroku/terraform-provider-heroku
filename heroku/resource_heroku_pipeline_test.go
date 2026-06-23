@@ -131,10 +131,10 @@ func testAccCheckHerokuPipeline_basic(pipelineName, pipelineOwnerID, pipelineOwn
 	return fmt.Sprintf(`
 resource "heroku_pipeline" "foobar" {
   name = "%s"
-  owner {
+  owner = [{
 	id = "%s"
 	type = "%s"
-  }
+  }]
 }
 `, pipelineName, pipelineOwnerID, pipelineOwnerType)
 }

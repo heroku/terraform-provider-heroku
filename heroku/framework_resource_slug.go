@@ -471,7 +471,21 @@ func (r *slugResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	plan.ID = types.StringValue(slug.ID)
-	slugPopulateModel(ctx, &plan, slug)
+
+	// Re-read the slug after upload so the persisted state matches what a
+	// subsequent Read/import would return. The SlugCreate response is a
+	// pre-upload snapshot whose server-computed fields (notably "size") differ
+	// from SlugInfo's authoritative values; populating from it directly caused
+	// ImportStateVerify drift (create "size"=324 vs import "size"=0).
+	createdSlug, err := r.config.Api.SlugInfo(ctx, appID, slug.ID)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error reading slug after create",
+			fmt.Sprintf("Error retrieving slug %s: %s", slug.ID, err),
+		)
+		return
+	}
+	slugPopulateModel(ctx, &plan, createdSlug)
 
 	log.Printf("[INFO] Created slug ID: %s", plan.ID.ValueString())
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)

@@ -25,7 +25,7 @@ func TestAccHerokuFormationSingleUpdate_WithOrg(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuFormationConfig_WithOrg(org, appName, slugID, "standard-2x", 2),
+				Config: testAccCheckHerokuFormationConfig_WithOrg(org, appName, slugID, "Standard-2X", 2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuFormationExists("heroku_formation.foobar-web", &formation),
 					testAccCheckHerokuFormationSizeAttribute(&formation, "Standard-2X"),
@@ -52,7 +52,7 @@ func TestAccHerokuFormationUpdateFreeDyno(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuFormationConfig_WithOutOrg(appName, slugID, "basic", 1),
+				Config: testAccCheckHerokuFormationConfig_WithOutOrg(appName, slugID, "Basic", 1),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuFormationExists("heroku_formation.foobar-web", &formation),
 					testAccCheckHerokuFormationSizeAttribute(&formation, "Basic"),

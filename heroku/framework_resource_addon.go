@@ -2,6 +2,7 @@ package heroku
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -331,6 +332,10 @@ func (r *addonResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	}
 
 	if err := r.readAddonIntoModel(ctx, &state); err != nil {
+		if isAddonNotFound(err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("Error reading addon", err.Error())
 		return
 	}
@@ -390,7 +395,7 @@ func (r *addonResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	log.Printf("[INFO] Deleting Addon: %s", state.ID.ValueString())
 
 	_, err := r.config.Api.AddOnDelete(ctx, state.AppID.ValueString(), state.ID.ValueString())
-	if err != nil {
+	if err != nil && !isAddonNotFound(err) {
 		resp.Diagnostics.AddError("Error deleting addon", fmt.Sprintf("Error deleting addon: %s", err))
 		return
 	}
@@ -407,7 +412,7 @@ func (r *addonResource) readAddonIntoModel(ctx context.Context, m *addonResource
 
 	addon, err := client.AddOnInfo(ctx, m.ID.ValueString())
 	if err != nil {
-		return fmt.Errorf("Error retrieving addon: %s", err)
+		return fmt.Errorf("Error retrieving addon: %w", err)
 	}
 
 	// Determine the plan. If the stored plan has no colon-separated tier, strip
@@ -473,4 +478,18 @@ func retrieveAddonConfigVars(ctx context.Context, client *heroku.Service, appID 
 	}
 
 	return nonNullVars, nil
+}
+
+// isAddonNotFound returns true when err represents a Heroku 404/not_found. The
+// heroku-go client returns heroku.Error (a value type); callers must wrap it
+// with fmt.Errorf("...: %w") so errors.As can walk the chain.
+func isAddonNotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+	var herr heroku.Error
+	if errors.As(err, &herr) {
+		return herr.ID == "not_found"
+	}
+	return false
 }

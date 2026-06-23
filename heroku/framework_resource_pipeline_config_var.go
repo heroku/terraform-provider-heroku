@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = (*pipelineConfigVarResource)(nil)
-	_ resource.ResourceWithConfigure = (*pipelineConfigVarResource)(nil)
+	_ resource.Resource                = (*pipelineConfigVarResource)(nil)
+	_ resource.ResourceWithConfigure   = (*pipelineConfigVarResource)(nil)
+	_ resource.ResourceWithImportState = (*pipelineConfigVarResource)(nil)
 )
 
 // NewPipelineConfigVarResource returns the framework implementation of the
@@ -236,6 +237,16 @@ func (r *pipelineConfigVarResource) Delete(ctx context.Context, req resource.Del
 	}
 
 	log.Printf("[INFO] Removed pipeline [%s] stage [%s] config vars", pipelineID, pipelineStage)
+}
+
+// ImportState mirrors the SDKv2 resourceHerokuPipelineConfigVarImport, which
+// always returns an error: this resource cannot be imported because its config
+// vars are derived rather than uniquely addressable by a stable import ID.
+func (r *pipelineConfigVarResource) ImportState(_ context.Context, _ resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resp.Diagnostics.AddError(
+		"Import not supported",
+		"not possible to import this resource",
+	)
 }
 
 // readIntoModel fetches the current remote state and populates the model,

@@ -112,14 +112,26 @@ func (d *spacePeeringInfoDataSource) Read(ctx context.Context, req datasource.Re
 	model.VpcID = types.StringValue(peeringInfo.VpcID)
 	model.VpcCIDR = types.StringValue(peeringInfo.VpcCIDR)
 
-	dynoCIDRList, diags := types.ListValueFrom(ctx, types.StringType, peeringInfo.DynoCIDRBlocks)
+	// Normalize nil slices to empty so the resulting list is a known empty list
+	// rather than null. SDKv2's d.Set produced "<attr>.# = 0" for an empty/nil
+	// slice; types.ListValueFrom on a nil slice instead yields a null list, which
+	// drops the ".#" count the acceptance test asserts is set.
+	dynoBlocks := peeringInfo.DynoCIDRBlocks
+	if dynoBlocks == nil {
+		dynoBlocks = []string{}
+	}
+	dynoCIDRList, diags := types.ListValueFrom(ctx, types.StringType, dynoBlocks)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	model.DynoCIDRBlocks = dynoCIDRList
 
-	unavailableCIDRList, diags := types.ListValueFrom(ctx, types.StringType, peeringInfo.UnavailableCIDRBlocks)
+	unavailableBlocks := peeringInfo.UnavailableCIDRBlocks
+	if unavailableBlocks == nil {
+		unavailableBlocks = []string{}
+	}
+	unavailableCIDRList, diags := types.ListValueFrom(ctx, types.StringType, unavailableBlocks)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
