@@ -12,6 +12,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -84,9 +85,10 @@ type appResourceModelV0 struct {
 }
 
 // -----------------------------------------------------------------------------
-// Inline plan modifiers (no boolplanmodifier / listplanmodifier sub-packages in
-// this vendored version of terraform-plugin-framework; mirrors the workaround
-// in framework_resource_space.go).
+// Inline plan modifiers expressing the SDKv2 ForceNew-on-change semantics. The
+// stock boolplanmodifier.RequiresReplace replaces whenever the value differs
+// from prior state, but these variants additionally skip the create case
+// (null prior state), matching the original resource's behaviour.
 // -----------------------------------------------------------------------------
 
 // appBoolRequiresReplace is a planmodifier.Bool that marks the resource for
@@ -105,6 +107,12 @@ func (m appBoolRequiresReplace) MarkdownDescription(_ context.Context) string {
 func (m appBoolRequiresReplace) PlanModifyBool(_ context.Context, req planmodifier.BoolRequest, resp *planmodifier.BoolResponse) {
 	// Skip on create (no prior state).
 	if req.StateValue.IsNull() {
+		return
+	}
+	// Skip while either value is unknown: a comparison against an unresolved
+	// value would spuriously trigger replacement. This matches the stock
+	// boolplanmodifier.RequiresReplace behaviour.
+	if req.PlanValue.IsUnknown() || req.StateValue.IsUnknown() {
 		return
 	}
 	if !req.PlanValue.Equal(req.StateValue) {
@@ -127,6 +135,9 @@ func (m appListRequiresReplace) MarkdownDescription(_ context.Context) string {
 
 func (m appListRequiresReplace) PlanModifyList(_ context.Context, req planmodifier.ListRequest, resp *planmodifier.ListResponse) {
 	if req.StateValue.IsNull() {
+		return
+	}
+	if req.PlanValue.IsUnknown() || req.StateValue.IsUnknown() {
 		return
 	}
 	if !req.PlanValue.Equal(req.StateValue) {
@@ -182,6 +193,13 @@ func (r *appResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []planmodifier.Bool{
+					// Carry the prior computed value forward when the attribute is
+					// absent from config. Without this the value plans as unknown on
+					// every update, which both produces a perpetual diff and trips
+					// appBoolRequiresReplace into a spurious destroy/recreate. In
+					// SDKv2 a Computed+ForceNew attribute retained its state value
+					// during planning, so ForceNew never fired on unrelated updates.
+					boolplanmodifier.UseStateForUnknown(),
 					appBoolRequiresReplace{},
 				},
 			},
@@ -414,13 +432,16 @@ func (r *appResource) Create(ctx context.Context, req resource.CreateRequest, re
 		}
 	}
 
-	// Apply ACM.
-	if !plan.Acm.IsNull() && !plan.Acm.IsUnknown() {
+	// Apply ACM. Only act when enabling: a freshly created app has ACM disabled,
+	// so attempting to disable it errors ("Your app does not have ACM enabled").
+	// This mirrors the SDKv2 create path, which gated on d.GetOk("acm") (false
+	// for the zero value) and therefore only ever enabled ACM on create.
+	if !plan.Acm.IsNull() && !plan.Acm.IsUnknown() && plan.Acm.ValueBool() {
 		if len(plan.Organization) == 0 {
 			log.Printf("You ask me to enable ACM for a non-organization app. This will most likely fail, " +
 				"due to the Heroku constraints (the app has to be scaled to Standard-1X - state of 28.01.2018)")
 		}
-		if err := updateAcm(appID, client, plan.Acm.ValueBool()); err != nil {
+		if err := updateAcm(appID, client, true); err != nil {
 			resp.Diagnostics.AddError("Error setting ACM after app create", err.Error())
 			return
 		}
