@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -20,8 +20,8 @@ func TestAccHerokuBuild_Basic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuBuildConfig_basic(appName),
@@ -39,8 +39,8 @@ func TestAccHerokuBuild_Fails(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		ErrorCheck: func(err error) error {
 			// Expect the build log output from the Ruby buildpack
 			if strings.Contains(err.Error(), "-----> Ruby app detected") {
@@ -61,8 +61,8 @@ func TestAccHerokuBuild_InsecureUrl(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuBuildConfig_insecureUrl(appName),
@@ -77,8 +77,8 @@ func TestAccHerokuBuild_NoSource(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuBuildConfig_noSource(appName),
@@ -94,8 +94,8 @@ func TestAccHerokuBuild_AllOpts(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuBuildConfig_allOpts(appName),
@@ -120,8 +120,8 @@ func TestAccHerokuBuild_LocalSourceTarball(t *testing.T) {
 	defer resetSourceFiles()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuBuildConfig_localSourceTarball(appName),
@@ -147,8 +147,8 @@ func TestAccHerokuBuild_LocalSourceTarball_SetChecksum(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuBuildConfig_localSourceTarball_setChecksum(appName),
@@ -164,8 +164,8 @@ func TestAccHerokuBuild_LocalSourceTarball_AllOpts(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuBuildConfig_localSourceTarball_allOpts(appName),
@@ -186,8 +186,8 @@ func TestAccHerokuBuild_LocalSourceDirectoryDiff(t *testing.T) {
 	defer resetSourceDirectories()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuBuildConfig_localSourceDirectory(appName),
@@ -218,8 +218,8 @@ func TestAccHerokuBuild_LocalSourceDirectorySelfContained(t *testing.T) {
 	defer func() { _ = os.Chdir("../..") }()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuBuildConfig_localSourceDirectorySelfContained(fmt.Sprintf("tftest-%s", acctest.RandString(10))),
@@ -241,7 +241,7 @@ func testAccCheckHerokuBuildExists(n string, Build *heroku.Build) resource.TestC
 			return fmt.Errorf("No Build ID is set")
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		foundBuild, err := client.BuildInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 

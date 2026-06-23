@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -17,9 +17,9 @@ func TestAccHerokuPipelineCoupling_importBasic(t *testing.T) {
 	stageName := "development"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuPipelineCouplingDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuPipelineCouplingDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuPipelineCouplingConfig_basic(appName, pipelineName, stageName),

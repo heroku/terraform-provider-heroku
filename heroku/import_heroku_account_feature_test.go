@@ -1,7 +1,7 @@
 package heroku
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"testing"
 )
 
@@ -14,7 +14,7 @@ func TestAccHerokuAccountFeature_importBasic(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers: testAccProviders,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAccountFeatureConfig_Basic(featureName, enabled),

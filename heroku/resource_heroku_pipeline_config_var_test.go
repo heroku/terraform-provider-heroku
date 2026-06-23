@@ -2,8 +2,8 @@ package heroku
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"testing"
 )
 
@@ -12,9 +12,9 @@ func TestAccHerokuPipelineConfigVar_TestStage_Basic(t *testing.T) {
 	stage := "test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuPipelineDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuPipelineDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuPipelineConfigVar_basic(name, stage),
@@ -42,9 +42,9 @@ func TestAccHerokuPipelineConfigVar_ReviewStage_Basic(t *testing.T) {
 	stage := "review"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuPipelineDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuPipelineDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuPipelineConfigVar_basic(name, stage),

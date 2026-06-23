@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -19,7 +19,7 @@ func TestAccHerokuTeamMember_Org(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers: testAccProviders,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuTeamMember_Org(team, testUser, role),
@@ -46,7 +46,7 @@ func testAccCheckHerokuTeamMemberExists(n string) resource.TestCheckFunc {
 		}
 
 		team, email, _ := parseCompositeID(rs.Primary.ID)
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		members, err := client.TeamMemberList(context.TODO(), team, &heroku.ListRange{Field: "email"})
 		if err != nil {

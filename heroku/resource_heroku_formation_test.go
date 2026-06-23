@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -22,7 +22,7 @@ func TestAccHerokuFormationSingleUpdate_WithOrg(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers: testAccProviders,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuFormationConfig_WithOrg(org, appName, slugID, "standard-2x", 2),
@@ -49,7 +49,7 @@ func TestAccHerokuFormationUpdateFreeDyno(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers: testAccProviders,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuFormationConfig_WithOutOrg(appName, slugID, "basic", 1),
@@ -79,7 +79,7 @@ func testAccCheckHerokuFormationExists(n string, formation *heroku.Formation) re
 			return fmt.Errorf("No Formation ID set")
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		foundFormation, err := client.FormationInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 

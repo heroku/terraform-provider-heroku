@@ -7,9 +7,9 @@ import (
 
 	"github.com/heroku/terraform-provider-heroku/v5/helper/test"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -25,7 +25,7 @@ func TestAccHerokuTeamCollaborator_Org(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers: testAccProviders,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuTeamCollaborator_Org(org, appName, testUser, perms),
@@ -51,7 +51,7 @@ func TestAccHerokuTeamCollaboratorPermsOutOfOrder_Org(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers: testAccProviders,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuTeamCollaborator_Org(org, appName, testUser, perms),
@@ -77,7 +77,7 @@ func testAccCheckHerokuTeamCollaboratorExists(n string, teamCollaborator *heroku
 			return fmt.Errorf("[ERROR] No Team Collaborator Set")
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		foundTeamCollaborator, err := client.TeamAppCollaboratorInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 

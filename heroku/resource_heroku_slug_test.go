@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -19,8 +19,8 @@ func TestAccHerokuSlug_Basic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuSlugConfig_basic(appName),
@@ -37,8 +37,8 @@ func TestAccHerokuSlug_NoFile(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuSlugConfig_noFile(appName),
@@ -54,8 +54,8 @@ func TestAccHerokuSlug_AllOpts(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuSlugConfig_allOpts(appName),
@@ -79,8 +79,8 @@ func TestAccHerokuSlug_WithFile(t *testing.T) {
 	defer resetSlugFiles()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuSlugConfig_withFile(appName),
@@ -110,8 +110,8 @@ func TestAccHerokuSlug_WithRemoteFile(t *testing.T) {
 	slugChecksum := "SHA256:6731cb5caea2cda97c6177216373360a0733aa8e7a21801de879fa8d22f740cf"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuSlugConfig_withRemoteFile(appName),
@@ -129,8 +129,8 @@ func TestAccHerokuSlug_WithInsecureRemoteFile(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuSlugConfig_withInsecureRemoteFile(appName),
@@ -172,7 +172,7 @@ func testAccCheckHerokuSlugExists(n string, Slug *heroku.Slug) resource.TestChec
 			return fmt.Errorf("No Slug ID is set")
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		foundSlug, err := client.SlugInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 

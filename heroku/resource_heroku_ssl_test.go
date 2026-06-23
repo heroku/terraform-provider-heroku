@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 	"github.com/heroku/terraform-provider-heroku/v5/helper/test"
 )
@@ -31,9 +31,9 @@ func TestAccHerokuSSL_basic(t *testing.T) {
 	certificateChain2 := string(certificateChain2Bytes)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuSSLDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuSSLDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuSSLConfig(appName, certFile2, keyFile2),
@@ -95,7 +95,7 @@ resource "heroku_ssl" "one" {
 }
 
 func testAccCheckHerokuSSLDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config).Api
+	client := testAccProviderConfig.Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_ssl" {
@@ -135,7 +135,7 @@ func testAccCheckHerokuSSLExists(n string, endpoint *heroku.SniEndpoint) resourc
 			return fmt.Errorf("No SNI endpoint ID is set")
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		foundEndpoint, err := client.SniEndpointInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 

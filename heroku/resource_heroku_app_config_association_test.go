@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccHerokuAppConfigAssociation_Basic(t *testing.T) {
@@ -18,7 +18,7 @@ func TestAccHerokuAppConfigAssociation_Basic(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers: testAccProviders,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppConfigAssociation_Basic(org, appName),
@@ -42,7 +42,7 @@ func TestAccHerokuAppConfigAssociation_Advanced(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers: testAccProviders,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppConfigAssociation_Advanced(org, appName),
@@ -68,7 +68,7 @@ func testAccCheckHerokuAppConfigAssociationExists(n string, vars ...string) reso
 			return fmt.Errorf("no app config association ID set")
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		app := rs.Primary.Attributes["app_id"]
 		remoteConfig, err := client.ConfigVarInfoForApp(context.TODO(), app)

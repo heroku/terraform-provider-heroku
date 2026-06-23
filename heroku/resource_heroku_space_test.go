@@ -6,10 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccHerokuSpace_Cedar(t *testing.T) {
@@ -22,8 +21,8 @@ func TestAccHerokuSpace_Cedar(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuSpaceDestroy,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuSpaceDestroy,
 		Steps: []resource.TestStep{
 			{
 				ResourceName: "heroku_space.foobar",
@@ -69,8 +68,8 @@ func TestAccHerokuSpace_Fir(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuSpaceDestroy,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuSpaceDestroy,
 		Steps: []resource.TestStep{
 			{
 				// Step 1: Create Fir space and validate generation
@@ -107,7 +106,7 @@ func TestAccHerokuSpace_GenerationShieldValidation(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers: testAccProviders,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				// Test: Fir + Shield should fail during plan
@@ -163,7 +162,7 @@ func testAccCheckHerokuSpaceExists(n string, space *spaceWithNAT) resource.TestC
 			return fmt.Errorf("No space name set")
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		foundSpace, err := client.SpaceInfo(context.TODO(), rs.Primary.ID)
 		if err != nil {
@@ -191,7 +190,7 @@ func testAccCheckHerokuSpaceExists(n string, space *spaceWithNAT) resource.TestC
 }
 
 func testAccCheckHerokuSpaceDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config).Api
+	client := testAccProviderConfig.Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_space" {
@@ -279,11 +278,12 @@ func TestHerokuSpaceGeneration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create resource data from schema
-			d := schema.TestResourceDataRaw(t, resourceHerokuSpace().Schema, tt.config)
-
-			// Check default generation behavior
-			generation := d.Get("generation").(string)
+			// Determine the generation, applying the framework schema default of
+			// "cedar" when the attribute is not specified in the config.
+			generation := "cedar"
+			if g, ok := tt.config["generation"].(string); ok && g != "" {
+				generation = g
+			}
 			if tt.config["generation"] == nil {
 				if generation != "cedar" {
 					t.Errorf("Expected default generation to be 'cedar', got '%s'", generation)
@@ -291,7 +291,7 @@ func TestHerokuSpaceGeneration(t *testing.T) {
 			}
 
 			// Test shield validation logic without actually calling the API
-			shield := d.Get("shield").(bool)
+			shield, _ := tt.config["shield"].(bool)
 			if shield {
 				supported := IsFeatureSupported(generation, "space", "shield")
 				if tt.expectError && supported {

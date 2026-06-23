@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 	"github.com/heroku/terraform-provider-heroku/v5/helper/test"
 )
@@ -21,9 +21,9 @@ func TestAccHerokuDomain_Basic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuDomainDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuDomainDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuDomainConfig_basic(appName),
@@ -45,9 +45,9 @@ func TestAccHerokuDomain_ACM(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuDomainDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuDomainDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuDomainConfig_ACM(appName),
@@ -70,9 +70,9 @@ func TestAccHerokuDomain_No_SSL_Change(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuDomainDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuDomainDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuDomainConfig_ssl_no_association(appName),
@@ -108,9 +108,9 @@ func TestAccHerokuDomain_SSL(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", randString)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuDomainDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuDomainDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuDomainConfig_ssl(appName),
@@ -140,7 +140,7 @@ func TestAccHerokuDomain_SSL(t *testing.T) {
 }
 
 func testAccCheckHerokuDomainDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config).Api
+	client := testAccProviderConfig.Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_domain" {
@@ -189,7 +189,7 @@ func testAccCheckHerokuDomainExists(n string, Domain *heroku.Domain) resource.Te
 			return fmt.Errorf("No Domain ID is set")
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		foundDomain, err := client.DomainInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 

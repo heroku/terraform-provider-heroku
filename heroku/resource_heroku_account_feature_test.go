@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -19,7 +19,7 @@ func TestAccHerokuAccountFeature_Basic(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers: testAccProviders,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAccountFeatureConfig_Basic(featureName, enabled),
@@ -45,7 +45,7 @@ func testAccCheckHerokuAccountFeatureDescription(accountFeature *heroku.AccountF
 }
 
 func testAccCheckHerokuAccountFeatureDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config).Api
+	client := testAccProviderConfig.Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_account_feature" {
@@ -74,7 +74,7 @@ func testAccCheckHerokuAccountFeatureStatus(n string, accountFeature *heroku.Acc
 			return fmt.Errorf("No account feature id set")
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 		accountEmail, accountFeatureName, _ := parseCompositeID(rs.Primary.ID)
 
 		// Check to make sure accountEmail matches what was set as the resource Id

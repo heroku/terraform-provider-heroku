@@ -9,7 +9,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	helper "github.com/heroku/terraform-provider-heroku/v5/helper/test"
 )
 
@@ -17,57 +18,59 @@ const (
 	ProviderNameHeroku = "heroku"
 )
 
-var providers []*schema.Provider
-var testAccProviderFactories map[string]func() (*schema.Provider, error)
-var testAccProviders map[string]*schema.Provider
-var testAccProvider *schema.Provider
-var testAccConfig *helper.TestConfig
-
-func testAccProviderFactoriesInternal(providers []*schema.Provider) map[string]func() (*schema.Provider, error) {
-	return testAccProviderFactoriesInit(providers, []string{ProviderNameHeroku})
+// testAccProtoV6ProviderFactories serves the terraform-plugin-framework
+// provider (protocol 6) to the acceptance-test harness. It replaces the SDKv2
+// testAccProviders/testAccProviderFactories used before the migration.
+var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
+	ProviderNameHeroku: providerserver.NewProtocol6WithError(NewFrameworkProvider()),
 }
 
-// testAccProviderFactoriesInit creates ProviderFactories for the provider under testing.
-func testAccProviderFactoriesInit(providers []*schema.Provider, providerNames []string) map[string]func() (*schema.Provider, error) {
-	var factories = make(map[string]func() (*schema.Provider, error), len(providerNames))
+// testAccProviderConfig is an initialized *Config built from the environment,
+// used by acceptance-test check functions that previously read
+// testAccProviderConfig. The framework provider no longer exposes a
+// Meta() accessor, so tests use this package-level config instead.
+var testAccProviderConfig *Config
 
-	for _, name := range providerNames {
-		p := Provider()
+var testAccConfig *helper.TestConfig
 
-		factories[name] = func() (*schema.Provider, error) {
-			return p, nil
-		}
+// newTestAccConfig builds a *Config from environment variables and the netrc
+// file, mirroring the framework provider's Configure logic. initializeAPI only
+// constructs an HTTP client (no network call), so this is safe to run in init.
+func newTestAccConfig() *Config {
+	config := NewConfig()
 
-		if providers != nil {
-			providers = append(providers, p)
-		}
+	// Best effort: netrc may not exist in CI.
+	_ = config.applyNetrcFile()
+
+	if v := os.Getenv("HEROKU_EMAIL"); v != "" {
+		config.Email = v
+	}
+	if v := os.Getenv("HEROKU_API_KEY"); v != "" {
+		config.APIKey = v
 	}
 
-	return factories
+	_ = config.initializeAPI()
+
+	return config
 }
 
 func init() {
-	testAccProvider = Provider()
-	testAccProviders = map[string]*schema.Provider{
-		"heroku": testAccProvider,
-	}
-	testAccProviderFactories = testAccProviderFactoriesInit(providers, []string{ProviderNameHeroku})
+	testAccProviderConfig = newTestAccConfig()
 	testAccConfig = helper.NewTestConfig()
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
+	ctx := context.Background()
+	server := providerserver.NewProtocol6(NewFrameworkProvider())()
+	if _, err := server.GetProviderSchema(ctx, &tfprotov6.GetProviderSchemaRequest{}); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
 
 func TestProviderConfigureUsesHeadersForClient(t *testing.T) {
-	p := Provider()
-	d := schema.TestResourceDataRaw(t, p.Schema, nil)
-	d.Set("headers", `{"X-Custom-Header":"yes"}`)
-
-	client, err := providerConfigure(d)
-	if err != nil {
+	config := NewConfig()
+	config.Headers.Set("X-Custom-Header", "yes")
+	if err := config.initializeAPI(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -83,11 +86,10 @@ func TestProviderConfigureUsesHeadersForClient(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := client.(*Config).Api
+	c := config.Api
 	c.URL = srv.URL
 
-	_, err = c.AppInfo(context.Background(), "does-not-matter")
-	if err != nil {
+	if _, err := c.AppInfo(context.Background(), "does-not-matter"); err != nil {
 		t.Fatal(err)
 	}
 }

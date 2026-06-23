@@ -7,7 +7,7 @@ import (
 
 	"github.com/heroku/terraform-provider-heroku/v5/helper/test"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 // Generates a "test step" not a whole test, so that it can reuse the space.
