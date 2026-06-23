@@ -2,9 +2,9 @@ package heroku
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
-	"net/url"
 	"strings"
 	"time"
 
@@ -635,6 +635,11 @@ func (r *appResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 	appID := state.ID.ValueString()
 	log.Printf("[INFO] Deleting App: %s", appID)
 	if _, err := r.config.Api.AppDelete(ctx, appID); err != nil {
+		// Treat an already-deleted app as success so delete is idempotent (e.g.
+		// when the app was removed out-of-band).
+		if isAppNotFound(err) {
+			return
+		}
 		resp.Diagnostics.AddError("Error deleting Heroku app", fmt.Sprintf("error deleting App: %s", err))
 		return
 	}
@@ -943,12 +948,12 @@ func isAppNotFound(err error) bool {
 	if err == nil {
 		return false
 	}
-	urlErr, ok := err.(*url.Error)
-	if !ok {
-		return false
-	}
-	if herr, ok := urlErr.Err.(heroku.Error); ok && herr.ID == "not_found" {
-		return true
+	// Walk the wrapped error chain: the heroku-go client returns the API error
+	// as a heroku.Error inside a *url.Error, and callers (e.g.
+	// resourceHerokuAppRetrieve) further wrap it with fmt.Errorf("...: %w").
+	var herr heroku.Error
+	if errors.As(err, &herr) {
+		return herr.ID == "not_found"
 	}
 	return false
 }

@@ -56,7 +56,7 @@ func resourceHerokuAppRetrieve(id string, client *heroku.Service) (*application,
 	err := app.Update()
 
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving app: %s", err)
+		return nil, fmt.Errorf("error retrieving app: %w", err)
 	}
 
 	return &app, nil
