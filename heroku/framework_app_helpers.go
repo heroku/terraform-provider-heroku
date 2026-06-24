@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	multierror "github.com/hashicorp/go-multierror"
@@ -115,15 +114,13 @@ func (a *application) Update() error {
 	var errs []error
 	var err error
 
-	// Only retrieve buildpacks for apps that support traditional buildpacks
-	if IsFeatureSupported(a.Generation, "app", "buildpacks") {
+	if !IsCNBApp(a.Generation, a.App.Stack) {
 		a.Buildpacks, err = retrieveBuildpacks(a.Id, a.Client)
 		if err != nil {
 			errs = append(errs, err)
 		}
 	} else {
-		// CNB apps don't have traditional buildpacks
-		log.Printf("[DEBUG] App %s uses generation %s which doesn't support traditional buildpacks", a.Id, a.Generation)
+		log.Printf("[DEBUG] App %s (generation=%s stack=%s) uses CNB; skipping traditional buildpack retrieval", a.Id, a.Generation, a.App.Stack)
 		a.Buildpacks = []string{}
 	}
 
@@ -152,16 +149,6 @@ func retrieveBuildpacks(id string, client *heroku.Service) ([]string, error) {
 	}
 
 	return buildpacks, nil
-}
-
-// isCNBError checks if an error is related to Cloud Native Buildpacks.
-func isCNBError(err error) bool {
-	if err == nil {
-		return false
-	}
-	errorMessage := err.Error()
-	return strings.Contains(errorMessage, "Cloud Native Buildpacks") ||
-		strings.Contains(errorMessage, "project.toml")
 }
 
 func retrieveAcm(id string, client *heroku.Service) (bool, error) {

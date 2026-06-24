@@ -237,7 +237,7 @@ func (r *buildResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanR
 		if appID != "" && r.config != nil {
 			app, err := r.config.Api.AppInfo(ctx, appID)
 			if err == nil {
-				if genErr := frameworkValidateBuildpacksForGeneration(app.Generation.Name); genErr != nil {
+				if genErr := frameworkValidateBuildpacksForGenerationAndStack(app.Generation.Name, app.BuildStack.Name); genErr != nil {
 					resp.Diagnostics.AddError("Invalid buildpacks for app generation", genErr.Error())
 					return
 				}
@@ -306,7 +306,7 @@ func (r *buildResource) Create(ctx context.Context, req resource.CreateRequest, 
 			resp.Diagnostics.AddError("Error fetching app info for buildpack validation", err.Error())
 			return
 		}
-		if err := frameworkValidateBuildpacksForGeneration(app.Generation.Name); err != nil {
+		if err := frameworkValidateBuildpacksForGenerationAndStack(app.Generation.Name, app.BuildStack.Name); err != nil {
 			resp.Diagnostics.AddError("Invalid buildpacks for app generation", err.Error())
 			return
 		}
@@ -747,19 +747,19 @@ func frameworkFetchBuildLog(outputStreamURL string) string {
 // this file is in place. They are prefixed with "framework" to avoid any
 // transitional symbol conflicts.
 
-// frameworkValidateBuildpacksForGeneration validates buildpacks against a generation name.
-// Mirrors validateBuildpacksForGeneration.
-func frameworkValidateBuildpacksForGeneration(generationName string) error {
+// frameworkValidateBuildpacksForGenerationAndStack validates that traditional
+// buildpacks are not used with CNB apps. Fir apps always use CNB; Cedar apps
+// use CNB when stack = "cnb". Mirrors validateBuildpacksForGenerationAndStack.
+func frameworkValidateBuildpacksForGenerationAndStack(generationName, stackName string) error {
 	gen := generationName
 	if gen == "" {
 		gen = "cedar"
 	}
-	if !IsFeatureSupported(gen, "app", "buildpacks") {
+	if !IsFeatureSupported(gen, "app", "buildpacks") || IsCNBApp(gen, stackName) {
 		return fmt.Errorf(
-			"buildpacks cannot be specified for %s generation apps. "+
-				"Use project.toml to configure Cloud Native Buildpacks instead. "+
+			"buildpacks cannot be specified for apps using Cloud Native Buildpacks. " +
+				"Use project.toml instead. " +
 				"See: https://devcenter.heroku.com/articles/using-multiple-buildpacks-for-an-app",
-			gen,
 		)
 	}
 	return nil
