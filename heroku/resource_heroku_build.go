@@ -412,8 +412,8 @@ func validateBuildpacksForAppGeneration(ctx context.Context, diff *schema.Resour
 		return nil
 	}
 
-	// Validate buildpacks against app generation
-	return validateBuildpacksForGeneration(app.Generation.Name)
+	// Validate buildpacks against app generation and stack
+	return validateBuildpacksForGenerationAndStack(app.Generation.Name, app.BuildStack.Name)
 }
 
 // validateBuildpacksForApp validates buildpack configuration at apply-time
@@ -423,25 +423,26 @@ func validateBuildpacksForApp(client *heroku.Service, appID string, d *schema.Re
 		return nil // No buildpacks specified, nothing to validate
 	}
 
-	// Fetch app info to determine its generation
+	// Fetch app info to determine its generation and stack
 	app, err := client.AppInfo(context.TODO(), appID)
 	if err != nil {
 		return fmt.Errorf("failed to get app info for build validation: %w", err)
 	}
 
-	// Validate buildpacks against app generation
-	return validateBuildpacksForGeneration(app.Generation.Name)
+	// Validate buildpacks against app generation and stack
+	return validateBuildpacksForGenerationAndStack(app.Generation.Name, app.BuildStack.Name)
 }
 
-// validateBuildpacksForGeneration validates buildpacks against a given generation
-func validateBuildpacksForGeneration(generationName string) error {
-	appGeneration := generationName
-	if appGeneration == "" {
-		appGeneration = "cedar" // Default to cedar if generation is not specified
+// validateBuildpacksForGenerationAndStack validates that traditional buildpacks are not
+// used with CNB apps. Fir apps always use CNB; Cedar apps use CNB when stack = "cnb".
+func validateBuildpacksForGenerationAndStack(generationName, stackName string) error {
+	generation := generationName
+	if generation == "" {
+		generation = "cedar"
 	}
 
-	if !IsFeatureSupported(appGeneration, "app", "buildpacks") {
-		return fmt.Errorf("buildpacks cannot be specified for %s generation apps. Use project.toml to configure Cloud Native Buildpacks instead. See: https://devcenter.heroku.com/articles/using-multiple-buildpacks-for-an-app", appGeneration)
+	if !IsFeatureSupported(generation, "app", "buildpacks") || IsCNBApp(generation, stackName) {
+		return fmt.Errorf("buildpacks cannot be specified for apps using Cloud Native Buildpacks. Use project.toml instead. See: https://devcenter.heroku.com/articles/using-multiple-buildpacks-for-an-app")
 	}
 
 	return nil

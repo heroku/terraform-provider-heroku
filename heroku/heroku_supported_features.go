@@ -25,7 +25,7 @@ var featureMatrix = map[string]map[string]map[string]bool{
 			"buildpacks":              true,  // Cedar supports traditional buildpacks
 			"stack":                   true,  // Cedar supports stack configuration
 			"internal_routing":        true,  // Cedar supports internal routing
-			"cloud_native_buildpacks": false, // Cedar doesn't use CNB by default
+			"cloud_native_buildpacks": true,  // Cedar supports CNB via stack = "cnb"
 			"otel":                    false, // Cedar doesn't supports OTel at the app level
 		},
 		"drain": {
@@ -63,6 +63,12 @@ var featureMatrix = map[string]map[string]map[string]bool{
 			"base_name": false, // Fir pipelines don't support Predictable URLs for Review Apps
 		},
 	},
+}
+
+// IsCNBApp reports whether an app is using Cloud Native Buildpacks.
+// Fir apps always use CNB. Cedar apps use CNB when stack is "cnb".
+func IsCNBApp(generation, stack string) bool {
+	return generation == "fir" || (generation == "cedar" && stack == "cnb")
 }
 
 // IsFeatureSupported checks if a feature is supported for a given generation and resource type.

@@ -496,11 +496,11 @@ func TestHerokuBuildGeneration(t *testing.T) {
 			expectedSupported: false,
 		},
 		{
-			name:              "Cedar apps should not support cloud_native_buildpacks",
+			name:              "Cedar apps should support cloud_native_buildpacks",
 			generation:        "cedar",
 			resourceType:      "app",
 			feature:           "cloud_native_buildpacks",
-			expectedSupported: false,
+			expectedSupported: true,
 		},
 		{
 			name:              "Fir apps should support cloud_native_buildpacks",
@@ -519,6 +519,30 @@ func TestHerokuBuildGeneration(t *testing.T) {
 					tc.generation, tc.resourceType, tc.feature, tc.expectedSupported, result)
 			} else {
 				t.Logf("✅ Generation: %s, Feature: %s, Supported: %v", tc.generation, tc.feature, result)
+			}
+		})
+	}
+}
+
+// TestValidateBuildpacksForGenerationAndStack tests that CNB apps reject traditional buildpacks
+func TestValidateBuildpacksForGenerationAndStack(t *testing.T) {
+	tests := []struct {
+		name       string
+		generation string
+		stack      string
+		wantErr    bool
+	}{
+		{"cedar with heroku-22 allows buildpacks", "cedar", "heroku-22", false},
+		{"cedar with empty stack allows buildpacks", "cedar", "", false},
+		{"cedar with cnb stack rejects buildpacks", "cedar", "cnb", true},
+		{"fir always rejects buildpacks", "fir", "cnb", true},
+		{"fir with empty stack rejects buildpacks", "fir", "", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateBuildpacksForGenerationAndStack(tt.generation, tt.stack)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateBuildpacksForGenerationAndStack(%q, %q) error = %v, wantErr %v", tt.generation, tt.stack, err, tt.wantErr)
 			}
 		})
 	}
