@@ -67,9 +67,10 @@ func (v customAddonNameValidator) ValidateString(_ context.Context, req fwvalida
 var addonResourceLock sync.Mutex
 
 var (
-	_ resource.Resource                = (*addonResource)(nil)
-	_ resource.ResourceWithConfigure   = (*addonResource)(nil)
-	_ resource.ResourceWithImportState = (*addonResource)(nil)
+	_ resource.Resource                 = (*addonResource)(nil)
+	_ resource.ResourceWithConfigure    = (*addonResource)(nil)
+	_ resource.ResourceWithImportState  = (*addonResource)(nil)
+	_ resource.ResourceWithUpgradeState = (*addonResource)(nil)
 )
 
 // NewAddonResource returns the framework implementation of the heroku_addon resource.
@@ -403,6 +404,99 @@ func (r *addonResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 
 func (r *addonResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
+}
+
+// addonResourceModelPriorV3 mirrors the pre-v3 SDKv2 schema, which used the
+// fuzzy "app" identifier instead of "app_id". It is the prior model decoded by
+// the state upgraders before the value is resolved to a UUID.
+type addonResourceModelPriorV3 struct {
+	ID              types.String `tfsdk:"id"`
+	App             types.String `tfsdk:"app"`
+	Plan            types.String `tfsdk:"plan"`
+	Name            types.String `tfsdk:"name"`
+	Config          types.Map    `tfsdk:"config"`
+	ProviderID      types.String `tfsdk:"provider_id"`
+	ConfigVars      types.List   `tfsdk:"config_vars"`
+	ConfigVarValues types.Map    `tfsdk:"config_var_values"`
+}
+
+// UpgradeState ports the SDKv2 resourceHerokuAddonMigrate behavior to the
+// framework. The shipped SDKv2 provider declared SchemaVersion 3 with a legacy
+// MigrateState (flatmap) path for v0->v1 (addon name->UUID), v1->v2 (config
+// TypeList->TypeSet) and v2->v3 (app->app_id).
+//
+// Of these, only the v2->v3 app->app_id resolution is faithfully reproducible
+// against JSON state, so it is implemented as a real upgrader. The v0->v1 and
+// v1->v2 migrations operated on pre-0.12 flatmap state that the framework never
+// receives as JSON; they are registered as log-and-passthrough upgraders that
+// still resolve app->app_id (best effort) and warn that the flatmap-specific
+// transforms cannot be applied.
+func (r *addonResource) UpgradeState(_ context.Context) map[int64]resource.StateUpgrader {
+	// priorSchema mirrors the pre-v3 schema: "app" (fuzzy id) instead of
+	// "app_id". Computed attributes decode as null when absent from older state.
+	priorSchema := schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id":   schema.StringAttribute{Computed: true},
+			"app":  schema.StringAttribute{Required: true},
+			"plan": schema.StringAttribute{Required: true},
+			"name": schema.StringAttribute{Optional: true, Computed: true},
+			"config": schema.MapAttribute{
+				ElementType: types.StringType,
+				Optional:    true,
+			},
+			"provider_id": schema.StringAttribute{Computed: true},
+			"config_vars": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"config_var_values": schema.MapAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+				Sensitive:   true,
+			},
+		},
+	}
+
+	// upgradeToV3 decodes the prior state, resolves app->app_id, and writes the
+	// current (v3) model. fromVersion drives the warning emitted for the
+	// unreachable flatmap-era versions.
+	upgradeToV3 := func(fromVersion int) func(context.Context, resource.UpgradeStateRequest, *resource.UpgradeStateResponse) {
+		return func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+			if fromVersion < 2 {
+				log.Printf("[WARN] heroku_addon state v%d detected. The v%d migration was a pre-0.12 flatmap MigrateState transform (addon-id and config-format) that cannot be reproduced for JSON state; resolving app_id only.", fromVersion, fromVersion)
+			}
+
+			var prior addonResourceModelPriorV3
+			resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+
+			appID, err := resolveAppToAppID(ctx, r.config, prior.App.ValueString(), "")
+			if err != nil {
+				resp.Diagnostics.AddError("Error upgrading heroku_addon state", err.Error())
+				return
+			}
+
+			upgraded := addonResourceModel{
+				ID:              prior.ID,
+				AppID:           types.StringValue(appID),
+				Plan:            prior.Plan,
+				Name:            prior.Name,
+				Config:          prior.Config,
+				ProviderID:      prior.ProviderID,
+				ConfigVars:      prior.ConfigVars,
+				ConfigVarValues: prior.ConfigVarValues,
+			}
+			resp.Diagnostics.Append(resp.State.Set(ctx, &upgraded)...)
+		}
+	}
+
+	return map[int64]resource.StateUpgrader{
+		0: {PriorSchema: &priorSchema, StateUpgrader: upgradeToV3(0)},
+		1: {PriorSchema: &priorSchema, StateUpgrader: upgradeToV3(1)},
+		2: {PriorSchema: &priorSchema, StateUpgrader: upgradeToV3(2)},
+	}
 }
 
 // readAddonIntoModel fetches the addon by ID and populates the model, mirroring
