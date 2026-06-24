@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	fwvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 )
@@ -51,7 +52,9 @@ func (r *appConfigAssociationResource) Schema(_ context.Context, _ resource.Sche
 			},
 			"app_id": schema.StringAttribute{
 				Required: true,
-				// TODO: port validation.IsUUID
+				Validators: []fwvalidator.String{
+					uuidValidator(),
+				},
 			},
 			"vars": schema.MapAttribute{
 				Optional:    true,

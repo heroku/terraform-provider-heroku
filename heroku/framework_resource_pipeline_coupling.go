@@ -6,11 +6,13 @@ import (
 	"log"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	fwvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 )
@@ -68,21 +70,27 @@ func (r *pipelineCouplingResource) Schema(_ context.Context, _ resource.SchemaRe
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
-				// TODO: port validation (IsUUID)
+				Validators: []fwvalidator.String{
+					uuidValidator(),
+				},
 			},
 			"pipeline": schema.StringAttribute{
 				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
-				// TODO: port validation (IsUUID)
+				Validators: []fwvalidator.String{
+					uuidValidator(),
+				},
 			},
 			"stage": schema.StringAttribute{
 				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
-				// TODO: port validation (StringInSlice ["review","development","staging","production"])
+				Validators: []fwvalidator.String{
+					stringvalidator.OneOf("review", "development", "staging", "production"),
+				},
 			},
 		},
 	}

@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 
 	uuid "github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -18,6 +20,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 )
+
+// pipelineNameRegex mirrors the SDKv2 validation.StringMatch regex for the
+// pipeline name: a lowercase letter followed by 2-29 lowercase letters, digits
+// or dashes (3-30 characters total).
+var pipelineNameRegex = regexp.MustCompile(`^[a-z][a-z0-9-]{2,29}$`)
 
 // pipelineOwnerIDValidator validates that owner.id is a UUID, mirroring the
 // SDKv2 validation.IsUUID ValidateFunc. The message reproduces the SDKv2 path
@@ -126,7 +133,12 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"name": schema.StringAttribute{
 				Required: true,
-				// TODO: port validation (StringMatch `^[a-z][a-z0-9-]{2,29}$`)
+				Validators: []fwvalidator.String{
+					stringvalidator.RegexMatches(
+						pipelineNameRegex,
+						"pipeline name must start with a lowercase letter and be 3-30 characters of lowercase letters, numbers and dashes",
+					),
+				},
 			},
 			// owner is Optional+Computed: when omitted, the provider defaults
 			// ownership to the authenticated user and populates it. A computed

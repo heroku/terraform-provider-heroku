@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 )
@@ -60,12 +63,18 @@ func (r *telemetryDrainResource) Schema(_ context.Context, _ resource.SchemaRequ
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				Validators: []validator.String{
+					uuidValidator(),
+				},
 			},
 			"owner_type": schema.StringAttribute{
 				Required:    true,
 				Description: "Type of owner (app or space)",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.OneOf("app", "space"),
 				},
 			},
 			"endpoint": schema.StringAttribute{
@@ -75,11 +84,19 @@ func (r *telemetryDrainResource) Schema(_ context.Context, _ resource.SchemaRequ
 			"exporter_type": schema.StringAttribute{
 				Required:    true,
 				Description: "Transport type for OpenTelemetry consumer (otlphttp or otlp)",
+				Validators: []validator.String{
+					stringvalidator.OneOf("otlphttp", "otlp"),
+				},
 			},
 			"signals": schema.SetAttribute{
 				Required:    true,
 				ElementType: types.StringType,
 				Description: "OpenTelemetry signals to send (traces, metrics, logs)",
+				Validators: []validator.Set{
+					setvalidator.ValueStringsAre(
+						stringvalidator.OneOf("traces", "metrics", "logs"),
+					),
+				},
 			},
 			"headers": schema.MapAttribute{
 				Required:    true,

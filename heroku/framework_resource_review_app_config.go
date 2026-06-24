@@ -7,11 +7,15 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 )
@@ -75,7 +79,9 @@ func (r *reviewAppConfigResource) Schema(_ context.Context, _ resource.SchemaReq
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
-				// TODO: port validation (IsUUID)
+				Validators: []validator.String{
+					uuidValidator(),
+				},
 			},
 			"org_repo": schema.StringAttribute{
 				Required: true,
@@ -100,7 +106,12 @@ func (r *reviewAppConfigResource) Schema(_ context.Context, _ resource.SchemaReq
 			"stale_days": schema.Int64Attribute{
 				Optional: true,
 				Computed: true,
-				// TODO: port validation (IntBetween(1, 30)) and RequiredWith destroy_stale_apps
+				Validators: []validator.Int64{
+					int64validator.Between(1, 30),
+					// Mirror the SDKv2 RequiredWith: stale_days requires
+					// destroy_stale_apps to be set in config.
+					int64validator.AlsoRequires(path.MatchRoot("destroy_stale_apps")),
+				},
 			},
 			"wait_for_ci": schema.BoolAttribute{
 				Optional: true,
@@ -117,11 +128,15 @@ func (r *reviewAppConfigResource) Schema(_ context.Context, _ resource.SchemaReq
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
 							Required: true,
-							// TODO: port validation (validateDeployTargetID: UUID or 2-letter region code)
+							Validators: []validator.String{
+								deployTargetIDValidator{},
+							},
 						},
 						"type": schema.StringAttribute{
 							Required: true,
-							// TODO: port validation (StringInSlice ["space","region"])
+							Validators: []validator.String{
+								stringvalidator.OneOf(DeployTargetTypeSpace, DeployTargetTypeRegion),
+							},
 						},
 					},
 				},
@@ -453,12 +468,32 @@ func deployTargetsEqual(a, b []reviewAppConfigDeployTargetModel) bool {
 	return a[0].ID.Equal(b[0].ID) && a[0].Type.Equal(b[0].Type)
 }
 
-// validateDeployTargetIDFramework checks that the deploy target ID is either a
-// UUID or a 2-letter region code. This mirrors the SDKv2 validateDeployTargetID
-// function and is preserved for reference.
-//
-//nolint:deadcode,unused
-func validateDeployTargetIDFramework(value string) bool {
-	pattern := `^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$|^[a-z]{2}$`
-	return regexp.MustCompile(pattern).MatchString(value)
+// deployTargetIDPattern matches either a UUID or a 2-letter region code,
+// mirroring the SDKv2 validateDeployTargetID ValidateFunc.
+var deployTargetIDPattern = regexp.MustCompile(`^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$|^[a-z]{2}$`)
+
+// deployTargetIDValidator validates that the deploy target ID is either a UUID
+// or a 2-letter region code, mirroring the SDKv2 validateDeployTargetID.
+type deployTargetIDValidator struct{}
+
+func (v deployTargetIDValidator) Description(_ context.Context) string {
+	return "value must be a space UUID or a 2-letter region code"
+}
+
+func (v deployTargetIDValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v deployTargetIDValidator) ValidateString(_ context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+	value := req.ConfigValue.ValueString()
+	if !deployTargetIDPattern.MatchString(value) {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid deploy target ID",
+			fmt.Sprintf("expected %q to be a space UUID or a 2-letter region code, got %s", req.Path, value),
+		)
+	}
 }

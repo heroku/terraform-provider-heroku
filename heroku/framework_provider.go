@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 )
@@ -66,12 +68,21 @@ func (p *frameworkProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 					Attributes: map[string]schema.Attribute{
 						"post_app_create_delay": schema.Int64Attribute{
 							Optional: true,
+							Validators: []validator.Int64{
+								int64validator.AtLeast(0),
+							},
 						},
 						"post_space_create_delay": schema.Int64Attribute{
 							Optional: true,
+							Validators: []validator.Int64{
+								int64validator.AtLeast(0),
+							},
 						},
 						"post_domain_create_delay": schema.Int64Attribute{
 							Optional: true,
+							Validators: []validator.Int64{
+								int64validator.AtLeast(0),
+							},
 						},
 					},
 				},
@@ -81,6 +92,9 @@ func (p *frameworkProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 					Attributes: map[string]schema.Attribute{
 						"addon_create_timeout": schema.Int64Attribute{
 							Optional: true,
+							Validators: []validator.Int64{
+								int64validator.AtLeast(10),
+							},
 						},
 					},
 				},

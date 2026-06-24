@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 )
@@ -61,6 +64,9 @@ func (r *appWebhookResource) Schema(_ context.Context, _ resource.SchemaRequest,
 			},
 			"level": schema.StringAttribute{
 				Required: true,
+				Validators: []validator.String{
+					stringvalidator.OneOfCaseInsensitive("notify", "sync"),
+				},
 			},
 			"url": schema.StringAttribute{
 				Required: true,
@@ -68,6 +74,15 @@ func (r *appWebhookResource) Schema(_ context.Context, _ resource.SchemaRequest,
 			"include": schema.ListAttribute{
 				Required:    true,
 				ElementType: types.StringType,
+				Validators: []validator.List{
+					listvalidator.ValueStringsAre(
+						stringvalidator.OneOfCaseInsensitive(
+							"api:addon-attachment", "api:addon", "api:app", "api:build",
+							"api:collaborator", "api:domain", "api:dyno", "api:formation",
+							"api:release", "api:sni-endpoint",
+						),
+					),
+				},
 			},
 			"secret": schema.StringAttribute{
 				Optional:  true,
