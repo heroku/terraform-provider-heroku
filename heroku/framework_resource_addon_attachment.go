@@ -15,9 +15,10 @@ import (
 )
 
 var (
-	_ resource.Resource                = (*addonAttachmentResource)(nil)
-	_ resource.ResourceWithConfigure   = (*addonAttachmentResource)(nil)
-	_ resource.ResourceWithImportState = (*addonAttachmentResource)(nil)
+	_ resource.Resource                 = (*addonAttachmentResource)(nil)
+	_ resource.ResourceWithConfigure    = (*addonAttachmentResource)(nil)
+	_ resource.ResourceWithImportState  = (*addonAttachmentResource)(nil)
+	_ resource.ResourceWithUpgradeState = (*addonAttachmentResource)(nil)
 )
 
 // NewAddonAttachmentResource returns the framework implementation of the
@@ -44,6 +45,10 @@ func (r *addonAttachmentResource) Metadata(_ context.Context, req resource.Metad
 
 func (r *addonAttachmentResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		// Version mirrors the SDKv2 SchemaVersion: 1. Without it the framework
+		// defaults to version 0, which Terraform treats as a downgrade from any
+		// state written by the shipped SDKv2 provider and rejects before refresh.
+		Version: 1,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -184,6 +189,52 @@ func (r *addonAttachmentResource) ImportState(ctx context.Context, req resource.
 	}
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
+}
+
+// UpgradeState ports the SDKv2 SchemaVersion 1 migration
+// (resourceHerokuAddonAttachmentMigrateState). The v0 -> v1 upgrade resolves
+// addon_id from the attachment's stored id to the addon's UUID via the API,
+// mirroring migrateAddonAttachmentStateV0toV1.
+func (r *addonAttachmentResource) UpgradeState(_ context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		0: {
+			PriorSchema: &schema.Schema{
+				Attributes: map[string]schema.Attribute{
+					"id":        schema.StringAttribute{Computed: true},
+					"app_id":    schema.StringAttribute{Optional: true, Computed: true},
+					"addon_id":  schema.StringAttribute{Optional: true, Computed: true},
+					"name":      schema.StringAttribute{Optional: true, Computed: true},
+					"namespace": schema.StringAttribute{Optional: true, Computed: true},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var prior addonAttachmentResourceModel
+				resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+
+				// Resolve the addon UUID from the stored app_id + id, mirroring
+				// migrateAddonAttachmentStateV0toV1. State upgrades can run before
+				// the provider is configured, so guard on the API client being set.
+				if r.config != nil && !prior.AppID.IsNull() && !prior.ID.IsNull() {
+					addon, err := r.config.Api.AddOnInfoByApp(ctx, prior.AppID.ValueString(), prior.ID.ValueString())
+					if err != nil {
+						resp.Diagnostics.AddError(
+							"Error upgrading heroku_addon_attachment state (v0 to v1)",
+							fmt.Sprintf("Could not resolve addon for attachment %s: %s", prior.ID.ValueString(), err),
+						)
+						return
+					}
+					if addon.ID != prior.ID.ValueString() {
+						prior.AddonID = types.StringValue(addon.ID)
+					}
+				}
+
+				resp.Diagnostics.Append(resp.State.Set(ctx, &prior)...)
+			},
+		},
+	}
 }
 
 // readAddonAttachment fetches the current attachment state and populates m.
