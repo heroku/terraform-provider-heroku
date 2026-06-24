@@ -6,6 +6,7 @@ import (
 	"log"
 
 	uuid "github.com/hashicorp/go-uuid"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -137,6 +138,12 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Computed: true,
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.UseStateForUnknown(),
+				},
+				// Restore the SDKv2 MaxItems: 1 constraint. Create reads only
+				// owners[0]; without this a multi-owner config would be silently
+				// truncated instead of rejected at plan time.
+				Validators: []fwvalidator.List{
+					listvalidator.SizeAtMost(1),
 				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
