@@ -668,9 +668,7 @@ func (a *application) Update() error {
 	var errs []error
 	var err error
 
-	// Only retrieve buildpacks for apps using traditional buildpacks.
-	// Cedar apps with stack = "cnb" and all fir apps use CNB instead.
-	if IsFeatureSupported(a.Generation, "app", "buildpacks") && !IsCNBApp(a.Generation, a.App.Stack) {
+	if !IsCNBApp(a.Generation, a.App.Stack) {
 		a.Buildpacks, err = retrieveBuildpacks(a.Id, a.Client)
 		if err != nil {
 			errs = append(errs, err)
