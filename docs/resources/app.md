@@ -37,6 +37,9 @@ resource "heroku_app" "cedar_app" {
 ```
 
 ### Cedar Generation Using Cloud Native Buildpacks
+
+For apps on CNB stack, their buildpacks are configured in the app's source code, instead of through the Heroku API. See [project.toml Configuration](#project-toml-configuration).
+
 ```hcl-terraform
 resource "heroku_app" "cedar_cnb_app" {
   name   = "my-cedar-cnb-app"
