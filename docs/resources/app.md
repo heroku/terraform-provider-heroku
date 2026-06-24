@@ -46,7 +46,7 @@ resource "heroku_app" "cedar_cnb_app" {
   region = "us"
 
   # Setting stack = "cnb" opts this Cedar app into Cloud Native Buildpacks.
-  # Do not specify buildpacks — configure them via project.toml instead.
+  # Instead of setting the `buildpacks` attribute, configure buildpacks with `project.toml` file.
   stack = "cnb"
 
   config_vars = {
