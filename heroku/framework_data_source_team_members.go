@@ -4,11 +4,19 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 )
+
+// TeamMemberRoles is the set of valid team member roles accepted by the
+// heroku_team_members "roles" filter. Restored from the original SDKv2 data
+// source (validation.StringInSlice(TeamMemberRoles, false)).
+var TeamMemberRoles = []string{"admin", "member", "viewer", "collaborator", "owner"}
 
 // Ensure interface compliance at compile time.
 var (
@@ -60,6 +68,14 @@ func (d *teamMembersDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 			"roles": schema.ListAttribute{
 				Required:    true,
 				ElementType: types.StringType,
+				Validators: []validator.List{
+					// Restore the SDKv2 MinItems: 1 and per-element
+					// StringInSlice(TeamMemberRoles, false) validation. Without
+					// these, an empty filter or a typo'd role is accepted and
+					// silently matches no members.
+					listvalidator.SizeAtLeast(1),
+					listvalidator.ValueStringsAre(stringvalidator.OneOf(TeamMemberRoles...)),
+				},
 			},
 			"members": schema.ListNestedAttribute{
 				Computed: true,
