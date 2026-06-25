@@ -88,6 +88,38 @@ func TestAccHerokuBuild_NoSource(t *testing.T) {
 	})
 }
 
+func TestAccHerokuBuild_MultipleSource(t *testing.T) {
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-%s", randString)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckHerokuBuildConfig_multipleSource(appName),
+				ExpectError: regexp.MustCompile(`at most 1`),
+			},
+		},
+	})
+}
+
+func TestAccHerokuBuild_SourcePathUrlConflict(t *testing.T) {
+	randString := acctest.RandString(10)
+	appName := fmt.Sprintf("tftest-%s", randString)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckHerokuBuildConfig_sourcePathUrlConflict(appName),
+				ExpectError: regexp.MustCompile(`cannot be specified when`),
+			},
+		},
+	})
+}
+
 func TestAccHerokuBuild_AllOpts(t *testing.T) {
 	var build heroku.Build
 	randString := acctest.RandString(10)
@@ -311,6 +343,38 @@ resource "heroku_build" "foobar" {
     app_id = heroku_app.foobar.id
     source {
       version = "v0"
+    }
+}`, appName)
+}
+
+func testAccCheckHerokuBuildConfig_multipleSource(appName string) string {
+	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_build" "foobar" {
+    app_id = heroku_app.foobar.id
+    source {
+      url = "https://example.com/app-a.tgz"
+    }
+    source {
+      url = "https://example.com/app-b.tgz"
+    }
+}`, appName)
+}
+
+func testAccCheckHerokuBuildConfig_sourcePathUrlConflict(appName string) string {
+	return fmt.Sprintf(`resource "heroku_app" "foobar" {
+    name = "%s"
+    region = "us"
+}
+
+resource "heroku_build" "foobar" {
+    app_id = heroku_app.foobar.id
+    source {
+      path = "test-fixtures/app.tgz"
+      url  = "https://example.com/app.tgz"
     }
 }`, appName)
 }

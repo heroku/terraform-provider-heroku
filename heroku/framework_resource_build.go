@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -180,6 +182,13 @@ func (r *buildResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 						},
 						"path": schema.StringAttribute{
 							Optional: true,
+							Validators: []fwvalidator.String{
+								// Restore the SDKv2 ConflictsWith: source.path and
+								// source.url are mutually exclusive. Without this, a
+								// config setting both passes plan and the runtime
+								// silently prefers path, ignoring url.
+								stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("url")),
+							},
 						},
 						"url": schema.StringAttribute{
 							Optional: true,
@@ -191,6 +200,13 @@ func (r *buildResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 							Optional: true,
 						},
 					},
+				},
+				// Restore the SDKv2 Required + MaxItems: 1 guarantee: exactly one
+				// source block. Create only consumes source[0]; without this,
+				// additional blocks would be silently ignored, and zero blocks
+				// would only error at apply time.
+				Validators: []fwvalidator.List{
+					listvalidator.SizeBetween(1, 1),
 				},
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.RequiresReplace(),
