@@ -179,6 +179,12 @@ func (r *buildResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 						"checksum": schema.StringAttribute{
 							Optional: true,
 							Computed: true,
+							Validators: []fwvalidator.String{
+								// source.checksum is auto-generated when source.path
+								// is set, so the two are mutually exclusive. Promotes
+								// the former apply-time check to plan time.
+								stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("path")),
+							},
 						},
 						"path": schema.StringAttribute{
 							Optional: true,
@@ -365,14 +371,9 @@ func (r *buildResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	src := plan.Source[0]
 
+	// checksum/path mutual exclusion is enforced at plan time by the schema
+	// ConflictsWith validator, so here we only forward a config-provided checksum.
 	if !src.Checksum.IsNull() && !src.Checksum.IsUnknown() && src.Checksum.ValueString() != "" {
-		if !src.Path.IsNull() && src.Path.ValueString() != "" {
-			resp.Diagnostics.AddError(
-				"Invalid source configuration",
-				"source.checksum should be empty when source.path is set (checksum is auto-generated)",
-			)
-			return
-		}
 		s := src.Checksum.ValueString()
 		opts.SourceBlob.Checksum = &s
 	}

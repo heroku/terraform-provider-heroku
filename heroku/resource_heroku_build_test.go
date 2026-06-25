@@ -184,7 +184,7 @@ func TestAccHerokuBuild_LocalSourceTarball_SetChecksum(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuBuildConfig_localSourceTarball_setChecksum(appName),
-				ExpectError: regexp.MustCompile(`checksum should be empty`),
+				ExpectError: regexp.MustCompile(`cannot be specified when`),
 			},
 		},
 	})
