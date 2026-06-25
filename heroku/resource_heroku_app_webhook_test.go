@@ -66,7 +66,7 @@ func testAccCheckHerokuAppWebhookDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := client.AppWebhookInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		_, err := client.AppWebhookInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Webhook still exists")
