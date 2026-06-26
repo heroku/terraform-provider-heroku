@@ -2,7 +2,7 @@ package heroku
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"testing"
 )
 
@@ -13,8 +13,8 @@ func TestAccHerokuReviewAppConfig_Basic(t *testing.T) {
 	pipelineID := testAccConfig.GetPipelineIDorSkip(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuReviewAppConfig_basic(pipelineID, "true",

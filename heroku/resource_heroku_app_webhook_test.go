@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -15,9 +15,9 @@ func TestAccHerokuAppWebhook_Basic(t *testing.T) {
 	var webhook heroku.AppWebhookInfoResult
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppWebhookDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAppWebhookDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppWebhookConfig(appName, "https://terraform.example.com:1234", "notify", "api:release"),
@@ -59,14 +59,14 @@ resource "heroku_app_webhook" "foobar_webhook" {
 }
 
 func testAccCheckHerokuAppWebhookDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config).Api
+	client := testAccProviderConfig.Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_app_webhook" {
 			continue
 		}
 
-		_, err := client.AppWebhookInfo(context.TODO(), rs.Primary.Attributes["app"], rs.Primary.ID)
+		_, err := client.AppWebhookInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Webhook still exists")
@@ -88,7 +88,7 @@ func testAccCheckHerokuAppWebhookExists(n string, Webhook *heroku.AppWebhookInfo
 			return fmt.Errorf("No Webhook ID is set")
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		foundWebhook, err := client.AppWebhookInfo(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 

@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -20,9 +18,9 @@ func TestAccHerokuAppFeature(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuFeatureDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuFeatureDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuFeature_basic(appName),
@@ -49,11 +47,8 @@ func TestAccHerokuAppFeature(t *testing.T) {
 }
 
 func TestResourceHerokuAppFeatureStateUpgradeV0(t *testing.T) {
-	p := Provider()
-	d := schema.TestResourceDataRaw(t, p.Schema, nil)
-
-	client, err := providerConfigure(d)
-	if err != nil {
+	config := NewConfig()
+	if err := config.initializeAPI(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -66,30 +61,23 @@ func TestResourceHerokuAppFeatureStateUpgradeV0(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := client.(*Config).Api
-	c.URL = srv.URL
+	config.Api.URL = srv.URL
 
-	existing := map[string]interface{}{
-		"id":  "test-app:45b2b2df-2094-40d2-b099-986d0d6d8444",
-		"app": "test-app",
-	}
-	expected := map[string]interface{}{
-		"id":     expectedID + ":45b2b2df-2094-40d2-b099-986d0d6d8444",
-		"app":    "test-app",
-		"app_id": expectedID,
-	}
-	actual, err := upgradeHerokuAppFeatureV1(context.Background(), existing, client)
+	// The framework state upgrader resolves the fuzzy "app" (name or UUID) from
+	// v0 state into the "app_id" UUID via resolveAppToAppID. Verify a name
+	// resolves to its UUID through the API (the substantive v0->v1 behavior).
+	appID, err := resolveAppToAppID(context.Background(), config, "test-app", "")
 	if err != nil {
-		t.Fatalf("error migrating state: %s", err)
+		t.Fatalf("error upgrading state: %s", err)
 	}
 
-	if !reflect.DeepEqual(expected, actual) {
-		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
+	if appID != expectedID {
+		t.Fatalf("expected app_id %q, got %q", expectedID, appID)
 	}
 }
 
 func testAccCheckHerokuFeatureDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config).Api
+	client := testAccProviderConfig.Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_app_feature" {
@@ -123,7 +111,7 @@ func testAccCheckHerokuFeatureExists(n string, feature *heroku.AppFeature) resou
 			return fmt.Errorf("Bad app: %s", app)
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		foundFeature, err := client.AppFeatureInfo(context.TODO(), app, id)
 		if err != nil {

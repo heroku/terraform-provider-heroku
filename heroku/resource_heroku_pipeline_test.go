@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -44,9 +44,9 @@ func TestAccHerokuPipeline_Basic(t *testing.T) {
 	ownerID := testAccConfig.GetUserIDOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuPipelineDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuPipelineDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuPipeline_basic(pipelineName, ownerID, "user"),
@@ -77,9 +77,9 @@ func TestAccHerokuPipeline_NoOwner(t *testing.T) {
 	ownerID := testAccConfig.GetUserIDOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuPipelineDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuPipelineDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuPipeline_NoOwner(pipelineName),
@@ -87,8 +87,21 @@ func TestAccHerokuPipeline_NoOwner(t *testing.T) {
 					testAccCheckHerokuPipelineExists("heroku_pipeline.foobar", &pipeline),
 					resource.TestCheckResourceAttr(
 						"heroku_pipeline.foobar", "name", pipelineName),
+					// owner is an optional block; when omitted it is not stored in
+					// state (the framework does not allow Computed blocks).
 					resource.TestCheckResourceAttr(
-						"heroku_pipeline.foobar", "owner.0.id", ownerID),
+						"heroku_pipeline.foobar", "owner.#", "0"),
+					// Ownership still defaults to the authenticated user
+					// server-side, verified here via the API.
+					func(s *terraform.State) error {
+						if pipeline.Owner == nil {
+							return fmt.Errorf("expected pipeline to have an owner, got nil")
+						}
+						if pipeline.Owner.ID != ownerID {
+							return fmt.Errorf("expected pipeline owner id %q, got %q", ownerID, pipeline.Owner.ID)
+						}
+						return nil
+					},
 				),
 			},
 		},
@@ -99,9 +112,9 @@ func TestAccHerokuPipeline_InvalidOwnerID(t *testing.T) {
 	pipelineName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuPipelineDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuPipelineDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuPipeline_basic(pipelineName, "im-an-invalid-owner-id", "user"),
@@ -115,9 +128,9 @@ func TestAccHerokuPipeline_InvalidOwnerType(t *testing.T) {
 	pipelineName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuPipelineDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuPipelineDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuPipeline_basic(pipelineName, "16d1c25f-d879-4f4d-ad1b-d807169aaa1c", "invalid"), // not real UUID
@@ -132,8 +145,8 @@ func testAccCheckHerokuPipeline_basic(pipelineName, pipelineOwnerID, pipelineOwn
 resource "heroku_pipeline" "foobar" {
   name = "%s"
   owner {
-	id = "%s"
-	type = "%s"
+    id   = "%s"
+    type = "%s"
   }
 }
 `, pipelineName, pipelineOwnerID, pipelineOwnerType)
@@ -159,7 +172,7 @@ func testAccCheckHerokuPipelineExists(n string, pipeline *heroku.Pipeline) resou
 			return fmt.Errorf("No pipeline name set")
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		foundPipeline, err := client.PipelineInfo(context.TODO(), rs.Primary.ID)
 		if err != nil {
@@ -177,7 +190,7 @@ func testAccCheckHerokuPipelineExists(n string, pipeline *heroku.Pipeline) resou
 }
 
 func testAccCheckHerokuPipelineDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config).Api
+	client := testAccProviderConfig.Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_pipeline" {

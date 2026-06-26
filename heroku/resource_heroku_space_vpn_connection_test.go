@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -45,7 +45,7 @@ func testAccCheckHerokuVPNConnectionExists(n string, vpnConnection *heroku.VPNCo
 		}
 		space, id, _ := parseCompositeID(rs.Primary.ID)
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 		foundVPNConnection, err := client.VPNConnectionInfo(context.TODO(), space, id)
 		if err != nil {
 			return err

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -18,9 +18,9 @@ func TestAccHerokuAddon_Basic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAddonConfig_basic(appName),
@@ -42,9 +42,9 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAddonConfig_no_plan(appName),
@@ -77,9 +77,9 @@ func TestAccHerokuAddon_ConfigVarValues(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAddonConfig_configVarValues(appName),
@@ -97,8 +97,8 @@ func TestAccHerokuAddon_DontSetConfigVarValues(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAddonConfig_dontSetConfigVarValues(appName),
@@ -115,9 +115,9 @@ func TestAccHerokuAddon_CustomName(t *testing.T) {
 	customName := fmt.Sprintf("custom-addonname-%s", acctest.RandString(15))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAddonConfig_CustomName(appName, customName),
@@ -141,9 +141,9 @@ func TestAccHerokuAddon_CustomName_Invalid(t *testing.T) {
 	customName := "da.%dsadsa$d"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
@@ -158,9 +158,9 @@ func TestAccHerokuAddon_CustomName_EmptyString(t *testing.T) {
 	customName := ""
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
@@ -175,9 +175,9 @@ func TestAccHerokuAddon_CustomName_FirstCharNum(t *testing.T) {
 	customName := "1dasdad"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
@@ -192,9 +192,9 @@ func TestAccHerokuAddon_Disappears(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAddonDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAddonConfig_basic(appName),
@@ -209,7 +209,7 @@ func TestAccHerokuAddon_Disappears(t *testing.T) {
 }
 
 func testAccCheckHerokuAddonDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config)
+	client := testAccProviderConfig
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_addon" {
@@ -273,7 +273,7 @@ func testAccCheckHerokuAddonExists(n string, addon *heroku.AddOn) resource.TestC
 			return fmt.Errorf("No Addon ID is set")
 		}
 
-		client := testAccProvider.Meta().(*Config)
+		client := testAccProviderConfig
 
 		foundAddon, err := client.Api.AddOnInfoByApp(context.TODO(), rs.Primary.Attributes["app_id"], rs.Primary.ID)
 
@@ -293,7 +293,7 @@ func testAccCheckHerokuAddonExists(n string, addon *heroku.AddOn) resource.TestC
 
 func testAccCheckHerokuAddonDisappears(appName, addonName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config)
+		client := testAccProviderConfig
 
 		_, err := client.Api.AddOnDelete(context.TODO(), appName, addonName)
 		return err

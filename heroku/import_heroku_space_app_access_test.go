@@ -3,7 +3,7 @@ package heroku
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 // Generates a "test step" not a whole test, so that it can reuse the space.

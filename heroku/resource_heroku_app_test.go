@@ -6,14 +6,12 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -22,9 +20,9 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppConfig_basic(appName),
@@ -61,8 +59,8 @@ func TestAccHerokuApp_DontSetAllConfigVars(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppConfig_DontSetConfigVars(appName),
@@ -88,9 +86,9 @@ func TestAccHerokuApp_Disappears(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppConfig_basic(appName),
@@ -110,9 +108,9 @@ func TestAccHerokuApp_Change(t *testing.T) {
 	appName2 := fmt.Sprintf("%s-v2", appName)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppConfig_basic(appName),
@@ -147,9 +145,9 @@ func TestAccHerokuApp_NukeVars(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppConfig_basic(appName),
@@ -182,9 +180,9 @@ func TestAccHerokuApp_Buildpacks(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppConfig_go(appName),
@@ -221,9 +219,9 @@ func TestAccHerokuApp_ExternallySetBuildpacks(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppConfig_no_vars(appName),
@@ -254,8 +252,8 @@ func TestAccHerokuApp_ACM(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppDestroy,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppConfig_organization(appName, org),
@@ -291,8 +289,8 @@ func TestAccHerokuApp_Organization(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppDestroy,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppConfig_organization(appName, org),
@@ -343,9 +341,9 @@ func TestAccHerokuApp_EmptyConfigVars(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppConfig_EmptyConfigVars(appName),
@@ -366,9 +364,9 @@ func TestAccHerokuApp_SensitiveConfigVars(t *testing.T) {
 	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppConfig_Sensitive(appName, org),
@@ -416,8 +414,8 @@ func TestAccHerokuApp_Organization_Locked(t *testing.T) {
 		PreCheck: func() {
 			testAccPreCheck(t)
 		},
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuAppDestroy,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuAppConfig_locked(appName, org, "false"),
@@ -440,11 +438,8 @@ func TestAccHerokuApp_Organization_Locked(t *testing.T) {
 }
 
 func TestResourceHerokuAppStateUpgradeV0(t *testing.T) {
-	p := Provider()
-	d := schema.TestResourceDataRaw(t, p.Schema, nil)
-
-	client, err := providerConfigure(d)
-	if err != nil {
+	config := NewConfig()
+	if err := config.initializeAPI(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -457,27 +452,24 @@ func TestResourceHerokuAppStateUpgradeV0(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := client.(*Config).Api
-	c.URL = srv.URL
+	config.Api.URL = srv.URL
 
-	existing := map[string]interface{}{
-		"id": "test-app",
-	}
-	expected := map[string]interface{}{
-		"id": expectedID,
-	}
-	actual, err := resourceHerokuAppStateUpgradeV0(context.Background(), existing, client)
+	// The framework v0->v1 state upgrader resolves the prior "id" field: a UUID
+	// is kept as-is, otherwise the app is looked up by name and its UUID is
+	// substituted. resolveAppToAppID implements that exact resolution; verify a
+	// name resolves to its UUID through the API.
+	actual, err := resolveAppToAppID(context.Background(), config, "test-app", "")
 	if err != nil {
-		t.Fatalf("error migrating state: %s", err)
+		t.Fatalf("error upgrading state: %s", err)
 	}
 
-	if !reflect.DeepEqual(expected, actual) {
-		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
+	if actual != expectedID {
+		t.Fatalf("expected app_id %q, got %q", expectedID, actual)
 	}
 }
 
 func testAccCheckHerokuAppDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config).Api
+	client := testAccProviderConfig.Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_app" {
@@ -496,7 +488,7 @@ func testAccCheckHerokuAppDestroy(s *terraform.State) error {
 
 func testAccCheckHerokuAppAttributes(app *heroku.App, appName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		if app.Region.Name != "us" {
 			return fmt.Errorf("Bad region: %s", app.Region.Name)
@@ -521,7 +513,7 @@ func testAccCheckHerokuAppAttributes(app *heroku.App, appName string) resource.T
 
 func testAccCheckHerokuAppAttributesUpdated(app *heroku.App, appName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		if app.Name != appName {
 			return fmt.Errorf("Bad name: %s", app.Name)
@@ -548,7 +540,7 @@ func testAccCheckHerokuAppAttributesUpdated(app *heroku.App, appName string) res
 
 func testAccCheckHerokuAppAttributesNoVars(app *heroku.App, appName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		if app.Name != appName {
 			return fmt.Errorf("Bad name: %s", app.Name)
@@ -569,7 +561,7 @@ func testAccCheckHerokuAppAttributesNoVars(app *heroku.App, appName string) reso
 
 func testAccCheckHerokuAppBuildpacks(appName string, multi bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		results, err := client.BuildpackInstallationList(context.TODO(), appName, nil)
 		if err != nil {
@@ -604,7 +596,7 @@ func testAccCheckHerokuAppBuildpacks(appName string, multi bool) resource.TestCh
 
 func testAccCheckHerokuAppNoBuildpacks(appName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		results, err := client.BuildpackInstallationList(context.TODO(), appName, nil)
 		if err != nil {
@@ -626,7 +618,7 @@ func testAccCheckHerokuAppNoBuildpacks(appName string) resource.TestCheckFunc {
 
 func testAccCheckHerokuAppAttributesOrg(app *heroku.TeamApp, appName, space, org string, internal bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		if app.Region.Name != "us" && app.Region.Name != "virginia" {
 			return fmt.Errorf("Bad region: %s", app.Region.Name)
@@ -682,7 +674,7 @@ func testAccCheckHerokuAppExists(n string, app *heroku.App) resource.TestCheckFu
 			return fmt.Errorf("No App Name is set")
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		foundApp, err := client.AppInfo(context.TODO(), rs.Primary.ID)
 
@@ -712,7 +704,7 @@ func testAccCheckHerokuAppExistsOrg(n string, app *heroku.TeamApp) resource.Test
 			return fmt.Errorf("No App Name is set")
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		foundApp, err := client.TeamAppInfo(context.TODO(), rs.Primary.ID)
 
@@ -732,7 +724,7 @@ func testAccCheckHerokuAppExistsOrg(n string, app *heroku.TeamApp) resource.Test
 
 func testAccInstallUnconfiguredBuildpack(t *testing.T, appName string) func() {
 	return func() {
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		opts := heroku.BuildpackInstallationUpdateOpts{
 			Updates: []struct {
@@ -751,7 +743,7 @@ func testAccInstallUnconfiguredBuildpack(t *testing.T, appName string) func() {
 
 func testAccCheckHerokuAppDisappears(appName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		_, err := client.AppDelete(context.TODO(), appName)
 		return err

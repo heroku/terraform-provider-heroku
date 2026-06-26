@@ -104,6 +104,8 @@ For the `owner` attribute block:
 * You can create unowned pipelines with the Heroku Platform API. However, the dashboard UI requires that pipelines have an owner.
 * To improve usability, if you don't set the `owner` attribute block in your configuration(s), the pipeline owner
 defaults to the user used to authenticate to the Platform API via this provider.
+* When the `owner` block is omitted, the defaulted owner is applied server-side but is not stored in Terraform
+state. To track ownership in state, set the `owner` block explicitly.
 
 ## Attributes Reference
 

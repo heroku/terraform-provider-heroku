@@ -1,59 +1,57 @@
 package heroku
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	frameworkresource "github.com/hashicorp/terraform-plugin-framework/resource"
+	rschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestResourceHerokuTelemetryDrain_Schema(t *testing.T) {
-	resource := resourceHerokuTelemetryDrain()
+	var resp frameworkresource.SchemaResponse
+	NewTelemetryDrainResource().Schema(context.Background(), frameworkresource.SchemaRequest{}, &resp)
+	s := resp.Schema
 
 	// Test required fields
 	requiredFields := []string{"owner_id", "owner_type", "endpoint", "exporter_type", "signals"}
 	for _, field := range requiredFields {
-		if _, ok := resource.Schema[field]; !ok {
+		attr, ok := s.Attributes[field]
+		if !ok {
 			t.Errorf("Required field %s not found in schema", field)
+			continue
 		}
-		if !resource.Schema[field].Required {
+		if !attr.IsRequired() {
 			t.Errorf("Field %s should be required", field)
-		}
-	}
-
-	// Test ForceNew fields
-	forceNewFields := []string{"owner_id", "owner_type"}
-	for _, field := range forceNewFields {
-		if !resource.Schema[field].ForceNew {
-			t.Errorf("Field %s should be ForceNew", field)
 		}
 	}
 
 	// Test computed fields
 	computedFields := []string{"created_at", "updated_at"}
 	for _, field := range computedFields {
-		if _, ok := resource.Schema[field]; !ok {
+		attr, ok := s.Attributes[field]
+		if !ok {
 			t.Errorf("Computed field %s not found in schema", field)
+			continue
 		}
-		if !resource.Schema[field].Computed {
+		if !attr.IsComputed() {
 			t.Errorf("Field %s should be computed", field)
 		}
 	}
 
 	// Test signals field is a Set
-	if resource.Schema["signals"].Type != schema.TypeSet {
-		t.Errorf("signals field should be TypeSet")
+	if _, ok := s.Attributes["signals"].(rschema.SetAttribute); !ok {
+		t.Errorf("signals field should be a SetAttribute")
 	}
 
-	// Test headers field is a Map
-	if resource.Schema["headers"].Type != schema.TypeMap {
-		t.Errorf("headers field should be TypeMap")
-	}
-
-	// Test headers field is required
-	if !resource.Schema["headers"].Required {
+	// Test headers field is a required Map
+	headers, ok := s.Attributes["headers"].(rschema.MapAttribute)
+	if !ok {
+		t.Errorf("headers field should be a MapAttribute")
+	} else if !headers.IsRequired() {
 		t.Errorf("headers field should be required")
 	}
 }

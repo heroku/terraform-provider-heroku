@@ -1,7 +1,6 @@
 package heroku
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,10 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/bgentry/go-netrc/netrc"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	heroku "github.com/heroku/heroku-go/v6"
 	"github.com/heroku/terraform-provider-heroku/v5/version"
 	homedir "github.com/mitchellh/go-homedir"
@@ -65,10 +63,19 @@ func NewConfig() *Config {
 		SetAddonConfigVarsInState:  DefaultSetAddonConfigVarsInState,
 		SetAppAllConfigVarsInState: DefaultSetAppAllConfigVarsInState,
 	}
-	if logging.IsDebugOrHigher() {
+	if isDebugOrHigher() {
 		config.DebugHTTP = true
 	}
 	return config
+}
+
+// isDebugOrHigher reports whether the TF_LOG environment variable requests
+// DEBUG- or TRACE-level logging. It replaces the SDKv2
+// helper/logging.IsDebugOrHigher used before the migration to
+// terraform-plugin-framework.
+func isDebugOrHigher() bool {
+	level := strings.ToUpper(os.Getenv("TF_LOG"))
+	return level == "DEBUG" || level == "TRACE"
 }
 
 func (c *Config) initializeAPI() (err error) {
@@ -94,74 +101,6 @@ func (c *Config) initializeAPI() (err error) {
 	c.Api.URL = c.URL
 
 	log.Printf("[INFO] Heroku Client configured for user: %s", c.Email)
-
-	return
-}
-
-func (c *Config) applySchema(d *schema.ResourceData) (err error) {
-	headers := make(map[string]string)
-	if h := d.Get("headers").(string); h != "" {
-		if err = json.Unmarshal([]byte(h), &headers); err != nil {
-			return
-		}
-	}
-
-	for k, v := range headers {
-		c.Headers.Set(k, v)
-	}
-
-	if url, ok := d.GetOk("url"); ok {
-		c.URL = url.(string)
-	}
-
-	if v, ok := d.GetOk("customizations"); ok {
-		vL := v.([]interface{})
-		if len(vL) > 1 {
-			return fmt.Errorf("Provider configuration error: only one customizations block is permitted")
-		}
-		for _, v := range vL {
-			customizations := v.(map[string]interface{})
-			if v, ok := customizations["set_app_all_config_vars_in_state"].(bool); ok {
-				c.SetAppAllConfigVarsInState = v
-			}
-			if v, ok := customizations["set_addon_config_vars_in_state"].(bool); ok {
-				c.SetAddonConfigVarsInState = v
-			}
-		}
-	}
-
-	if v, ok := d.GetOk("delays"); ok {
-		vL := v.([]interface{})
-		if len(vL) > 1 {
-			return fmt.Errorf("Provider configuration error: only one delays block is permitted")
-		}
-		for _, v := range vL {
-			delaysConfig := v.(map[string]interface{})
-			if v, ok := delaysConfig["post_app_create_delay"].(int); ok {
-				c.PostAppCreateDelay = int64(v)
-			}
-			if v, ok := delaysConfig["post_space_create_delay"].(int); ok {
-				c.PostSpaceCreateDelay = int64(v)
-			}
-			if v, ok := delaysConfig["post_domain_create_delay"].(int); ok {
-				c.PostDomainCreateDelay = int64(v)
-			}
-		}
-	}
-
-	if v, ok := d.GetOk("timeouts"); ok {
-		vL := v.([]interface{})
-		if len(vL) > 1 {
-			return fmt.Errorf("provider configuration error: only one timeouts block is permitted")
-		}
-
-		for _, v := range vL {
-			timeoutsConfig := v.(map[string]interface{})
-			if v, ok := timeoutsConfig["addon_create_timeout"].(int); ok {
-				c.AddonCreateTimeout = int64(v)
-			}
-		}
-	}
 
 	return
 }

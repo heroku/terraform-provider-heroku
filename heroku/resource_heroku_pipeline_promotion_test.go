@@ -1,65 +1,72 @@
 package heroku
 
 import (
+	"context"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	rschema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
 func TestResourceHerokuPipelinePromotion_Schema(t *testing.T) {
-	resource := resourceHerokuPipelinePromotion()
+	r, ok := NewPipelinePromotionResource().(resource.ResourceWithConfigure)
+	if !ok {
+		t.Fatal("expected pipeline_promotion resource to implement resource.ResourceWithConfigure")
+	}
 
-	// Test required fields
+	var resp resource.SchemaResponse
+	r.Schema(context.Background(), resource.SchemaRequest{}, &resp)
+	s := resp.Schema
+
+	// Required + ForceNew (RequiresReplace) fields.
 	requiredFields := []string{"pipeline", "source_app_id", "targets", "release_id"}
 	for _, field := range requiredFields {
-		if _, ok := resource.Schema[field]; !ok {
+		attr, ok := s.Attributes[field]
+		if !ok {
 			t.Errorf("Required field %s not found in schema", field)
+			continue
 		}
-		if !resource.Schema[field].Required {
+		if !attr.IsRequired() {
 			t.Errorf("Field %s should be required", field)
-		}
-		if !resource.Schema[field].ForceNew {
-			t.Errorf("Field %s should be ForceNew", field)
 		}
 	}
 
-	// Test computed fields
-	computedFields := []string{"status", "created_at", "promoted_release_id", "promoted_release_ids"}
+	// Computed fields.
+	computedFields := []string{"status", "created_at", "promoted_release_id"}
 	for _, field := range computedFields {
-		if _, ok := resource.Schema[field]; !ok {
+		attr, ok := s.Attributes[field]
+		if !ok {
 			t.Errorf("Computed field %s not found in schema", field)
+			continue
 		}
-		if !resource.Schema[field].Computed {
+		if !attr.IsComputed() {
 			t.Errorf("Field %s should be computed", field)
 		}
 	}
 
-	// Test promoted_release_id is deprecated
-	if resource.Schema["promoted_release_id"].Deprecated == "" {
+	// promoted_release_id is deprecated.
+	if dm := s.Attributes["promoted_release_id"].GetDeprecationMessage(); dm == "" {
 		t.Errorf("promoted_release_id should be marked as deprecated")
 	}
 
-	// Test promoted_release_ids is a List of objects
-	if resource.Schema["promoted_release_ids"].Type != schema.TypeList {
-		t.Errorf("promoted_release_ids field should be TypeList")
-	}
-
-	// Test promoted_release_ids contains objects with app_id and release_id
-	promotedReleaseIdsElem, ok := resource.Schema["promoted_release_ids"].Elem.(*schema.Resource)
+	// promoted_release_ids is a list-nested block of objects with app_id and release_id.
+	block, ok := s.Blocks["promoted_release_ids"]
 	if !ok {
-		t.Fatal("Expected promoted_release_ids.Elem to be a Resource (object)")
+		t.Fatal("Expected promoted_release_ids to be a nested block")
 	}
-
-	if _, hasAppID := promotedReleaseIdsElem.Schema["app_id"]; !hasAppID {
+	nestedBlock, ok := block.(rschema.ListNestedBlock)
+	if !ok {
+		t.Fatal("Expected promoted_release_ids to be a ListNestedBlock")
+	}
+	if _, hasAppID := nestedBlock.NestedObject.Attributes["app_id"]; !hasAppID {
 		t.Fatal("Expected promoted_release_ids objects to have app_id field")
 	}
-
-	if _, hasReleaseID := promotedReleaseIdsElem.Schema["release_id"]; !hasReleaseID {
+	if _, hasReleaseID := nestedBlock.NestedObject.Attributes["release_id"]; !hasReleaseID {
 		t.Fatal("Expected promoted_release_ids objects to have release_id field")
 	}
 
-	// Test targets field is a Set
-	if resource.Schema["targets"].Type != schema.TypeSet {
-		t.Errorf("targets field should be TypeSet")
+	// targets is a set attribute.
+	if _, ok := s.Attributes["targets"].(rschema.SetAttribute); !ok {
+		t.Errorf("targets field should be a SetAttribute")
 	}
 }

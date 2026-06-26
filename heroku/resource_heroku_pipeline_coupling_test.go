@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
@@ -19,9 +19,9 @@ func TestAccHerokuPipelineCoupling_Basic(t *testing.T) {
 	stageName := "development"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHerokuPipelineCouplingDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		CheckDestroy:             testAccCheckHerokuPipelineCouplingDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckHerokuPipelineCouplingConfig_basic(appName, pipelineName, stageName),
@@ -69,7 +69,7 @@ func testAccCheckHerokuPipelineCouplingExists(n string, pipeline *heroku.Pipelin
 			return fmt.Errorf("No coupling ID set")
 		}
 
-		client := testAccProvider.Meta().(*Config).Api
+		client := testAccProviderConfig.Api
 
 		foundPipelineCoupling, err := client.PipelineCouplingInfo(context.TODO(), rs.Primary.ID)
 		if err != nil {
@@ -105,7 +105,7 @@ func testAccCheckHerokuPipelineCouplingAttributes(coupling *heroku.PipelineCoupl
 }
 
 func testAccCheckHerokuPipelineCouplingDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*Config).Api
+	client := testAccProviderConfig.Api
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "heroku_pipeline_coupling" {
