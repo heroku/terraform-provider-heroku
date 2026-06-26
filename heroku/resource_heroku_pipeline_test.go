@@ -87,8 +87,21 @@ func TestAccHerokuPipeline_NoOwner(t *testing.T) {
 					testAccCheckHerokuPipelineExists("heroku_pipeline.foobar", &pipeline),
 					resource.TestCheckResourceAttr(
 						"heroku_pipeline.foobar", "name", pipelineName),
+					// owner is an optional block; when omitted it is not stored in
+					// state (the framework does not allow Computed blocks).
 					resource.TestCheckResourceAttr(
-						"heroku_pipeline.foobar", "owner.0.id", ownerID),
+						"heroku_pipeline.foobar", "owner.#", "0"),
+					// Ownership still defaults to the authenticated user
+					// server-side, verified here via the API.
+					func(s *terraform.State) error {
+						if pipeline.Owner == nil {
+							return fmt.Errorf("expected pipeline to have an owner, got nil")
+						}
+						if pipeline.Owner.ID != ownerID {
+							return fmt.Errorf("expected pipeline owner id %q, got %q", ownerID, pipeline.Owner.ID)
+						}
+						return nil
+					},
 				),
 			},
 		},
@@ -131,10 +144,10 @@ func testAccCheckHerokuPipeline_basic(pipelineName, pipelineOwnerID, pipelineOwn
 	return fmt.Sprintf(`
 resource "heroku_pipeline" "foobar" {
   name = "%s"
-  owner = [{
-	id = "%s"
-	type = "%s"
-  }]
+  owner {
+    id   = "%s"
+    type = "%s"
+  }
 }
 `, pipelineName, pipelineOwnerID, pipelineOwnerType)
 }

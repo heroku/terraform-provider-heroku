@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	fwvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -113,8 +112,7 @@ func pipelineOwnerObjectType() types.ObjectType {
 type pipelineResourceModel struct {
 	ID   types.String `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
-	// owner is a Computed nested attribute, so it must be types.List to hold an
-	// unknown value at plan time.
+	// owner is a ListNestedBlock (MaxItems 1), so it is held as a types.List.
 	Owner types.List `tfsdk:"owner"`
 }
 
@@ -140,24 +138,17 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					),
 				},
 			},
-			// owner is Optional+Computed: when omitted, the provider defaults
-			// ownership to the authenticated user and populates it. A computed
-			// block is not possible in the framework (blocks cannot be Computed),
-			// so it is modeled as a ListNestedAttribute, which can plan as unknown
-			// and accept the post-apply value without a "block count changed" error.
-			"owner": schema.ListNestedAttribute{
-				Optional: true,
-				Computed: true,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
-				},
-				// Restore the SDKv2 MaxItems: 1 constraint. Create reads only
-				// owners[0]; without this a multi-owner config would be silently
-				// truncated instead of rejected at plan time.
-				Validators: []fwvalidator.List{
-					listvalidator.SizeAtMost(1),
-				},
-				NestedObject: schema.NestedAttributeObject{
+		},
+		Blocks: map[string]schema.Block{
+			// owner is modeled as a block to preserve the SDKv2 HCL syntax
+			// (owner { ... }). The framework does not allow Computed blocks, so
+			// the SDKv2 Optional+Computed behavior cannot be fully reproduced:
+			// when owner is omitted, ownership still defaults to the
+			// authenticated user server-side, but that default is not persisted
+			// to Terraform state (a non-Computed block populated by the provider
+			// would cause an "inconsistent result after apply" error).
+			"owner": schema.ListNestedBlock{
+				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
 							Required: true,
@@ -178,6 +169,12 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 							},
 						},
 					},
+				},
+				// Restore the SDKv2 MaxItems: 1 constraint. Create reads only
+				// owners[0]; without this a multi-owner config would be silently
+				// truncated instead of rejected at plan time.
+				Validators: []fwvalidator.List{
+					listvalidator.SizeAtMost(1),
 				},
 			},
 		},
@@ -219,7 +216,8 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 		Type string `json:"type" url:"type,key"`
 	}{}
 
-	if !plan.Owner.IsNull() && !plan.Owner.IsUnknown() && len(plan.Owner.Elements()) > 0 {
+	ownerConfigured := !plan.Owner.IsNull() && !plan.Owner.IsUnknown() && len(plan.Owner.Elements()) > 0
+	if ownerConfigured {
 		var owners []pipelineOwnerModel
 		resp.Diagnostics.Append(plan.Owner.ElementsAs(ctx, &owners, false)...)
 		if resp.Diagnostics.HasError() {
@@ -250,7 +248,7 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 	plan.ID = types.StringValue(p.ID)
 	log.Printf("[INFO] Pipeline ID: %s", p.ID)
 
-	resp.Diagnostics.Append(r.setModelFromPipeline(ctx, &plan, p)...)
+	resp.Diagnostics.Append(r.setModelFromPipeline(ctx, &plan, p, ownerConfigured)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -271,7 +269,10 @@ func (r *pipelineResource) Read(ctx context.Context, req resource.ReadRequest, r
 		return
 	}
 
-	resp.Diagnostics.Append(r.setModelFromPipeline(ctx, &state, p)...)
+	// Preserve whether owner was configured: a non-Computed block must not be
+	// populated by the provider when the config omits it.
+	ownerConfigured := !state.Owner.IsNull() && len(state.Owner.Elements()) > 0
+	resp.Diagnostics.Append(r.setModelFromPipeline(ctx, &state, p, ownerConfigured)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -312,7 +313,8 @@ func (r *pipelineResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	plan.ID = state.ID
-	resp.Diagnostics.Append(r.setModelFromPipeline(ctx, &plan, p)...)
+	ownerConfigured := !plan.Owner.IsNull() && !plan.Owner.IsUnknown() && len(plan.Owner.Elements()) > 0
+	resp.Diagnostics.Append(r.setModelFromPipeline(ctx, &plan, p, ownerConfigured)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -345,7 +347,9 @@ func (r *pipelineResource) ImportState(ctx context.Context, req resource.ImportS
 
 	state := pipelineResourceModel{}
 	state.ID = types.StringValue(p.ID)
-	resp.Diagnostics.Append(r.setModelFromPipeline(ctx, &state, p)...)
+	// On import there is no prior config; populate owner from the API so the
+	// imported state reflects the remote owner.
+	resp.Diagnostics.Append(r.setModelFromPipeline(ctx, &state, p, true)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -353,10 +357,16 @@ func (r *pipelineResource) ImportState(ctx context.Context, req resource.ImportS
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func (r *pipelineResource) setModelFromPipeline(ctx context.Context, m *pipelineResourceModel, p *heroku.Pipeline) diag.Diagnostics {
+// setModelFromPipeline populates the model from the API response. When
+// ownerConfigured is false (the owner block was omitted from config), owner is
+// set to an empty block list to match the planned value: a framework block
+// cannot be Computed, so the server-defaulted owner is intentionally not
+// persisted to state, which would otherwise cause an "inconsistent result
+// after apply" error or a perpetual diff.
+func (r *pipelineResource) setModelFromPipeline(ctx context.Context, m *pipelineResourceModel, p *heroku.Pipeline, ownerConfigured bool) diag.Diagnostics {
 	m.Name = types.StringValue(p.Name)
 
-	if p.Owner != nil {
+	if ownerConfigured && p.Owner != nil {
 		ownerList, diags := types.ListValueFrom(ctx, pipelineOwnerObjectType(), []pipelineOwnerModel{
 			{
 				ID:   types.StringValue(p.Owner.ID),
@@ -367,6 +377,7 @@ func (r *pipelineResource) setModelFromPipeline(ctx context.Context, m *pipeline
 		return diags
 	}
 
-	m.Owner = types.ListNull(pipelineOwnerObjectType())
-	return nil
+	emptyOwner, diags := types.ListValue(pipelineOwnerObjectType(), []attr.Value{})
+	m.Owner = emptyOwner
+	return diags
 }
