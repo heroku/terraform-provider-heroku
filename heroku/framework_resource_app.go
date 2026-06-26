@@ -10,6 +10,8 @@ import (
 
 	uuid "github.com/hashicorp/go-uuid"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
@@ -17,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	fwvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 )
@@ -287,6 +290,10 @@ func (r *appResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 							PlanModifiers: []planmodifier.String{
 								stringplanmodifier.RequiresReplace(),
 							},
+							// Restore SDKv2 validation.StringIsNotEmpty on name.
+							Validators: []fwvalidator.String{
+								stringvalidator.LengthAtLeast(1),
+							},
 						},
 						"locked": schema.BoolAttribute{
 							Optional: true,
@@ -303,6 +310,10 @@ func (r *appResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 				},
 				PlanModifiers: []planmodifier.List{
 					appListRequiresReplace{},
+				},
+				// Restore SDKv2 MaxItems: 1 on the organization block.
+				Validators: []fwvalidator.List{
+					listvalidator.SizeAtMost(1),
 				},
 			},
 		},

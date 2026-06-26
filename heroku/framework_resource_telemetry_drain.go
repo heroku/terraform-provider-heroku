@@ -93,6 +93,8 @@ func (r *telemetryDrainResource) Schema(_ context.Context, _ resource.SchemaRequ
 				ElementType: types.StringType,
 				Description: "OpenTelemetry signals to send (traces, metrics, logs)",
 				Validators: []validator.Set{
+					// Restore SDKv2 MinItems: 1 on signals.
+					setvalidator.SizeAtLeast(1),
 					setvalidator.ValueStringsAre(
 						stringvalidator.OneOf("traces", "metrics", "logs"),
 					),

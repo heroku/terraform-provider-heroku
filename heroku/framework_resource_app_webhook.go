@@ -75,6 +75,8 @@ func (r *appWebhookResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Required:    true,
 				ElementType: types.StringType,
 				Validators: []validator.List{
+					// Restore SDKv2 MinItems: 1 on include.
+					listvalidator.SizeAtLeast(1),
 					listvalidator.ValueStringsAre(
 						stringvalidator.OneOfCaseInsensitive(
 							"api:addon-attachment", "api:addon", "api:app", "api:build",

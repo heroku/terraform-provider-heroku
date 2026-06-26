@@ -192,6 +192,125 @@ resource "heroku_app_release" "t" {
 	}
 }
 
+// TestAccFrameworkParity_Cardinality verifies restored SDKv2 MinItems/MaxItems
+// (and StringIsNotEmpty) constraints: team_collaborator.permissions (1..4),
+// heroku_app.organization (MaxItems 1) + organization.name (non-empty),
+// app_webhook.include (MinItems 1), telemetry_drain.signals (MinItems 1), and
+// review_app_config.deploy_target (MaxItems 1). All cases fail at plan time.
+func TestAccFrameworkParity_Cardinality(t *testing.T) {
+	const u = "00000000-0000-0000-0000-000000000000"
+
+	cases := []struct {
+		name   string
+		config string
+		err    *regexp.Regexp
+	}{
+		{
+			name: "team_collaborator_permissions_empty",
+			config: fmt.Sprintf(`
+resource "heroku_team_collaborator" "t" {
+  app_id      = "%s"
+  email       = "collaborator@example.com"
+  permissions = []
+}`, u),
+			err: regexp.MustCompile(`must contain at least`),
+		},
+		{
+			name: "team_collaborator_permissions_too_many",
+			config: fmt.Sprintf(`
+resource "heroku_team_collaborator" "t" {
+  app_id      = "%s"
+  email       = "collaborator@example.com"
+  permissions = ["a", "b", "c", "d", "e"]
+}`, u),
+			err: regexp.MustCompile(`at most 4`),
+		},
+		{
+			name: `app_organization_too_many`,
+			config: `
+resource "heroku_app" "t" {
+  name   = "tftest-app"
+  region = "us"
+  organization {
+    name = "org-a"
+  }
+  organization {
+    name = "org-b"
+  }
+}`,
+			err: regexp.MustCompile(`must contain at most`),
+		},
+		{
+			name: `app_organization_empty_name`,
+			config: `
+resource "heroku_app" "t" {
+  name   = "tftest-app"
+  region = "us"
+  organization {
+    name = ""
+  }
+}`,
+			err: regexp.MustCompile(`length must be at least`),
+		},
+		{
+			name: "app_webhook_include_empty",
+			config: fmt.Sprintf(`
+resource "heroku_app_webhook" "t" {
+  app_id  = "%s"
+  level   = "notify"
+  url     = "https://example.com/hook"
+  include = []
+}`, u),
+			err: regexp.MustCompile(`must contain at least`),
+		},
+		{
+			name: "telemetry_drain_signals_empty",
+			config: fmt.Sprintf(`
+resource "heroku_telemetry_drain" "t" {
+  owner_id      = "%s"
+  owner_type    = "app"
+  exporter_type = "otlp"
+  endpoint      = "https://example.com"
+  signals       = []
+  headers       = {}
+}`, u),
+			err: regexp.MustCompile(`must contain at least`),
+		},
+		{
+			name: "review_app_config_deploy_target_too_many",
+			config: fmt.Sprintf(`
+resource "heroku_review_app_config" "t" {
+  pipeline_id = "%s"
+  org_repo    = "acme/app"
+  deploy_target {
+    id   = "us"
+    type = "region"
+  }
+  deploy_target {
+    id   = "%s"
+    type = "space"
+  }
+}`, u, u),
+			err: regexp.MustCompile(`must contain at most`),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resource.Test(t, resource.TestCase{
+				PreCheck:                 func() { testAccPreCheck(t) },
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config:      tc.config,
+						ExpectError: tc.err,
+					},
+				},
+			})
+		})
+	}
+}
+
 // TestAccFrameworkParity_PipelineAndSpace verifies restored SDKv2 constraints
 // on heroku_pipeline_config_var (pipeline_id IsUUID, pipeline_stage enum),
 // heroku_pipeline_promotion (IsUUID on pipeline/source_app_id/release_id and

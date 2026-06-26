@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -83,6 +84,10 @@ func (r *teamCollaboratorResource) Schema(_ context.Context, _ resource.SchemaRe
 			"permissions": schema.SetAttribute{
 				Required:    true,
 				ElementType: types.StringType,
+				// Restore SDKv2 MinItems: 1 / MaxItems: 4 on permissions.
+				Validators: []fwvalidator.Set{
+					setvalidator.SizeBetween(1, 4),
+				},
 			},
 		},
 	}
