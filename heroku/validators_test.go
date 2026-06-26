@@ -68,60 +68,89 @@ func TestValidateOCIImage(t *testing.T) {
 	}
 }
 
-func TestValidateArtifactForGeneration(t *testing.T) {
-	// Test Cedar generation
-	t.Run("Cedar generation", func(t *testing.T) {
+func TestValidateArtifactForApp(t *testing.T) {
+	// Classic Cedar apps (any non-"cnb" stack) release slugs.
+	t.Run("Cedar slug-based stack", func(t *testing.T) {
 		// Valid: Cedar + slug_id
-		err := validateArtifactForGeneration("cedar", true, false)
+		err := validateArtifactForApp("cedar", "heroku-24", true, false)
 		if err != nil {
 			t.Fatalf("Cedar + slug_id should be valid: %v", err)
 		}
 
 		// Invalid: Cedar + oci_image
-		err = validateArtifactForGeneration("cedar", false, true)
+		err = validateArtifactForApp("cedar", "heroku-24", false, true)
 		if err == nil {
 			t.Fatal("Cedar + oci_image should be invalid")
 		}
-		expectedMsg := "cedar generation apps must use slug_id, not oci_image"
+		expectedMsg := `slug-based apps (generation "cedar", stack "heroku-24") must use slug_id, not oci_image`
 		if err.Error() != expectedMsg {
 			t.Fatalf("Expected error message %q, got %q", expectedMsg, err.Error())
 		}
 
 		// Invalid: Cedar + no slug_id
-		err = validateArtifactForGeneration("cedar", false, false)
+		err = validateArtifactForApp("cedar", "heroku-24", false, false)
 		if err == nil {
 			t.Fatal("Cedar without slug_id should be invalid")
 		}
-		expectedMsg = "cedar generation apps require slug_id"
+		expectedMsg = `slug-based apps (generation "cedar", stack "heroku-24") require slug_id`
 		if err.Error() != expectedMsg {
 			t.Fatalf("Expected error message %q, got %q", expectedMsg, err.Error())
 		}
 	})
 
-	// Test Fir generation
+	// Cedar apps on the "cnb" stack release OCI images, just like Fir apps.
+	t.Run("Cedar cnb stack", func(t *testing.T) {
+		// Valid: Cedar + cnb + oci_image
+		err := validateArtifactForApp("cedar", "cnb", false, true)
+		if err != nil {
+			t.Fatalf("Cedar + cnb + oci_image should be valid: %v", err)
+		}
+
+		// Invalid: Cedar + cnb + slug_id
+		err = validateArtifactForApp("cedar", "cnb", true, false)
+		if err == nil {
+			t.Fatal("Cedar + cnb + slug_id should be invalid")
+		}
+		expectedMsg := `cloud native buildpack apps (generation "cedar", stack "cnb") must use oci_image, not slug_id`
+		if err.Error() != expectedMsg {
+			t.Fatalf("Expected error message %q, got %q", expectedMsg, err.Error())
+		}
+
+		// Invalid: Cedar + cnb + no oci_image
+		err = validateArtifactForApp("cedar", "cnb", false, false)
+		if err == nil {
+			t.Fatal("Cedar + cnb without oci_image should be invalid")
+		}
+		expectedMsg = `cloud native buildpack apps (generation "cedar", stack "cnb") require oci_image`
+		if err.Error() != expectedMsg {
+			t.Fatalf("Expected error message %q, got %q", expectedMsg, err.Error())
+		}
+	})
+
+	// Fir apps always release OCI images, regardless of stack.
 	t.Run("Fir generation", func(t *testing.T) {
 		// Valid: Fir + oci_image
-		err := validateArtifactForGeneration("fir", false, true)
+		err := validateArtifactForApp("fir", "fir", false, true)
 		if err != nil {
 			t.Fatalf("Fir + oci_image should be valid: %v", err)
 		}
 
 		// Invalid: Fir + slug_id
-		err = validateArtifactForGeneration("fir", true, false)
+		err = validateArtifactForApp("fir", "fir", true, false)
 		if err == nil {
 			t.Fatal("Fir + slug_id should be invalid")
 		}
-		expectedMsg := "fir generation apps must use oci_image, not slug_id"
+		expectedMsg := `cloud native buildpack apps (generation "fir", stack "fir") must use oci_image, not slug_id`
 		if err.Error() != expectedMsg {
 			t.Fatalf("Expected error message %q, got %q", expectedMsg, err.Error())
 		}
 
 		// Invalid: Fir + no oci_image
-		err = validateArtifactForGeneration("fir", false, false)
+		err = validateArtifactForApp("fir", "fir", false, false)
 		if err == nil {
 			t.Fatal("Fir without oci_image should be invalid")
 		}
-		expectedMsg = "fir generation apps require oci_image"
+		expectedMsg = `cloud native buildpack apps (generation "fir", stack "fir") require oci_image`
 		if err.Error() != expectedMsg {
 			t.Fatalf("Expected error message %q, got %q", expectedMsg, err.Error())
 		}
@@ -129,12 +158,12 @@ func TestValidateArtifactForGeneration(t *testing.T) {
 
 	// Test unknown generation (should pass through)
 	t.Run("Unknown generation", func(t *testing.T) {
-		err := validateArtifactForGeneration("unknown", true, false)
+		err := validateArtifactForApp("unknown", "heroku-24", true, false)
 		if err != nil {
 			t.Fatalf("Unknown generation should pass through: %v", err)
 		}
 
-		err = validateArtifactForGeneration("unknown", false, true)
+		err = validateArtifactForApp("unknown", "heroku-24", false, true)
 		if err != nil {
 			t.Fatalf("Unknown generation should pass through: %v", err)
 		}

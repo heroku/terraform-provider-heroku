@@ -44,24 +44,34 @@ func resourceHerokuAddonRetrieve(id string, client *heroku.Service) (*heroku.Add
 	return addon, nil
 }
 
-// validateArtifactForGeneration validates that the release artifact type matches
-// the app generation. Extracted from resource_heroku_app_release.go; still used
-// by validators_test.go.
-func validateArtifactForGeneration(generationName string, hasSlug bool, hasOci bool) error {
-	switch generationName {
-	case "cedar":
+// validateArtifactForApp validates that the release artifact type matches the
+// app's build system rather than its generation alone. Cloud Native Buildpack
+// apps release OCI images; slug-based apps release slugs. Whether an app uses
+// CNB depends on both generation and stack (see IsCNBApp): Fir apps always use
+// CNB, and Cedar apps use CNB when stack is "cnb". Keying off the stack (not
+// just the generation) is what allows Cedar apps on the "cnb" stack — which
+// release OCI images — to be validated correctly.
+//
+// Extracted from resource_heroku_app_release.go; still used by validators_test.go.
+func validateArtifactForApp(generation string, stack string, hasSlug bool, hasOci bool) error {
+	switch generation {
+	case "cedar", "fir":
+		if IsCNBApp(generation, stack) {
+			// Fir apps, and Cedar apps on the "cnb" stack, release OCI images.
+			if hasSlug {
+				return fmt.Errorf("cloud native buildpack apps (generation %q, stack %q) must use oci_image, not slug_id", generation, stack)
+			}
+			if !hasOci {
+				return fmt.Errorf("cloud native buildpack apps (generation %q, stack %q) require oci_image", generation, stack)
+			}
+			return nil
+		}
+		// Classic Cedar apps (any non-"cnb" stack) release slugs.
 		if hasOci {
-			return fmt.Errorf("cedar generation apps must use slug_id, not oci_image")
+			return fmt.Errorf("slug-based apps (generation %q, stack %q) must use slug_id, not oci_image", generation, stack)
 		}
 		if !hasSlug {
-			return fmt.Errorf("cedar generation apps require slug_id")
-		}
-	case "fir":
-		if hasSlug {
-			return fmt.Errorf("fir generation apps must use oci_image, not slug_id")
-		}
-		if !hasOci {
-			return fmt.Errorf("fir generation apps require oci_image")
+			return fmt.Errorf("slug-based apps (generation %q, stack %q) require slug_id", generation, stack)
 		}
 	default:
 		// Unknown generation - let the API handle it
