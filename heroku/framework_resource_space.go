@@ -7,12 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	fwvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 )
@@ -180,6 +182,10 @@ func (r *spaceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				Description: "Generation of the space. Defaults to cedar for backward compatibility.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+				},
+				// Restore SDKv2 StringInSlice([]string{"cedar", "fir"}).
+				Validators: []fwvalidator.String{
+					stringvalidator.OneOf("cedar", "fir"),
 				},
 			},
 		},

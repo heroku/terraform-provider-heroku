@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	fwvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -57,11 +59,19 @@ func (r *pipelineConfigVarResource) Schema(_ context.Context, _ resource.SchemaR
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				// Restore SDKv2 validation.IsUUID on pipeline_id.
+				Validators: []fwvalidator.String{
+					uuidValidator(),
+				},
 			},
 			"pipeline_stage": schema.StringAttribute{
 				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+				},
+				// Restore SDKv2 StringInSlice([]string{"test", "review"}).
+				Validators: []fwvalidator.String{
+					stringvalidator.OneOf("test", "review"),
 				},
 			},
 			"vars": schema.MapAttribute{

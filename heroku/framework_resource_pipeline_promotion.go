@@ -9,11 +9,13 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	fwvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 )
@@ -70,12 +72,20 @@ func (r *pipelinePromotionResource) Schema(_ context.Context, _ resource.SchemaR
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				// Restore SDKv2 validation.IsUUID on pipeline.
+				Validators: []fwvalidator.String{
+					uuidValidator(),
+				},
 			},
 			"source_app_id": schema.StringAttribute{
 				Required:    true,
 				Description: "Source app ID to promote from",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+				},
+				// Restore SDKv2 validation.IsUUID on source_app_id.
+				Validators: []fwvalidator.String{
+					uuidValidator(),
 				},
 			},
 			"release_id": schema.StringAttribute{
@@ -84,6 +94,10 @@ func (r *pipelinePromotionResource) Schema(_ context.Context, _ resource.SchemaR
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				// Restore SDKv2 validation.IsUUID on release_id.
+				Validators: []fwvalidator.String{
+					uuidValidator(),
+				},
 			},
 			"targets": schema.SetAttribute{
 				Required:    true,
@@ -91,6 +105,10 @@ func (r *pipelinePromotionResource) Schema(_ context.Context, _ resource.SchemaR
 				ElementType: types.StringType,
 				PlanModifiers: []planmodifier.Set{
 					setplanmodifier.RequiresReplace(),
+				},
+				// Restore SDKv2 per-element validation.IsUUID on targets.
+				Validators: []fwvalidator.Set{
+					setvalidator.ValueStringsAre(uuidValidator()),
 				},
 			},
 			"status": schema.StringAttribute{

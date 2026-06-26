@@ -191,3 +191,84 @@ resource "heroku_app_release" "t" {
 		})
 	}
 }
+
+// TestAccFrameworkParity_PipelineAndSpace verifies restored SDKv2 constraints
+// on heroku_pipeline_config_var (pipeline_id IsUUID, pipeline_stage enum),
+// heroku_pipeline_promotion (IsUUID on pipeline/source_app_id/release_id and
+// each targets element), and heroku_space (generation enum). All cases fail at
+// plan time.
+func TestAccFrameworkParity_PipelineAndSpace(t *testing.T) {
+	const u = "00000000-0000-0000-0000-000000000000"
+
+	cases := []struct {
+		name   string
+		config string
+		err    *regexp.Regexp
+	}{
+		{
+			name: "pipeline_config_var_invalid_pipeline_id",
+			config: `
+resource "heroku_pipeline_config_var" "t" {
+  pipeline_id    = "not-a-uuid"
+  pipeline_stage = "test"
+}`,
+			err: regexp.MustCompile(`to be a valid UUID`),
+		},
+		{
+			name: "pipeline_config_var_invalid_stage",
+			config: fmt.Sprintf(`
+resource "heroku_pipeline_config_var" "t" {
+  pipeline_id    = "%s"
+  pipeline_stage = "bogus"
+}`, u),
+			err: regexp.MustCompile(`value must be one of`),
+		},
+		{
+			name: "pipeline_promotion_invalid_pipeline",
+			config: fmt.Sprintf(`
+resource "heroku_pipeline_promotion" "t" {
+  pipeline      = "not-a-uuid"
+  source_app_id = "%s"
+  release_id    = "%s"
+  targets       = ["%s"]
+}`, u, u, u),
+			err: regexp.MustCompile(`to be a valid UUID`),
+		},
+		{
+			name: "pipeline_promotion_invalid_target",
+			config: fmt.Sprintf(`
+resource "heroku_pipeline_promotion" "t" {
+  pipeline      = "%s"
+  source_app_id = "%s"
+  release_id    = "%s"
+  targets       = ["not-a-uuid"]
+}`, u, u, u),
+			err: regexp.MustCompile(`to be a valid UUID`),
+		},
+		{
+			name: "space_invalid_generation",
+			config: `
+resource "heroku_space" "t" {
+  name         = "tftest-space"
+  organization = "tftest"
+  generation   = "bogus"
+}`,
+			err: regexp.MustCompile(`value must be one of`),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resource.Test(t, resource.TestCase{
+				PreCheck:                 func() { testAccPreCheck(t) },
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config:      tc.config,
+						ExpectError: tc.err,
+					},
+				},
+			})
+		})
+	}
+}
