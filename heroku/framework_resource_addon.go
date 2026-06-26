@@ -134,6 +134,10 @@ func (r *addonResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				// Restore SDKv2 validation.IsUUID on app_id (lost in migration).
+				Validators: []fwvalidator.String{
+					uuidValidator(),
+				},
 			},
 			"plan": schema.StringAttribute{
 				Required: true,

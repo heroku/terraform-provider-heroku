@@ -121,6 +121,10 @@ func (r *buildResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				// Restore SDKv2 validation.IsUUID on app_id (lost in migration).
+				Validators: []fwvalidator.String{
+					uuidValidator(),
+				},
 			},
 			"buildpacks": schema.ListAttribute{
 				ElementType: types.StringType,

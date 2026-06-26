@@ -202,6 +202,10 @@ func (r *slugResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				// Restore SDKv2 validation.IsUUID on app_id (lost in migration).
+				Validators: []fwvalidator.String{
+					uuidValidator(),
+				},
 			},
 			"file_path": schema.StringAttribute{
 				Optional: true,

@@ -3,6 +3,7 @@ package heroku
 import (
 	"context"
 	"fmt"
+	fwvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -67,6 +68,10 @@ func (r *appFeatureResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+				},
+				// Restore SDKv2 validation.IsUUID on app_id (lost in migration).
+				Validators: []fwvalidator.String{
+					uuidValidator(),
 				},
 			},
 			"name": schema.StringAttribute{
