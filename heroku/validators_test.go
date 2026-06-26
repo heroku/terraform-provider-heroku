@@ -127,30 +127,31 @@ func TestValidateArtifactForApp(t *testing.T) {
 		}
 	})
 
-	// Fir apps always release OCI images, regardless of stack.
+	// Fir is a generation that always implicitly uses the "cnb" stack, so Fir
+	// apps always release OCI images.
 	t.Run("Fir generation", func(t *testing.T) {
 		// Valid: Fir + oci_image
-		err := validateArtifactForApp("fir", "fir", false, true)
+		err := validateArtifactForApp("fir", "cnb", false, true)
 		if err != nil {
 			t.Fatalf("Fir + oci_image should be valid: %v", err)
 		}
 
 		// Invalid: Fir + slug_id
-		err = validateArtifactForApp("fir", "fir", true, false)
+		err = validateArtifactForApp("fir", "cnb", true, false)
 		if err == nil {
 			t.Fatal("Fir + slug_id should be invalid")
 		}
-		expectedMsg := `cloud native buildpack apps (generation "fir", stack "fir") must use oci_image, not slug_id`
+		expectedMsg := `cloud native buildpack apps (generation "fir", stack "cnb") must use oci_image, not slug_id`
 		if err.Error() != expectedMsg {
 			t.Fatalf("Expected error message %q, got %q", expectedMsg, err.Error())
 		}
 
 		// Invalid: Fir + no oci_image
-		err = validateArtifactForApp("fir", "fir", false, false)
+		err = validateArtifactForApp("fir", "cnb", false, false)
 		if err == nil {
 			t.Fatal("Fir without oci_image should be invalid")
 		}
-		expectedMsg = `cloud native buildpack apps (generation "fir", stack "fir") require oci_image`
+		expectedMsg = `cloud native buildpack apps (generation "fir", stack "cnb") require oci_image`
 		if err.Error() != expectedMsg {
 			t.Fatalf("Expected error message %q, got %q", expectedMsg, err.Error())
 		}
