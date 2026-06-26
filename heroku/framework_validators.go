@@ -39,3 +39,31 @@ func (v uuidStringValidator) ValidateString(_ context.Context, req fwvalidator.S
 		)
 	}
 }
+
+// ociImageStringValidator validates that a string is either a valid UUID or a
+// SHA256 digest, mirroring the SDKv2 validateOCIImage ValidateFunc on
+// heroku_app_release.oci_image. It delegates to the shared validateOCIImage so
+// the accepted formats stay in sync with the (still-used) SDKv2 helper.
+type ociImageStringValidator struct{}
+
+// ociImageValidator returns the shared OCI image identifier validator.
+func ociImageValidator() fwvalidator.String { return ociImageStringValidator{} }
+
+func (v ociImageStringValidator) Description(_ context.Context) string {
+	return "value must be a UUID or SHA256 digest"
+}
+
+func (v ociImageStringValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v ociImageStringValidator) ValidateString(_ context.Context, req fwvalidator.StringRequest, resp *fwvalidator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+	if _, errs := validateOCIImage(req.ConfigValue.ValueString(), req.Path.String()); len(errs) > 0 {
+		for _, err := range errs {
+			resp.Diagnostics.AddAttributeError(req.Path, "Invalid OCI image identifier", err.Error())
+		}
+	}
+}

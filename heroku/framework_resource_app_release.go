@@ -6,11 +6,13 @@ import (
 	"log"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	fwvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 )
@@ -69,17 +71,31 @@ func (r *appReleaseResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				// Restore SDKv2 validation.IsUUID on app_id.
+				Validators: []fwvalidator.String{
+					uuidValidator(),
+				},
 			},
 			"slug_id": schema.StringAttribute{
 				Optional: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				// Restore SDKv2 ConflictsWith + AtLeastOneOf between slug_id and
+				// oci_image (together: exactly one must be set). Declared on
+				// slug_id only; the validator evaluates the whole set.
+				Validators: []fwvalidator.String{
+					stringvalidator.ExactlyOneOf(path.MatchRoot("slug_id"), path.MatchRoot("oci_image")),
+				},
 			},
 			"oci_image": schema.StringAttribute{
 				Optional: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+				},
+				// Restore SDKv2 validateOCIImage (UUID or SHA256 digest).
+				Validators: []fwvalidator.String{
+					ociImageValidator(),
 				},
 			},
 			"description": schema.StringAttribute{

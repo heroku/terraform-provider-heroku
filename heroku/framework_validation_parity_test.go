@@ -1,6 +1,7 @@
 package heroku
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
@@ -118,6 +119,72 @@ resource "heroku_team_collaborator" "t" {
 					{
 						Config:      tc.config,
 						ExpectError: uuidErr,
+					},
+				},
+			})
+		})
+	}
+}
+
+// TestAccFrameworkParity_AppRelease verifies the restored SDKv2 constraints on
+// heroku_app_release: app_id IsUUID, the slug_id/oci_image exactly-one rule
+// (SDKv2 ConflictsWith + AtLeastOneOf), and validateOCIImage on oci_image. All
+// cases fail at plan time, so no API calls are made.
+func TestAccFrameworkParity_AppRelease(t *testing.T) {
+	const validUUID = "00000000-0000-0000-0000-000000000000"
+
+	cases := []struct {
+		name   string
+		config string
+		err    *regexp.Regexp
+	}{
+		{
+			name: "invalid_app_id",
+			config: fmt.Sprintf(`
+resource "heroku_app_release" "t" {
+  app_id  = "not-a-uuid"
+  slug_id = "%s"
+}`, validUUID),
+			err: regexp.MustCompile(`to be a valid UUID`),
+		},
+		{
+			name: "both_sources",
+			config: fmt.Sprintf(`
+resource "heroku_app_release" "t" {
+  app_id    = "%s"
+  slug_id   = "%s"
+  oci_image = "%s"
+}`, validUUID, validUUID, validUUID),
+			err: regexp.MustCompile(`one \(and only one\) of`),
+		},
+		{
+			name: "no_source",
+			config: fmt.Sprintf(`
+resource "heroku_app_release" "t" {
+  app_id = "%s"
+}`, validUUID),
+			err: regexp.MustCompile(`one \(and only one\) of`),
+		},
+		{
+			name: "invalid_oci_image",
+			config: fmt.Sprintf(`
+resource "heroku_app_release" "t" {
+  app_id    = "%s"
+  oci_image = "not-a-valid-image"
+}`, validUUID),
+			err: regexp.MustCompile(`invalid OCI image identifier`),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resource.Test(t, resource.TestCase{
+				PreCheck:                 func() { testAccPreCheck(t) },
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config:      tc.config,
+						ExpectError: tc.err,
 					},
 				},
 			})
