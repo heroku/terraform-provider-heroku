@@ -3,6 +3,7 @@ package heroku
 import (
 	"context"
 	"fmt"
+	"net"
 
 	uuid "github.com/hashicorp/go-uuid"
 	fwvalidator "github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -65,5 +66,64 @@ func (v ociImageStringValidator) ValidateString(_ context.Context, req fwvalidat
 		for _, err := range errs {
 			resp.Diagnostics.AddAttributeError(req.Path, "Invalid OCI image identifier", err.Error())
 		}
+	}
+}
+
+// cidrNetworkStringValidator validates that a string is a valid CIDR network
+// whose significant bits fall within [min, max], mirroring the SDKv2
+// validation.IsCIDRNetwork ValidateFunc used on
+// heroku_space_inbound_ruleset.rule.source (IsCIDRNetwork(0, 32)). The
+// framework validators library does not ship a CIDR validator.
+type cidrNetworkStringValidator struct {
+	min int
+	max int
+}
+
+// cidrNetworkValidator returns a validator enforcing a CIDR network with
+// between min and max significant bits.
+func cidrNetworkValidator(min, max int) fwvalidator.String {
+	return cidrNetworkStringValidator{min: min, max: max}
+}
+
+func (v cidrNetworkStringValidator) Description(_ context.Context) string {
+	return fmt.Sprintf("value must be a valid CIDR network with between %d and %d significant bits", v.min, v.max)
+}
+
+func (v cidrNetworkStringValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v cidrNetworkStringValidator) ValidateString(_ context.Context, req fwvalidator.StringRequest, resp *fwvalidator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+	val := req.ConfigValue.ValueString()
+
+	_, ipnet, err := net.ParseCIDR(val)
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid CIDR network",
+			fmt.Sprintf("expected %q to be a valid CIDR network, got %s: %v", req.Path, val, err),
+		)
+		return
+	}
+
+	if ipnet == nil || val != ipnet.String() {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid CIDR network",
+			fmt.Sprintf("expected %q to contain a valid network value, expected %v, got %s", req.Path, ipnet, val),
+		)
+		return
+	}
+
+	sigbits, _ := ipnet.Mask.Size()
+	if sigbits < v.min || sigbits > v.max {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid CIDR network",
+			fmt.Sprintf("expected %q to contain a network value with between %d and %d significant bits, got: %d", req.Path, v.min, v.max, sigbits),
+		)
 	}
 }

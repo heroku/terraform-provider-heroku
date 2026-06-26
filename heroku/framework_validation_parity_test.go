@@ -311,6 +311,66 @@ resource "heroku_review_app_config" "t" {
 	}
 }
 
+// TestAccFrameworkParity_SpaceInboundRuleset verifies restored SDKv2
+// constraints on heroku_space_inbound_ruleset: the rule block MinItems 1
+// (SizeAtLeast) and validation.IsCIDRNetwork(0, 32) on rule.source. Both cases
+// fail at plan time.
+func TestAccFrameworkParity_SpaceInboundRuleset(t *testing.T) {
+	cases := []struct {
+		name   string
+		config string
+		err    *regexp.Regexp
+	}{
+		{
+			name: "no_rules",
+			config: `
+resource "heroku_space_inbound_ruleset" "t" {
+  space = "tftest-space"
+}`,
+			err: regexp.MustCompile(`must contain at least`),
+		},
+		{
+			name: "invalid_cidr",
+			config: `
+resource "heroku_space_inbound_ruleset" "t" {
+  space = "tftest-space"
+  rule {
+    action = "allow"
+    source = "not-a-cidr"
+  }
+}`,
+			err: regexp.MustCompile(`valid CIDR network`),
+		},
+		{
+			name: "non_network_cidr",
+			config: `
+resource "heroku_space_inbound_ruleset" "t" {
+  space = "tftest-space"
+  rule {
+    action = "allow"
+    source = "10.0.0.1/8"
+  }
+}`,
+			err: regexp.MustCompile(`valid network value`),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resource.Test(t, resource.TestCase{
+				PreCheck:                 func() { testAccPreCheck(t) },
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config:      tc.config,
+						ExpectError: tc.err,
+					},
+				},
+			})
+		})
+	}
+}
+
 // TestAccFrameworkParity_PipelineAndSpace verifies restored SDKv2 constraints
 // on heroku_pipeline_config_var (pipeline_id IsUUID, pipeline_stage enum),
 // heroku_pipeline_promotion (IsUUID on pipeline/source_app_id/release_id and

@@ -4,17 +4,21 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	heroku "github.com/heroku/heroku-go/v6"
 )
 
 var (
-	_ resource.Resource              = (*spaceInboundRulesetResource)(nil)
-	_ resource.ResourceWithConfigure = (*spaceInboundRulesetResource)(nil)
+	_ resource.Resource                   = (*spaceInboundRulesetResource)(nil)
+	_ resource.ResourceWithConfigure      = (*spaceInboundRulesetResource)(nil)
+	_ resource.ResourceWithValidateConfig = (*spaceInboundRulesetResource)(nil)
 )
 
 // NewSpaceInboundRulesetResource returns the framework implementation of the
@@ -67,11 +71,40 @@ func (r *spaceInboundRulesetResource) Schema(_ context.Context, _ resource.Schem
 						},
 						"source": schema.StringAttribute{
 							Required: true,
+							// Restore SDKv2 validation.IsCIDRNetwork(0, 32) on source.
+							Validators: []validator.String{
+								cidrNetworkValidator(0, 32),
+							},
 						},
 					},
 				},
+				// Restore SDKv2 MinItems: 1 on the rule block.
+				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(1),
+				},
 			},
 		},
+	}
+}
+
+// ValidateConfig enforces the SDKv2 MinItems: 1 constraint on the rule block.
+// An attribute/block validator (setvalidator.SizeAtLeast) cannot catch the
+// zero-blocks case because an unconfigured block collection is null, and
+// framework validators skip null values. This config-level check rejects a
+// ruleset with no rule blocks at plan time, mirroring SDKv2.
+func (r *spaceInboundRulesetResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data spaceInboundRulesetResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if len(data.Rule) < 1 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("rule"),
+			"Missing rule block",
+			"the rule set must contain at least 1 rule block",
+		)
 	}
 }
 
