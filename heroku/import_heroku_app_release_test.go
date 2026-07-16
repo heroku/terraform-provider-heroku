@@ -11,6 +11,7 @@ import (
 
 func TestAccHerokuAppRelease_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetAnyOrganizationOrSkip(t)
 	slugID := testAccConfig.GetSlugIDOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
@@ -20,7 +21,7 @@ func TestAccHerokuAppRelease_importBasic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppRelease_Basic(appName, slugID),
+				Config: testAccCheckHerokuAppRelease_Basic(appName, org, slugID),
 			},
 			{
 				ResourceName:      "heroku_app_release.foobar-release",

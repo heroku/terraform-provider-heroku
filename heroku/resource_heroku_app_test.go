@@ -20,6 +20,7 @@ import (
 func TestAccHerokuApp_Basic(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -27,7 +28,7 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_basic(appName),
+				Config: testAccCheckHerokuAppConfig_basic(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					testAccCheckHerokuAppAttributes(&app, appName),
@@ -59,13 +60,14 @@ func TestAccHerokuApp_Basic(t *testing.T) {
 
 func TestAccHerokuApp_DontSetAllConfigVars(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_DontSetConfigVars(appName),
+				Config: testAccCheckHerokuAppConfig_DontSetConfigVars(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"heroku_app.foobar", "name", appName),
@@ -86,6 +88,7 @@ func TestAccHerokuApp_DontSetAllConfigVars(t *testing.T) {
 func TestAccHerokuApp_Disappears(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -93,7 +96,7 @@ func TestAccHerokuApp_Disappears(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_basic(appName),
+				Config: testAccCheckHerokuAppConfig_basic(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					testAccCheckHerokuAppDisappears(appName),
@@ -108,6 +111,7 @@ func TestAccHerokuApp_Change(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	appName2 := fmt.Sprintf("%s-v2", appName)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -115,7 +119,7 @@ func TestAccHerokuApp_Change(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_basic(appName),
+				Config: testAccCheckHerokuAppConfig_basic(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					testAccCheckHerokuAppAttributes(&app, appName),
@@ -126,7 +130,7 @@ func TestAccHerokuApp_Change(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckHerokuAppConfig_updated(appName2),
+				Config: testAccCheckHerokuAppConfig_updated(appName2, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					testAccCheckHerokuAppAttributesUpdated(&app, appName2),
@@ -145,6 +149,7 @@ func TestAccHerokuApp_Change(t *testing.T) {
 func TestAccHerokuApp_NukeVars(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -152,7 +157,7 @@ func TestAccHerokuApp_NukeVars(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_basic(appName),
+				Config: testAccCheckHerokuAppConfig_basic(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					testAccCheckHerokuAppAttributes(&app, appName),
@@ -163,7 +168,7 @@ func TestAccHerokuApp_NukeVars(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckHerokuAppConfig_no_vars(appName),
+				Config: testAccCheckHerokuAppConfig_no_vars(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					testAccCheckHerokuAppAttributesNoVars(&app, appName),
@@ -180,6 +185,7 @@ func TestAccHerokuApp_NukeVars(t *testing.T) {
 func TestAccHerokuApp_Buildpacks(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -187,7 +193,7 @@ func TestAccHerokuApp_Buildpacks(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_go(appName),
+				Config: testAccCheckHerokuAppConfig_go(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					testAccCheckHerokuAppBuildpacks(appName, false),
@@ -195,7 +201,7 @@ func TestAccHerokuApp_Buildpacks(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckHerokuAppConfig_multi(appName),
+				Config: testAccCheckHerokuAppConfig_multi(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					testAccCheckHerokuAppBuildpacks(appName, true),
@@ -205,7 +211,7 @@ func TestAccHerokuApp_Buildpacks(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckHerokuAppConfig_no_vars(appName),
+				Config: testAccCheckHerokuAppConfig_no_vars(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					testAccCheckHerokuAppNoBuildpacks(appName),
@@ -219,6 +225,7 @@ func TestAccHerokuApp_Buildpacks(t *testing.T) {
 func TestAccHerokuApp_ExternallySetBuildpacks(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -226,7 +233,7 @@ func TestAccHerokuApp_ExternallySetBuildpacks(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_no_vars(appName),
+				Config: testAccCheckHerokuAppConfig_no_vars(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					testAccCheckHerokuAppNoBuildpacks(appName),
@@ -235,7 +242,7 @@ func TestAccHerokuApp_ExternallySetBuildpacks(t *testing.T) {
 			},
 			{
 				PreConfig: testAccInstallUnconfiguredBuildpack(t, appName),
-				Config:    testAccCheckHerokuAppConfig_no_vars(appName),
+				Config:    testAccCheckHerokuAppConfig_no_vars(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					resource.TestCheckNoResourceAttr("heroku_app.foobar", "buildpacks.0"),
@@ -341,6 +348,7 @@ func testStep_AccHerokuApp_Space_Internal(t *testing.T, spaceConfig, spaceName s
 func TestAccHerokuApp_EmptyConfigVars(t *testing.T) {
 	var app heroku.App
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -348,7 +356,7 @@ func TestAccHerokuApp_EmptyConfigVars(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_EmptyConfigVars(appName),
+				Config: testAccCheckHerokuAppConfig_EmptyConfigVars(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppExists("heroku_app.foobar", &app),
 					testAccCheckHerokuAppAttributesNoVars(&app, appName),
@@ -758,64 +766,84 @@ func testAccCheckHerokuAppDisappears(appName string) resource.TestCheckFunc {
 	}
 }
 
-func testAccCheckHerokuAppConfig_basic(appName string) string {
+func testAccCheckHerokuAppConfig_basic(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
+
+  organization {
+    name = "%s"
+  }
 
   config_vars = {
     FOO = "bar"
   }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuAppConfig_go(appName string) string {
+func testAccCheckHerokuAppConfig_go(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
+
+  organization {
+    name = "%s"
+  }
 
   buildpacks = ["heroku/go"]
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuAppConfig_multi(appName string) string {
+func testAccCheckHerokuAppConfig_multi(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
+
+  organization {
+    name = "%s"
+  }
 
   buildpacks = [
     "https://github.com/heroku/heroku-buildpack-multi-procfile",
     "heroku/go"
   ]
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuAppConfig_updated(appName string) string {
+func testAccCheckHerokuAppConfig_updated(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
+
+  organization {
+    name = "%s"
+  }
 
   config_vars = {
     FOO = "bing"
     BAZ = "bar"
   }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuAppConfig_no_vars(appName string) string {
+func testAccCheckHerokuAppConfig_no_vars(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
 
+  organization {
+    name = "%s"
+  }
+
   buildpacks = []
 
   config_vars = {}
-}`, appName)
+}`, appName, org)
 }
 
 func testAccCheckHerokuAppConfig_organization(appName, org string) string {
@@ -875,12 +903,16 @@ resource "heroku_app" "foobar" {
 }`, spaceConfig, appName, org)
 }
 
-func testAccCheckHerokuAppConfig_EmptyConfigVars(appName string) string {
+func testAccCheckHerokuAppConfig_EmptyConfigVars(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
-}`, appName)
+
+  organization {
+    name = "%s"
+  }
+}`, appName, org)
 }
 
 func testAccCheckHerokuAppConfig_acm_enabled(appName, org string) string {
@@ -1032,7 +1064,7 @@ resource "heroku_app" "foobar" {
 }`, appName, org, locked)
 }
 
-func testAccCheckHerokuAppConfig_DontSetConfigVars(appName string) string {
+func testAccCheckHerokuAppConfig_DontSetConfigVars(appName, org string) string {
 	return fmt.Sprintf(`
 provider "heroku" {
   customizations {
@@ -1044,10 +1076,14 @@ resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
 
+  organization {
+    name = "%s"
+  }
+
   config_vars = {
     FOO = "bar"
   }
-}`, appName)
+}`, appName, org)
 }
 
 // Unit tests for app generation support

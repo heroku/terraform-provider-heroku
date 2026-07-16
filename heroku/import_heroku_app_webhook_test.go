@@ -10,6 +10,7 @@ import (
 
 func TestAccHerokuAppWebhook_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -18,7 +19,7 @@ func TestAccHerokuAppWebhook_importBasic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppWebhookConfig(appName, "https://terraform.example.com:4321", "sync", "api:build"),
+				Config: testAccCheckHerokuAppWebhookConfig(appName, org, "https://terraform.example.com:4321", "sync", "api:build"),
 			},
 			{
 				ResourceName:        "heroku_app_webhook.foobar_webhook",

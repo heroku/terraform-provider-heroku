@@ -11,6 +11,7 @@ import (
 func TestAccDatasourceHerokuPipeline_Basic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	pipelineName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -19,7 +20,7 @@ func TestAccDatasourceHerokuPipeline_Basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuPipelineWithDatasourceBasic(appName, pipelineName),
+				Config: testAccCheckHerokuPipelineWithDatasourceBasic(appName, pipelineName, org),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"data.heroku_pipeline.foobar", "name", pipelineName),
@@ -35,11 +36,14 @@ func TestAccDatasourceHerokuPipeline_Basic(t *testing.T) {
 	})
 }
 
-func testAccCheckHerokuPipelineWithDatasourceBasic(appName, pipelineName string) string {
+func testAccCheckHerokuPipelineWithDatasourceBasic(appName, pipelineName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "staging" {
   name = "%s"
   region = "us"
+  organization {
+    name = "%s"
+  }
 }
 
 resource "heroku_pipeline" "foobar" {
@@ -55,5 +59,5 @@ resource "heroku_pipeline_coupling" "staging" {
 data "heroku_pipeline" "foobar" {
   name = heroku_pipeline_coupling.staging.pipeline
 }
-`, appName, pipelineName)
+`, appName, org, pipelineName)
 }

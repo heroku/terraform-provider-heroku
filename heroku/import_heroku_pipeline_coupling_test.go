@@ -15,6 +15,7 @@ func TestAccHerokuPipelineCoupling_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	pipelineName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	stageName := "development"
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -22,7 +23,7 @@ func TestAccHerokuPipelineCoupling_importBasic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuPipelineCouplingDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuPipelineCouplingConfig_basic(appName, pipelineName, stageName),
+				Config: testAccCheckHerokuPipelineCouplingConfig_basic(appName, pipelineName, stageName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuPipelineCouplingExists("heroku_pipeline_coupling.default", &coupling),
 					testAccCheckHerokuPipelineCouplingAttributes(

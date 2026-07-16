@@ -17,6 +17,7 @@ func TestAccHerokuPipelineCoupling_Basic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	pipelineName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	stageName := "development"
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -24,7 +25,7 @@ func TestAccHerokuPipelineCoupling_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuPipelineCouplingDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuPipelineCouplingConfig_basic(appName, pipelineName, stageName),
+				Config: testAccCheckHerokuPipelineCouplingConfig_basic(appName, pipelineName, stageName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuPipelineCouplingExists("heroku_pipeline_coupling.default", &coupling),
 					testAccCheckHerokuPipelineCouplingAttributes(
@@ -38,11 +39,14 @@ func TestAccHerokuPipelineCoupling_Basic(t *testing.T) {
 	})
 }
 
-func testAccCheckHerokuPipelineCouplingConfig_basic(appName, pipelineName, stageName string) string {
+func testAccCheckHerokuPipelineCouplingConfig_basic(appName, pipelineName, stageName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "default" {
   name   = "%s"
   region = "us"
+  organization {
+    name = "%s"
+  }
 }
 
 resource "heroku_pipeline" "default" {
@@ -54,7 +58,7 @@ resource "heroku_pipeline_coupling" "default" {
   pipeline = heroku_pipeline.default.id
   stage    = "%s"
 }
-`, appName, pipelineName, stageName)
+`, appName, org, pipelineName, stageName)
 }
 
 func testAccCheckHerokuPipelineCouplingExists(n string, pipeline *heroku.PipelineCoupling) resource.TestCheckFunc {

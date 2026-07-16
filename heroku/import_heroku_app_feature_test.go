@@ -9,13 +9,14 @@ import (
 
 func TestAccHerokuAppFeature_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuFeature_basic(appName),
+				Config: testAccCheckHerokuFeature_basic(appName, org),
 			},
 			{
 				ResourceName:      "heroku_app_feature.runtime_metrics",

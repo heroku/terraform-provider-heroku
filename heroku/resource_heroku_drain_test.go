@@ -14,6 +14,7 @@ import (
 func TestAccHerokuDrain_Basic(t *testing.T) {
 	var drain heroku.LogDrain
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -21,7 +22,7 @@ func TestAccHerokuDrain_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuDrainDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuDrainConfig_basic(appName),
+				Config: testAccCheckHerokuDrainConfig_basic(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDrainExists("heroku_drain.foobar", &drain),
 					testAccCheckHerokuDrainAttributes(&drain),
@@ -38,6 +39,7 @@ func TestAccHerokuDrain_Basic(t *testing.T) {
 func TestAccHerokuDrain_BasicWithSensitiveURL(t *testing.T) {
 	var drain heroku.LogDrain
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -45,7 +47,7 @@ func TestAccHerokuDrain_BasicWithSensitiveURL(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuDrainDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuDrainConfig_basicWithSensitiveURL(appName),
+				Config: testAccCheckHerokuDrainConfig_basicWithSensitiveURL(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDrainExists("heroku_drain.foobar", &drain),
 					testAccCheckHerokuDrainAttributes(&drain),
@@ -122,28 +124,34 @@ func testAccCheckHerokuDrainExists(n string, Drain *heroku.LogDrain) resource.Te
 	}
 }
 
-func testAccCheckHerokuDrainConfig_basic(appName string) string {
+func testAccCheckHerokuDrainConfig_basic(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_drain" "foobar" {
     app_id = heroku_app.foobar.id
     url = "syslog://terraform.example.com:1234"
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuDrainConfig_basicWithSensitiveURL(appName string) string {
+func testAccCheckHerokuDrainConfig_basicWithSensitiveURL(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_drain" "foobar" {
     app_id = heroku_app.foobar.id
     sensitive_url = "syslog://terraform.example.com:1234"
-}`, appName)
+}`, appName, org)
 }

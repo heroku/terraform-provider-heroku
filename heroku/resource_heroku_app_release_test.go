@@ -15,6 +15,7 @@ func TestAccHerokuAppRelease_Basic(t *testing.T) {
 	var appRelease heroku.Release
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetAnyOrganizationOrSkip(t)
 	slugID := testAccConfig.GetSlugIDOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
@@ -25,7 +26,7 @@ func TestAccHerokuAppRelease_Basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppRelease_Basic(appName, slugID),
+				Config: testAccCheckHerokuAppRelease_Basic(appName, org, slugID),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppReleaseExists("heroku_app_release.foobar-release", &appRelease),
 					resource.TestCheckResourceAttr(
@@ -95,17 +96,20 @@ func testAccCheckHerokuAppReleaseExists(n string, appRelease *heroku.Release) re
 	}
 }
 
-func testAccCheckHerokuAppRelease_Basic(appName, slugId string) string {
+func testAccCheckHerokuAppRelease_Basic(appName, org, slugId string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
 	name = "%s"
 	region = "us"
+	organization {
+		name = "%s"
+	}
 }
 resource "heroku_app_release" "foobar-release" {
 	app_id = heroku_app.foobar.id
 	slug_id = "%s"
 }
-`, appName, slugId)
+`, appName, org, slugId)
 }
 
 func testAccCheckHerokuAppRelease_OrgBasic(appName, org, slugId, desc string) string {

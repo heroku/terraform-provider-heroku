@@ -10,12 +10,13 @@ import (
 
 func TestAccHerokuAddonAttachment_Basic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAddonAttachmentConfig_basic(appName),
+				Config: testAccCheckHerokuAddonAttachmentConfig_basic(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon_attachment.foobar", "app_id"),
@@ -29,12 +30,13 @@ func TestAccHerokuAddonAttachment_Basic(t *testing.T) {
 
 func TestAccHerokuAddonAttachment_Named(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAddonAttachmentConfig_named(appName, "TEST_ADDON"),
+				Config: testAccCheckHerokuAddonAttachmentConfig_named(appName, org, "TEST_ADDON"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(
 						"heroku_addon_attachment.foobar", "app_id"),
@@ -46,11 +48,15 @@ func TestAccHerokuAddonAttachment_Named(t *testing.T) {
 	})
 }
 
-func testAccCheckHerokuAddonAttachmentConfig_basic(appID string) string {
+func testAccCheckHerokuAddonAttachmentConfig_basic(appID, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
 	name   = "%s"
 	region = "us"
+
+	organization {
+		name = "%s"
+	}
 }
 
 resource "heroku_addon" "foobar" {
@@ -62,14 +68,18 @@ resource "heroku_addon_attachment" "foobar" {
     app_id    = heroku_app.foobar.id
     addon_id  = heroku_addon.foobar.id
     namespace = "TEST_NAMESPACE"
-}`, appID)
+}`, appID, org)
 }
 
-func testAccCheckHerokuAddonAttachmentConfig_named(appID string, name string) string {
+func testAccCheckHerokuAddonAttachmentConfig_named(appID, org, name string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
 	name   = "%s"
 	region = "us"
+
+	organization {
+		name = "%s"
+	}
 }
 
 resource "heroku_addon" "foobar" {
@@ -81,5 +91,5 @@ resource "heroku_addon_attachment" "foobar" {
     app_id   = heroku_app.foobar.id
     addon_id = heroku_addon.foobar.id
     name     = "%s"
-}`, appID, name)
+}`, appID, org, name)
 }

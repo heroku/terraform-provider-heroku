@@ -18,13 +18,14 @@ func TestAccHerokuBuild_Basic(t *testing.T) {
 	var build heroku.Build
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuBuildConfig_basic(appName),
+				Config: testAccCheckHerokuBuildConfig_basic(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
 					resource.TestCheckResourceAttr("heroku_build.foobar", "status", "succeeded"),
@@ -37,6 +38,7 @@ func TestAccHerokuBuild_Basic(t *testing.T) {
 func TestAccHerokuBuild_Fails(t *testing.T) {
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -50,7 +52,7 @@ func TestAccHerokuBuild_Fails(t *testing.T) {
 		},
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuBuildConfig_fails(appName),
+				Config: testAccCheckHerokuBuildConfig_fails(appName, org),
 			},
 		},
 	})
@@ -59,13 +61,14 @@ func TestAccHerokuBuild_Fails(t *testing.T) {
 func TestAccHerokuBuild_InsecureUrl(t *testing.T) {
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckHerokuBuildConfig_insecureUrl(appName),
+				Config:      testAccCheckHerokuBuildConfig_insecureUrl(appName, org),
 				ExpectError: regexp.MustCompile(`must be a secure URL`),
 			},
 		},
@@ -75,13 +78,14 @@ func TestAccHerokuBuild_InsecureUrl(t *testing.T) {
 func TestAccHerokuBuild_NoSource(t *testing.T) {
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckHerokuBuildConfig_noSource(appName),
+				Config:      testAccCheckHerokuBuildConfig_noSource(appName, org),
 				ExpectError: regexp.MustCompile(`Build requires either`),
 			},
 		},
@@ -92,13 +96,14 @@ func TestAccHerokuBuild_AllOpts(t *testing.T) {
 	var build heroku.Build
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuBuildConfig_allOpts(appName),
+				Config: testAccCheckHerokuBuildConfig_allOpts(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
 				),
@@ -111,6 +116,7 @@ func TestAccHerokuBuild_LocalSourceTarball(t *testing.T) {
 	var build, build2 heroku.Build
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 	// Manually generated using `shasum --algorithm 256 app.tgz`
 	// Manually generated using `shasum --algorithm 256 app-2.tgz`
 	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
@@ -124,7 +130,7 @@ func TestAccHerokuBuild_LocalSourceTarball(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuBuildConfig_localSourceTarball(appName),
+				Config: testAccCheckHerokuBuildConfig_localSourceTarball(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
 					resource.TestCheckResourceAttr("heroku_build.foobar", "local_checksum", sourceChecksum),
@@ -132,7 +138,7 @@ func TestAccHerokuBuild_LocalSourceTarball(t *testing.T) {
 			},
 			{
 				SkipFunc: switchSourceFiles,
-				Config:   testAccCheckHerokuBuildConfig_localSourceTarball(appName),
+				Config:   testAccCheckHerokuBuildConfig_localSourceTarball(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build2),
 					resource.TestCheckResourceAttr("heroku_build.foobar", "local_checksum", sourceChecksum2),
@@ -145,13 +151,14 @@ func TestAccHerokuBuild_LocalSourceTarball(t *testing.T) {
 func TestAccHerokuBuild_LocalSourceTarball_SetChecksum(t *testing.T) {
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckHerokuBuildConfig_localSourceTarball_setChecksum(appName),
+				Config:      testAccCheckHerokuBuildConfig_localSourceTarball_setChecksum(appName, org),
 				ExpectError: regexp.MustCompile(`checksum should be empty`),
 			},
 		},
@@ -162,13 +169,14 @@ func TestAccHerokuBuild_LocalSourceTarball_AllOpts(t *testing.T) {
 	var build heroku.Build
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuBuildConfig_localSourceTarball_allOpts(appName),
+				Config: testAccCheckHerokuBuildConfig_localSourceTarball_allOpts(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
 				),
@@ -182,6 +190,7 @@ func TestAccHerokuBuild_LocalSourceDirectoryDiff(t *testing.T) {
 	var originalSourceChecksum string
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	defer resetSourceDirectories()
 
@@ -190,7 +199,7 @@ func TestAccHerokuBuild_LocalSourceDirectoryDiff(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuBuildConfig_localSourceDirectory(appName),
+				Config: testAccCheckHerokuBuildConfig_localSourceDirectory(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
 					testAccCheckCaptureSourceChecksum("heroku_build.foobar", &originalSourceChecksum),
@@ -198,7 +207,7 @@ func TestAccHerokuBuild_LocalSourceDirectoryDiff(t *testing.T) {
 			},
 			{
 				SkipFunc: switchSourceDirectories,
-				Config:   testAccCheckHerokuBuildConfig_localSourceDirectory(appName),
+				Config:   testAccCheckHerokuBuildConfig_localSourceDirectory(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuBuildExists("heroku_build.foobar", &build2),
 					testAccCheckSourceChecksumIsDifferent("heroku_build.foobar", &originalSourceChecksum),
@@ -211,6 +220,7 @@ func TestAccHerokuBuild_LocalSourceDirectoryDiff(t *testing.T) {
 // https://github.com/heroku/terraform-provider-heroku/issues/160
 func TestAccHerokuBuild_LocalSourceDirectorySelfContained(t *testing.T) {
 	var build heroku.Build
+	org := testAccConfig.GetOrganizationOrSkip(t)
 	defer func() { _ = resetSourceDirectories() }()
 
 	// cd to the ./test-fixtures/app directory before and revert back afterwards
@@ -222,7 +232,7 @@ func TestAccHerokuBuild_LocalSourceDirectorySelfContained(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuBuildConfig_localSourceDirectorySelfContained(fmt.Sprintf("tftest-%s", acctest.RandString(10))),
+				Config: testAccCheckHerokuBuildConfig_localSourceDirectorySelfContained(fmt.Sprintf("tftest-%s", acctest.RandString(10)), org),
 				Check:  testAccCheckHerokuBuildExists("heroku_build.foobar", &build),
 			},
 		},
@@ -259,10 +269,13 @@ func testAccCheckHerokuBuildExists(n string, Build *heroku.Build) resource.TestC
 	}
 }
 
-func testAccCheckHerokuBuildConfig_basic(appName string) string {
+func testAccCheckHerokuBuildConfig_basic(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_build" "foobar" {
@@ -270,13 +283,16 @@ resource "heroku_build" "foobar" {
     source {
         url = "https://github.com/heroku/terraform-provider-heroku/raw/update-heroku-api-client/heroku/test-fixtures/app.tgz"
     }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuBuildConfig_fails(appName string) string {
+func testAccCheckHerokuBuildConfig_fails(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_build" "foobar" {
@@ -284,13 +300,16 @@ resource "heroku_build" "foobar" {
     source {
         url = "https://github.com/heroku/terraform-provider-heroku/raw/update-heroku-api-client/heroku/test-fixtures/app-broken-build.tgz"
     }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuBuildConfig_insecureUrl(appName string) string {
+func testAccCheckHerokuBuildConfig_insecureUrl(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_build" "foobar" {
@@ -298,13 +317,16 @@ resource "heroku_build" "foobar" {
     source {
       url = "http://github.com/mars/terraform-provider-heroku/raw/update-heroku-api-client/heroku/test-fixtures/app.tgz"
     }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuBuildConfig_noSource(appName string) string {
+func testAccCheckHerokuBuildConfig_noSource(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_build" "foobar" {
@@ -312,16 +334,19 @@ resource "heroku_build" "foobar" {
     source {
       version = "v0"
     }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuBuildConfig_allOpts(appName string) string {
+func testAccCheckHerokuBuildConfig_allOpts(appName, org string) string {
 	// Manually generated `checksum` using `shasum --algorithm 256 app.tar.gz`
 	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
 
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_build" "foobar" {
@@ -335,13 +360,16 @@ resource "heroku_build" "foobar" {
       url = "https://github.com/heroku/terraform-provider-heroku/raw/update-heroku-api-client/heroku/test-fixtures/app.tgz"
       version = "v0"
     }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuBuildConfig_localSourceDirectory(appName string) string {
+func testAccCheckHerokuBuildConfig_localSourceDirectory(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_build" "foobar" {
@@ -349,26 +377,32 @@ resource "heroku_build" "foobar" {
     source {
       path = "test-fixtures/app/"
     }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuBuildConfig_localSourceDirectorySelfContained(appName string) string {
+func testAccCheckHerokuBuildConfig_localSourceDirectorySelfContained(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
  resource "heroku_build" "foobar" {
     app_id = heroku_app.foobar.id
     source {
       path = "."
     }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuBuildConfig_localSourceTarball(appName string) string {
+func testAccCheckHerokuBuildConfig_localSourceTarball(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_build" "foobar" {
@@ -376,13 +410,16 @@ resource "heroku_build" "foobar" {
     source {
       path = "test-fixtures/app.tgz"
     }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuBuildConfig_localSourceTarball_setChecksum(appName string) string {
+func testAccCheckHerokuBuildConfig_localSourceTarball_setChecksum(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_build" "foobar" {
@@ -391,13 +428,16 @@ resource "heroku_build" "foobar" {
       checksum = "SHA256:0000000000000000000000000000000000000000000000000000000000000000"
       path = "test-fixtures/app.tgz"
     }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuBuildConfig_localSourceTarball_allOpts(appName string) string {
+func testAccCheckHerokuBuildConfig_localSourceTarball_allOpts(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_build" "foobar" {
@@ -407,7 +447,7 @@ resource "heroku_build" "foobar" {
       path = "test-fixtures/app.tgz"
       version = "v0"
     }
-}`, appName)
+}`, appName, org)
 }
 
 func testAccCheckCaptureSourceChecksum(buildName string, originalSourceChecksum *string) resource.TestCheckFunc {

@@ -43,6 +43,7 @@ func TestAccHerokuFormationUpdateFreeDyno(t *testing.T) {
 	var formation heroku.Formation
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 	slugID := testAccConfig.GetSlugIDOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
@@ -52,7 +53,7 @@ func TestAccHerokuFormationUpdateFreeDyno(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuFormationConfig_WithOutOrg(appName, slugID, "basic", 1),
+				Config: testAccCheckHerokuFormationConfig_WithOutOrg(appName, org, slugID, "basic", 1),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuFormationExists("heroku_formation.foobar-web", &formation),
 					testAccCheckHerokuFormationSizeAttribute(&formation, "Basic"),
@@ -130,11 +131,14 @@ resource "heroku_formation" "foobar-web" {
 `, appName, org, slugId, dynoSize, dynoQuant)
 }
 
-func testAccCheckHerokuFormationConfig_WithOutOrg(appName, slugId, dynoSize string, dynoQuant int) string {
+func testAccCheckHerokuFormationConfig_WithOutOrg(appName, org, slugId, dynoSize string, dynoQuant int) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 resource "heroku_app_release" "foobar-release" {
 	app_id = heroku_app.foobar.id
@@ -146,5 +150,5 @@ resource "heroku_formation" "foobar-web" {
 	size = "%s"
 	quantity = %d
 }
-`, appName, slugId, dynoSize, dynoQuant)
+`, appName, org, slugId, dynoSize, dynoQuant)
 }

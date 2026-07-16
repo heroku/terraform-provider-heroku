@@ -11,6 +11,7 @@ import (
 
 func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 	gitUrl := fmt.Sprintf("https://git.heroku.com/%s.git", appName)
 
 	resource.Test(t, resource.TestCase{
@@ -18,7 +19,7 @@ func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppWithDatasource_basic(appName),
+				Config: testAccCheckHerokuAppWithDatasource_basic(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"data.heroku_app.foobar", "name", appName),
@@ -44,13 +45,14 @@ func TestAccDatasourceHerokuApp_Basic(t *testing.T) {
 
 func TestAccDatasourceHerokuApp_ReleaseIDAndSlugID(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppWithDatasource_slugRelease(appName),
+				Config: testAccCheckHerokuAppWithDatasource_slugRelease(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(
 						"data.heroku_app.foobar", "last_release_id"),
@@ -143,17 +145,21 @@ resource "heroku_app" "foobar" {
 `, appName)
 }
 
-func testAccCheckHerokuAppWithDatasource_basic(appName string) string {
+func testAccCheckHerokuAppWithDatasource_basic(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
   name   = "%s"
   region = "us"
 
+  organization {
+    name = "%s"
+  }
+
   buildpacks = [
     "https://github.com/heroku/heroku-buildpack-multi-procfile",
     "heroku/go"
 	]
-	
+
 	config_vars = {
     FOO = "bar"
 	}
@@ -162,14 +168,17 @@ resource "heroku_app" "foobar" {
 data "heroku_app" "foobar" {
   name = "${heroku_app.foobar.name}"
 }
-`, appName)
+`, appName, org)
 }
 
-func testAccCheckHerokuAppWithDatasource_slugRelease(appName string) string {
+func testAccCheckHerokuAppWithDatasource_slugRelease(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_slug" "foobar" {
@@ -191,7 +200,7 @@ data "heroku_app" "foobar" {
 
   depends_on = [heroku_app_release.foobar]
 }
-`, appName)
+`, appName, org)
 }
 
 func testAccCheckHerokuApp_organization(appName, orgName string) string {

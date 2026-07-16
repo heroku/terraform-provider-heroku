@@ -16,6 +16,7 @@ func TestAccHerokuCollaborator_Basic(t *testing.T) {
 
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	testUser := testAccConfig.GetNonAdminUserOrAbort(t)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -24,7 +25,7 @@ func TestAccHerokuCollaborator_Basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuCollaborator_Basic(appName, testUser),
+				Config: testAccCheckHerokuCollaborator_Basic(appName, testUser, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuCollaboratorExists("heroku_collaborator.foobar-collaborator", &collaborator),
 					testAccCheckHerokuCollaboratorEmailAttribute(&collaborator, testUser),
@@ -75,15 +76,18 @@ func testAccCheckHerokuCollaboratorEmailAttribute(collaborator *heroku.Collabora
 	}
 }
 
-func testAccCheckHerokuCollaborator_Basic(appName, testUser string) string {
+func testAccCheckHerokuCollaborator_Basic(appName, testUser, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 resource "heroku_collaborator" "foobar-collaborator" {
 	app_id = heroku_app.foobar.id
 	email = "%s"
 }
-`, appName, testUser)
+`, appName, org, testUser)
 }

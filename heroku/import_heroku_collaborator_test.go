@@ -11,6 +11,7 @@ import (
 func TestAccHerokuCollaborator_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	testUser := testAccConfig.GetNonAdminUserOrAbort(t)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -19,7 +20,7 @@ func TestAccHerokuCollaborator_importBasic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuCollaborator_Basic(appName, testUser),
+				Config: testAccCheckHerokuCollaborator_Basic(appName, testUser, org),
 			},
 			{
 				ResourceName:            "heroku_collaborator.foobar-collaborator",

@@ -10,6 +10,7 @@ import (
 
 func TestAccDatasourceHerokuAddon_Basic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -18,10 +19,10 @@ func TestAccDatasourceHerokuAddon_Basic(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAddonBasic(appName),
+				Config: testAccCheckHerokuAddonBasic(appName, org),
 			},
 			{
-				Config: testAccCheckHerokuAddonWithDatasourceBasic(appName),
+				Config: testAccCheckHerokuAddonWithDatasourceBasic(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(
 						"data.heroku_addon.test_data", "app_id"),
@@ -33,11 +34,14 @@ func TestAccDatasourceHerokuAddon_Basic(t *testing.T) {
 	})
 }
 
-func testAccCheckHerokuAddonBasic(appName string) string {
+func testAccCheckHerokuAddonBasic(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_addon" "foobar" {
@@ -47,14 +51,17 @@ resource "heroku_addon" "foobar" {
 		url = "http://google.com"
 	}
 }
-`, appName)
+`, appName, org)
 }
 
-func testAccCheckHerokuAddonWithDatasourceBasic(appName string) string {
+func testAccCheckHerokuAddonWithDatasourceBasic(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_addon" "foobar" {
@@ -68,5 +75,5 @@ resource "heroku_addon" "foobar" {
 data "heroku_addon" "test_data" {
   name = "${heroku_addon.foobar.id}"
 }
-`, appName)
+`, appName, org)
 }

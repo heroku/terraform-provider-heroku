@@ -16,6 +16,7 @@ import (
 func TestAccHerokuAddon_Basic(t *testing.T) {
 	var addon heroku.AddOn
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -23,7 +24,7 @@ func TestAccHerokuAddon_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAddonConfig_basic(appName),
+				Config: testAccCheckHerokuAddonConfig_basic(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
 					testAccCheckHerokuAddonPlan(&addon, "scheduler:standard"),
@@ -40,6 +41,7 @@ func TestAccHerokuAddon_Basic(t *testing.T) {
 func TestAccHerokuAddon_noPlan(t *testing.T) {
 	var addon heroku.AddOn
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -47,7 +49,7 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAddonConfig_no_plan(appName),
+				Config: testAccCheckHerokuAddonConfig_no_plan(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
 					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:essential-0"),
@@ -58,7 +60,7 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckHerokuAddonConfig_no_plan(appName),
+				Config: testAccCheckHerokuAddonConfig_no_plan(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
 					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:essential-0"),
@@ -75,6 +77,7 @@ func TestAccHerokuAddon_noPlan(t *testing.T) {
 func TestAccHerokuAddon_ConfigVarValues(t *testing.T) {
 	var addon heroku.AddOn
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -82,7 +85,7 @@ func TestAccHerokuAddon_ConfigVarValues(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAddonConfig_configVarValues(appName),
+				Config: testAccCheckHerokuAddonConfig_configVarValues(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.pg", &addon),
 					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:essential-0"),
@@ -95,13 +98,14 @@ func TestAccHerokuAddon_ConfigVarValues(t *testing.T) {
 
 func TestAccHerokuAddon_DontSetConfigVarValues(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAddonConfig_dontSetConfigVarValues(appName),
+				Config: testAccCheckHerokuAddonConfig_dontSetConfigVarValues(appName, org),
 				Check: resource.TestCheckNoResourceAttr(
 					"heroku_addon.pg", "config_var_values.DATABASE_URL"),
 			},
@@ -113,6 +117,7 @@ func TestAccHerokuAddon_CustomName(t *testing.T) {
 	var addon heroku.AddOn
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	customName := fmt.Sprintf("custom-addonname-%s", acctest.RandString(15))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -120,7 +125,7 @@ func TestAccHerokuAddon_CustomName(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAddonConfig_CustomName(appName, customName),
+				Config: testAccCheckHerokuAddonConfig_CustomName(appName, org, customName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
 					testAccCheckHerokuAddonPlan(&addon, "heroku-postgresql:essential-0"),
@@ -139,6 +144,7 @@ func TestAccHerokuAddon_CustomName(t *testing.T) {
 func TestAccHerokuAddon_CustomName_Invalid(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	customName := "da.%dsadsa$d"
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -146,7 +152,7 @@ func TestAccHerokuAddon_CustomName_Invalid(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
+				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, org, customName),
 				ExpectError: regexp.MustCompile(`Invalid custom addon name.*`),
 			},
 		},
@@ -156,6 +162,7 @@ func TestAccHerokuAddon_CustomName_Invalid(t *testing.T) {
 func TestAccHerokuAddon_CustomName_EmptyString(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	customName := ""
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -163,7 +170,7 @@ func TestAccHerokuAddon_CustomName_EmptyString(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
+				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, org, customName),
 				ExpectError: regexp.MustCompile(`Invalid custom addon name.*`),
 			},
 		},
@@ -173,6 +180,7 @@ func TestAccHerokuAddon_CustomName_EmptyString(t *testing.T) {
 func TestAccHerokuAddon_CustomName_FirstCharNum(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
 	customName := "1dasdad"
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -180,7 +188,7 @@ func TestAccHerokuAddon_CustomName_FirstCharNum(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, customName),
+				Config:      testAccCheckHerokuAddonConfig_CustomName(appName, org, customName),
 				ExpectError: regexp.MustCompile(`Invalid custom addon name.*`),
 			},
 		},
@@ -190,6 +198,7 @@ func TestAccHerokuAddon_CustomName_FirstCharNum(t *testing.T) {
 func TestAccHerokuAddon_Disappears(t *testing.T) {
 	var addon heroku.AddOn
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -197,7 +206,7 @@ func TestAccHerokuAddon_Disappears(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAddonConfig_basic(appName),
+				Config: testAccCheckHerokuAddonConfig_basic(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAddonExists("heroku_addon.foobar", &addon),
 					testAccCheckHerokuAddonDisappears(appName, "scheduler"),
@@ -300,11 +309,14 @@ func testAccCheckHerokuAddonDisappears(appName, addonName string) resource.TestC
 	}
 }
 
-func testAccCheckHerokuAddonConfig_basic(appName string) string {
+func testAccCheckHerokuAddonConfig_basic(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_addon" "foobar" {
@@ -313,23 +325,26 @@ resource "heroku_addon" "foobar" {
     config = {
         url = "http://google.com"
 	}
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuAddonConfig_configVarValues(appName string) string {
+func testAccCheckHerokuAddonConfig_configVarValues(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_addon" "pg" {
     app_id = heroku_app.foobar.id
     plan = "heroku-postgresql"
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuAddonConfig_dontSetConfigVarValues(appName string) string {
+func testAccCheckHerokuAddonConfig_dontSetConfigVarValues(appName, org string) string {
 	return fmt.Sprintf(`
 provider "heroku" {
   customizations {
@@ -340,37 +355,46 @@ provider "heroku" {
 resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_addon" "pg" {
     app_id = heroku_app.foobar.id
     plan = "heroku-postgresql"
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuAddonConfig_no_plan(appName string) string {
+func testAccCheckHerokuAddonConfig_no_plan(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_addon" "foobar" {
     app_id = heroku_app.foobar.id
     plan = "heroku-postgresql"
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuAddonConfig_CustomName(appName, customAddonName string) string {
+func testAccCheckHerokuAddonConfig_CustomName(appName, org, customAddonName string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_addon" "foobar" {
     app_id = heroku_app.foobar.id
     plan = "heroku-postgresql"
     name = "%s"
-}`, appName, customAddonName)
+}`, appName, org, customAddonName)
 }

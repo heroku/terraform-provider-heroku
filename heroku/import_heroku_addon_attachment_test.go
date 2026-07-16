@@ -10,13 +10,14 @@ import (
 
 func TestAccHerokuAddonAttachment_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAddonAttachmentConfig_basic(appName),
+				Config: testAccCheckHerokuAddonAttachmentConfig_basic(appName, org),
 			},
 			{
 				ResourceName: "heroku_addon_attachment.foobar",

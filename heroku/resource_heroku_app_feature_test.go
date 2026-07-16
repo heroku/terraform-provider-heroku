@@ -18,6 +18,7 @@ import (
 func TestAccHerokuAppFeature(t *testing.T) {
 	var feature heroku.AppFeature
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -25,7 +26,7 @@ func TestAccHerokuAppFeature(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuFeatureDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuFeature_basic(appName),
+				Config: testAccCheckHerokuFeature_basic(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuFeatureExists("heroku_app_feature.runtime_metrics", &feature),
 					testAccCheckHerokuFeatureEnabled(&feature, true),
@@ -35,7 +36,7 @@ func TestAccHerokuAppFeature(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckHerokuFeature_disabled(appName),
+				Config: testAccCheckHerokuFeature_disabled(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuFeatureExists("heroku_app_feature.runtime_metrics", &feature),
 					testAccCheckHerokuFeatureEnabled(&feature, false),
@@ -149,25 +150,33 @@ func testAccCheckHerokuFeatureEnabled(feature *heroku.AppFeature, enabled bool) 
 	}
 }
 
-func testAccCheckHerokuFeature_basic(appName string) string {
+func testAccCheckHerokuFeature_basic(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "example" {
 	name = "%s"
 	region = "us"
+
+	organization {
+		name = "%s"
+	}
 }
 
 resource "heroku_app_feature" "runtime_metrics" {
 	app_id = heroku_app.example.id
 	name = "log-runtime-metrics"
 }
-`, appName)
+`, appName, org)
 }
 
-func testAccCheckHerokuFeature_disabled(appName string) string {
+func testAccCheckHerokuFeature_disabled(appName, org string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "example" {
 	name = "%s"
 	region = "us"
+
+	organization {
+		name = "%s"
+	}
 }
 
 resource "heroku_app_feature" "runtime_metrics" {
@@ -175,5 +184,5 @@ resource "heroku_app_feature" "runtime_metrics" {
 	name = "log-runtime-metrics"
 	enabled = false
 }
-`, appName)
+`, appName, org)
 }

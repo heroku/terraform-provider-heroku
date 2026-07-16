@@ -10,6 +10,7 @@ import (
 
 func TestAccHerokuDomain_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -17,7 +18,7 @@ func TestAccHerokuDomain_importBasic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuDomainDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuDomainConfig_basic(appName),
+				Config: testAccCheckHerokuDomainConfig_basic(appName, org),
 			},
 			{
 				ResourceName:        "heroku_domain.one",
@@ -30,6 +31,7 @@ func TestAccHerokuDomain_importBasic(t *testing.T) {
 
 func TestAccHerokuDomain_importSSL(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -37,7 +39,7 @@ func TestAccHerokuDomain_importSSL(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuDomainDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuDomainConfig_ssl(appName),
+				Config: testAccCheckHerokuDomainConfig_ssl(appName, org),
 			},
 			{
 				ResourceName:        "heroku_domain.one",

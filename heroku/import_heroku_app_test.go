@@ -10,6 +10,7 @@ import (
 
 func TestAccHerokuApp_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -17,7 +18,7 @@ func TestAccHerokuApp_importBasic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_basic(appName),
+				Config: testAccCheckHerokuAppConfig_basic(appName, org),
 			},
 			{
 				ResourceName:      "heroku_app.foobar",
@@ -59,6 +60,7 @@ func TestAccHerokuApp_importOrganization(t *testing.T) {
 
 func TestAccHerokuApp_importBuildpacks(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -68,7 +70,7 @@ func TestAccHerokuApp_importBuildpacks(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAppDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppConfig_multi(appName),
+				Config: testAccCheckHerokuAppConfig_multi(appName, org),
 			},
 			{
 				ResourceName:      "heroku_app.foobar",

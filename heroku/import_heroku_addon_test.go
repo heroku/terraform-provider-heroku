@@ -10,6 +10,7 @@ import (
 
 func TestAccHerokuAddon_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -17,7 +18,7 @@ func TestAccHerokuAddon_importBasic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuAddonDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAddonConfig_basic(appName),
+				Config: testAccCheckHerokuAddonConfig_basic(appName, org),
 			},
 			{
 				ResourceName:            "heroku_addon.foobar",
@@ -26,7 +27,7 @@ func TestAccHerokuAddon_importBasic(t *testing.T) {
 				ImportStateVerifyIgnore: []string{"config_vars", "config"},
 			},
 			{
-				Config:             testAccCheckHerokuAddonConfig_basic(appName),
+				Config:             testAccCheckHerokuAddonConfig_basic(appName, org),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: false,
 			},

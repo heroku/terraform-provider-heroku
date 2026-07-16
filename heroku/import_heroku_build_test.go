@@ -10,13 +10,14 @@ import (
 
 func TestAccHerokuBuild_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuBuildConfig_basic(appName),
+				Config: testAccCheckHerokuBuildConfig_basic(appName, org),
 			},
 			{
 				ResourceName:            "heroku_build.foobar",
@@ -31,13 +32,14 @@ func TestAccHerokuBuild_importBasic(t *testing.T) {
 
 func TestAccHerokuBuild_importAllOpts(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuBuildConfig_allOpts(appName),
+				Config: testAccCheckHerokuBuildConfig_allOpts(appName, org),
 			},
 			{
 				ResourceName:            "heroku_build.foobar",
@@ -52,13 +54,14 @@ func TestAccHerokuBuild_importAllOpts(t *testing.T) {
 
 func TestAccHerokuBuild_importWithFileUrl(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuBuildConfig_localSourceTarball(appName),
+				Config: testAccCheckHerokuBuildConfig_localSourceTarball(appName, org),
 			},
 			{
 				ResourceName:            "heroku_build.foobar",

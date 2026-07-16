@@ -11,6 +11,7 @@ import (
 
 func TestAccHerokuSSL_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	wd, _ := os.Getwd()
 	certFile := wd + "/test-fixtures/terraform.cert"
@@ -22,7 +23,7 @@ func TestAccHerokuSSL_importBasic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuSSLDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuSSLConfig(appName, certFile, keyFile),
+				Config: testAccCheckHerokuSSLConfig(appName, org, certFile, keyFile),
 			},
 			{
 				ResourceName:            "heroku_ssl.one",

@@ -19,6 +19,7 @@ func TestAccHerokuDomain_Basic(t *testing.T) {
 	var endpoint heroku.SniEndpoint
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -26,7 +27,7 @@ func TestAccHerokuDomain_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuDomainDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuDomainConfig_basic(appName),
+				Config: testAccCheckHerokuDomainConfig_basic(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.one", &domain),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
@@ -43,6 +44,7 @@ func TestAccHerokuDomain_ACM(t *testing.T) {
 	var endpoint heroku.SniEndpoint
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -50,7 +52,7 @@ func TestAccHerokuDomain_ACM(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuDomainDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuDomainConfig_ACM(appName),
+				Config: testAccCheckHerokuDomainConfig_ACM(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.one", &domain),
 					testAccCheckHerokuDomainAttributes(&domain, &endpoint),
@@ -68,6 +70,7 @@ func TestAccHerokuDomain_No_SSL_Change(t *testing.T) {
 	var endpoint heroku.SniEndpoint
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -75,7 +78,7 @@ func TestAccHerokuDomain_No_SSL_Change(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuDomainDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuDomainConfig_ssl_no_association(appName),
+				Config: testAccCheckHerokuDomainConfig_ssl_no_association(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.one", &domain),
 					testAccCheckHerokuSSLExists("heroku_ssl.one", &endpoint),
@@ -87,7 +90,7 @@ func TestAccHerokuDomain_No_SSL_Change(t *testing.T) {
 			},
 			{
 				PreConfig: test.Sleep(t, 15),
-				Config:    testAccCheckHerokuDomainConfig_ssl(appName),
+				Config:    testAccCheckHerokuDomainConfig_ssl(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.one", &domain),
 					testAccCheckHerokuSSLExists("heroku_ssl.one", &endpoint),
@@ -106,6 +109,7 @@ func TestAccHerokuDomain_SSL(t *testing.T) {
 	var endpoint heroku.SniEndpoint
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -113,7 +117,7 @@ func TestAccHerokuDomain_SSL(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuDomainDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuDomainConfig_ssl(appName),
+				Config: testAccCheckHerokuDomainConfig_ssl(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.one", &domain),
 					testAccCheckHerokuSSLExists("heroku_ssl.one", &endpoint),
@@ -125,7 +129,7 @@ func TestAccHerokuDomain_SSL(t *testing.T) {
 			},
 			{
 				PreConfig: test.Sleep(t, 15),
-				Config:    testAccCheckHerokuDomainConfig_ssl_change(appName),
+				Config:    testAccCheckHerokuDomainConfig_ssl_change(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuDomainExists("heroku_domain.one", &domain),
 					testAccCheckHerokuSSLExists("heroku_ssl.two", &endpoint),
@@ -207,7 +211,7 @@ func testAccCheckHerokuDomainExists(n string, Domain *heroku.Domain) resource.Te
 	}
 }
 
-func testAccCheckHerokuDomainConfig_ssl_no_association(appName string) string {
+func testAccCheckHerokuDomainConfig_ssl_no_association(appName, org string) string {
 	wd, _ := os.Getwd()
 	certFile := wd + "/test-fixtures/terraform.cert"
 	keyFile := wd + "/test-fixtures/terraform.key"
@@ -215,6 +219,9 @@ func testAccCheckHerokuDomainConfig_ssl_no_association(appName string) string {
 	return fmt.Sprintf(`resource "heroku_app" "one" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_slug" "one" {
@@ -252,10 +259,10 @@ resource "heroku_domain" "one" {
   hostname = "terraform-%s.example.com"
   # Wait until the certificate has been created before adding domains to avoid auto-association. Once auto-association has been sunset we no longer need to do this. See https://devcenter.heroku.com/changelog-items/1938.
   depends_on = [heroku_ssl.one]
-}`, appName, certFile, keyFile, appName)
+}`, appName, org, certFile, keyFile, appName)
 }
 
-func testAccCheckHerokuDomainConfig_ssl_change(appName string) string {
+func testAccCheckHerokuDomainConfig_ssl_change(appName, org string) string {
 	wd, _ := os.Getwd()
 	certFile := wd + "/test-fixtures/terraform.cert"
 	keyFile := wd + "/test-fixtures/terraform.key"
@@ -263,6 +270,9 @@ func testAccCheckHerokuDomainConfig_ssl_change(appName string) string {
 	return fmt.Sprintf(`resource "heroku_app" "one" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_slug" "one" {
@@ -304,10 +314,10 @@ resource "heroku_domain" "one" {
   app_id = heroku_app.one.id
   hostname = "terraform-%s.example.com"
   sni_endpoint_id = "${heroku_ssl.two.id}"
-}`, appName, certFile, keyFile, certFile, keyFile, appName)
+}`, appName, org, certFile, keyFile, certFile, keyFile, appName)
 }
 
-func testAccCheckHerokuDomainConfig_ssl(appName string) string {
+func testAccCheckHerokuDomainConfig_ssl(appName, org string) string {
 	wd, _ := os.Getwd()
 	certFile := wd + "/test-fixtures/terraform.cert"
 	keyFile := wd + "/test-fixtures/terraform.key"
@@ -315,6 +325,9 @@ func testAccCheckHerokuDomainConfig_ssl(appName string) string {
 	return fmt.Sprintf(`resource "heroku_app" "one" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_slug" "one" {
@@ -349,30 +362,36 @@ resource "heroku_domain" "one" {
   app_id = heroku_app.one.id
   hostname = "terraform-%s.example.com"
   sni_endpoint_id = "${heroku_ssl.one.id}"
-}`, appName, certFile, keyFile, appName)
+}`, appName, org, certFile, keyFile, appName)
 }
 
-func testAccCheckHerokuDomainConfig_basic(appName string) string {
+func testAccCheckHerokuDomainConfig_basic(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "one" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_domain" "one" {
   app_id = heroku_app.one.id
   hostname = "terraform-%s.example.com"
-}`, appName, appName)
+}`, appName, org, appName)
 }
 
-func testAccCheckHerokuDomainConfig_ACM(appName string) string {
+func testAccCheckHerokuDomainConfig_ACM(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "one" {
     name = "%s"
     region = "us"
     acm = true
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_domain" "one" {
   app_id = heroku_app.one.id
   hostname = "terraform-%s.example.com"
-}`, appName, appName)
+}`, appName, org, appName)
 }

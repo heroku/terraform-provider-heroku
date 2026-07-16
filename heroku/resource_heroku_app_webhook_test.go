@@ -14,13 +14,14 @@ import (
 func TestAccHerokuAppWebhook_Basic(t *testing.T) {
 	var webhook heroku.AppWebhookInfoResult
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckHerokuAppWebhookDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuAppWebhookConfig(appName, "https://terraform.example.com:1234", "notify", "api:release"),
+				Config: testAccCheckHerokuAppWebhookConfig(appName, org, "https://terraform.example.com:1234", "notify", "api:release"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppWebhookExists("heroku_app_webhook.foobar_webhook", &webhook),
 					testAccCheckHerokuAppWebhookAttributes(&webhook, "https://terraform.example.com:1234", "notify", "api:release"),
@@ -30,7 +31,7 @@ func TestAccHerokuAppWebhook_Basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckHerokuAppWebhookConfig(appName, "https://terraform.example.com:4321", "sync", "api:build"),
+				Config: testAccCheckHerokuAppWebhookConfig(appName, org, "https://terraform.example.com:4321", "sync", "api:build"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuAppWebhookExists("heroku_app_webhook.foobar_webhook", &webhook),
 					testAccCheckHerokuAppWebhookAttributes(&webhook, "https://terraform.example.com:4321", "sync", "api:build"),
@@ -43,11 +44,15 @@ func TestAccHerokuAppWebhook_Basic(t *testing.T) {
 	})
 }
 
-func testAccCheckHerokuAppWebhookConfig(appName, url, level, include string) string {
+func testAccCheckHerokuAppWebhookConfig(appName, org, url, level, include string) string {
 	return fmt.Sprintf(`
 resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_app_webhook" "foobar_webhook" {
@@ -55,7 +60,7 @@ resource "heroku_app_webhook" "foobar_webhook" {
     url     = "%s"
     level   = "%s"
     include = ["%s"]
-}`, appName, url, level, include)
+}`, appName, org, url, level, include)
 }
 
 func testAccCheckHerokuAppWebhookDestroy(s *terraform.State) error {

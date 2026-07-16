@@ -12,6 +12,7 @@ import (
 
 func TestAccHerokuDrain_importBasic(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -19,7 +20,7 @@ func TestAccHerokuDrain_importBasic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuDrainDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuDrainConfig_basic(appName),
+				Config: testAccCheckHerokuDrainConfig_basic(appName, org),
 			},
 			{
 				ResourceName:        "heroku_drain.foobar",
@@ -33,6 +34,7 @@ func TestAccHerokuDrain_importBasic(t *testing.T) {
 
 func TestAccHerokuDrain_importBasicWithSensitiveURL(t *testing.T) {
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -40,7 +42,7 @@ func TestAccHerokuDrain_importBasicWithSensitiveURL(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuDrainDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuDrainConfig_basicWithSensitiveURL(appName),
+				Config: testAccCheckHerokuDrainConfig_basicWithSensitiveURL(appName, org),
 			},
 			{
 				ResourceName:      "heroku_drain.foobar",

@@ -18,6 +18,7 @@ import (
 func TestAccHerokuSSL_basic(t *testing.T) {
 	var endpoint heroku.SniEndpoint
 	appName := fmt.Sprintf("tftest-%s", acctest.RandString(10))
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	wd, _ := os.Getwd()
 	certFile := wd + "/test-fixtures/terraform.cert"
@@ -36,7 +37,7 @@ func TestAccHerokuSSL_basic(t *testing.T) {
 		CheckDestroy: testAccCheckHerokuSSLDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuSSLConfig(appName, certFile2, keyFile2),
+				Config: testAccCheckHerokuSSLConfig(appName, org, certFile2, keyFile2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSSLExists("heroku_ssl.one", &endpoint),
 					testAccCheckHerokuSSLCertificateChain(&endpoint, certificateChain2),
@@ -46,7 +47,7 @@ func TestAccHerokuSSL_basic(t *testing.T) {
 			},
 			{
 				PreConfig: test.Sleep(t, 15),
-				Config:    testAccCheckHerokuSSLConfig(appName, certFile, keyFile),
+				Config:    testAccCheckHerokuSSLConfig(appName, org, certFile, keyFile),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSSLExists("heroku_ssl.one", &endpoint),
 					testAccCheckHerokuSSLCertificateChain(&endpoint, certificateChain),
@@ -58,11 +59,14 @@ func TestAccHerokuSSL_basic(t *testing.T) {
 	})
 }
 
-func testAccCheckHerokuSSLConfig(appName, certFile, keyFile string) string {
+func testAccCheckHerokuSSLConfig(appName, org, certFile, keyFile string) string {
 	return strings.TrimSpace(fmt.Sprintf(`
 resource "heroku_app" "one" {
   name = "%s"
   region = "us"
+  organization {
+    name = "%s"
+  }
 }
 
 resource "heroku_slug" "one" {
@@ -91,7 +95,7 @@ resource "heroku_ssl" "one" {
   certificate_chain = file("%s")
   private_key = file("%s")
   depends_on = [heroku_formation.web]
-}`, appName, certFile, keyFile))
+}`, appName, org, certFile, keyFile))
 }
 
 func testAccCheckHerokuSSLDestroy(s *terraform.State) error {

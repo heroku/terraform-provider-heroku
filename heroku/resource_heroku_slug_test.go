@@ -17,13 +17,14 @@ func TestAccHerokuSlug_Basic(t *testing.T) {
 	var slug heroku.Slug
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuSlugConfig_basic(appName),
+				Config: testAccCheckHerokuSlugConfig_basic(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSlugExists("heroku_slug.foobar", &slug),
 				),
@@ -35,13 +36,14 @@ func TestAccHerokuSlug_Basic(t *testing.T) {
 func TestAccHerokuSlug_NoFile(t *testing.T) {
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckHerokuSlugConfig_noFile(appName),
+				Config:      testAccCheckHerokuSlugConfig_noFile(appName, org),
 				ExpectError: regexp.MustCompile(`requires either`),
 			},
 		},
@@ -52,13 +54,14 @@ func TestAccHerokuSlug_AllOpts(t *testing.T) {
 	var slug heroku.Slug
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuSlugConfig_allOpts(appName),
+				Config: testAccCheckHerokuSlugConfig_allOpts(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSlugExists("heroku_slug.foobar", &slug),
 				),
@@ -71,6 +74,7 @@ func TestAccHerokuSlug_WithFile(t *testing.T) {
 	var slug, slug2 heroku.Slug
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 	// Manually generated using `shasum --algorithm 256 slug.tgz`
 	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
 	slugChecksum := "SHA256:6731cb5caea2cda97c6177216373360a0733aa8e7a21801de879fa8d22f740cf"
@@ -83,7 +87,7 @@ func TestAccHerokuSlug_WithFile(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuSlugConfig_withFile(appName),
+				Config: testAccCheckHerokuSlugConfig_withFile(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSlugExists("heroku_slug.foobar", &slug),
 					resource.TestCheckResourceAttr("heroku_slug.foobar", "checksum", slugChecksum),
@@ -91,7 +95,7 @@ func TestAccHerokuSlug_WithFile(t *testing.T) {
 			},
 			{
 				SkipFunc: switchSlugFiles,
-				Config:   testAccCheckHerokuSlugConfig_withFile(appName),
+				Config:   testAccCheckHerokuSlugConfig_withFile(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSlugExists("heroku_slug.foobar", &slug2),
 					resource.TestCheckResourceAttr("heroku_slug.foobar", "checksum", slugChecksum2),
@@ -105,6 +109,7 @@ func TestAccHerokuSlug_WithRemoteFile(t *testing.T) {
 	var slug heroku.Slug
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 	// Manually generated using `shasum --algorithm 256 slug.tgz`
 	// per Heroku docs https://devcenter.heroku.com/articles/slug-checksums
 	slugChecksum := "SHA256:6731cb5caea2cda97c6177216373360a0733aa8e7a21801de879fa8d22f740cf"
@@ -114,7 +119,7 @@ func TestAccHerokuSlug_WithRemoteFile(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckHerokuSlugConfig_withRemoteFile(appName),
+				Config: testAccCheckHerokuSlugConfig_withRemoteFile(appName, org),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckHerokuSlugExists("heroku_slug.foobar", &slug),
 					resource.TestCheckResourceAttr("heroku_slug.foobar", "checksum", slugChecksum),
@@ -127,13 +132,14 @@ func TestAccHerokuSlug_WithRemoteFile(t *testing.T) {
 func TestAccHerokuSlug_WithInsecureRemoteFile(t *testing.T) {
 	randString := acctest.RandString(10)
 	appName := fmt.Sprintf("tftest-%s", randString)
+	org := testAccConfig.GetOrganizationOrSkip(t)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCheckHerokuSlugConfig_withInsecureRemoteFile(appName),
+				Config:      testAccCheckHerokuSlugConfig_withInsecureRemoteFile(appName, org),
 				ExpectError: regexp.MustCompile(`must be a secure URL`),
 			},
 		},
@@ -190,10 +196,13 @@ func testAccCheckHerokuSlugExists(n string, Slug *heroku.Slug) resource.TestChec
 	}
 }
 
-func testAccCheckHerokuSlugConfig_basic(appName string) string {
+func testAccCheckHerokuSlugConfig_basic(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_slug" "foobar" {
@@ -203,13 +212,16 @@ resource "heroku_slug" "foobar" {
     	test = "echo 'Just a test'"
     	diag = "echo 'Just diagnosis'"
     }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuSlugConfig_noFile(appName string) string {
+func testAccCheckHerokuSlugConfig_noFile(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_slug" "foobar" {
@@ -218,13 +230,16 @@ resource "heroku_slug" "foobar" {
       test = "echo 'Just a test'"
       diag = "echo 'Just diagnosis'"
     }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuSlugConfig_allOpts(appName string) string {
+func testAccCheckHerokuSlugConfig_allOpts(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_slug" "foobar" {
@@ -237,13 +252,16 @@ resource "heroku_slug" "foobar" {
     	test = "echo 'Just a test'"
     	diag = "echo 'Just diagnosis'"
     }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuSlugConfig_withFile(appName string) string {
+func testAccCheckHerokuSlugConfig_withFile(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_slug" "foobar" {
@@ -253,13 +271,16 @@ resource "heroku_slug" "foobar" {
     process_types = {
       web = "ruby server.rb"
     }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuSlugConfig_withRemoteFile(appName string) string {
+func testAccCheckHerokuSlugConfig_withRemoteFile(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_slug" "foobar" {
@@ -269,13 +290,16 @@ resource "heroku_slug" "foobar" {
     process_types = {
       web = "ruby server.rb"
     }
-}`, appName)
+}`, appName, org)
 }
 
-func testAccCheckHerokuSlugConfig_withInsecureRemoteFile(appName string) string {
+func testAccCheckHerokuSlugConfig_withInsecureRemoteFile(appName, org string) string {
 	return fmt.Sprintf(`resource "heroku_app" "foobar" {
     name = "%s"
     region = "us"
+    organization {
+        name = "%s"
+    }
 }
 
 resource "heroku_slug" "foobar" {
@@ -285,7 +309,7 @@ resource "heroku_slug" "foobar" {
     process_types = {
       web = "ruby server.rb"
     }
-}`, appName)
+}`, appName, org)
 }
 
 func testAccCheckHerokuSlugConfig_withFile_inPrivateSpace(spaceConfig, appName, orgName string) string {
