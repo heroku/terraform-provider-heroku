@@ -35,7 +35,7 @@ The following parameters are available for running the test. The absence of some
 
 * **HEROKU_API_KEY**(`string`) **Required** The api key of the user running the test.
 * **HEROKU_EMAIL**(`string`) **Required** The email of the user running the test.
-* **HEROKU_ORGANIZATION**(`string`) **Required** The Heroku Team in which tests will be run.
+* **HEROKU_ORGANIZATION**(`string`) **Required** The Heroku Team in which tests will be run. All acceptance test apps are created under this team. Salesforce internal (`@salesforce.com`) accounts cannot create personal apps — all apps must belong to a team — so this value must be set when running tests with an internal account.
 * **HEROKU_TEST_USER**(`string`) The name of an existing user belonging to the organization, that will be used for various test cases.
 * **HEROKU_NON_ADMIN_TEST_USER**(`string`) The name of an existing non-admin user belonging to the organization, that will be used for various test cases.
 * **HEROKU_SLUG_ID**(`string`) The ID of an existing slug built in the Common Runtime (otherwise "Slug not compatible with space" errors will be thrown)
