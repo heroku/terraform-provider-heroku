@@ -38,6 +38,10 @@ func TestAccDatasourceHerokuPipeline_Basic(t *testing.T) {
 
 func testAccCheckHerokuPipelineWithDatasourceBasic(appName, pipelineName, org string) string {
 	return fmt.Sprintf(`
+data "heroku_team" "foobar" {
+  name = "%s"
+}
+
 resource "heroku_app" "staging" {
   name = "%s"
   region = "us"
@@ -48,6 +52,10 @@ resource "heroku_app" "staging" {
 
 resource "heroku_pipeline" "foobar" {
   name = "%s"
+  owner {
+    id   = data.heroku_team.foobar.id
+    type = "team"
+  }
 }
 
 resource "heroku_pipeline_coupling" "staging" {
@@ -59,5 +67,5 @@ resource "heroku_pipeline_coupling" "staging" {
 data "heroku_pipeline" "foobar" {
   name = heroku_pipeline_coupling.staging.pipeline
 }
-`, appName, org, pipelineName)
+`, org, appName, org, pipelineName)
 }
