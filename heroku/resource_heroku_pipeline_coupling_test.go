@@ -41,6 +41,10 @@ func TestAccHerokuPipelineCoupling_Basic(t *testing.T) {
 
 func testAccCheckHerokuPipelineCouplingConfig_basic(appName, pipelineName, stageName, org string) string {
 	return fmt.Sprintf(`
+data "heroku_team" "default" {
+  name = "%s"
+}
+
 resource "heroku_app" "default" {
   name   = "%s"
   region = "us"
@@ -51,6 +55,10 @@ resource "heroku_app" "default" {
 
 resource "heroku_pipeline" "default" {
   name = "%s"
+  owner {
+    id   = data.heroku_team.default.id
+    type = "team"
+  }
 }
 
 resource "heroku_pipeline_coupling" "default" {
@@ -58,7 +66,7 @@ resource "heroku_pipeline_coupling" "default" {
   pipeline = heroku_pipeline.default.id
   stage    = "%s"
 }
-`, appName, org, pipelineName, stageName)
+`, org, appName, org, pipelineName, stageName)
 }
 
 func testAccCheckHerokuPipelineCouplingExists(n string, pipeline *heroku.PipelineCoupling) resource.TestCheckFunc {

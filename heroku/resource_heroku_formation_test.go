@@ -127,6 +127,7 @@ resource "heroku_formation" "foobar-web" {
 	type = "web"
 	size = "%s"
 	quantity = %d
+	depends_on = [heroku_app_release.foobar-release]
 }
 `, appName, org, slugId, dynoSize, dynoQuant)
 }
@@ -149,6 +150,7 @@ resource "heroku_formation" "foobar-web" {
 	type = "web"
 	size = "%s"
 	quantity = %d
+	depends_on = [heroku_app_release.foobar-release]
 }
 `, appName, org, slugId, dynoSize, dynoQuant)
 }
