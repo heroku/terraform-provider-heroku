@@ -61,7 +61,11 @@ func resourceHerokuConfigCreate(d *schema.ResourceData, m interface{}) error {
 
 	if v, ok := d.GetOk("sensitive_vars"); ok {
 		vs := v.(map[string]interface{})
-		log.Printf("[DEBUG] sensitive vars: %v", vs)
+		var keys []string
+		for k := range vs {
+			keys = append(keys, k)
+		}
+		log.Printf("[DEBUG] sensitive vars (keys only): %s", keys)
 		sensitiveVars = vs
 	}
 
@@ -105,7 +109,11 @@ func resourceHerokuConfigUpdate(d *schema.ResourceData, m interface{}) error {
 	if d.HasChange("sensitive_vars") {
 		v := d.Get("sensitive_vars")
 		vs := v.(map[string]interface{})
-		log.Printf("[DEBUG] sensitive vars: %v", vs)
+		var keys []string
+		for k := range vs {
+			keys = append(keys, k)
+		}
+		log.Printf("[DEBUG] sensitive vars (keys only): %s", keys)
 		sensitiveVars = vs
 	}
 
