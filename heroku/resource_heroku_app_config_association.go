@@ -152,7 +152,11 @@ func resourceHerokuAppConfigAssociationDelete(d *schema.ResourceData, m interfac
 func updateVars(id string, client *heroku.Service, o map[string]interface{}, n map[string]interface{}) error {
 	vars := constructVars(o, n)
 
-	log.Printf("[INFO] Updating config vars: *%#v", vars)
+	var varKeys []string
+	for k := range vars {
+		varKeys = append(varKeys, k)
+	}
+	log.Printf("[INFO] Updating config vars (keys only): %s", varKeys)
 	if _, err := client.ConfigVarUpdate(context.TODO(), id, vars); err != nil {
 		return fmt.Errorf("error updating config vars: %s", err)
 	}
@@ -201,7 +205,11 @@ func getSensitiveVars(d *schema.ResourceData) map[string]interface{} {
 	var sensitiveVars map[string]interface{}
 	if v, ok := d.GetOk("sensitive_vars"); ok {
 		vs := v.(map[string]interface{})
-		log.Printf("[DEBUG] sensitive vars: %s", vs)
+		var keys []string
+		for k := range vs {
+			keys = append(keys, k)
+		}
+		log.Printf("[DEBUG] sensitive vars (keys only): %s", keys)
 		sensitiveVars = vs
 	}
 

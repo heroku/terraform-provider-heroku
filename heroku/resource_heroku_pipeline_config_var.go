@@ -152,8 +152,12 @@ func resourceHerokuPipelineConfigVarRead(d *schema.ResourceData, meta interface{
 
 	vettedConfigVars, vettedSensitiveConfigVars := vetVarsForState(getVars(d), getSensitiveVars(d), rpvFormatted)
 
+	var sensitiveVarKeys []string
+	for k := range vettedSensitiveConfigVars {
+		sensitiveVarKeys = append(sensitiveVarKeys, k)
+	}
 	log.Printf("[DEBUG] pipeline config vars to be set in state: *%#v", vettedConfigVars)
-	log.Printf("[DEBUG] pipeline sensitive config vars to be set in state: *%#v", vettedSensitiveConfigVars)
+	log.Printf("[DEBUG] pipeline sensitive config vars to be set in state (keys only): %s", sensitiveVarKeys)
 
 	var setErr error
 	setErr = d.Set("pipeline_id", pipelineID)
@@ -191,13 +195,17 @@ func updatePipelineConfigVars(client *heroku.Service, pipelineID, pipelineStage 
 	oldVars, newVars map[string]interface{}) error {
 	varsToModify := constructVars(oldVars, newVars)
 
-	log.Printf("[INFO] Modifying pipeline [%s] stage [%s] config vars: *%#v", pipelineID, pipelineStage, varsToModify)
+	var varKeys []string
+	for k := range varsToModify {
+		varKeys = append(varKeys, k)
+	}
+	log.Printf("[INFO] Modifying pipeline [%s] stage [%s] config vars (keys only): %s", pipelineID, pipelineStage, varKeys)
 
 	if _, updateErr := client.PipelineConfigVarUpdate(context.TODO(), pipelineID, pipelineStage, varsToModify); updateErr != nil {
 		return fmt.Errorf("error updating pipeline config vars: %s", updateErr)
 	}
 
-	log.Printf("[INFO] Modifying pipeline [%s] stage [%s] config vars: *%#v", pipelineID, pipelineStage, varsToModify)
+	log.Printf("[INFO] Modified pipeline [%s] stage [%s] config vars (keys only): %s", pipelineID, pipelineStage, varKeys)
 
 	return nil
 }
