@@ -4,7 +4,7 @@ require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hashicorp/go-uuid v1.0.3
+	github.com/hashicorp/go-uuid v1.0.4
 	github.com/hashicorp/terraform-plugin-log v0.11.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.1
 	github.com/heroku/heroku-go/v6 v6.1.0
@@ -65,6 +65,4 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 )
 
-go 1.25.8
-
-toolchain go1.25.9
+go 1.25.13
