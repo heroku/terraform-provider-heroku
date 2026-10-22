@@ -24,6 +24,12 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("HEROKU_API_KEY", nil),
 			},
 
+			"tfc_workload_identity": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("HEROKU_TFC_WORKLOAD_IDENTITY", true),
+			},
+
 			"headers": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -167,6 +173,8 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	if apiKey, ok := d.GetOk("api_key"); ok {
 		config.APIKey = apiKey.(string)
 	}
+
+	config.applyTFCWorkloadIdentity(d.Get("tfc_workload_identity").(bool))
 
 	if err := config.initializeAPI(); err != nil {
 		return nil, err

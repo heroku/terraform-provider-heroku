@@ -30,12 +30,14 @@ const (
 )
 
 type Config struct {
-	Api       *heroku.Service
-	APIKey    string
-	DebugHTTP bool
-	Email     string
-	Headers   http.Header
-	URL       string
+	Api    *heroku.Service
+	APIKey string
+	// BearerToken is the TFC workload identity token, used only when no APIKey is set.
+	BearerToken string
+	DebugHTTP   bool
+	Email       string
+	Headers     http.Header
+	URL         string
 
 	// Delays
 	PostAppCreateDelay    int64
@@ -76,6 +78,8 @@ func (c *Config) initializeAPI() (err error) {
 		Transport: &heroku.Transport{
 			Username: c.Email,
 			Password: c.APIKey,
+			// heroku-go sends Bearer and skips basic auth when this is set.
+			BearerToken: c.BearerToken,
 			UserAgent: fmt.Sprintf("%s terraform-provider-heroku/%s",
 				heroku.DefaultUserAgent, version.ProviderVersion),
 			AdditionalHeaders: c.Headers,
@@ -96,6 +100,18 @@ func (c *Config) initializeAPI() (err error) {
 	log.Printf("[INFO] Heroku Client configured for user: %s", c.Email)
 
 	return
+}
+
+// applyTFCWorkloadIdentity uses TFC_WORKLOAD_IDENTITY_TOKEN when enabled and no
+// API key came from api_key, HEROKU_API_KEY or netrc.
+func (c *Config) applyTFCWorkloadIdentity(enabled bool) {
+	if !enabled || c.APIKey != "" {
+		return
+	}
+	if token := os.Getenv("TFC_WORKLOAD_IDENTITY_TOKEN"); token != "" {
+		c.BearerToken = token
+		log.Printf("[INFO] Heroku Client using TFC workload identity token")
+	}
 }
 
 func (c *Config) applySchema(d *schema.ResourceData) (err error) {

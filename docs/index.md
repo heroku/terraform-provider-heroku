@@ -56,6 +56,7 @@ precedence, and explained below:
 * Static credentials
 * Environment variables
 * Netrc
+* HCP Terraform workload identity
 
 ### Generating tokens
 
@@ -121,6 +122,36 @@ machine api.heroku.com
 
 The directory containing the `.netrc` file can be overridden by the `NETRC` environment variable as described [here](https://www.gnu.org/software/inetutils/manual/html_node/The-_002enetrc-file.html).
 
+### HCP Terraform workload identity
+
+When running in HCP Terraform (Terraform Cloud), the provider can authenticate
+with the workspace's [workload identity token](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/dynamic-provider-credentials/workload-identity-tokens)
+instead of a long-lived API key. Set this environment variable in the workspace:
+
+```shell
+TFC_WORKLOAD_IDENTITY_AUDIENCE=https://api.heroku.com
+```
+
+HCP Terraform then injects `TFC_WORKLOAD_IDENTITY_TOKEN` into each run, and the
+provider sends it to the Heroku API as a bearer token. No provider
+configuration is needed:
+
+```hcl-terraform
+provider "heroku" {}
+```
+
+* **Precedence:** `api_key`, `HEROKU_API_KEY` and netrc credentials all win over
+  the workload identity token. Remove the shared API key from the workspace to
+  switch to workload identity.
+* **Opt-out:** set `tfc_workload_identity = false` in the provider block, or
+  `HEROKU_TFC_WORKLOAD_IDENTITY=false` in the environment.
+* **Token age:** the Heroku API rejects workload identity tokens issued more
+  than 30 minutes ago, so a single plan or apply phase must finish within
+  that window.
+* Tagged tokens (`TFC_WORKLOAD_IDENTITY_TOKEN_<TAG>`) are not supported.
+* Self-hosted HCP Terraform agents need v1.7.0 or later.
+* The Heroku API must have a platform user configured to trust the workspace.
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -131,6 +162,11 @@ The following arguments are supported:
 * `email` - (Ignored) This field originally supported username-password authentication, 
   but has since [been deprecated](https://devcenter.heroku.com/changelog-items/2516).
   Instead, simply set an auth token in the `api_key` property.
+
+* `tfc_workload_identity` - (Optional) Use the HCP Terraform workload identity token
+  (`TFC_WORKLOAD_IDENTITY_TOKEN`) when no API key is configured. Defaults to `true`, or
+  the value of the `HEROKU_TFC_WORKLOAD_IDENTITY` environment variable.
+  See [HCP Terraform workload identity](#hcp-terraform-workload-identity).
 
 * `headers` - (Optional) Additional Headers to be sent to Heroku, as a string-encoded JSON object, 
   for example: `{"X-Custom-Header":"yes","X-Custom-Header-Too":"no"}`. If not provided, it will be 
