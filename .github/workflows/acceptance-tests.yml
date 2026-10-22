@@ -54,7 +54,7 @@ jobs:
     - name: Install Terraform
       run: |
         set -eu
-        terraform_version="1.14.0"
+        terraform_version="1.14.9"
 
         set +e
         terraform_bin="$(which terraform)"
